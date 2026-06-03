@@ -35,6 +35,12 @@
 - [x] AdminPanelProvider configurado en /admin
 - [x] Sintaxis PHP verificada
 - [x] Autoload verificado
+- [x] docker-compose.yml con PHP 8.3 + PostgreSQL 16
+- [x] Dockerfile personalizado en docker/8.3/
+- [x] docker-compose.override.yml con Vite y queue worker
+- [x] Makefile con comandos simplificados
+- [x] .dockerignore y .env.docker
+- [x] AGENTS.md actualizado con instrucciones Docker
 
 ## Fase 2: Registro Manual y Aprobacion [PENDIENTE]
 - [ ] Crear modelo ActivityRecord
@@ -107,11 +113,10 @@
 - [ ] Pruebas con casos ambiguos
 
 ## Fase 6: Piloto Operativo [PENDIENTE]
-- [ ] Servidor con extensiones PHP completas
-- [ ] Instalar php-xml, php-intl, php-zip, php-pgsql
-- [ ] Crear base de datos PostgreSQL
-- [ ] Ejecutar migraciones
-- [ ] Crear usuario administrador
+- [ ] Levantar entorno con `make up`
+- [ ] Verificar que app responde en http://localhost:8080
+- [ ] Ejecutar `make migrate` (si no se hace automaticamente)
+- [ ] Crear usuario administrador con `php artisan make:filament-user`
 - [ ] Cargar catalogo de procedimientos
 - [ ] Cargar reglas de comision
 - [ ] Registrar 2 doctores

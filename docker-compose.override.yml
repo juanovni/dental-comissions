@@ -1,0 +1,46 @@
+services:
+    dental.app:
+        volumes:
+            - '.:/var/www/html'
+        environment:
+            APP_ENV: local
+            APP_DEBUG: 'true'
+            VITE_DEV_SERVER_URL: 'http://${VITE_HOST:-localhost}:${VITE_PORT:-5173}'
+
+    dental.vite:
+        image: dental-commissions/app:8.3
+        container_name: dental-vite
+        depends_on:
+            - dental.app
+        ports:
+            - '${VITE_PORT:-5173}:5173'
+        working_dir: /var/www/html
+        volumes:
+            - '.:/var/www/html'
+            - '/var/www/html/node_modules'
+        entrypoint: ['npm', 'run', 'dev']
+        networks:
+            - dental
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.3'
+                    memory: 400M
+
+    dental.worker:
+        image: dental-commissions/app:8.3
+        container_name: dental-worker
+        depends_on:
+            - dental.app
+        working_dir: /var/www/html
+        volumes:
+            - '.:/var/www/html'
+        entrypoint: ['php', 'artisan', 'queue:work', '--tries=1', '--timeout=60']
+        networks:
+            - dental
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.2'
+                    memory: 300M
