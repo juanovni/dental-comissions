@@ -1,7 +1,7 @@
 services:
     dental.app:
         build:
-            context: ./docker/8.3
+            context: ./docker/8.4
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP:-1000}'
@@ -32,7 +32,7 @@ services:
             QUEUE_CONNECTION: database
         volumes:
             - '.:/var/www/html'
-            - './docker/8.3/php.ini:/usr/local/etc/php/conf.d/99-sail.ini'
+            - './docker/8.4/php.ini:/usr/local/etc/php/conf.d/99-sail.ini'
         networks:
             - dental
         depends_on:
