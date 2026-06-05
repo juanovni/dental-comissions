@@ -1,0 +1,9 @@
+services:
+    dental.app:
+        volumes:
+            - '.:/var/www/html'
+        environment:
+            APP_ENV: local
+            APP_DEBUG: 'true'
+            VITE_DEV_SERVER_URL: 'http://${VITE_HOST:-localhost}:${VITE_PORT:-5173}'
+

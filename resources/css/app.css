@@ -1,9 +1,19 @@
 @import 'tailwindcss';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@import '../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../vendor/filament/filament/resources';
+@source '../../vendor/filament/actions/resources';
+@source '../../vendor/filament/forms/resources';
+@source '../../vendor/filament/infolists/resources';
+@source '../../vendor/filament/notifications/resources';
+@source '../../vendor/filament/schemas/resources';
+@source '../../vendor/filament/support/resources';
+@source '../../vendor/filament/tables/resources';
+@source '../../vendor/filament/widgets/resources';
+@source '../../vendor/livewire/livewire/src';
+@source '../**';
+@source '../../storage/framework/views';
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',

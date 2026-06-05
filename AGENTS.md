@@ -9,9 +9,9 @@ administrador revisa y aprueba antes de generar pagos semanales.
 - Backend: Laravel 12
 - Admin Panel: Filament 4
 - Base de datos: PostgreSQL
-- IA: OpenAI API (pendiente)
-- WhatsApp: Meta WhatsApp Cloud API o Twilio (pendiente)
-- PDF: DomPDF o Browsershot (pendiente)
+- IA: OpenAI API (openai-php/laravel)
+- WhatsApp: Meta WhatsApp Cloud API (Http facade)
+- PDF: barryvdh/laravel-dompdf
 - Moneda: USD (solo control interno)
 
 ## Reglas de Negocio
@@ -38,26 +38,68 @@ administrador revisa y aprueba antes de generar pagos semanales.
 - Etiquetas de UI en espanol
 
 ## Archivos Clave
-- Enums: app/Enums/ (ProfessionalRole, CommissionType)
-- Models: app/Models/ (Professional, Patient, Procedure, CommissionRule, DoctorAssistantAssignment)
-- Resources: app/Filament/Resources/
+- Enums: app/Enums/ (ProfessionalRole, CommissionType, ActivityStatus, WeeklyReportStatus, WhatsappMessageStatus, WhatsappMessageDirection)
+- Models: app/Models/ (Professional, Patient, Procedure, CommissionRule, DoctorAssistantAssignment, ActivityRecord, ActivityAssistant, WeeklyReport, WeeklyReportItem, WhatsappMessage)
+- Services: app/Services/ (WhatsappService)
+- Controllers: app/Http/Controllers/ (WebhookController)
+- Resources: app/Filament/Resources/ (Professionals, Patients, Procedures, CommissionRules, DoctorAssistantAssignments, ActivityRecords, WeeklyReports)
 - Migrations: database/migrations/2026_06_02_*
 - Providers: app/Providers/Filament/AdminPanelProvider.php
 - Panel admin: /admin
 - Login: requerido para acceder al panel
+- Webhook WhatsApp: /webhook/whatsapp (GET verificacion, POST recepcion)
 
 ## Estados Planeados
 - Activity: pending_confirmation, needs_review, approved, paid, cancelled
 - WeeklyReport: draft, approved, paid
 - Professional: is_active, can_register_via_whatsapp
 
-## Comandos Utiles
+## Comandos Utiles (sin Docker)
 - composer install
 - composer install --ignore-platform-req=ext-xml --ignore-platform-req=ext-dom --ignore-platform-req=ext-xmlwriter --ignore-platform-req=ext-xmlreader --ignore-platform-req=ext-intl --ignore-platform-req=ext-zip
 - php artisan package:discover
 - php artisan migrate
 - php artisan make:filament-user
 - php artisan serve
+
+## Entorno Docker (recomendado para WSL)
+El proyecto incluye docker-compose.yml listo para WSL/Linux. PHP 8.3 con todas las
+extensiones necesarias, PostgreSQL 16 y Vite para assets.
+
+Servicios:
+- dental.app: PHP 8.3 + Composer + Node 22 (puerto 8080)
+- dental.pgsql: PostgreSQL 16 (puerto 5432)
+- dental.vite: Vite dev server (puerto 5173) [solo dev]
+- dental.worker: Queue worker [solo dev]
+
+Archivos:
+- docker-compose.yml: servicios principales
+- docker-compose.override.yml: servicios adicionales de desarrollo
+- docker/8.3/Dockerfile: imagen PHP 8.3 con extensiones
+- docker/8.3/php.ini: configuracion PHP
+- docker/8.3/supervisord.conf: supervisor
+- docker/8.3/start-container: script de inicio
+- docker/pgsql/create-testing-database.sh: crea DB de testing
+- .env.docker: plantilla de variables de entorno
+- Makefile: comandos simplificados
+
+Uso:
+- make up: levanta los contenedores
+- make build: construye la imagen
+- make shell: abre bash en el contenedor app
+- make migrate: ejecuta migraciones
+- make fresh: fresh migrate con seed
+- make test: ejecuta tests
+- make composer cmd=install: ejecuta composer
+- make npm cmd=install: ejecuta npm
+- make down: detiene los contenedores
+- make clean: elimina todo (contenedores, volumenes, imagenes)
+
+Acceso:
+- App: http://localhost:8080
+- Admin: http://localhost:8080/admin
+- Vite: http://localhost:5173
+- PostgreSQL: localhost:5432 (user/pass: dental/dental, db: dental_commissions_mvp)
 
 ## Requisitos del Servidor
 Para ejecutar el proyecto se requieren las siguientes extensiones PHP:
@@ -67,7 +109,8 @@ Para ejecutar el proyecto se requieren las siguientes extensiones PHP:
 - pdo_pgsql
 - openssl, mbstring, bcmath, ctype, json, pcre, tokenizer
 
-## Limitaciones del Entorno Local
+## Limitaciones del Entorno Local Sin Docker
 Este proyecto fue creado en un entorno sin acceso sudo para instalar extensiones PHP del
-sistema. Por eso se uso --ignore-platform-reqs al instalar dependencias. Para produccion
-se debe usar un servidor con las extensiones instaladas correctamente.
+sistema. Por eso se uso --ignore-platform-reqs al instalar dependencias. Para desarrollo
+local se recomienda usar Docker (ver seccion "Entorno Docker"). Para produccion se debe
+usar un servidor con las extensiones instaladas correctamente.

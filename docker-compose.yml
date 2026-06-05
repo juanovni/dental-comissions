@@ -1,0 +1,87 @@
+services:
+    dental.app:
+        build:
+            context: ./docker/8.4
+            dockerfile: Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP:-1000}'
+        image: dental-commissions/app:8.3
+        container_name: dental-app
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        ports:
+            - '${APP_PORT:-8080}:80'
+            - '${VITE_PORT:-5173}:5173'
+        environment:
+            WWWUSER: '${WWWUSER:-1000}'
+            LARAVEL_SAIL: 1
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+            IGNITION_LOCAL_SITES_PATH: '${PWD}'
+            DB_CONNECTION: pgsql
+            DB_HOST: dental.pgsql
+            DB_PORT: 5432
+            DB_DATABASE: '${DB_DATABASE:-dental_commissions_mvp}'
+            DB_USERNAME: '${DB_USERNAME:-dental}'
+            DB_PASSWORD: '${DB_PASSWORD:-dental}'
+            APP_ENV: '${APP_ENV:-local}'
+            APP_DEBUG: '${APP_DEBUG:-true}'
+            APP_URL: '${APP_URL:-http://localhost:8080}'
+            CACHE_STORE: database
+            SESSION_DRIVER: database
+            QUEUE_CONNECTION: database
+        volumes:
+            - '.:/var/www/html'
+            - './docker/8.4/php.ini:/usr/local/etc/php/conf.d/99-sail.ini'
+        networks:
+            - dental
+        depends_on:
+            dental.pgsql:
+                condition: service_healthy
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 800M
+
+    dental.pgsql:
+        image: 'postgres:16-alpine'
+        container_name: dental-pgsql
+        ports:
+            - '${FORWARD_DB_PORT:-5432}:5432'
+        environment:
+            PGPASSWORD: '${DB_PASSWORD:-dental}'
+            POSTGRES_DB: '${DB_DATABASE:-dental_commissions_mvp}'
+            POSTGRES_USER: '${DB_USERNAME:-dental}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD:-dental}'
+            POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --lc-collate=C --lc-ctype=C'
+            TZ: 'UTC'
+        volumes:
+            - 'sail-pgsql:/var/lib/postgresql/data'
+            - './docker/pgsql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+        networks:
+            - dental
+        healthcheck:
+            test:
+                - CMD
+                - pg_isready
+                - '-q'
+                - '-d'
+                - '${DB_DATABASE:-dental_commissions_mvp}'
+                - '-U'
+                - '${DB_USERNAME:-dental}'
+            retries: 5
+            timeout: 5s
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.6'
+                    memory: 1000M
+
+networks:
+    dental:
+        driver: bridge
+
+volumes:
+    sail-pgsql:
+        driver: local
