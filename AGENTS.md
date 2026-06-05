@@ -9,9 +9,9 @@ administrador revisa y aprueba antes de generar pagos semanales.
 - Backend: Laravel 12
 - Admin Panel: Filament 4
 - Base de datos: PostgreSQL
-- IA: OpenAI API (pendiente)
-- WhatsApp: Meta WhatsApp Cloud API o Twilio (pendiente)
-- PDF: DomPDF o Browsershot (pendiente)
+- IA: OpenAI API (openai-php/laravel)
+- WhatsApp: Meta WhatsApp Cloud API (Http facade)
+- PDF: barryvdh/laravel-dompdf
 - Moneda: USD (solo control interno)
 
 ## Reglas de Negocio
@@ -38,13 +38,16 @@ administrador revisa y aprueba antes de generar pagos semanales.
 - Etiquetas de UI en espanol
 
 ## Archivos Clave
-- Enums: app/Enums/ (ProfessionalRole, CommissionType)
-- Models: app/Models/ (Professional, Patient, Procedure, CommissionRule, DoctorAssistantAssignment)
-- Resources: app/Filament/Resources/
+- Enums: app/Enums/ (ProfessionalRole, CommissionType, ActivityStatus, WeeklyReportStatus, WhatsappMessageStatus, WhatsappMessageDirection)
+- Models: app/Models/ (Professional, Patient, Procedure, CommissionRule, DoctorAssistantAssignment, ActivityRecord, ActivityAssistant, WeeklyReport, WeeklyReportItem, WhatsappMessage)
+- Services: app/Services/ (WhatsappService)
+- Controllers: app/Http/Controllers/ (WebhookController)
+- Resources: app/Filament/Resources/ (Professionals, Patients, Procedures, CommissionRules, DoctorAssistantAssignments, ActivityRecords, WeeklyReports)
 - Migrations: database/migrations/2026_06_02_*
 - Providers: app/Providers/Filament/AdminPanelProvider.php
 - Panel admin: /admin
 - Login: requerido para acceder al panel
+- Webhook WhatsApp: /webhook/whatsapp (GET verificacion, POST recepcion)
 
 ## Estados Planeados
 - Activity: pending_confirmation, needs_review, approved, paid, cancelled

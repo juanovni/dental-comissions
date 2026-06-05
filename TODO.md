@@ -42,75 +42,81 @@
 - [x] .dockerignore y .env.docker
 - [x] AGENTS.md actualizado con instrucciones Docker
 
-## Fase 2: Registro Manual y Aprobacion [PENDIENTE]
-- [ ] Crear modelo ActivityRecord
-- [ ] Crear modelo ActivityAssistant
-- [ ] Crear enum ActivityStatus
-- [ ] Migracion activity_records
-- [ ] Migracion activity_assistants
-- [ ] Recurso Filament ActivityRecords (lista + creacion)
-- [ ] Formulario: paciente, doctor, procedimiento, auxiliares
-- [ ] Validar auxiliares asignados al doctor
-- [ ] Calcular comision del doctor (regla parametrizable)
-- [ ] Calcular comision del auxiliar por cada procedimiento asistido
-- [ ] Estados: pending_confirmation, needs_review, approved, paid, cancelled
-- [ ] Accion de aprobacion administrativa
-- [ ] Accion de marcado como pagado
-- [ ] Notas de correccion
-- [ ] Filtros por fecha, profesional, estado
+## Fase 2: Registro Manual y Aprobacion [COMPLETADA]
+- [x] Crear modelo ActivityRecord
+- [x] Crear modelo ActivityAssistant
+- [x] Crear enum ActivityStatus
+- [x] Migracion activity_records
+- [x] Migracion activity_assistants
+- [x] Recurso Filament ActivityRecords (lista + creacion)
+- [x] Formulario: paciente, doctor, procedimiento, auxiliares
+- [x] Validar auxiliares asignados al doctor
+- [x] Calcular comision del doctor (regla parametrizable)
+- [x] Calcular comision del auxiliar por cada procedimiento asistido
+- [x] Estados: pending_confirmation, needs_review, approved, paid, cancelled
+- [x] Accion de aprobacion administrativa
+- [x] Accion de marcado como pagado
+- [x] Notas de correccion
+- [x] Filtros por fecha, profesional, estado
 
-## Fase 3: Reportes Semanales [PENDIENTE]
-- [ ] Crear modelo WeeklyReport
-- [ ] Crear modelo WeeklyReportItem
-- [ ] Crear enum WeeklyReportStatus
-- [ ] Migracion weekly_reports
-- [ ] Migracion weekly_report_items
-- [ ] Recurso Filament WeeklyReports
-- [ ] Generar reporte semanal manualmente
-- [ ] Resumen por doctor
-- [ ] Resumen por auxiliar
-- [ ] Total pacientes atendidos
-- [ ] Total procedimientos realizados
-- [ ] Total comision generada
-- [ ] Generar PDF descargable
-- [ ] Filtros por rango de fechas
-- [ ] Estado: draft, approved, paid
-- [ ] Accion de aprobacion del reporte
-- [ ] Accion de marcado como pagado
+## Fase 2.1: Mejora de Aprobacion Administrativa [COMPLETADA]
+- [x] Agregar accion directa Aprobar en tabla de actividades
+- [x] Agregar accion directa Solicitar correccion en tabla de actividades
+- [x] Agregar accion directa Marcar como pagado en tabla de actividades
+- [x] Mantener Editar como accion de detalle
 
-## Fase 4: Integracion WhatsApp [PENDIENTE]
-- [ ] Instalar SDK WhatsApp (Twilio o Meta Cloud API)
-- [ ] Crear migracion whatsapp_messages
-- [ ] Crear modelo WhatsappMessage
-- [ ] Crear enum WhatsappMessageStatus
-- [ ] Crear enum WhatsappMessageDirection
-- [ ] Crear controlador WebhookController
-- [ ] Ruta webhook para recibir mensajes
-- [ ] Identificar profesional por numero telefonico
-- [ ] Guardar mensaje original
-- [ ] Enviar respuesta automatica de confirmacion
-- [ ] No permitir registrar por otros doctores
-- [ ] Validar auxiliares asignados al doctor
-- [ ] Manejo de confirmacion OK / CORREGIR
-- [ ] Logica de reintento
-- [ ] Configuracion de credenciales WhatsApp en .env
+## Fase 3: Reportes Semanales [COMPLETADA]
+- [x] Crear modelo WeeklyReport
+- [x] Crear modelo WeeklyReportItem
+- [x] Crear enum WeeklyReportStatus
+- [x] Migracion weekly_reports
+- [x] Migracion weekly_report_items
+- [x] Recurso Filament WeeklyReports
+- [x] Generar reporte semanal manualmente
+- [x] Resumen por doctor
+- [x] Resumen por auxiliar
+- [x] Total pacientes atendidos
+- [x] Total procedimientos realizados
+- [x] Total comision generada
+- [x] Generar PDF descargable
+- [x] Filtros por rango de fechas
+- [x] Estado: draft, approved, paid
+- [x] Accion de aprobacion del reporte
+- [x] Accion de marcado como pagado
 
-## Fase 5: Integracion IA (OpenAI) [PENDIENTE]
-- [ ] Instalar openai-php/laravel
-- [ ] Configurar API key en .env
-- [ ] Crear servicio OpenAIMessageInterpreter
-- [ ] Prompt para extraer paciente
-- [ ] Prompt para extraer procedimientos
-- [ ] Prompt para extraer auxiliar(es)
-- [ ] Prompt para extraer fecha/hora
-- [ ] Prompt para detectar ambiguedad
-- [ ] Salida JSON estructurada
-- [ ] Validar respuesta JSON
-- [ ] Matchear procedimiento con catalogo
-- [ ] Matchear auxiliar con asignaciones del doctor
-- [ ] Enviar a revision si falta informacion
-- [ ] Logica de fallback si IA falla
-- [ ] Pruebas con casos ambiguos
+## Fase 4: Integracion WhatsApp [COMPLETADA]
+- [x] Instalar SDK WhatsApp (Twilio o Meta Cloud API)
+- [x] Crear migracion whatsapp_messages
+- [x] Crear modelo WhatsappMessage
+- [x] Crear enum WhatsappMessageStatus
+- [x] Crear enum WhatsappMessageDirection
+- [x] Crear controlador WebhookController
+- [x] Ruta webhook para recibir mensajes
+- [x] Identificar profesional por numero telefonico
+- [x] Guardar mensaje original
+- [x] Enviar respuesta automatica de confirmacion
+- [x] No permitir registrar por otros doctores
+- [x] Validar auxiliares asignados al doctor
+- [x] Manejo de confirmacion OK / CORREGIR
+- [x] Logica de reintento
+- [x] Configuracion de credenciales WhatsApp en .env
+
+## Fase 5: Integracion IA (OpenAI) [COMPLETADA]
+- [x] Instalar openai-php/laravel
+- [x] Configurar API key en .env
+- [x] Crear servicio AiParsingService
+- [x] Prompt para extraer paciente
+- [x] Prompt para extraer procedimientos
+- [x] Prompt para extraer auxiliar(es)
+- [x] Prompt para extraer fecha/hora
+- [x] Prompt para detectar ambiguedad
+- [x] Salida JSON estructurada
+- [x] Validar respuesta JSON
+- [x] Matchear procedimiento con catalogo
+- [x] Matchear auxiliar con asignaciones del doctor
+- [x] Enviar a revision si falta informacion
+- [x] Logica de fallback si IA falla
+- [x] Pruebas con casos ambiguos
 
 ## Fase 6: Piloto Operativo [PENDIENTE]
 - [ ] Levantar entorno con `make up`
