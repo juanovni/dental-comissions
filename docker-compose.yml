@@ -5,7 +5,7 @@ services:
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP:-1000}'
-        image: dental-commissions/app:8.3
+        image: dental-commissions/app:8.4
         container_name: dental-app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
