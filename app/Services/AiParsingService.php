@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DoctorAssistantAssignment;
+use App\Models\PaymentMethod;
 use App\Models\Procedure;
 use App\Models\Professional;
 use Carbon\Carbon;
@@ -32,8 +33,17 @@ class AiParsingService
             ->toArray();
 
         $today = now()->format('Y-m-d');
+        $paymentMethods = PaymentMethod::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn (PaymentMethod $paymentMethod) => [
+                'name' => $paymentMethod->name,
+                'code' => $paymentMethod->code,
+                'aliases' => $paymentMethod->aliases ?? [],
+            ])
+            ->toArray();
 
-        $systemPrompt = $this->buildSystemPrompt($procedures, $assistants, $today);
+        $systemPrompt = $this->buildSystemPrompt($procedures, $assistants, $paymentMethods, $today);
 
         try {
             $response = OpenAI::chat()->create([
@@ -75,6 +85,14 @@ class AiParsingService
         $patientName = $this->extractLabelValue($messageBody, ['paciente', 'patient']);
         $procedureNames = $this->extractListLabelValue($messageBody, ['procedimiento', 'procedimientos', 'procedure', 'procedures']);
         $assistantNames = $this->extractListLabelValue($messageBody, ['auxiliar', 'auxiliares', 'assistant', 'assistants']);
+        $paymentMethod = $this->extractLabelValue($messageBody, [
+            'pago',
+            'metodo de pago',
+            'método de pago',
+            'forma de pago',
+            'payment',
+            'payment method',
+        ]);
         $date = $this->extractDate($messageBody);
 
         if (empty($procedureNames)) {
@@ -97,7 +115,11 @@ class AiParsingService
             $patientName = $this->extractPatientFromNaturalMessage($messageBody);
         }
 
-        if (!$patientName && empty($procedureNames)) {
+        if (!$paymentMethod) {
+            $paymentMethod = app(PaymentMethodResolver::class)->findInMessage($messageBody);
+        }
+
+        if (!$patientName && empty($procedureNames) && !$paymentMethod) {
             return null;
         }
 
@@ -105,6 +127,7 @@ class AiParsingService
             'patient_name' => $patientName ?? '',
             'procedures' => $procedureNames,
             'assistants' => $assistantNames,
+            'payment_method' => $paymentMethod ?? '',
             'date' => $date,
             'needs_review' => false,
             'review_notes' => '',
@@ -190,7 +213,7 @@ class AiParsingService
         return Str::of($value)->lower()->ascii()->squish()->toString();
     }
 
-    private function buildSystemPrompt(array $procedures, array $assistants, string $today): string
+    private function buildSystemPrompt(array $procedures, array $assistants, array $paymentMethods, string $today): string
     {
         $procedureList = collect($procedures)
             ->map(fn ($p) => "- {$p['name']}" . ($p['code'] ? " ({$p['code']})" : ''))
@@ -204,6 +227,14 @@ class AiParsingService
             ? "No hay auxiliares asignados a este doctor."
             : "Auxiliares asignados al doctor:\n{$assistantList}";
 
+        $paymentMethodList = collect($paymentMethods)
+            ->map(function ($paymentMethod): string {
+                $aliases = empty($paymentMethod['aliases']) ? '' : ' aliases: ' . implode(', ', $paymentMethod['aliases']);
+
+                return "- {$paymentMethod['name']} ({$paymentMethod['code']}){$aliases}";
+            })
+            ->implode("\n");
+
         return <<<PROMPT
 Eres un asistente dental. Tu tarea es extraer informacion de mensajes de doctores dental para registrar actividades.
 
@@ -212,6 +243,7 @@ Debes retornar SOLO un JSON valido con esta estructura exacta:
     "patient_name": "nombre del paciente",
     "procedures": ["nombre del procedimiento"],
     "assistants": ["nombre del auxiliar"],
+    "payment_method": "metodo de pago",
     "date": "YYYY-MM-DD",
     "needs_review": false,
     "review_notes": ""
@@ -222,14 +254,19 @@ Procedimientos disponibles en el catalogo:
 
 {$assistantSection}
 
+Metodos de pago disponibles:
+{$paymentMethodList}
+
 Reglas importantes:
 - Si no se menciona el nombre del paciente, pon needs_review=true y review_notes="Falta nombre del paciente"
 - Si no se menciona ningun procedimiento, pon needs_review=true y review_notes="Falta procedimiento"
+- Si no se menciona metodo de pago, pon needs_review=true y review_notes="Falta metodo de pago"
 - Si la fecha no se menciona explicitamente, usa la fecha de hoy: {$today}
 - Si se menciona "ayer", usa la fecha de ayer
 - Si se menciona "hace X dias", calcula la fecha correcta
 - Los nombres de procedimientos deben coincidir exactamente con el catalogo. Si no coincide exactamente, usa el mas cercano
 - Los nombres de auxiliares deben coincidir con la lista de auxiliares asignados. Si no coincide, deja el array vacio y agrega nota
+- El metodo de pago debe coincidir con la lista de metodos disponibles. Acepta nombres, codigos o aliases, y devuelve el nombre del metodo.
 - Si hay ambiguedad o informacion confusa, pon needs_review=true
 - procedures puede contener varios procedimientos si el doctor menciona mas de uno
 - assistants puede estar vacio si no se menciona auxiliar
@@ -243,6 +280,7 @@ PROMPT;
             'patient_name' => $parsed['patient_name'] ?? '',
             'procedures' => $parsed['procedures'] ?? [],
             'assistants' => $parsed['assistants'] ?? [],
+            'payment_method' => $parsed['payment_method'] ?? '',
             'date' => $parsed['date'] ?? now()->format('Y-m-d'),
             'needs_review' => $parsed['needs_review'] ?? false,
             'review_notes' => $parsed['review_notes'] ?? '',
@@ -258,6 +296,11 @@ PROMPT;
             $result['review_notes'] = $this->appendNote($result['review_notes'], 'Falta procedimiento');
         }
 
+        if (empty($result['payment_method'])) {
+            $result['needs_review'] = true;
+            $result['review_notes'] = $this->appendNote($result['review_notes'], 'Falta metodo de pago');
+        }
+
         return $result;
     }
 
@@ -267,6 +310,7 @@ PROMPT;
             'patient_name' => '',
             'procedures' => [],
             'assistants' => [],
+            'payment_method' => '',
             'date' => now()->format('Y-m-d'),
             'needs_review' => true,
             'review_notes' => $reason,

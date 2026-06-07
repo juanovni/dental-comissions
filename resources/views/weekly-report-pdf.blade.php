@@ -63,10 +63,6 @@
             <div class="label">Com. Doctor</div>
         </div>
         <div class="summary-item">
-            <div class="number">${{ number_format($report->total_assistant_commission, 2) }}</div>
-            <div class="label">Com. Auxiliares</div>
-        </div>
-        <div class="summary-item">
             <div class="number">${{ number_format($report->total_commission, 2) }}</div>
             <div class="label">Total</div>
         </div>
@@ -78,8 +74,8 @@
                 <th>Fecha</th>
                 <th>Paciente</th>
                 <th>Procedimiento</th>
+                <th>Metodo de pago</th>
                 <th>Com. Doctor</th>
-                <th>Com. Auxiliares</th>
             </tr>
         </thead>
         <tbody>
@@ -88,8 +84,8 @@
                     <td>{{ $activity->activity_date->format('d/m/Y') }}</td>
                     <td>{{ $activity->patient->full_name }}</td>
                     <td>{{ $activity->procedure->name }}</td>
+                    <td>{{ $activity->paymentMethod?->name ?? 'N/A' }}</td>
                     <td class="text-right">${{ number_format($activity->doctor_commission_amount, 2) }}</td>
-                    <td class="text-right">${{ number_format($activity->assistant_commission_total, 2) }}</td>
                 </tr>
             @empty
                 <tr>
@@ -104,10 +100,6 @@
             <tr>
                 <td>Total comision doctor:</td>
                 <td class="text-right">${{ number_format($report->total_doctor_commission, 2) }}</td>
-            </tr>
-            <tr>
-                <td>Total comision auxiliares:</td>
-                <td class="text-right">${{ number_format($report->total_assistant_commission, 2) }}</td>
             </tr>
             <tr class="total-row">
                 <td>TOTAL:</td>

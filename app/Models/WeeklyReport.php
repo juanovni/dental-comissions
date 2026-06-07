@@ -114,8 +114,8 @@ class WeeklyReport extends Model
             'total_patients' => $activities->pluck('patient_id')->unique()->count(),
             'total_procedures' => $activities->count(),
             'total_doctor_commission' => $activities->sum('doctor_commission_amount'),
-            'total_assistant_commission' => $activities->sum('assistant_commission_total'),
-            'total_commission' => $activities->sum('doctor_commission_amount') + $activities->sum('assistant_commission_total'),
+            'total_assistant_commission' => 0,
+            'total_commission' => $activities->sum('doctor_commission_amount'),
         ]);
     }
 

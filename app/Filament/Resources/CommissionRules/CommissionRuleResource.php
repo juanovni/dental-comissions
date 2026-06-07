@@ -37,6 +37,8 @@ class CommissionRuleResource extends Resource
 
     protected static ?string $pluralModelLabel = 'reglas de comision';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([

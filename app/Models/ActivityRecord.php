@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use App\Enums\ActivityStatus;
-use App\Enums\CommissionType;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
 class ActivityRecord extends Model
 {
@@ -19,6 +18,9 @@ class ActivityRecord extends Model
         'patient_id',
         'doctor_id',
         'procedure_id',
+        'payment_method_id',
+        'payment_method_raw',
+        'payment_method_commission_snapshot',
         'activity_date',
         'activity_time',
         'status',
@@ -40,6 +42,7 @@ class ActivityRecord extends Model
             'doctor_commission_amount' => 'decimal:2',
             'assistant_commission_total' => 'decimal:2',
             'internal_rate_snapshot' => 'decimal:2',
+            'payment_method_commission_snapshot' => 'decimal:2',
             'approved_at' => 'datetime',
             'paid_at' => 'datetime',
         ];
@@ -60,6 +63,11 @@ class ActivityRecord extends Model
         return $this->belongsTo(Procedure::class);
     }
 
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
     public function assistants(): BelongsToMany
     {
         return $this->belongsToMany(Professional::class, 'activity_assistants', 'activity_record_id', 'assistant_id')
@@ -75,28 +83,11 @@ class ActivityRecord extends Model
     public function calculateCommissions(): void
     {
         $procedure = $this->procedure;
-        $doctor = $this->doctor;
 
         $this->internal_rate_snapshot = $procedure->internal_rate;
 
-        $doctorRule = CommissionRule::where('professional_id', $doctor->id)
-            ->where('procedure_id', $procedure->id)
-            ->where('role', 'doctor')
-            ->where('is_active', true)
-            ->where(function ($query) {
-                $query->whereNull('starts_at')
-                    ->orWhere('starts_at', '<=', $this->activity_date);
-            })
-            ->where(function ($query) {
-                $query->whereNull('ends_at')
-                    ->orWhere('ends_at', '>=', $this->activity_date);
-            })
-            ->first();
-
-        if (!$doctorRule) {
-            $doctorRule = CommissionRule::whereNull('professional_id')
-                ->where('procedure_id', $procedure->id)
-                ->where('role', 'doctor')
+        $commissionRate = $this->payment_method_id
+            ? PaymentMethodCommissionRate::where('payment_method_id', $this->payment_method_id)
                 ->where('is_active', true)
                 ->where(function ($query) {
                     $query->whereNull('starts_at')
@@ -106,69 +97,25 @@ class ActivityRecord extends Model
                     $query->whereNull('ends_at')
                         ->orWhere('ends_at', '>=', $this->activity_date);
                 })
-                ->first();
-        }
+                ->latest('starts_at')
+                ->first()
+            : null;
 
-        $this->doctor_commission_amount = $doctorRule
-            ? $this->computeAmount($doctorRule, $procedure->internal_rate)
-            : 0;
+        $amount = $commissionRate ? (float) $commissionRate->amount : 0;
+
+        $this->doctor_commission_amount = $amount;
+        $this->payment_method_commission_snapshot = $amount;
 
         $assistantTotal = 0;
 
         foreach ($this->assistants as $assistant) {
-            $assistantRule = CommissionRule::where('professional_id', $assistant->id)
-                ->where('procedure_id', $procedure->id)
-                ->where('role', 'assistant')
-                ->where('is_active', true)
-                ->where(function ($query) {
-                    $query->whereNull('starts_at')
-                        ->orWhere('starts_at', '<=', $this->activity_date);
-                })
-                ->where(function ($query) {
-                    $query->whereNull('ends_at')
-                        ->orWhere('ends_at', '>=', $this->activity_date);
-                })
-                ->first();
-
-            if (!$assistantRule) {
-                $assistantRule = CommissionRule::whereNull('professional_id')
-                    ->where('procedure_id', $procedure->id)
-                    ->where('role', 'assistant')
-                    ->where('is_active', true)
-                    ->where(function ($query) {
-                        $query->whereNull('starts_at')
-                            ->orWhere('starts_at', '<=', $this->activity_date);
-                    })
-                    ->where(function ($query) {
-                        $query->whereNull('ends_at')
-                            ->orWhere('ends_at', '>=', $this->activity_date);
-                    })
-                    ->first();
-            }
-
-            $amount = $assistantRule
-                ? $this->computeAmount($assistantRule, $procedure->internal_rate)
-                : 0;
-
             $this->assistants()->updateExistingPivot($assistant->id, [
-                'commission_amount' => $amount,
+                'commission_amount' => 0,
             ]);
-
-            $assistantTotal += $amount;
         }
 
         $this->assistant_commission_total = $assistantTotal;
         $this->save();
-    }
-
-    private function computeAmount(CommissionRule $rule, ?float $internalRate): float
-    {
-        return match ($rule->commission_type) {
-            CommissionType::FixedPerProcedure => (float) $rule->fixed_amount,
-            CommissionType::PercentageOfInternalRate => ($internalRate ?? 0) * ($rule->percentage_value / 100),
-            CommissionType::Mixed => (float) $rule->fixed_amount + (($internalRate ?? 0) * ($rule->percentage_value / 100)),
-            CommissionType::None => 0,
-        };
     }
 
     public function approve(): void
