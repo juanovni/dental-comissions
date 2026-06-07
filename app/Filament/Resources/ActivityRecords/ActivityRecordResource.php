@@ -141,6 +141,8 @@ class ActivityRecordResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->poll('10s')
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('patient.full_name')->label('Paciente')->searchable()->sortable(),
                 TextColumn::make('doctor.name')->label('Doctor')->searchable()->sortable(),

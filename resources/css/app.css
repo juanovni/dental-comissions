@@ -28,15 +28,11 @@
 
 @layer base {
     .fi-body {
-        background:
-            radial-gradient(circle at top left, color-mix(in srgb, var(--primary-100) 72%, transparent), transparent 30rem),
-            linear-gradient(135deg, #f8fafc 0%, #eef7f5 46%, #f8fafc 100%);
+        background: #ffffff;
     }
 
     .dark .fi-body {
-        background:
-            radial-gradient(circle at top left, color-mix(in srgb, var(--primary-900) 46%, transparent), transparent 30rem),
-            linear-gradient(135deg, #020617 0%, #0f1f1d 50%, #020617 100%);
+        background: #020617;
     }
 }
 
