@@ -3,7 +3,12 @@
 namespace Tests\Feature\Services;
 
 use App\Enums\WhatsappMessageStatus;
+use App\Models\ActivityRecord;
+use App\Models\DoctorAssistantAssignment;
+use App\Models\PaymentMethod;
+use App\Models\PaymentMethodCommissionRate;
 use App\Models\Professional;
+use App\Models\Procedure;
 use App\Models\WhatsappMessage;
 use App\Services\ActivityCreationService;
 use App\Services\AiParsingService;
@@ -154,8 +159,235 @@ class WhatsappServiceTest extends TestCase
         $this->assertEquals(WhatsappMessageStatus::NeedsReview, $original->status);
     }
 
-    private function fakeOpenAI(): void
+    public function test_assistant_with_one_assigned_doctor_registers_activity_for_that_doctor(): void
     {
+        $this->seedPaymentMethods();
+
+        $doctor = Professional::factory()->create([
+            'role' => 'doctor',
+            'name' => 'Dr. Carlos Ramirez',
+            'is_active' => true,
+        ]);
+        $assistant = Professional::factory()->create([
+            'role' => 'assistant',
+            'name' => 'Ana Garcia',
+            'whatsapp_phone' => '+573001112233',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental', 'is_active' => true]);
+
+        DoctorAssistantAssignment::create([
+            'doctor_id' => $doctor->id,
+            'assistant_id' => $assistant->id,
+            'is_active' => true,
+        ]);
+
+        $this->fakeOpenAI([
+            'patient_name' => 'Maria Perez',
+            'procedures' => [$procedure->name],
+            'assistants' => [],
+            'payment_method' => 'Efectivo',
+            'date' => now()->format('Y-m-d'),
+            'needs_review' => false,
+            'review_notes' => '',
+        ]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('+573001112233', 'Paciente: Maria Perez Procedimiento: Limpieza dental Pago: efectivo'),
+        );
+
+        $activity = ActivityRecord::first();
+
+        $this->assertNotNull($result);
+        $this->assertNotNull($activity);
+        $this->assertEquals($assistant->id, $result->professional_id);
+        $this->assertEquals($doctor->id, $activity->doctor_id);
+        $this->assertTrue($activity->assistants()->whereKey($assistant->id)->exists());
+    }
+
+    public function test_assistant_with_multiple_doctors_uses_labeled_doctor(): void
+    {
+        $this->seedPaymentMethods();
+
+        $firstDoctor = Professional::factory()->create([
+            'role' => 'doctor',
+            'name' => 'Dr. Carlos Ramirez',
+            'is_active' => true,
+        ]);
+        $secondDoctor = Professional::factory()->create([
+            'role' => 'doctor',
+            'name' => 'Dra. Laura Torres',
+            'is_active' => true,
+        ]);
+        $assistant = Professional::factory()->create([
+            'role' => 'assistant',
+            'name' => 'Ana Garcia',
+            'whatsapp_phone' => '+573001112233',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental', 'is_active' => true]);
+
+        foreach ([$firstDoctor, $secondDoctor] as $doctor) {
+            DoctorAssistantAssignment::create([
+                'doctor_id' => $doctor->id,
+                'assistant_id' => $assistant->id,
+                'is_active' => true,
+            ]);
+        }
+
+        $this->fakeOpenAI([
+            'patient_name' => 'Maria Perez',
+            'procedures' => [$procedure->name],
+            'assistants' => [],
+            'payment_method' => 'Efectivo',
+            'date' => now()->format('Y-m-d'),
+            'needs_review' => false,
+            'review_notes' => '',
+        ]);
+
+        $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('+573001112233', 'Doctor: Laura Torres, Paciente: Maria Perez, Procedimiento: Limpieza dental, Pago: efectivo'),
+        );
+
+        $activity = ActivityRecord::first();
+
+        $this->assertNotNull($activity);
+        $this->assertEquals($secondDoctor->id, $activity->doctor_id);
+        $this->assertTrue($activity->assistants()->whereKey($assistant->id)->exists());
+    }
+
+    public function test_assistant_with_multiple_doctors_uses_doctor_mentioned_at_message_start(): void
+    {
+        $this->seedPaymentMethods();
+
+        $firstDoctor = Professional::factory()->create([
+            'role' => 'doctor',
+            'name' => 'Dr. Carlos Ramirez',
+            'is_active' => true,
+        ]);
+        $secondDoctor = Professional::factory()->create([
+            'role' => 'doctor',
+            'name' => 'Dr. Juan Constantine Murillo',
+            'is_active' => true,
+        ]);
+        $assistant = Professional::factory()->create([
+            'role' => 'assistant',
+            'name' => 'Ana Garcia',
+            'whatsapp_phone' => '+573007778899',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental', 'is_active' => true]);
+
+        foreach ([$firstDoctor, $secondDoctor] as $doctor) {
+            DoctorAssistantAssignment::create([
+                'doctor_id' => $doctor->id,
+                'assistant_id' => $assistant->id,
+                'is_active' => true,
+            ]);
+        }
+
+        $this->fakeOpenAI([
+            'patient_name' => 'Roberto Gomez',
+            'procedures' => [$procedure->name],
+            'assistants' => [],
+            'payment_method' => 'Efectivo',
+            'date' => now()->format('Y-m-d'),
+            'needs_review' => false,
+            'review_notes' => '',
+        ]);
+
+        $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('+573007778899', 'Dr. Juan Constantine, limpieza dental para Roberto Gomez, pago efectivo'),
+        );
+
+        $activity = ActivityRecord::first();
+
+        $this->assertNotNull($activity);
+        $this->assertEquals($secondDoctor->id, $activity->doctor_id);
+        $this->assertTrue($activity->assistants()->whereKey($assistant->id)->exists());
+    }
+
+    public function test_assistant_partial_doctor_name_is_rejected_when_ambiguous(): void
+    {
+        $firstDoctor = Professional::factory()->create([
+            'role' => 'doctor',
+            'name' => 'Dr. Juan Constantine Murillo',
+            'is_active' => true,
+        ]);
+        $secondDoctor = Professional::factory()->create([
+            'role' => 'doctor',
+            'name' => 'Dr. Juan Constantine Perez',
+            'is_active' => true,
+        ]);
+        $assistant = Professional::factory()->create([
+            'role' => 'assistant',
+            'name' => 'Ana Garcia',
+            'whatsapp_phone' => '+573007778899',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+
+        foreach ([$firstDoctor, $secondDoctor] as $doctor) {
+            DoctorAssistantAssignment::create([
+                'doctor_id' => $doctor->id,
+                'assistant_id' => $assistant->id,
+                'is_active' => true,
+            ]);
+        }
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('+573007778899', 'Dr. Juan Constantine, limpieza dental para Roberto Gomez, pago efectivo'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals(WhatsappMessageStatus::NeedsReview, $result->status);
+        $this->assertEquals(0, ActivityRecord::count());
+    }
+
+    public function test_assistant_with_multiple_doctors_without_doctor_label_needs_review(): void
+    {
+        $firstDoctor = Professional::factory()->create(['role' => 'doctor', 'is_active' => true]);
+        $secondDoctor = Professional::factory()->create(['role' => 'doctor', 'is_active' => true]);
+        $assistant = Professional::factory()->create([
+            'role' => 'assistant',
+            'whatsapp_phone' => '+573001112233',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+
+        foreach ([$firstDoctor, $secondDoctor] as $doctor) {
+            DoctorAssistantAssignment::create([
+                'doctor_id' => $doctor->id,
+                'assistant_id' => $assistant->id,
+                'is_active' => true,
+            ]);
+        }
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('+573001112233', 'Paciente: Maria Perez Procedimiento: Limpieza dental Pago: efectivo'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals(WhatsappMessageStatus::NeedsReview, $result->status);
+        $this->assertStringContainsString('perteneces a varios doctores', $result->error_message);
+        $this->assertEquals(0, ActivityRecord::count());
+    }
+
+    private function fakeOpenAI(?array $content = null): void
+    {
+        $content ??= [
+            'patient_name' => '',
+            'procedures' => [],
+            'assistants' => [],
+            'payment_method' => '',
+            'date' => now()->format('Y-m-d'),
+            'needs_review' => true,
+            'review_notes' => 'No se pudo procesar el mensaje',
+        ];
+
         OpenAI::fake([
             CreateResponse::fake([
                 'choices' => [
@@ -163,15 +395,7 @@ class WhatsappServiceTest extends TestCase
                         'index' => 0,
                         'message' => [
                             'role' => 'assistant',
-                            'content' => json_encode([
-                                'patient_name' => '',
-                                'procedures' => [],
-                                'assistants' => [],
-                                'payment_method' => '',
-                                'date' => now()->format('Y-m-d'),
-                                'needs_review' => true,
-                                'review_notes' => 'No se pudo procesar el mensaje',
-                            ]),
+                            'content' => json_encode($content),
                         ],
                         'logprobs' => null,
                         'finish_reason' => 'stop',
@@ -194,5 +418,21 @@ class WhatsappServiceTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    private function seedPaymentMethods(): void
+    {
+        $paymentMethod = PaymentMethod::create([
+            'name' => 'Efectivo',
+            'code' => 'EFECTIVO',
+            'aliases' => ['efectivo', 'efe'],
+            'is_active' => true,
+        ]);
+
+        PaymentMethodCommissionRate::create([
+            'payment_method_id' => $paymentMethod->id,
+            'amount' => 1.25,
+            'is_active' => true,
+        ]);
     }
 }

@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Enums\ProfessionalRole;
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
+use App\Models\DoctorAssistantAssignment;
 use App\Models\Professional;
 use App\Models\WhatsappMessage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class WhatsappService
 {
@@ -92,12 +95,24 @@ class WhatsappService
         $this->sendMessage($message->from_phone, $body);
     }
 
-    public function processWithAI(WhatsappMessage $message, Professional $doctor): void
+    public function processWithAI(WhatsappMessage $message, Professional $sender): void
     {
+        $doctor = $this->resolveDoctorForSender($sender, $message->message_body);
+
+        if (!$doctor) {
+            $error = $this->unresolvedDoctorMessage($sender);
+
+            $message->markAsNeedsReview($error);
+            $this->sendMessage($message->from_phone, $error);
+
+            return;
+        }
+
         $aiService = app(AiParsingService::class);
         $creationService = app(ActivityCreationService::class);
 
         $parsedData = $aiService->parseMessage($message->message_body, $doctor);
+        $parsedData = $this->appendSenderAssistant($parsedData, $sender);
 
         $activity = $creationService->create($parsedData, $doctor, $message);
 
@@ -123,6 +138,140 @@ class WhatsappService
                 $message->markAsNeedsReview($error);
             }
         }
+    }
+
+    private function resolveDoctorForSender(Professional $sender, string $messageBody): ?Professional
+    {
+        if ($sender->role === ProfessionalRole::Doctor) {
+            return $sender;
+        }
+
+        if ($sender->role !== ProfessionalRole::Assistant) {
+            return null;
+        }
+
+        $assignedDoctors = $this->assignedDoctorsForAssistant($sender);
+
+        if ($assignedDoctors->count() === 1) {
+            return $assignedDoctors->first();
+        }
+
+        if ($assignedDoctors->isEmpty()) {
+            return null;
+        }
+
+        $doctorName = $this->extractDoctorName($messageBody);
+
+        if ($doctorName) {
+            return $this->matchAssignedDoctorByName($assignedDoctors, $doctorName);
+        }
+
+        $doctorName = $this->extractDoctorNameFromStart($messageBody);
+
+        return $doctorName ? $this->matchAssignedDoctorByName($assignedDoctors, $doctorName) : null;
+    }
+
+    private function assignedDoctorsForAssistant(Professional $assistant): \Illuminate\Support\Collection
+    {
+        return DoctorAssistantAssignment::query()
+            ->with('doctor')
+            ->where('assistant_id', $assistant->id)
+            ->where('is_active', true)
+            ->get()
+            ->pluck('doctor')
+            ->filter(fn (?Professional $doctor): bool => $doctor?->is_active && $doctor->role === ProfessionalRole::Doctor)
+            ->values();
+    }
+
+    private function extractDoctorName(string $messageBody): ?string
+    {
+        if (!preg_match('/(?:^|[\n,;])\s*doctor\s*:\s*([^\n,;]+)/iu', $messageBody, $matches)) {
+            return null;
+        }
+
+        return trim($matches[1]);
+    }
+
+    private function extractDoctorNameFromStart(string $messageBody): ?string
+    {
+        if (!preg_match('/^\s*((?:dr|dra|doctor|doctora)\.?\s+[^\n,;]+)/iu', $messageBody, $matches)) {
+            return null;
+        }
+
+        return trim($matches[1]);
+    }
+
+    private function matchAssignedDoctorByName(\Illuminate\Support\Collection $assignedDoctors, string $doctorName): ?Professional
+    {
+        $normalizedDoctorName = $this->normalizeProfessionalName($doctorName);
+
+        $exactMatch = $assignedDoctors->first(
+            fn (Professional $doctor): bool => $this->normalizeProfessionalName($doctor->name) === $normalizedDoctorName,
+        );
+
+        if ($exactMatch) {
+            return $exactMatch;
+        }
+
+        $partialMatches = $assignedDoctors->filter(
+            fn (Professional $doctor): bool => str_starts_with(
+                $this->normalizeProfessionalName($doctor->name),
+                $normalizedDoctorName,
+            ),
+        );
+
+        return $partialMatches->count() === 1 ? $partialMatches->first() : null;
+    }
+
+    private function appendSenderAssistant(array $parsedData, Professional $sender): array
+    {
+        if ($sender->role !== ProfessionalRole::Assistant) {
+            return $parsedData;
+        }
+
+        $assistants = $parsedData['assistants'] ?? [];
+        $normalizedSenderName = $this->normalizeProfessionalName($sender->name);
+
+        $alreadyIncluded = collect($assistants)->contains(
+            fn (string $assistantName): bool => $this->normalizeProfessionalName($assistantName) === $normalizedSenderName,
+        );
+
+        if (!$alreadyIncluded) {
+            $assistants[] = $sender->name;
+        }
+
+        $parsedData['assistants'] = $assistants;
+
+        return $parsedData;
+    }
+
+    private function unresolvedDoctorMessage(Professional $sender): string
+    {
+        if ($sender->role !== ProfessionalRole::Assistant) {
+            return 'No pudimos registrar la actividad porque tu perfil no esta configurado como doctor o auxiliar.';
+        }
+
+        $assignedDoctors = $this->assignedDoctorsForAssistant($sender);
+
+        if ($assignedDoctors->isEmpty()) {
+            return 'No pudimos registrar la actividad porque no tienes doctores asignados activos. Contacta al administrador.';
+        }
+
+        return "No pudimos registrar la actividad porque perteneces a varios doctores. Envia nuevamente el mensaje indicando el doctor, por ejemplo:\n\n"
+            . "Doctor: Dr. Carlos Ramirez\n"
+            . "Paciente: Maria Perez\n"
+            . "Procedimiento: Limpieza dental\n"
+            . 'Pago: efectivo';
+    }
+
+    private function normalizeProfessionalName(string $name): string
+    {
+        return Str::of($name)
+            ->lower()
+            ->ascii()
+            ->replaceMatches('/\b(dr|dra|doctor|doctora)\.?\s+/u', '')
+            ->squish()
+            ->toString();
     }
 
     private function buildActivitySummary($activity, array $parsedData): string
