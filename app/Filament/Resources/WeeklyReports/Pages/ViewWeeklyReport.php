@@ -29,7 +29,6 @@ class ViewWeeklyReport extends ViewRecord
             TextEntry::make('total_patients')->label('Pacientes'),
             TextEntry::make('total_procedures')->label('Procedimientos'),
             TextEntry::make('total_doctor_commission')->label('Comision doctor')->money('USD'),
-            TextEntry::make('total_assistant_commission')->label('Comision auxiliares')->money('USD'),
             TextEntry::make('total_commission')->label('Total comisiones')->money('USD'),
             TextEntry::make('notes')->label('Notas')->columnSpanFull(),
             TextEntry::make('approved_at')->label('Aprobado el')->dateTime(),
@@ -45,7 +44,7 @@ class ViewWeeklyReport extends ViewRecord
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('gray')
                 ->action(function ($record) {
-                    $record->load('activities.patient', 'activities.procedure', 'activities.doctor');
+                    $record->load('activities.patient', 'activities.procedure', 'activities.doctor', 'activities.paymentMethod');
 
                     $pdf = Pdf::loadView('weekly-report-pdf', ['report' => $record]);
 

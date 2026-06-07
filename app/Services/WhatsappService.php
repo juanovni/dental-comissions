@@ -106,8 +106,22 @@ class WhatsappService
             $this->sendMessage($message->from_phone, $summary);
             $message->markAsParsed($parsedData);
         } else {
+            $message->refresh();
+            $error = $message->error_message ?: 'Error al crear actividad desde IA';
+
+            if (str_contains(strtolower($error), 'falta metodo de pago')) {
+                $this->sendMessage(
+                    $message->from_phone,
+                    'No pudimos registrar la actividad porque falta el metodo de pago. Envia nuevamente el mensaje indicando efectivo, transferencia, credito o debito.',
+                );
+                return;
+            }
+
             $this->sendMessage($message->from_phone, 'No pudimos procesar tu mensaje. El administrador lo revisara.');
-            $message->markAsNeedsReview('Error al crear actividad desde IA');
+
+            if (!$message->error_message) {
+                $message->markAsNeedsReview($error);
+            }
         }
     }
 
@@ -115,6 +129,7 @@ class WhatsappService
     {
         $patientName = $activity->patient->full_name ?? $parsedData['patient_name'] ?? 'N/A';
         $procedureName = $activity->procedure->name ?? 'N/A';
+        $paymentMethodName = $activity->paymentMethod->name ?? $parsedData['payment_method'] ?? 'N/A';
         $date = \Carbon\Carbon::parse($parsedData['date'] ?? $activity->activity_date)->format('d/m/Y');
         $doctorCommission = number_format($activity->doctor_commission_amount ?? 0, 2);
         $assistantCount = count($parsedData['assistants'] ?? []);
@@ -122,12 +137,12 @@ class WhatsappService
         $summary = "*Actividad registrada:*\n";
         $summary .= "Paciente: {$patientName}\n";
         $summary .= "Procedimiento: {$procedureName}\n";
+        $summary .= "Metodo de pago: {$paymentMethodName}\n";
         $summary .= "Fecha: {$date}\n";
         $summary .= "Comision doctor: \${$doctorCommission}\n";
 
         if ($assistantCount > 0) {
             $summary .= "Auxiliares: " . implode(', ', $parsedData['assistants']) . "\n";
-            $summary .= "Comision auxiliares: \$" . number_format($activity->assistant_commission_total ?? 0, 2) . "\n";
         }
 
         if ($parsedData['needs_review'] ?? false) {

@@ -20,7 +20,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ProcedureSeeder::class,
             ProfessionalSeeder::class,
-            CommissionRuleSeeder::class,
+            PaymentMethodSeeder::class,
+            PaymentMethodCommissionRateSeeder::class,
         ]);
 
         User::updateOrCreate(

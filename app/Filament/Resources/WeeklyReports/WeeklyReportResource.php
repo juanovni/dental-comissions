@@ -86,7 +86,6 @@ class WeeklyReportResource extends Resource
                 TextColumn::make('total_activities')->label('Actividades')->sortable(),
                 TextColumn::make('total_patients')->label('Pacientes')->sortable(),
                 TextColumn::make('total_doctor_commission')->label('Com. doctor')->money('USD'),
-                TextColumn::make('total_assistant_commission')->label('Com. auxiliares')->money('USD'),
                 TextColumn::make('total_commission')->label('Total')->money('USD')->weight('bold'),
                 TextColumn::make('created_at')->label('Creado')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])

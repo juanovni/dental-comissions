@@ -87,6 +87,16 @@ class EditActivityRecord extends EditRecord
         $record->calculateCommissions();
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $data['assistants'] = $this->record
+            ->assistants()
+            ->pluck('professionals.id')
+            ->toArray();
+
+        return $data;
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         unset($data['assistants']);

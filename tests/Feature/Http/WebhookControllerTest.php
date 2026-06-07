@@ -3,6 +3,8 @@
 namespace Tests\Feature\Http;
 
 use App\Enums\WhatsappMessageStatus;
+use App\Models\PaymentMethod;
+use App\Models\PaymentMethodCommissionRate;
 use App\Models\Professional;
 use App\Models\Procedure;
 use App\Models\WhatsappMessage;
@@ -153,6 +155,19 @@ class WebhookControllerTest extends TestCase
             'is_active' => true,
         ]);
 
+        $paymentMethod = PaymentMethod::create([
+            'name' => 'Efectivo',
+            'code' => 'EFECTIVO',
+            'aliases' => ['efectivo'],
+            'is_active' => true,
+        ]);
+
+        PaymentMethodCommissionRate::create([
+            'payment_method_id' => $paymentMethod->id,
+            'amount' => 1.25,
+            'is_active' => true,
+        ]);
+
         OpenAI::fake([
             CreateResponse::fake([
                 'choices' => [
@@ -164,6 +179,7 @@ class WebhookControllerTest extends TestCase
                                 'patient_name' => 'Juan Perez',
                                 'procedures' => ['Limpieza dental'],
                                 'assistants' => [],
+                                'payment_method' => 'efectivo',
                                 'date' => now()->format('Y-m-d'),
                                 'needs_review' => false,
                                 'review_notes' => '',
@@ -178,7 +194,7 @@ class WebhookControllerTest extends TestCase
 
         $response = $this->postJson('/test/whatsapp', [
             'phone' => '+573001112233',
-            'message' => 'Limpieza para Juan Perez',
+            'message' => 'Limpieza para Juan Perez efectivo',
         ]);
 
         if ($response->status() === 500) {

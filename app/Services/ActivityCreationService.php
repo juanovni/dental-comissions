@@ -6,6 +6,7 @@ use App\Enums\ActivityStatus;
 use App\Models\ActivityRecord;
 use App\Models\DoctorAssistantAssignment;
 use App\Models\Patient;
+use App\Models\PaymentMethodCommissionRate;
 use App\Models\Procedure;
 use App\Models\Professional;
 use App\Models\WhatsappMessage;
@@ -17,7 +18,13 @@ class ActivityCreationService
     public function create(array $parsedData, Professional $doctor, WhatsappMessage $message): ?ActivityRecord
     {
         try {
-            $patient = $this->findOrCreatePatient($parsedData['patient_name']);
+            $paymentMethodRaw = $parsedData['payment_method'] ?? null;
+            $paymentMethod = app(PaymentMethodResolver::class)->resolve($paymentMethodRaw);
+
+            if (!$paymentMethod) {
+                $message->markAsFailed('Falta metodo de pago');
+                return null;
+            }
 
             $procedure = $this->matchProcedure($parsedData['procedures']);
 
@@ -28,10 +35,22 @@ class ActivityCreationService
 
             $activityDate = $this->parseDate($parsedData['date']);
 
+            $commissionRate = $this->findCommissionRate($paymentMethod->id, $activityDate);
+
+            if (!$commissionRate) {
+                $message->markAsFailed('No hay tarifa de comision activa para el metodo de pago: ' . $paymentMethod->name);
+                return null;
+            }
+
+            $patient = $this->findOrCreatePatient($parsedData['patient_name']);
+
             $activity = ActivityRecord::create([
                 'patient_id' => $patient->id,
                 'doctor_id' => $doctor->id,
                 'procedure_id' => $procedure->id,
+                'payment_method_id' => $paymentMethod->id,
+                'payment_method_raw' => $paymentMethodRaw,
+                'payment_method_commission_snapshot' => $commissionRate->amount,
                 'activity_date' => $activityDate,
                 'status' => ActivityStatus::PendingConfirmation,
                 'notes' => 'Registrado via WhatsApp - Msg ID: ' . $message->message_sid,
@@ -121,9 +140,11 @@ class ActivityCreationService
         $validIds = [];
 
         foreach ($assistantNames as $name) {
+            $normalizedName = Str::of($name)->lower()->ascii()->squish()->toString();
+
             $assistant = Professional::whereIn('id', $assignedIds)
-                ->whereRaw('LOWER(name) = ?', [strtolower($name)])
-                ->first();
+                ->get()
+                ->first(fn (Professional $assistant): bool => Str::of($assistant->name)->lower()->ascii()->squish()->toString() === $normalizedName);
 
             if ($assistant) {
                 $validIds[] = $assistant->id;
@@ -131,6 +152,22 @@ class ActivityCreationService
         }
 
         return $validIds;
+    }
+
+    private function findCommissionRate(int $paymentMethodId, string $activityDate): ?PaymentMethodCommissionRate
+    {
+        return PaymentMethodCommissionRate::where('payment_method_id', $paymentMethodId)
+            ->where('is_active', true)
+            ->where(function ($query) use ($activityDate) {
+                $query->whereNull('starts_at')
+                    ->orWhere('starts_at', '<=', $activityDate);
+            })
+            ->where(function ($query) use ($activityDate) {
+                $query->whereNull('ends_at')
+                    ->orWhere('ends_at', '>=', $activityDate);
+            })
+            ->latest('starts_at')
+            ->first();
     }
 
     private function parseDate(string $dateString): string

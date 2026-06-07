@@ -4,6 +4,7 @@ namespace Tests\Feature\Services;
 
 use App\Models\Professional;
 use App\Models\Procedure;
+use App\Models\PaymentMethod;
 use App\Services\AiParsingService;
 use App\Models\DoctorAssistantAssignment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,6 +22,12 @@ class AiParsingServiceTest extends TestCase
     {
         parent::setUp();
         $this->aiParsingService = app(AiParsingService::class);
+        PaymentMethod::create([
+            'name' => 'Efectivo',
+            'code' => 'EFECTIVO',
+            'aliases' => ['efectivo', 'efe'],
+            'is_active' => true,
+        ]);
     }
 
     public function test_parse_message_returns_structured_data(): void
@@ -34,6 +41,7 @@ class AiParsingServiceTest extends TestCase
             'patient_name' => 'Juan Perez',
             'procedures' => ['Limpieza dental'],
             'assistants' => ['Ana Garcia'],
+            'payment_method' => 'Efectivo',
             'date' => now()->format('Y-m-d'),
             'needs_review' => false,
             'review_notes' => '',
@@ -76,6 +84,7 @@ class AiParsingServiceTest extends TestCase
             'patient_name' => '',
             'procedures' => ['Limpieza dental'],
             'assistants' => [],
+            'payment_method' => 'Efectivo',
             'date' => now()->format('Y-m-d'),
             'needs_review' => false,
             'review_notes' => '',
@@ -114,6 +123,7 @@ class AiParsingServiceTest extends TestCase
             'patient_name' => 'Juan Perez',
             'procedures' => [],
             'assistants' => [],
+            'payment_method' => 'Efectivo',
             'date' => now()->format('Y-m-d'),
             'needs_review' => false,
             'review_notes' => '',
@@ -152,6 +162,7 @@ class AiParsingServiceTest extends TestCase
             'patient_name' => 'Juan Perez',
             'procedures' => ['Limpieza dental'],
             'assistants' => [],
+            'payment_method' => 'Efectivo',
             'date' => now()->format('Y-m-d'),
             'needs_review' => false,
             'review_notes' => '',
@@ -235,12 +246,13 @@ class AiParsingServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        $result = $this->aiParsingService->parseMessage('Limpieza dental para Juan Perez hoy con Ana Garcia', $doctor);
+        $result = $this->aiParsingService->parseMessage('Limpieza dental para Juan Perez hoy con Ana Garcia efectivo', $doctor);
 
         $this->assertFalse($result['needs_review']);
         $this->assertSame('Juan Perez', $result['patient_name']);
         $this->assertSame(['Limpieza dental'], $result['procedures']);
         $this->assertSame(['Ana Garcia'], $result['assistants']);
+        $this->assertSame('efectivo', $result['payment_method']);
         $this->assertSame(now()->format('Y-m-d'), $result['date']);
     }
 }

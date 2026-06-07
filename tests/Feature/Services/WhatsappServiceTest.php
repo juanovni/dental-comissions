@@ -167,6 +167,7 @@ class WhatsappServiceTest extends TestCase
                                 'patient_name' => '',
                                 'procedures' => [],
                                 'assistants' => [],
+                                'payment_method' => '',
                                 'date' => now()->format('Y-m-d'),
                                 'needs_review' => true,
                                 'review_notes' => 'No se pudo procesar el mensaje',

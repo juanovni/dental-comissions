@@ -10,6 +10,7 @@ use App\Filament\Resources\ActivityRecords\Pages\ListActivityRecords;
 use App\Models\ActivityRecord;
 use App\Models\DoctorAssistantAssignment;
 use App\Models\Patient;
+use App\Models\PaymentMethod;
 use App\Models\Procedure;
 use App\Models\Professional;
 use Filament\Actions\Action;
@@ -83,6 +84,14 @@ class ActivityRecordResource extends Resource
                     ]))
                 ->searchable()
                 ->required(),
+            Select::make('payment_method_id')
+                ->label('Metodo de pago')
+                ->options(fn () => PaymentMethod::query()
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->pluck('name', 'id'))
+                ->searchable()
+                ->required(),
             DatePicker::make('activity_date')
                 ->label('Fecha del procedimiento')
                 ->required()
@@ -136,6 +145,7 @@ class ActivityRecordResource extends Resource
                 TextColumn::make('patient.full_name')->label('Paciente')->searchable()->sortable(),
                 TextColumn::make('doctor.name')->label('Doctor')->searchable()->sortable(),
                 TextColumn::make('procedure.name')->label('Procedimiento')->searchable()->sortable(),
+                TextColumn::make('paymentMethod.name')->label('Metodo de pago')->searchable()->sortable(),
                 TextColumn::make('activity_date')->label('Fecha')->date()->sortable(),
                 TextColumn::make('status')
                     ->label('Estado')
@@ -143,7 +153,6 @@ class ActivityRecordResource extends Resource
                     ->formatStateUsing(fn (ActivityStatus $state): string => $state->label())
                     ->color(fn (ActivityStatus $state): string => $state->color()),
                 TextColumn::make('doctor_commission_amount')->label('Comision doctor')->money('USD'),
-                TextColumn::make('assistant_commission_total')->label('Comision auxiliares')->money('USD'),
                 TextColumn::make('created_at')->label('Creado')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
