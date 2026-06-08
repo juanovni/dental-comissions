@@ -255,4 +255,58 @@ class AiParsingServiceTest extends TestCase
         $this->assertSame('efectivo', $result['payment_method']);
         $this->assertSame(now()->format('Y-m-d'), $result['date']);
     }
+
+    public function test_local_fallback_stops_patient_name_before_payment_text(): void
+    {
+        config(['services.openai.api_key' => null]);
+
+        $doctor = Professional::factory()->create([
+            'role' => 'doctor',
+            'is_active' => true,
+        ]);
+
+        Procedure::factory()->create([
+            'name' => 'Limpieza dental',
+            'code' => 'LIMP001',
+            'internal_rate' => 50.00,
+            'is_active' => true,
+        ]);
+
+        $result = $this->aiParsingService->parseMessage(
+            'Dr. Carlos Rodriguez, limpieza dental para Roberto Gomez, pago efectivo',
+            $doctor,
+        );
+
+        $this->assertFalse($result['needs_review']);
+        $this->assertSame('Roberto Gomez', $result['patient_name']);
+        $this->assertSame(['Limpieza dental'], $result['procedures']);
+        $this->assertSame('efectivo', $result['payment_method']);
+    }
+
+    public function test_local_fallback_extracts_patient_after_a_before_payment_text(): void
+    {
+        config(['services.openai.api_key' => null]);
+
+        $doctor = Professional::factory()->create([
+            'role' => 'doctor',
+            'is_active' => true,
+        ]);
+
+        Procedure::factory()->create([
+            'name' => 'Limpieza dental',
+            'code' => 'LIMP001',
+            'internal_rate' => 50.00,
+            'is_active' => true,
+        ]);
+
+        $result = $this->aiParsingService->parseMessage(
+            'Limpieza dental a Roberto Gomez pago efectivo',
+            $doctor,
+        );
+
+        $this->assertFalse($result['needs_review']);
+        $this->assertSame('Roberto Gomez', $result['patient_name']);
+        $this->assertSame(['Limpieza dental'], $result['procedures']);
+        $this->assertSame('efectivo', $result['payment_method']);
+    }
 }

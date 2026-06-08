@@ -196,11 +196,11 @@ class AiParsingService
 
     private function extractPatientFromNaturalMessage(string $messageBody): ?string
     {
-        if (!preg_match('/\bpara\s+(.+?)(?:\s+hoy\b|\s+ayer\b|\s+con\b|\s+fecha\b|$)/iu', $messageBody, $matches)) {
+        if (!preg_match('/\b(?:para|a)\s+(.+?)(?:\s*,?\s*(?:pago|metodo de pago|método de pago|forma de pago|hoy|ayer|con|fecha)\b|$)/iu', $messageBody, $matches)) {
             return null;
         }
 
-        return trim($matches[1]);
+        return trim($matches[1], " \t\n\r\0\x0B,.;");
     }
 
     private function containsNormalized(string $haystack, string $needle): bool

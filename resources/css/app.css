@@ -37,6 +37,24 @@
 }
 
 @layer components {
+    .fi-body {
+        --sidebar-width: 16rem;
+    }
+
+    .fi-sidebar-nav {
+        padding-inline: 1rem;
+    }
+
+    .fi-main {
+        padding-inline: 1rem;
+    }
+
+    @media (min-width: 1024px) {
+        .fi-main {
+            padding-inline: 1.25rem;
+        }
+    }
+
     .fi-wi-stats-overview-stat,
     .fi-wi-chart,
     .fi-wi-table {
