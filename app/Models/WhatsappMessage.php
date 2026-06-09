@@ -54,7 +54,10 @@ class WhatsappMessage extends Model
 
     public static function findByPhone(string $phone): ?Professional
     {
-        return Professional::where('whatsapp_phone', $phone)
+        $digits = preg_replace('/\D+/', '', $phone) ?? $phone;
+        $phones = array_values(array_unique([$phone, $digits, '+' . $digits]));
+
+        return Professional::whereIn('whatsapp_phone', $phones)
             ->where('is_active', true)
             ->where('can_register_via_whatsapp', true)
             ->first();
