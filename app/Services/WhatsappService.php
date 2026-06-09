@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ProfessionalRole;
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
+use App\Models\ActivityRecord;
 use App\Models\DoctorAssistantAssignment;
 use App\Models\Professional;
 use App\Models\WhatsappMessage;
@@ -62,13 +63,26 @@ class WhatsappService
             ]);
 
             if ($contextId) {
-                $originalMessage = WhatsappMessage::where('message_sid', $contextId)->first();
+                $contextMessage = WhatsappMessage::where('message_sid', $contextId)->first();
+                $originalMessage = $contextMessage?->direction === WhatsappMessageDirection::Incoming
+                    ? $contextMessage
+                    : $this->findPendingOriginalForReply($whatsappMessage);
+
                 if ($originalMessage) {
-                    $whatsappMessage->update(['related_message_id' => $originalMessage->id]);
+                    $whatsappMessage->update([
+                        'related_message_id' => $originalMessage->id,
+                    ]);
                     $this->processReply($whatsappMessage, $originalMessage);
                 }
             } elseif ($professional) {
-                $this->processWithAI($whatsappMessage, $professional);
+                $originalMessage = $this->findPendingOriginalForReply($whatsappMessage);
+
+                if ($originalMessage) {
+                    $whatsappMessage->update(['related_message_id' => $originalMessage->id]);
+                    $this->processReply($whatsappMessage, $originalMessage);
+                } else {
+                    $this->processWithAI($whatsappMessage, $professional);
+                }
             } else {
                 $this->sendMessage($fromPhone, 'No pudimos identificar tu numero. Contacta al administrador.');
                 $whatsappMessage->markAsFailed('Profesional no identificado');
@@ -283,7 +297,7 @@ class WhatsappService
         $doctorCommission = number_format($activity->doctor_commission_amount ?? 0, 2);
         $assistantCount = count($parsedData['assistants'] ?? []);
 
-        $summary = "*Actividad registrada:*\n";
+        $summary = "*Actividad pre-registrada:*\n";
         $summary .= "Paciente: {$patientName}\n";
         $summary .= "Procedimiento: {$procedureName}\n";
         $summary .= "Metodo de pago: {$paymentMethodName}\n";
@@ -299,27 +313,56 @@ class WhatsappService
             $summary .= "Motivo: {$parsedData['review_notes']}\n";
         }
 
-        $summary .= "\nResponde *OK* para confirmar o *CORREGIR* [cambio].";
+        $summary .= "\nResponde *OK* para confirmar y guardar definitivamente, "
+            . 'o *CORREGIR* [cambio] para enviarla a revision.';
 
         return $summary;
+    }
+
+    private function findPendingOriginalForReply(WhatsappMessage $reply): ?WhatsappMessage
+    {
+        $text = strtolower(trim($reply->message_body));
+
+        if ($text !== 'ok' && !str_starts_with($text, 'corregir')) {
+            return null;
+        }
+
+        return WhatsappMessage::query()
+            ->where('from_phone', $reply->from_phone)
+            ->where('direction', WhatsappMessageDirection::Incoming->value)
+            ->where('status', WhatsappMessageStatus::Parsed->value)
+            ->where('id', '<', $reply->id)
+            ->latest('id')
+            ->first();
     }
 
     public function processReply(WhatsappMessage $reply, WhatsappMessage $original): void
     {
         $text = strtolower(trim($reply->message_body));
+        $activity = $this->findActivityForMessage($original);
 
         if ($text === 'ok') {
+            $activity?->approve();
             $original->markAsConfirmed();
             $reply->markAsConfirmed();
-            $this->sendMessage($reply->from_phone, 'Confirmado! Tu registro ha sido guardado.');
+            $this->sendMessage($reply->from_phone, 'Confirmado! Tu actividad ha sido guardada definitivamente.');
         } elseif (str_starts_with($text, 'corregir')) {
             $notes = trim(substr($reply->message_body, 8));
+            $activity?->requestCorrection($notes ?: 'Solicitud de correccion sin detalles');
             $original->markAsNeedsReview($notes ?: 'Solicitud de correccion sin detalles');
             $reply->markAsNeedsReview($notes);
             $this->sendMessage($reply->from_phone, 'Recibido. Tu registro ha sido enviado a revision. El administrador lo revisara.');
         } else {
             $this->sendMessage($reply->from_phone, 'No entendimos tu respuesta. Responde *OK* para confirmar o *CORREGIR* [cambio].');
         }
+    }
+
+    private function findActivityForMessage(WhatsappMessage $message): ?ActivityRecord
+    {
+        return ActivityRecord::query()
+            ->where('notes', 'like', '%Msg ID: ' . $message->message_sid . '%')
+            ->latest('id')
+            ->first();
     }
 
     public function sendMessage(string $toPhone, string $body): bool

@@ -9,6 +9,7 @@ enum WhatsappMessageStatus: string
     case Confirmed = 'confirmed';
     case NeedsReview = 'needs_review';
     case Processed = 'processed';
+    case Sent = 'sent';
     case Failed = 'failed';
 
     public function label(): string
@@ -19,6 +20,7 @@ enum WhatsappMessageStatus: string
             self::Confirmed => 'Confirmado',
             self::NeedsReview => 'Requiere revision',
             self::Processed => 'Procesado',
+            self::Sent => 'Enviado',
             self::Failed => 'Error',
         };
     }
@@ -31,6 +33,7 @@ enum WhatsappMessageStatus: string
             self::Confirmed => 'success',
             self::NeedsReview => 'danger',
             self::Processed => 'info',
+            self::Sent => 'success',
             self::Failed => 'gray',
         };
     }
