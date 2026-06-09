@@ -198,3 +198,32 @@
 - [x] Programar sincronizacion cada 5 minutos
 - [x] Crear webhook complementario `/webhook/meta/social`
 - [x] Excluir webhook Meta social de CSRF
+
+## Modulo Reputacion Digital - Fase 5: Clasificacion con IA [COMPLETADA]
+- [x] Crear servicio SocialCommentClassificationService
+- [x] Implementar prompt de IA para reputacion digital dental
+- [x] Validar contrato JSON de clasificacion
+- [x] Guardar classification, sentiment, priority y reputation_risk
+- [x] Guardar suggested_action, response_channel y suggested_reply
+- [x] Marcar comentarios como classified o review_required
+- [x] Registrar ai_response, ai_reason y processed_at
+- [x] Registrar accion classify en social_comment_actions
+- [x] Implementar fallback local si OpenAI falla
+- [x] Crear comando `social:classify-comments`
+- [x] Programar clasificacion cada 5 minutos
+- [x] Agregar plan de prueba con `/test/meta/comment`
+
+## Modulo Reputacion Digital - Fase 6: Panel administrativo [COMPLETADA]
+- [x] Crear recurso Filament SocialCommentResource
+- [x] Agregar bandeja de comentarios con filtros por red, estado, clasificacion, prioridad y riesgo
+- [x] Mostrar prioridad, riesgo reputacional, estado y revision humana con badges/iconos
+- [x] Crear vista detalle del comentario con publicacion, autor, clasificacion IA y respuesta sugerida
+- [x] Permitir editar estado, accion sugerida, canal, respuesta sugerida y motivo IA
+- [x] Agregar accion manual interna Marcar revisado
+- [x] Agregar accion manual interna Ignorar
+- [x] Agregar accion manual interna Escalar
+- [x] Agregar accion manual interna Spam interno
+- [x] Registrar acciones manuales en social_comment_actions con usuario administrador
+- [x] Crear recurso Filament SocialAccountResource para revisar cuentas y estado de sincronizacion
+- [x] Mantener acciones sin modificar Meta directamente en esta fase
+- [x] Crear Bandeja de Reputacion minimalista con cards, metricas, filtros rapidos y acciones inline

@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('social:sync-comments')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+Schedule::command('social:classify-comments')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
