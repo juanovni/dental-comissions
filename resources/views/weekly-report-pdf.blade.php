@@ -31,7 +31,7 @@
 <body>
     <div class="header">
         <h1>Reporte de Comisiones Semanal</h1>
-        <p>Dental Commissions MVP</p>
+        <p>Dental Comisiones</p>
     </div>
 
     <div class="info-grid">
@@ -109,7 +109,7 @@
     </div>
 
     <div class="footer">
-        Generado el {{ now()->format('d/m/Y H:i') }} | Dental Commissions MVP
+        Generado el {{ now()->format('d/m/Y H:i') }} | Dental Comisiones
     </div>
 </body>
 </html>
