@@ -148,3 +148,19 @@
 - [x] Documentar reglas de seguridad del MVP
 - [x] Documentar riesgos y mitigaciones
 - [x] Crear documento docs/social-reputation-meta-validation.md
+
+## Modulo Reputacion Digital - Fase 2: Flujo funcional [COMPLETADA]
+- [x] Definir sincronizacion programada como entrada principal
+- [x] Definir webhooks de Meta como entrada complementaria
+- [x] Definir frecuencia de sincronizacion cada 5 minutos
+- [x] Definir importacion inicial de ultimos 30 dias
+- [x] Definir estados de comentarios
+- [x] Definir clasificaciones IA orientadas a reputacion y conversion
+- [x] Definir prioridades y riesgo reputacional
+- [x] Definir acciones sugeridas y canales de respuesta
+- [x] Definir reglas de revision humana obligatoria
+- [x] Definir reglas de ocultamiento manual sin eliminacion
+- [x] Definir contrato JSON de IA para comentarios
+- [x] Definir metricas del MVP e historial requerido
+- [x] Documentar casos operativos y fuera de alcance
+- [x] Crear documento docs/social-reputation-flow.md
