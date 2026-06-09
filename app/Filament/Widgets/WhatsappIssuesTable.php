@@ -13,7 +13,7 @@ class WhatsappIssuesTable extends TableWidget
 {
     protected static ?int $sort = 7;
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int | string | array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
