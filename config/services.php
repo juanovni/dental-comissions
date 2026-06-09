@@ -43,6 +43,13 @@ return [
         'app_secret' => env('WHATSAPP_APP_SECRET'),
     ],
 
+    'meta' => [
+        'api_url' => env('META_GRAPH_API_URL', 'https://graph.facebook.com/v25.0'),
+        'access_token' => env('META_ACCESS_TOKEN'),
+        'verify_token' => env('META_VERIFY_TOKEN', 'dental-social-verify'),
+        'sync_days' => (int) env('META_SYNC_DAYS', 30),
+    ],
+
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),

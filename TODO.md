@@ -164,3 +164,37 @@
 - [x] Definir metricas del MVP e historial requerido
 - [x] Documentar casos operativos y fuera de alcance
 - [x] Crear documento docs/social-reputation-flow.md
+
+## Modulo Reputacion Digital - Fase 3: Base de datos [COMPLETADA]
+- [x] Crear enums del modulo social
+- [x] Crear modelo SocialAccount
+- [x] Crear modelo SocialPost
+- [x] Crear modelo SocialComment
+- [x] Crear modelo SocialCommentAction
+- [x] Crear modelo SocialModerationRule
+- [x] Crear modelo SocialReplyTemplate
+- [x] Crear migracion social_accounts con tokens cifrables e indices
+- [x] Crear migracion social_posts con payload original e indice unico
+- [x] Crear migracion social_comments con clasificacion IA, riesgo reputacional e indice unico
+- [x] Crear migracion social_comment_actions para historial administrativo
+- [x] Crear migracion social_moderation_rules para reglas configurables
+- [x] Crear migracion social_reply_templates para plantillas de respuesta
+- [x] Definir relaciones Eloquent principales
+- [x] Agregar casts explicitos, JSON, fechas y enums
+
+## Modulo Reputacion Digital - Fase 4: Integracion inicial con Meta [COMPLETADA]
+- [x] Agregar configuracion `services.meta`
+- [x] Agregar variables `META_*` en archivos de entorno
+- [x] Crear servicio MetaSocialService
+- [x] Listar paginas autorizadas desde Meta Graph API
+- [x] Crear/actualizar cuentas Facebook automaticamente
+- [x] Detectar cuenta Instagram Business conectada a una pagina
+- [x] Crear/actualizar cuentas Instagram automaticamente
+- [x] Sincronizar publicaciones recientes de ultimos 30 dias
+- [x] Sincronizar comentarios de publicaciones
+- [x] Guardar posts y comentarios con `updateOrCreate`/idempotencia
+- [x] Preservar estados administrativos de comentarios existentes al resincronizar
+- [x] Crear comando `social:sync-comments`
+- [x] Programar sincronizacion cada 5 minutos
+- [x] Crear webhook complementario `/webhook/meta/social`
+- [x] Excluir webhook Meta social de CSRF
