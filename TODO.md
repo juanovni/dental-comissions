@@ -135,3 +135,16 @@
 - [ ] Medir tasa de error de IA
 - [ ] Ajustar reglas y reportes
 - [ ] Documentar aprendizajes
+
+## Modulo Reputacion Digital - Fase 1: Validacion Meta [COMPLETADA]
+- [x] Definir alcance inicial: Instagram y Facebook
+- [x] Definir modo semiautomatico sin eliminacion automatica
+- [x] Documentar prerrequisitos de cuenta Meta
+- [x] Documentar permisos esperados de Meta Graph API
+- [x] Identificar endpoints iniciales para paginas, publicaciones y comentarios
+- [x] Definir capacidades a validar por plataforma
+- [x] Definir flujo tecnico propuesto
+- [x] Definir contrato JSON de clasificacion IA
+- [x] Documentar reglas de seguridad del MVP
+- [x] Documentar riesgos y mitigaciones
+- [x] Crear documento docs/social-reputation-meta-validation.md
