@@ -25,43 +25,7 @@
         }
 
         .reputation-hero {
-            align-items: end;
-            display: grid;
-            gap: 1.25rem;
-            grid-template-columns: minmax(0, 1fr);
             margin-bottom: 1.25rem;
-        }
-
-        @media (min-width: 1024px) {
-            .reputation-hero {
-                grid-template-columns: minmax(0, 1.2fr) minmax(18rem, .8fr);
-            }
-        }
-
-        .reputation-kicker {
-            color: rgb(13, 148, 136);
-            font-size: .72rem;
-            font-weight: 800;
-            letter-spacing: .18em;
-            text-transform: uppercase;
-        }
-
-        .reputation-title {
-            color: rgb(15, 23, 42);
-            font-size: clamp(2rem, 5vw, 4.4rem);
-            font-weight: 850;
-            letter-spacing: -.07em;
-            line-height: .9;
-            margin-top: .5rem;
-            max-width: 12ch;
-        }
-
-        .reputation-copy {
-            color: rgb(71, 85, 105);
-            font-size: .95rem;
-            line-height: 1.65;
-            max-width: 42rem;
-            margin-top: 1rem;
         }
 
         .reputation-search {
@@ -152,13 +116,13 @@
             gap: 1rem;
             grid-template-columns: minmax(0, 1fr);
             overflow: hidden;
-            padding: 1.1rem;
+            padding: .9rem;
             position: relative;
         }
 
         @media (min-width: 1024px) {
             .comment-card {
-                grid-template-columns: minmax(0, 1fr) minmax(18rem, .5fr);
+                grid-template-columns: minmax(0, 1fr) minmax(14rem, .42fr);
                 padding: 1.25rem;
             }
         }
@@ -213,25 +177,29 @@
 
         .comment-author {
             color: rgb(15, 23, 42);
-            font-size: 1rem;
-            font-weight: 850;
-            margin-top: .85rem;
+            font-size: .85rem;
+            font-weight: 800;
+            margin-top: .65rem;
         }
 
         .comment-text {
             color: rgb(15, 23, 42);
-            font-size: clamp(1.05rem, 2vw, 1.35rem);
-            font-weight: 650;
-            letter-spacing: -.03em;
-            line-height: 1.35;
-            margin-top: .45rem;
+            font-size: clamp(.88rem, 1.4vw, 1.02rem);
+            font-weight: 600;
+            letter-spacing: -.02em;
+            line-height: 1.4;
+            margin-top: .4rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .comment-context {
             color: rgb(100, 116, 139);
-            font-size: .82rem;
-            line-height: 1.5;
-            margin-top: .8rem;
+            font-size: .78rem;
+            line-height: 1.45;
+            margin-top: .6rem;
         }
 
         .reply-draft {
@@ -305,22 +273,12 @@
 
     <section class="reputation-shell">
         <div class="reputation-hero">
-            <div>
-                <div class="reputation-kicker">Centro de reputacion</div>
-                <h2 class="reputation-title">Inbox social de alta senal.</h2>
-                <p class="reputation-copy">
-                    Lee primero lo que puede afectar la reputacion o convertirse en paciente. Cada tarjeta resume el riesgo, el contexto y la siguiente accion sin ruido operativo.
-                </p>
-            </div>
-
-            <div>
-                <input
-                    class="reputation-search"
-                    type="search"
-                    wire:model.live.debounce.350ms="search"
-                    placeholder="Buscar por comentario, autor o usuario"
-                />
-            </div>
+            <input
+                class="reputation-search"
+                type="search"
+                wire:model.live.debounce.350ms="search"
+                placeholder="Buscar por comentario, autor o usuario"
+            />
         </div>
 
         <div class="reputation-stats">

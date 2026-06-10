@@ -24,9 +24,9 @@ class SocialInbox extends Page
 
     protected static string | \UnitEnum | null $navigationGroup = 'Reputacion Digital';
 
-    protected static ?string $navigationLabel = 'Bandeja de Reputacion';
+    protected static ?string $navigationLabel = 'Bandeja de reputacion';
 
-    protected static ?string $title = 'Bandeja de Reputacion';
+    protected static ?string $title = 'Bandeja de reputacion';
 
     protected static ?string $slug = 'social-inbox';
 
