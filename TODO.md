@@ -101,8 +101,8 @@
 - [x] Logica de reintento
 - [x] Configuracion de credenciales WhatsApp en .env
 
-## Fase 5: Integracion IA (OpenAI) [COMPLETADA]
-- [x] Instalar openai-php/laravel
+## Fase 5: Integracion IA (Google Gemini) [COMPLETADA]
+- [x] Integrar Google Gemini API via Http facade
 - [x] Configurar API key en .env
 - [x] Crear servicio AiParsingService
 - [x] Prompt para extraer paciente
@@ -208,7 +208,7 @@
 - [x] Marcar comentarios como classified o review_required
 - [x] Registrar ai_response, ai_reason y processed_at
 - [x] Registrar accion classify en social_comment_actions
-- [x] Implementar fallback local si OpenAI falla
+- [x] Implementar fallback local si Gemini falla
 - [x] Crear comando `social:classify-comments`
 - [x] Programar clasificacion cada 5 minutos
 - [x] Agregar plan de prueba con `/test/meta/comment`

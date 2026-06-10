@@ -9,8 +9,7 @@ use App\Models\Professional;
 use App\Models\Procedure;
 use App\Models\WhatsappMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use OpenAI\Laravel\Facades\OpenAI;
-use OpenAI\Responses\Chat\CreateResponse;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class WebhookControllerTest extends TestCase
@@ -168,25 +167,27 @@ class WebhookControllerTest extends TestCase
             'is_active' => true,
         ]);
 
-        OpenAI::fake([
-            CreateResponse::fake([
-                'choices' => [
+        config(['services.gemini.api_key' => 'test-key']);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
                     [
-                        'index' => 0,
-                        'message' => [
-                            'role' => 'assistant',
-                            'content' => json_encode([
-                                'patient_name' => 'Juan Perez',
-                                'procedures' => ['Limpieza dental'],
-                                'assistants' => [],
-                                'payment_method' => 'efectivo',
-                                'date' => now()->format('Y-m-d'),
-                                'needs_review' => false,
-                                'review_notes' => '',
-                            ]),
+                        'content' => [
+                            'parts' => [
+                                [
+                                'text' => json_encode([
+                                    'patient_name' => 'Juan Perez',
+                                    'procedures' => ['Limpieza dental'],
+                                    'assistants' => [],
+                                    'payment_method' => 'efectivo',
+                                    'date' => now()->format('Y-m-d'),
+                                    'needs_review' => false,
+                                    'review_notes' => '',
+                                ]),
+                                ],
+                            ],
                         ],
-                        'logprobs' => null,
-                        'finish_reason' => 'stop',
                     ],
                 ],
             ]),

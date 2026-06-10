@@ -9,7 +9,6 @@ use App\Models\Professional;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use OpenAI\Laravel\Facades\OpenAI;
 
 class AiParsingService
 {
@@ -46,21 +45,11 @@ class AiParsingService
         $systemPrompt = $this->buildSystemPrompt($procedures, $assistants, $paymentMethods, $today);
 
         try {
-            $response = OpenAI::chat()->create([
-                'model' => config('services.openai.model', 'gpt-4o-mini'),
-                'messages' => [
-                    ['role' => 'system', 'content' => $systemPrompt],
-                    ['role' => 'user', 'content' => $messageBody],
-                ],
-                'temperature' => 0.1,
-                'response_format' => ['type' => 'json_object'],
-            ]);
-
-            $content = $response->choices[0]->message->content;
+            $content = app(GeminiJsonService::class)->generate($systemPrompt, $messageBody);
             $parsed = json_decode($content, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('Error decodificando respuesta JSON de OpenAI', [
+                Log::error('Error decodificando respuesta JSON de Gemini', [
                     'content' => $content,
                 ]);
                 return $this->defaultNeedsReview('Error al interpretar respuesta de IA');
@@ -68,7 +57,7 @@ class AiParsingService
 
             return $this->validateParsedData($parsed);
         } catch (\Throwable $e) {
-            Log::error('Error llamando OpenAI API', [
+            Log::error('Error llamando Gemini API', [
                 'error' => $e->getMessage(),
             ]);
 

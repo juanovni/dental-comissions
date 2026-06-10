@@ -13,7 +13,6 @@ use App\Enums\SocialSuggestedAction;
 use App\Models\SocialComment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use OpenAI\Laravel\Facades\OpenAI;
 
 class SocialCommentClassificationService
 {
@@ -62,17 +61,7 @@ class SocialCommentClassificationService
 
     private function classifyWithAi(SocialComment $comment): array
     {
-        $response = OpenAI::chat()->create([
-            'model' => config('services.openai.model', 'gpt-4o-mini'),
-            'messages' => [
-                ['role' => 'system', 'content' => $this->systemPrompt()],
-                ['role' => 'user', 'content' => $this->userPrompt($comment)],
-            ],
-            'temperature' => 0.1,
-            'response_format' => ['type' => 'json_object'],
-        ]);
-
-        $content = $response->choices[0]->message->content;
+        $content = app(GeminiJsonService::class)->generate($this->systemPrompt(), $this->userPrompt($comment));
         $decoded = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {

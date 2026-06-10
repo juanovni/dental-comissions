@@ -10,7 +10,7 @@ clasificacion procesa el comentario con IA o fallback local.
 - Entorno local o testing.
 - Migraciones ejecutadas.
 - App corriendo en `http://localhost:8080`.
-- OpenAI configurado para probar IA real. Si falla, se usara fallback local.
+- Google Gemini configurado para probar IA real. Si falla, se usara fallback local.
 
 ```bash
 docker compose exec dental.app php artisan migrate

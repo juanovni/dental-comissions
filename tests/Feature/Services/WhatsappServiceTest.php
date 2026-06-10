@@ -14,8 +14,7 @@ use App\Services\ActivityCreationService;
 use App\Services\AiParsingService;
 use App\Services\WhatsappService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use OpenAI\Laravel\Facades\OpenAI;
-use OpenAI\Responses\Chat\CreateResponse;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class WhatsappServiceTest extends TestCase
@@ -28,7 +27,8 @@ class WhatsappServiceTest extends TestCase
     {
         parent::setUp();
         $this->whatsappService = app(WhatsappService::class);
-        $this->fakeOpenAI();
+        config(['services.gemini.api_key' => 'test-key']);
+        $this->fakeGemini();
     }
 
     public function test_process_incoming_message_creates_whatsapp_message(): void
@@ -183,7 +183,7 @@ class WhatsappServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->fakeOpenAI([
+        $this->fakeGemini([
             'patient_name' => 'Maria Perez',
             'procedures' => [$procedure->name],
             'assistants' => [],
@@ -237,7 +237,7 @@ class WhatsappServiceTest extends TestCase
             ]);
         }
 
-        $this->fakeOpenAI([
+        $this->fakeGemini([
             'patient_name' => 'Maria Perez',
             'procedures' => [$procedure->name],
             'assistants' => [],
@@ -289,7 +289,7 @@ class WhatsappServiceTest extends TestCase
             ]);
         }
 
-        $this->fakeOpenAI([
+        $this->fakeGemini([
             'patient_name' => 'Roberto Gomez',
             'procedures' => [$procedure->name],
             'assistants' => [],
@@ -376,7 +376,7 @@ class WhatsappServiceTest extends TestCase
         $this->assertEquals(0, ActivityRecord::count());
     }
 
-    private function fakeOpenAI(?array $content = null): void
+    private function fakeGemini(?array $content = null): void
     {
         $content ??= [
             'patient_name' => '',
@@ -388,17 +388,15 @@ class WhatsappServiceTest extends TestCase
             'review_notes' => 'No se pudo procesar el mensaje',
         ];
 
-        OpenAI::fake([
-            CreateResponse::fake([
-                'choices' => [
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
                     [
-                        'index' => 0,
-                        'message' => [
-                            'role' => 'assistant',
-                            'content' => json_encode($content),
+                        'content' => [
+                            'parts' => [
+                                ['text' => json_encode($content)],
+                            ],
                         ],
-                        'logprobs' => null,
-                        'finish_reason' => 'stop',
                     ],
                 ],
             ]),
