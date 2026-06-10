@@ -2,9 +2,9 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Widgets\SocialConversionFunnelChart;
+use App\Filament\Widgets\ApexSocialConversionFunnelChart;
+use App\Filament\Widgets\ApexSocialTopPostsChart;
 use App\Filament\Widgets\SocialRoiStatsWidget;
-use App\Filament\Widgets\SocialTopPostsChart;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class DashboardRoiSocial extends BaseDashboard
@@ -25,8 +25,8 @@ class DashboardRoiSocial extends BaseDashboard
     {
         return [
             SocialRoiStatsWidget::class,
-            SocialConversionFunnelChart::class,
-            SocialTopPostsChart::class,
+            ApexSocialConversionFunnelChart::class,
+            ApexSocialTopPostsChart::class,
         ];
     }
 }

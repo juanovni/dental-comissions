@@ -12,43 +12,26 @@
     @endphp
 
     <style>
-        .smart-inbox {
+        .social-inbox-page {
             --inbox-ink: #0f172a;
             --inbox-muted: #64748b;
             --inbox-line: rgba(15, 23, 42, .08);
             --inbox-card: #ffffff;
-            background: #f8fafc;
-            border: 1px solid rgba(226, 232, 240, .9);
-            border-radius: 1.25rem;
             color: var(--inbox-ink);
-            padding: clamp(1rem, 2vw, 1.35rem);
         }
 
-        .smart-inbox-header {
-            align-items: start;
-            display: grid;
+        .social-inbox-toolbar {
+            align-items: center;
+            display: flex;
             gap: 1rem;
-            grid-template-columns: minmax(0, 1fr);
-            margin-bottom: 1rem;
+            justify-content: flex-end;
+            margin-bottom: .875rem;
         }
 
-        @media (min-width: 980px) {
-            .smart-inbox-header {
-                grid-template-columns: minmax(0, .9fr) minmax(18rem, .42fr);
+        @media (max-width: 760px) {
+            .social-inbox-toolbar {
+                justify-content: stretch;
             }
-        }
-
-        .smart-inbox-title {
-            font-size: clamp(1.35rem, 2.4vw, 2rem);
-            font-weight: 850;
-            letter-spacing: -.035em;
-            line-height: 1;
-        }
-
-        .smart-inbox-subtitle {
-            color: var(--inbox-muted);
-            font-size: .95rem;
-            margin-top: .55rem;
         }
 
         .smart-search {
@@ -59,14 +42,14 @@
             color: var(--inbox-ink);
             outline: none;
             padding: .82rem 1rem;
-            width: 100%;
+            width: min(100%, 32rem);
         }
 
         .smart-filters {
             display: flex;
             flex-wrap: wrap;
             gap: .55rem;
-            margin: 1rem 0 1.25rem;
+            margin: 0 0 1.25rem;
         }
 
         .smart-filter {
@@ -308,13 +291,8 @@
         }
     </style>
 
-    <section class="smart-inbox">
-        <header class="smart-inbox-header">
-            <div>
-                <div class="smart-inbox-title">Smart Inbox</div>
-                <p class="smart-inbox-subtitle">Comentarios priorizados por intencion, riesgo y contexto clinico.</p>
-            </div>
-
+    <section class="social-inbox-page">
+        <header class="social-inbox-toolbar">
             <input
                 class="smart-search"
                 type="search"

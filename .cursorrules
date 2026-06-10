@@ -50,3 +50,15 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 - Antes de crear CSS nuevo para tarjetas, badges, botones o grids, revisar las clases `mc-*` en `resources/css/app.css`.
 - Preferir reutilizar `mc-card`, `mc-badge`, `mc-btn`, `mc-facts`, `mc-fact`, `mc-grid-main` y variantes relacionadas.
 - Si una vista requiere estilos propios, mantenerlos pequenos y alineados con esta guia.
+
+## Charts
+
+- Para nuevos graficos administrativos usar ApexCharts, no `Filament\Widgets\ChartWidget`.
+- Crear widgets de charts extendiendo `App\Filament\Widgets\ApexChartWidget`.
+- Usar `App\Filament\Widgets\Concerns\HasApexChartDefaults` para mantener configuracion visual consistente.
+- Devolver opciones completas en formato ApexCharts desde `getOptions()`.
+- Mantener toolbar desactivado salvo que el usuario pida exportar o hacer zoom.
+- Preferir charts compactos y limpios: `bar`, `bar` horizontal, `donut`, `area` o `radialBar` segun el caso.
+- Usar colores sobrios tipo Metronic: azul `#1d7afc`, teal `#0f766e`, slate/grays y estados success/warning/danger.
+- Registrar dependencias JS del panel en `app/Providers/Filament/AdminPanelProvider.php` con assets de Filament cuando sea necesario.
+- No cargar scripts con `@vite` dentro de cada widget si ya estan registrados en el panel.
