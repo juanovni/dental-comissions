@@ -47,34 +47,49 @@
 
 <style>
     .social-case {
-        --case-ink: #0f172a;
-        --case-muted: #64748b;
-        --case-line: rgba(15, 23, 42, .08);
-        --case-card: rgba(255, 255, 255, .9);
-        --case-soft: #f8fafc;
-        background:
-            radial-gradient(circle at 0% 0%, rgba(20, 184, 166, .14), transparent 22rem),
-            radial-gradient(circle at 95% 12%, rgba(251, 191, 36, .14), transparent 22rem),
-            linear-gradient(180deg, rgba(248, 250, 252, .96), rgba(255, 255, 255, .98));
+        --case-accent: #1d7afc;
+        --case-card: #ffffff;
+        --case-ink: #1f2937;
+        --case-line: #e5e7eb;
+        --case-muted: #6b7280;
+        --case-soft: #f9fafb;
+        background: var(--case-soft);
         border: 1px solid var(--case-line);
-        border-radius: 2rem;
-        box-shadow: 0 28px 90px -72px rgba(15, 23, 42, .95);
+        border-radius: .875rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
         color: var(--case-ink);
         overflow: hidden;
-        padding: clamp(1rem, 2vw, 1.5rem);
+        padding: .875rem;
+    }
+
+    .fi-page-header .fi-ac .fi-btn,
+    .fi-header .fi-ac .fi-btn,
+    .fi-header-actions .fi-btn {
+        border-radius: .5rem;
+        font-size: .75rem;
+        font-weight: 500;
+        min-height: 2rem;
+        padding: .375rem .625rem;
+    }
+
+    .fi-page-header .fi-ac .fi-btn .fi-btn-icon,
+    .fi-header .fi-ac .fi-btn .fi-btn-icon,
+    .fi-header-actions .fi-btn .fi-btn-icon {
+        height: .95rem;
+        width: .95rem;
     }
 
     .social-case-hero {
         align-items: stretch;
         display: grid;
-        gap: 1rem;
+        gap: .75rem;
         grid-template-columns: minmax(0, 1fr);
-        margin-bottom: 1rem;
+        margin-bottom: .75rem;
     }
 
     @media (min-width: 900px) {
         .social-case-hero {
-            grid-template-columns: minmax(0, 1fr) minmax(16rem, .38fr);
+            grid-template-columns: minmax(0, 1fr) minmax(14rem, .32fr);
         }
     }
 
@@ -83,112 +98,80 @@
     .social-case-side {
         background: var(--case-card);
         border: 1px solid var(--case-line);
-        border-radius: 1.5rem;
-        box-shadow: 0 20px 60px -52px rgba(15, 23, 42, .8);
+        border-radius: .75rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
     }
 
     .social-case-intro {
         display: grid;
-        gap: 1rem;
+        gap: .875rem;
         grid-template-columns: auto minmax(0, 1fr);
-        padding: clamp(1rem, 2vw, 1.35rem);
-        position: relative;
-    }
-
-    .social-case-intro::after {
-        background: linear-gradient(180deg, #14b8a6, transparent);
-        border-radius: 999px;
-        content: '';
-        inset: 1rem 1rem auto auto;
-        height: 44%;
-        opacity: .28;
-        position: absolute;
-        width: 3px;
+        padding: 1rem;
     }
 
     .social-case-icon {
         align-items: center;
-        border-radius: 1.1rem;
+        border-radius: .75rem;
         color: white;
         display: flex;
-        font-size: 1.45rem;
-        font-weight: 900;
-        height: 3.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        height: 2.75rem;
         justify-content: center;
-        letter-spacing: -.05em;
-        position: relative;
-        width: 3.5rem;
+        letter-spacing: -.02em;
+        width: 2.75rem;
     }
 
     .social-case-icon.facebook {
-        background: linear-gradient(145deg, #1877f2, #0755b8);
+        background: #1877f2;
     }
 
     .social-case-icon.instagram {
-        background: radial-gradient(circle at 30% 100%, #feda75, #fa7e1e 28%, #d62976 56%, #962fbf 78%, #4f5bd5);
-    }
-
-    .social-case-icon.instagram::before {
-        border: 2px solid rgba(255, 255, 255, .9);
-        border-radius: .5rem;
-        content: '';
-        height: 1.45rem;
-        position: absolute;
-        width: 1.45rem;
-    }
-
-    .social-case-icon.instagram::after {
-        background: white;
-        border-radius: 999px;
-        box-shadow: .46rem -.46rem 0 -.12rem white;
-        content: '';
-        height: .42rem;
-        position: absolute;
-        width: .42rem;
+        background: #e1306c;
     }
 
     .social-case-kicker {
         color: var(--case-muted);
-        font-size: .72rem;
-        font-weight: 850;
+        font-size: .68rem;
+        font-weight: 500;
         letter-spacing: .12em;
         text-transform: uppercase;
     }
 
     .social-case-title {
-        font-size: clamp(1.35rem, 2.4vw, 2.15rem);
-        font-weight: 900;
-        letter-spacing: -.055em;
-        line-height: 1.04;
-        margin-top: .25rem;
+        font-size: 1.08rem;
+        font-weight: 600;
+        letter-spacing: -.015em;
+        line-height: 1.25;
+        margin-top: .15rem;
     }
 
     .social-case-author {
         color: var(--case-muted);
-        font-size: .95rem;
-        font-weight: 650;
-        margin-top: .45rem;
+        font-size: .82rem;
+        font-weight: 400;
+        margin-top: .25rem;
     }
 
     .social-case-badges {
         display: flex;
         flex-wrap: wrap;
-        gap: .45rem;
-        margin-top: .9rem;
+        gap: .375rem;
+        margin-top: .65rem;
     }
 
     .social-case-badge {
         align-items: center;
-        background: #f1f5f9;
-        border: 1px solid rgba(15, 23, 42, .07);
-        border-radius: 999px;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: .375rem;
         color: #334155;
         display: inline-flex;
-        font-size: .72rem;
-        font-weight: 850;
+        font-size: .7rem;
+        font-weight: 500;
         gap: .35rem;
-        letter-spacing: .02em;
-        padding: .42rem .64rem;
+        line-height: 1.1;
+        padding: .265rem .475rem;
     }
 
     .social-case-badge.risk-high,
@@ -231,32 +214,32 @@
 
     .social-case-score strong {
         display: block;
-        font-size: 2.25rem;
-        font-weight: 950;
-        letter-spacing: -.08em;
-        line-height: .9;
+        font-size: 1.3rem;
+        font-weight: 600;
+        letter-spacing: -.025em;
+        line-height: 1.05;
     }
 
     .social-case-score span {
         color: var(--case-muted);
         display: block;
-        font-size: .72rem;
-        font-weight: 850;
+        font-size: .68rem;
+        font-weight: 500;
         letter-spacing: .1em;
-        margin-top: .35rem;
+        margin-top: .3rem;
         text-transform: uppercase;
     }
 
     .social-case-meter {
-        background: #e2e8f0;
+        background: #edf2f7;
         border-radius: 999px;
-        height: .5rem;
-        margin-top: 1rem;
+        height: .375rem;
+        margin-top: .875rem;
         overflow: hidden;
     }
 
     .social-case-meter span {
-        background: #14b8a6;
+        background: var(--case-accent);
         border-radius: inherit;
         display: block;
         height: 100%;
@@ -269,43 +252,44 @@
 
     .social-case-grid {
         display: grid;
-        gap: 1rem;
+        gap: .75rem;
         grid-template-columns: minmax(0, 1fr);
     }
 
     @media (min-width: 1100px) {
         .social-case-grid {
-            grid-template-columns: minmax(0, 1fr) minmax(18rem, .42fr);
+            grid-template-columns: minmax(0, 1fr) minmax(17rem, .36fr);
         }
     }
 
     .social-case-main,
     .social-case-aside {
         display: grid;
-        gap: 1rem;
+        gap: .75rem;
     }
 
     .social-case-card {
-        padding: clamp(1rem, 2vw, 1.25rem);
+        padding: 1rem;
     }
 
     .social-case-card h3 {
         color: var(--case-ink);
-        font-size: .82rem;
-        font-weight: 900;
-        letter-spacing: .1em;
-        margin: 0 0 .85rem;
-        text-transform: uppercase;
+        font-size: .9rem;
+        font-weight: 600;
+        letter-spacing: -.01em;
+        margin: 0 0 .875rem;
     }
 
     .social-case-comment {
-        border-left: 4px solid #14b8a6;
-        color: #111827;
-        font-size: clamp(1.05rem, 1.7vw, 1.35rem);
-        font-weight: 750;
-        letter-spacing: -.025em;
-        line-height: 1.55;
-        padding-left: 1rem;
+        background: var(--case-soft);
+        border-left: 3px solid var(--case-accent);
+        border-radius: .5rem;
+        color: #1f2937;
+        font-size: .94rem;
+        font-weight: 400;
+        letter-spacing: 0;
+        line-height: 1.62;
+        padding: .85rem .95rem;
     }
 
     .social-case-comment.risk-high,
@@ -318,26 +302,28 @@
     }
 
     .social-case-note {
-        background: #f8fafc;
-        border: 1px solid rgba(15, 23, 42, .07);
-        border-radius: 1rem;
+        background: var(--case-soft);
+        border: 1px solid var(--case-line);
+        border-radius: .625rem;
         color: #475569;
+        font-size: .86rem;
+        font-weight: 400;
         line-height: 1.55;
-        padding: .9rem;
+        padding: .8rem;
     }
 
     .social-case-facts {
         display: grid;
-        gap: .65rem;
+        gap: .55rem;
     }
 
     .social-case-fact {
         align-items: start;
-        border-bottom: 1px solid rgba(15, 23, 42, .06);
+        border-bottom: 1px solid #f1f5f9;
         display: grid;
         gap: .4rem;
-        grid-template-columns: minmax(7rem, .42fr) minmax(0, 1fr);
-        padding-bottom: .65rem;
+        grid-template-columns: minmax(6.5rem, .35fr) minmax(0, 1fr);
+        padding-bottom: .55rem;
     }
 
     .social-case-fact:last-child {
@@ -347,65 +333,66 @@
 
     .social-case-fact span {
         color: var(--case-muted);
-        font-size: .72rem;
-        font-weight: 850;
-        letter-spacing: .08em;
-        text-transform: uppercase;
+        font-size: .76rem;
+        font-weight: 400;
+        letter-spacing: 0;
     }
 
     .social-case-fact strong,
     .social-case-fact p {
         color: var(--case-ink);
-        font-size: .9rem;
-        font-weight: 750;
+        font-size: .86rem;
+        font-weight: 500;
         margin: 0;
         overflow-wrap: anywhere;
     }
 
+    .social-case-fact p {
+        font-weight: 400;
+    }
+
     .social-case-empty {
         color: var(--case-muted);
+        font-size: .84rem;
         font-style: italic;
     }
 
     .social-case-actions {
         display: flex;
         flex-wrap: wrap;
-        gap: .55rem;
+        gap: .45rem;
     }
 
     .social-case-action {
         align-items: center;
-        border-radius: 999px;
+        border-radius: .5rem;
         display: inline-flex;
-        font-size: .78rem;
-        font-weight: 900;
+        font-size: .75rem;
+        font-weight: 500;
         justify-content: center;
-        letter-spacing: .01em;
-        padding: .62rem .78rem;
+        letter-spacing: 0;
+        padding: .425rem .625rem;
         text-decoration: none;
     }
 
     .social-case-action.primary {
-        background: #0f766e;
+        background: var(--case-accent);
         color: white;
     }
 
     .social-case-action.soft {
-        background: #f1f5f9;
-        border: 1px solid rgba(15, 23, 42, .08);
+        background: var(--case-soft);
+        border: 1px solid var(--case-line);
         color: #334155;
     }
 
     .dark .social-case {
         --case-ink: #e5e7eb;
         --case-muted: #94a3b8;
-        --case-line: rgba(148, 163, 184, .14);
-        --case-card: rgba(15, 23, 42, .82);
+        --case-line: rgba(148, 163, 184, .16);
+        --case-card: rgba(15, 23, 42, .74);
         --case-soft: #020617;
-        background:
-            radial-gradient(circle at 0% 0%, rgba(20, 184, 166, .14), transparent 24rem),
-            radial-gradient(circle at 95% 12%, rgba(245, 158, 11, .1), transparent 22rem),
-            linear-gradient(180deg, rgba(2, 6, 23, .98), rgba(15, 23, 42, .98));
+        background: #0f172a;
     }
 
     .dark .social-case-comment,
@@ -421,6 +408,44 @@
         color: #cbd5e1;
     }
 
+    .dark .social-case-badge,
+    .dark .social-case-action.soft {
+        background: rgba(15, 23, 42, .86);
+        border-color: rgba(148, 163, 184, .18);
+        color: #cbd5e1;
+    }
+
+    .dark .social-case-badge.risk-high,
+    .dark .social-case-badge.risk-critical,
+    .dark .social-case-badge.status-escalated,
+    .dark .social-case-badge.status-marked_as_spam,
+    .dark .social-case-badge.sentiment-negative {
+        background: rgba(127, 29, 29, .28);
+        border-color: rgba(248, 113, 113, .28);
+        color: #fca5a5;
+    }
+
+    .dark .social-case-badge.risk-medium,
+    .dark .social-case-badge.priority-high,
+    .dark .social-case-badge.priority-critical,
+    .dark .social-case-badge.status-review_required {
+        background: rgba(120, 53, 15, .28);
+        border-color: rgba(251, 191, 36, .24);
+        color: #fcd34d;
+    }
+
+    .dark .social-case-badge.sentiment-positive,
+    .dark .social-case-badge.status-classified,
+    .dark .social-case-badge.status-responded {
+        background: rgba(6, 78, 59, .28);
+        border-color: rgba(52, 211, 153, .24);
+        color: #86efac;
+    }
+
+    .dark .social-case-fact {
+        border-bottom-color: rgba(148, 163, 184, .12);
+    }
+
     .dark .social-case-action.soft {
         background: rgba(15, 23, 42, .9);
         border-color: rgba(148, 163, 184, .16);
@@ -434,6 +459,10 @@
             <div class="social-case-icon {{ $platform }}" aria-hidden="true">
                 @if ($platform === 'facebook')
                     f
+                @elseif ($platform === 'instagram')
+                    ig
+                @else
+                    rs
                 @endif
             </div>
 

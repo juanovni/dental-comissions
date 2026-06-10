@@ -1,0 +1,52 @@
+# Dental Commissions - UI Style Guide
+
+Para todas las vistas y componentes administrativos con Filament y Blade, mantener una estetica limpia tipo Metronic.
+
+## Estilo General
+
+- Usar un estilo administrativo limpio, sobrio y compacto.
+- Evitar gradientes llamativos, sombras fuertes, efectos decorativos pesados y bordes exageradamente redondos.
+- Preferir tarjetas blancas con borde suave, sombras minimas y buen espaciado.
+- La interfaz principal debe estar en espanol.
+
+## Tipografia
+
+- Titulos de seccion: `font-size` cercano a `1rem`, `font-weight: 600`.
+- Texto normal: `font-size` entre `.84rem` y `.95rem`, `font-weight: 400`.
+- Labels secundarios: color muted, `font-weight: 400-500`, sin uppercase forzado salvo pequenos kickers.
+- Badges y botones: `font-weight: 500`.
+- No usar `font-weight` mayor a `700` salvo casos excepcionales. Lo normal debe ser `400-600`.
+- Evitar textos muy grandes dentro de vistas administrativas.
+
+## Cards y Grids
+
+- Cards: fondo blanco, borde `#e5e7eb`, `border-radius` entre `.625rem` y `.875rem`, shadow minimo.
+- Padding recomendado en cards: `1rem`.
+- Layout principal: 1 columna en mobile, 2 columnas limpias en desktop cuando haya aside.
+- Separacion recomendada entre cards: `.75rem`.
+- Fact grids: dos columnas, label izquierda muted y valor derecha con `font-weight: 500`.
+
+## Badges y Botones
+
+- Badges compactos: `font-size: .7rem`, `font-weight: 500`, `border-radius: .375rem`, padding pequeno.
+- Botones superiores y acciones internas: compactos, `font-size: .75rem`, `font-weight: 500`, `min-height` alrededor de `2rem`.
+- Usar colores de estado sobrios: verde para exito, amarillo para alerta, rojo para peligro, gris para neutro.
+
+## Colores
+
+- Preferir paleta slate/gray con acento azul o el primary del panel.
+- Evitar combinaciones tipo dashboard futurista si el objetivo es administracion diaria.
+- Usar variables CSS en componentes complejos, por ejemplo `--case-*` o clases reutilizables `mc-*`.
+
+## Dark Mode
+
+- Toda vista personalizada debe incluir soporte para `.dark`.
+- Fondo oscuro recomendado: `#0f172a` o variantes slate.
+- En dark mode, usar bordes transluidos y texto claro legible.
+- Badges dark deben conservar significado de color con fondos translucidos y texto claro.
+
+## Reutilizacion
+
+- Antes de crear CSS nuevo para tarjetas, badges, botones o grids, revisar las clases `mc-*` en `resources/css/app.css`.
+- Preferir reutilizar `mc-card`, `mc-badge`, `mc-btn`, `mc-facts`, `mc-fact`, `mc-grid-main` y variantes relacionadas.
+- Si una vista requiere estilos propios, mantenerlos pequenos y alineados con esta guia.

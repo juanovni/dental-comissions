@@ -21,6 +21,192 @@
 }
 
 @layer components {
+    .mc-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        padding: 1rem;
+    }
+
+    .mc-section-title {
+        color: #1f2937;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin: 0 0 0.875rem;
+    }
+
+    .mc-grid-main {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    @media (min-width: 1100px) {
+        .mc-grid-main {
+            grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.36fr);
+        }
+    }
+
+    .mc-facts {
+        display: grid;
+        gap: 0.55rem;
+    }
+
+    .mc-fact {
+        align-items: start;
+        border-bottom: 1px solid #f1f5f9;
+        display: grid;
+        gap: 0.4rem;
+        grid-template-columns: minmax(6.5rem, 0.35fr) minmax(0, 1fr);
+        padding-bottom: 0.55rem;
+    }
+
+    .mc-fact:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .mc-fact-label {
+        color: #6b7280;
+        font-size: 0.76rem;
+        font-weight: 400;
+    }
+
+    .mc-fact-value {
+        color: #1f2937;
+        font-size: 0.86rem;
+        font-weight: 500;
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .mc-fact-value-muted {
+        color: #6b7280;
+        font-size: 0.84rem;
+        font-style: italic;
+        font-weight: 400;
+    }
+
+    .mc-badge {
+        align-items: center;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        color: #334155;
+        display: inline-flex;
+        font-size: 0.7rem;
+        font-weight: 500;
+        gap: 0.35rem;
+        line-height: 1.1;
+        padding: 0.265rem 0.475rem;
+    }
+
+    .mc-badge-success {
+        background: #ecfdf5;
+        border-color: #bbf7d0;
+        color: #047857;
+    }
+
+    .mc-badge-warning {
+        background: #fffbeb;
+        border-color: #fed7aa;
+        color: #b45309;
+    }
+
+    .mc-badge-danger {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #b91c1c;
+    }
+
+    .mc-btn {
+        align-items: center;
+        border-radius: 0.5rem;
+        display: inline-flex;
+        font-size: 0.75rem;
+        font-weight: 500;
+        justify-content: center;
+        line-height: 1.1;
+        padding: 0.425rem 0.625rem;
+        text-decoration: none;
+    }
+
+    .mc-btn-primary {
+        background: #1d7afc;
+        color: #ffffff;
+    }
+
+    .mc-btn-soft {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        color: #334155;
+    }
+
+    .fi-page-header .fi-ac .fi-btn,
+    .fi-header .fi-ac .fi-btn,
+    .fi-header-actions .fi-btn {
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        min-height: 2rem;
+        padding: 0.375rem 0.625rem;
+    }
+
+    .fi-page-header .fi-ac .fi-btn .fi-btn-icon,
+    .fi-header .fi-ac .fi-btn .fi-btn-icon,
+    .fi-header-actions .fi-btn .fi-btn-icon {
+        height: 0.95rem;
+        width: 0.95rem;
+    }
+
+    .dark .mc-card {
+        background: rgba(15, 23, 42, 0.74);
+        border-color: rgba(148, 163, 184, 0.16);
+    }
+
+    .dark .mc-section-title,
+    .dark .mc-fact-value {
+        color: #e5e7eb;
+    }
+
+    .dark .mc-fact {
+        border-bottom-color: rgba(148, 163, 184, 0.12);
+    }
+
+    .dark .mc-fact-label,
+    .dark .mc-fact-value-muted {
+        color: #94a3b8;
+    }
+
+    .dark .mc-badge,
+    .dark .mc-btn-soft {
+        background: rgba(15, 23, 42, 0.86);
+        border-color: rgba(148, 163, 184, 0.18);
+        color: #cbd5e1;
+    }
+
+    .dark .mc-badge-success {
+        background: rgba(6, 78, 59, 0.28);
+        border-color: rgba(52, 211, 153, 0.24);
+        color: #86efac;
+    }
+
+    .dark .mc-badge-warning {
+        background: rgba(120, 53, 15, 0.28);
+        border-color: rgba(251, 191, 36, 0.24);
+        color: #fcd34d;
+    }
+
+    .dark .mc-badge-danger {
+        background: rgba(127, 29, 29, 0.28);
+        border-color: rgba(248, 113, 113, 0.28);
+        color: #fca5a5;
+    }
+}
+
+@layer components {
     .fi-width-9xl {
         max-width: 96rem;
     }

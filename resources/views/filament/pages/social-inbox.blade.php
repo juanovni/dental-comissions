@@ -16,15 +16,12 @@
             --inbox-ink: #0f172a;
             --inbox-muted: #64748b;
             --inbox-line: rgba(15, 23, 42, .08);
-            --inbox-card: rgba(255, 255, 255, .94);
-            background:
-                radial-gradient(circle at 0 0, rgba(20, 184, 166, .14), transparent 24rem),
-                radial-gradient(circle at 100% 8%, rgba(245, 158, 11, .12), transparent 22rem),
-                linear-gradient(180deg, rgba(248, 250, 252, .96), rgba(255, 255, 255, .98));
-            border: 1px solid var(--inbox-line);
-            border-radius: 2rem;
+            --inbox-card: #ffffff;
+            background: #f8fafc;
+            border: 1px solid rgba(226, 232, 240, .9);
+            border-radius: 1.25rem;
             color: var(--inbox-ink);
-            padding: clamp(1rem, 2vw, 1.5rem);
+            padding: clamp(1rem, 2vw, 1.35rem);
         }
 
         .smart-inbox-header {
@@ -42,10 +39,10 @@
         }
 
         .smart-inbox-title {
-            font-size: clamp(1.55rem, 3vw, 2.55rem);
-            font-weight: 950;
-            letter-spacing: -.065em;
-            line-height: .95;
+            font-size: clamp(1.35rem, 2.4vw, 2rem);
+            font-weight: 850;
+            letter-spacing: -.035em;
+            line-height: 1;
         }
 
         .smart-inbox-subtitle {
@@ -55,13 +52,13 @@
         }
 
         .smart-search {
-            background: rgba(255, 255, 255, .86);
-            border: 1px solid var(--inbox-line);
-            border-radius: 999px;
-            box-shadow: 0 26px 80px -68px rgba(15, 23, 42, .9);
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .85rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
             color: var(--inbox-ink);
             outline: none;
-            padding: .95rem 1.1rem;
+            padding: .82rem 1rem;
             width: 100%;
         }
 
@@ -74,24 +71,24 @@
 
         .smart-filter {
             align-items: center;
-            background: rgba(255, 255, 255, .78);
-            border: 1px solid var(--inbox-line);
-            border-radius: 999px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .75rem;
             color: #334155;
             display: inline-flex;
             font-size: .84rem;
-            font-weight: 850;
+            font-weight: 750;
             gap: .45rem;
-            padding: .68rem .9rem;
+            padding: .62rem .82rem;
             transition: .18s ease;
         }
 
         .smart-filter:hover,
         .smart-filter.is-active {
-            background: #0f172a;
-            border-color: #0f172a;
+            background: #0f766e;
+            border-color: #0f766e;
             color: white;
-            transform: translateY(-1px);
+            box-shadow: 0 8px 20px -16px rgba(15, 118, 110, .9);
         }
 
         .smart-grid {
@@ -108,25 +105,30 @@
 
         .smart-card {
             background: var(--inbox-card);
-            border: 1px solid var(--inbox-line);
-            border-left: 6px solid #14b8a6;
-            border-radius: 1.55rem;
-            box-shadow: 0 26px 90px -74px rgba(15, 23, 42, .95);
+            border: 1px solid #e5e7eb;
+            border-top: 4px solid #14b8a6;
+            border-radius: 1rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 18px 50px -48px rgba(15, 23, 42, .65);
             display: grid;
-            gap: 1rem;
+            gap: .9rem;
             overflow: hidden;
-            padding: clamp(1rem, 1.5vw, 1.25rem);
+            padding: clamp(1rem, 1.5vw, 1.2rem);
             position: relative;
+            transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+        }
+
+        .smart-card:hover {
+            box-shadow: 0 3px 12px rgba(15, 23, 42, .06), 0 24px 70px -56px rgba(15, 23, 42, .75);
+            transform: translateY(-1px);
         }
 
         .smart-card.intent-crisis {
-            border-left-color: #dc2626;
-            box-shadow: 0 0 0 1px rgba(220, 38, 38, .08), 0 30px 95px -74px rgba(127, 29, 29, .9);
+            border-top-color: #dc2626;
         }
 
-        .smart-card.intent-lead { border-left-color: #0891b2; }
-        .smart-card.intent-vip { border-left-color: #16a34a; }
-        .smart-card.intent-medical { border-left-color: #f59e0b; }
+        .smart-card.intent-lead { border-top-color: #2563eb; }
+        .smart-card.intent-vip { border-top-color: #16a34a; }
+        .smart-card.intent-medical { border-top-color: #f59e0b; }
 
         .smart-card.intent-crisis.risk-critical::after {
             animation: inboxPulse 1.25s ease-in-out infinite;
@@ -158,28 +160,29 @@
 
         .smart-avatar {
             align-items: center;
-            background: linear-gradient(145deg, #0f766e, #14b8a6);
-            border-radius: 1rem;
-            color: white;
+            background: #f1f5f9;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            color: #0f766e;
             display: flex;
             flex: 0 0 auto;
-            font-size: .92rem;
-            font-weight: 950;
-            height: 2.7rem;
+            font-size: .9rem;
+            font-weight: 850;
+            height: 2.85rem;
             justify-content: center;
             text-transform: uppercase;
-            width: 2.7rem;
+            width: 2.85rem;
         }
 
-        .intent-crisis .smart-avatar { background: linear-gradient(145deg, #991b1b, #ef4444); }
-        .intent-lead .smart-avatar { background: linear-gradient(145deg, #155e75, #06b6d4); }
-        .intent-vip .smart-avatar { background: linear-gradient(145deg, #166534, #22c55e); }
-        .intent-medical .smart-avatar { background: linear-gradient(145deg, #92400e, #f59e0b); }
+        .intent-crisis .smart-avatar { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+        .intent-lead .smart-avatar { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .intent-vip .smart-avatar { background: #ecfdf5; border-color: #bbf7d0; color: #047857; }
+        .intent-medical .smart-avatar { background: #fffbeb; border-color: #fed7aa; color: #b45309; }
 
         .smart-user {
             color: var(--inbox-ink);
             font-size: 1rem;
-            font-weight: 900;
+            font-weight: 800;
             line-height: 1.15;
             overflow-wrap: anywhere;
         }
@@ -201,9 +204,9 @@
         .smart-badge {
             border-radius: 999px;
             font-size: .68rem;
-            font-weight: 900;
-            letter-spacing: .06em;
-            padding: .38rem .55rem;
+            font-weight: 800;
+            letter-spacing: .02em;
+            padding: .34rem .52rem;
             text-transform: uppercase;
         }
 
@@ -215,10 +218,11 @@
 
         .smart-message {
             color: #111827;
-            font-size: clamp(1rem, 1.45vw, 1.18rem);
-            font-weight: 750;
-            letter-spacing: -.025em;
-            line-height: 1.42;
+            font-size: clamp(.98rem, 1.35vw, 1.08rem);
+            font-weight: 650;
+            letter-spacing: -.015em;
+            line-height: 1.5;
+            padding: .2rem 0;
         }
 
         .smart-panels {
@@ -234,10 +238,20 @@
         }
 
         .smart-panel {
-            background: linear-gradient(180deg, rgba(248, 250, 252, .9), rgba(255, 255, 255, .96));
-            border: 1px solid var(--inbox-line);
-            border-radius: 1.05rem;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: .85rem;
             padding: .85rem;
+        }
+
+        .smart-ai-panel {
+            background: linear-gradient(180deg, #eef6ff, #ffffff);
+            border-color: #bfdbfe;
+            box-shadow: inset 0 0 0 1px rgba(59, 130, 246, .04);
+        }
+
+        .smart-ai-panel h3 {
+            color: #1d4ed8;
         }
 
         .smart-panel h3 {
@@ -266,19 +280,23 @@
         }
 
         .smart-action {
-            border-radius: 999px;
+            align-items: center;
+            border: 1px solid transparent;
+            border-radius: .55rem;
+            display: inline-flex;
             font-size: .78rem;
-            font-weight: 900;
-            padding: .62rem .82rem;
+            font-weight: 750;
+            line-height: 1;
+            padding: .58rem .78rem;
             transition: .18s ease;
         }
 
-        .smart-action:hover { transform: translateY(-1px); }
-        .smart-action.primary { background: #0f172a; color: white; }
+        .smart-action:hover { filter: brightness(.98); transform: translateY(-1px); }
+        .smart-action.primary { background: #2563eb; color: white; }
         .smart-action.success { background: #0f766e; color: white; }
-        .smart-action.warning { background: #fffbeb; color: #b45309; }
-        .smart-action.danger { background: #fef2f2; color: #b91c1c; }
-        .smart-action.muted { background: #f1f5f9; color: #475569; }
+        .smart-action.warning { background: #ffffff; border-color: #fed7aa; color: #b45309; }
+        .smart-action.danger { background: #ffffff; border-color: #fecaca; color: #b91c1c; }
+        .smart-action.muted { background: #ffffff; border-color: #e5e7eb; color: #475569; }
 
         .smart-empty {
             background: rgba(255, 255, 255, .86);
@@ -390,7 +408,7 @@
                             @endif
                         </section>
 
-                        <section class="smart-panel">
+                        <section class="smart-panel smart-ai-panel">
                             <h3>Sugerencia IA</h3>
                             <p>{{ $comment->suggested_reply ?: 'Sin respuesta sugerida. Revisar contexto antes de responder.' }}</p>
                             @if ($comment->ai_reason)
@@ -401,17 +419,17 @@
 
                     <div class="smart-actions">
                         @if ($isCrisis)
-                            <button class="smart-action danger" type="button" wire:click="escalate({{ $comment->id }})">Escalar a Director</button>
+                            <button class="smart-action danger" type="button" wire:click="escalate({{ $comment->id }})">Escalar</button>
                         @endif
 
                         @if ($isLead || blank($comment->tracking_token))
-                            <button class="smart-action success" type="button" wire:click="routeToWhatsapp({{ $comment->id }})">Derivar a WhatsApp</button>
+                            <button class="smart-action success" type="button" wire:click="routeToWhatsapp({{ $comment->id }})">WhatsApp</button>
                         @endif
 
                         @if ($patientUrl)
-                            <a class="smart-action primary" href="{{ $patientUrl }}">Ver Ficha</a>
+                            <a class="smart-action primary" href="{{ $patientUrl }}">Ver ficha</a>
                         @else
-                            <a class="smart-action primary" href="{{ $detailUrl }}">Crear Ficha</a>
+                            <a class="smart-action primary" href="{{ $detailUrl }}">Crear ficha</a>
                         @endif
 
                         <a class="smart-action muted" href="{{ $detailUrl }}">Detalle</a>
