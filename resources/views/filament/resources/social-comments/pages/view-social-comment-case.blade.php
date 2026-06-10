@@ -15,8 +15,33 @@
     $classificationLabel = $record->classification?->label() ?? 'Sin clasificar';
     $suggestedActionLabel = $record->suggested_action?->label() ?? 'Sin accion';
     $responseChannelLabel = $record->response_channel?->label() ?? 'Sin canal';
+    $conversionStatusLabel = $record->conversion_status?->label() ?? 'Sin conversion';
+    $identity = $record->socialIdentity;
+    $patient = $identity?->patient ?: $record->convertedPatient;
+    $lastActivity = $patient
+        ? \App\Models\ActivityRecord::query()
+            ->with(['doctor', 'procedure'])
+            ->where('patient_id', $patient->id)
+            ->latest('activity_date')
+            ->latest('id')
+            ->first()
+        : null;
+    $activityCount = $patient
+        ? \App\Models\ActivityRecord::query()->where('patient_id', $patient->id)->count()
+        : 0;
+    $patientRevenue = $patient
+        ? \App\Models\ActivityRecord::query()->where('patient_id', $patient->id)->sum('internal_rate_snapshot')
+        : 0;
+    $socialHistoryCount = $identity
+        ? \App\Models\SocialComment::query()->where('social_identity_id', $identity->id)->count()
+        : 0;
+    $previousSocialCount = max(0, $socialHistoryCount - 1);
+    $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
     $publishedAt = $record->published_at?->translatedFormat('M. d, Y H:i') ?? 'Sin fecha';
     $processedAt = $record->processed_at?->translatedFormat('M. d, Y H:i') ?? 'Pendiente';
+    $lastActivityDate = $lastActivity?->activity_date?->diffForHumans() ?? 'Sin citas registradas';
+    $lastDoctor = $lastActivity?->doctor?->name ?? 'Sin doctor registrado';
+    $lastProcedure = $lastActivity?->procedure?->name ?? 'Sin procedimiento registrado';
     $postCaption = $record->socialPost?->caption;
 @endphp
 
@@ -342,6 +367,35 @@
         font-style: italic;
     }
 
+    .social-case-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+    }
+
+    .social-case-action {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: .78rem;
+        font-weight: 900;
+        justify-content: center;
+        letter-spacing: .01em;
+        padding: .62rem .78rem;
+        text-decoration: none;
+    }
+
+    .social-case-action.primary {
+        background: #0f766e;
+        color: white;
+    }
+
+    .social-case-action.soft {
+        background: #f1f5f9;
+        border: 1px solid rgba(15, 23, 42, .08);
+        color: #334155;
+    }
+
     .dark .social-case {
         --case-ink: #e5e7eb;
         --case-muted: #94a3b8;
@@ -364,6 +418,12 @@
     .dark .social-case-note {
         background: rgba(2, 6, 23, .55);
         border-color: rgba(148, 163, 184, .14);
+        color: #cbd5e1;
+    }
+
+    .dark .social-case-action.soft {
+        background: rgba(15, 23, 42, .9);
+        border-color: rgba(148, 163, 184, .16);
         color: #cbd5e1;
     }
 </style>
@@ -443,6 +503,50 @@
                     </div>
                 </div>
             </section>
+
+            <section class="social-case-card">
+                <h3>Contexto Clinico 360</h3>
+                <div class="social-case-facts">
+                    <div class="social-case-fact">
+                        <span>Paciente</span>
+                        <strong>{{ $patient?->full_name ?: 'Lead sin ficha clinica' }}</strong>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Ultima cita</span>
+                        <p>{{ $lastActivityDate }} @if ($lastActivity) / {{ $lastProcedure }} @endif</p>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Doctor</span>
+                        <strong>{{ $lastDoctor }}</strong>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Saldo</span>
+                        <strong>No disponible en este modulo</strong>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Valor historico</span>
+                        <strong>${{ number_format((float) $patientRevenue, 2) }} / {{ $activityCount }} actividades</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="social-case-card">
+                <h3>Historial Social</h3>
+                <div class="social-case-facts">
+                    <div class="social-case-fact">
+                        <span>Interacciones</span>
+                        <strong>{{ $socialHistoryCount }} comentario(s) vinculados</strong>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Previos</span>
+                        <p>{{ $previousSocialCount }} comentario(s) antes de este caso.</p>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Origen</span>
+                        <p>{{ $record->socialPost?->campaign_name ?: 'Sin campana asignada' }}</p>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <aside class="social-case-aside">
@@ -465,6 +569,46 @@
                         <span>Canal</span>
                         <strong>{{ $responseChannelLabel }}</strong>
                     </div>
+                </div>
+            </section>
+
+            <section class="social-case-card">
+                <h3>CRM Social</h3>
+                <div class="social-case-facts">
+                    <div class="social-case-fact">
+                        <span>Conversion</span>
+                        <strong>{{ $conversionStatusLabel }}</strong>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Token</span>
+                        <strong>{{ $record->tracking_token ?: 'Sin token' }}</strong>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Identidad</span>
+                        <strong>{{ $identity?->display_name ?: $identity?->username ?: 'Sin identidad' }}</strong>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Paciente</span>
+                        <strong>{{ $patient?->full_name ?: 'Sin ficha vinculada' }}</strong>
+                    </div>
+                    <div class="social-case-fact">
+                        <span>Procedimiento</span>
+                        <strong>{{ $record->suggestedProcedure?->name ?: 'Sin sugerencia' }}</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="social-case-card">
+                <h3>Botones Rapidos</h3>
+                <div class="social-case-actions">
+                    @if ($patientUrl)
+                        <a class="social-case-action primary" href="{{ $patientUrl }}">Ver ficha clinica</a>
+                    @else
+                        <span class="social-case-action soft">Crear ficha desde acciones</span>
+                    @endif
+
+                    <span class="social-case-action soft">Derivar a WA desde acciones</span>
+                    <span class="social-case-action soft">Token: {{ $record->tracking_token ?: 'pendiente' }}</span>
                 </div>
             </section>
 

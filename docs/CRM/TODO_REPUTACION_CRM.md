@@ -10,7 +10,7 @@ Este TODO pertenece solo al modulo de Reputacion Digital y Social CRM. No reempl
 - [x] Crear enums para estado de identidad social y estado de conversion social.
 - [x] Crear modelo `SocialIdentity` con relaciones a `Patient` y `SocialComment`.
 - [x] Agregar relaciones CRM a `SocialComment`, `SocialPost`, `Patient` y `Procedure`.
-- [ ] Agregar relacion CRM a `ActivityRecord` para atribucion de ROI.
+- [x] Agregar relacion CRM a `ActivityRecord` para atribucion de ROI.
 - [x] Integrar creacion/busqueda de `social_identities` cuando se almacenan comentarios desde Meta.
 
 ## Fase 2: Handshake WhatsApp
@@ -26,17 +26,20 @@ Este TODO pertenece solo al modulo de Reputacion Digital y Social CRM. No reempl
 
 ## Fase 3: Filament SMM Command Center
 
-- [ ] Agregar tabs: Leads, Quejas, Riesgo alto, Pendiente de ficha y Convertidos.
-- [ ] Agregar accion `Derivar a WhatsApp`.
-- [ ] Agregar accion `Vincular paciente existente`.
-- [ ] Agregar accion `Crear ficha de paciente desde lead` con modal obligatorio.
-- [ ] Mostrar identidad social, paciente vinculado, token y procedimiento sugerido.
+- [x] Agregar tabs: Leads, Quejas, Riesgo alto, Pendiente de ficha y Convertidos.
+- [x] Agregar accion `Derivar a WhatsApp`.
+- [x] Agregar accion `Vincular paciente existente`.
+- [x] Agregar accion `Crear ficha de paciente desde lead` con modal obligatorio.
+- [x] Mostrar identidad social, paciente vinculado, token y procedimiento sugerido.
+- [x] Convertir tabs a Inbox Pro con contadores y categorias finales: Leads, Crisis, Pacientes VIP y Atencion Medica.
+- [x] Agregar alerta visual para riesgo critico en la tabla.
+- [x] Ampliar vista 360 con contexto clinico, historial social y botones rapidos.
 
 ## Fase 4: ROI Social
 
-- [ ] Permitir asociar `activity_records` con origen social.
-- [ ] Calcular revenue por post usando `activity_records.internal_rate_snapshot`.
-- [ ] Crear widgets: revenue por post, conversion lead-paciente y fuga de seguimiento.
+- [x] Permitir asociar `activity_records` con origen social.
+- [x] Calcular revenue por post usando `activity_records.internal_rate_snapshot`.
+- [x] Crear widgets: revenue por post, conversion lead-paciente y fuga de seguimiento.
 
 ## Reglas Cerradas
 

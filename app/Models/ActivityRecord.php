@@ -21,6 +21,10 @@ class ActivityRecord extends Model
         'payment_method_id',
         'payment_method_raw',
         'payment_method_commission_snapshot',
+        'social_comment_id',
+        'social_identity_id',
+        'social_post_id',
+        'social_attributed_at',
         'activity_date',
         'activity_time',
         'status',
@@ -43,6 +47,7 @@ class ActivityRecord extends Model
             'assistant_commission_total' => 'decimal:2',
             'internal_rate_snapshot' => 'decimal:2',
             'payment_method_commission_snapshot' => 'decimal:2',
+            'social_attributed_at' => 'datetime',
             'approved_at' => 'datetime',
             'paid_at' => 'datetime',
         ];
@@ -66,6 +71,21 @@ class ActivityRecord extends Model
     public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(PaymentMethod::class);
+    }
+
+    public function socialComment(): BelongsTo
+    {
+        return $this->belongsTo(SocialComment::class);
+    }
+
+    public function socialIdentity(): BelongsTo
+    {
+        return $this->belongsTo(SocialIdentity::class);
+    }
+
+    public function socialPost(): BelongsTo
+    {
+        return $this->belongsTo(SocialPost::class);
     }
 
     public function assistants(): BelongsToMany

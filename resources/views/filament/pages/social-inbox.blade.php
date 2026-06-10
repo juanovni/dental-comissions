@@ -3,393 +3,426 @@
         $stats = $this->stats();
         $comments = $this->comments();
         $filters = [
-            'review' => ['label' => 'Revision', 'count' => $stats['review']],
-            'high_risk' => ['label' => 'Riesgo alto', 'count' => $stats['high_risk']],
-            'leads' => ['label' => 'Leads', 'count' => $stats['leads']],
-            'complaints' => ['label' => 'Quejas', 'count' => $stats['complaints']],
-            'spam' => ['label' => 'Spam', 'count' => $stats['spam']],
-            'facebook' => ['label' => 'Facebook', 'count' => null],
-            'instagram' => ['label' => 'Instagram', 'count' => null],
-            'all' => ['label' => 'Todos', 'count' => null],
+            'leads' => ['label' => 'Leads', 'icon' => '🔥', 'count' => $stats['leads']],
+            'crisis' => ['label' => 'Crisis', 'icon' => '🚨', 'count' => $stats['crisis']],
+            'vip' => ['label' => 'Pacientes VIP', 'icon' => '🏥', 'count' => $stats['vip']],
+            'medical' => ['label' => 'Atencion Medica', 'icon' => '🩺', 'count' => $stats['medical']],
+            'all' => ['label' => 'Ver Todos', 'icon' => '🔍', 'count' => $stats['all']],
         ];
     @endphp
 
     <style>
-        .reputation-shell {
+        .smart-inbox {
+            --inbox-ink: #0f172a;
+            --inbox-muted: #64748b;
+            --inbox-line: rgba(15, 23, 42, .08);
+            --inbox-card: rgba(255, 255, 255, .94);
             background:
-                radial-gradient(circle at 8% 0%, rgba(20, 184, 166, .12), transparent 30rem),
-                linear-gradient(180deg, rgba(248, 250, 252, .94), rgba(255, 255, 255, .98));
-            border: 1px solid rgba(15, 23, 42, .06);
+                radial-gradient(circle at 0 0, rgba(20, 184, 166, .14), transparent 24rem),
+                radial-gradient(circle at 100% 8%, rgba(245, 158, 11, .12), transparent 22rem),
+                linear-gradient(180deg, rgba(248, 250, 252, .96), rgba(255, 255, 255, .98));
+            border: 1px solid var(--inbox-line);
             border-radius: 2rem;
+            color: var(--inbox-ink);
             padding: clamp(1rem, 2vw, 1.5rem);
         }
 
-        .reputation-hero {
-            margin-bottom: 1.25rem;
-        }
-
-        .reputation-search {
-            background: rgba(255, 255, 255, .78);
-            border: 1px solid rgba(15, 23, 42, .08);
-            border-radius: 999px;
-            box-shadow: 0 22px 70px -54px rgba(15, 23, 42, .8);
-            color: rgb(15, 23, 42);
-            outline: none;
-            padding: .95rem 1.15rem;
-            width: 100%;
-        }
-
-        .reputation-stats {
-            display: grid;
-            gap: .75rem;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            margin-block: 1rem 1.25rem;
-        }
-
-        @media (min-width: 768px) {
-            .reputation-stats {
-                grid-template-columns: repeat(5, minmax(0, 1fr));
-            }
-        }
-
-        .reputation-stat {
-            background: rgba(255, 255, 255, .86);
-            border: 1px solid rgba(15, 23, 42, .07);
-            border-radius: 1.35rem;
-            padding: 1rem;
-        }
-
-        .reputation-stat strong {
-            color: rgb(15, 23, 42);
-            display: block;
-            font-size: 1.8rem;
-            letter-spacing: -.06em;
-            line-height: 1;
-        }
-
-        .reputation-stat span {
-            color: rgb(100, 116, 139);
-            display: block;
-            font-size: .72rem;
-            font-weight: 750;
-            letter-spacing: .08em;
-            margin-top: .45rem;
-            text-transform: uppercase;
-        }
-
-        .reputation-filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .5rem;
-            margin-bottom: 1rem;
-        }
-
-        .reputation-filter {
-            border: 1px solid rgba(15, 23, 42, .08);
-            border-radius: 999px;
-            color: rgb(51, 65, 85);
-            font-size: .82rem;
-            font-weight: 750;
-            padding: .62rem .85rem;
-            transition: all .18s ease;
-        }
-
-        .reputation-filter:hover,
-        .reputation-filter.is-active {
-            background: rgb(15, 23, 42);
-            border-color: rgb(15, 23, 42);
-            color: white;
-            transform: translateY(-1px);
-        }
-
-        .comment-grid {
-            display: grid;
-            gap: .85rem;
-        }
-
-        .comment-card {
-            background: rgba(255, 255, 255, .94);
-            border: 1px solid rgba(15, 23, 42, .07);
-            border-radius: 1.6rem;
-            box-shadow: 0 24px 90px -70px rgba(15, 23, 42, .95);
+        .smart-inbox-header {
+            align-items: start;
             display: grid;
             gap: 1rem;
             grid-template-columns: minmax(0, 1fr);
-            overflow: hidden;
-            padding: .9rem;
-            position: relative;
+            margin-bottom: 1rem;
         }
 
-        @media (min-width: 1024px) {
-            .comment-card {
-                grid-template-columns: minmax(0, 1fr) minmax(14rem, .42fr);
-                padding: 1.25rem;
+        @media (min-width: 980px) {
+            .smart-inbox-header {
+                grid-template-columns: minmax(0, .9fr) minmax(18rem, .42fr);
             }
         }
 
-        .comment-card::before {
-            background: rgb(20, 184, 166);
-            content: '';
-            inset: 0 auto 0 0;
-            position: absolute;
-            width: 4px;
+        .smart-inbox-title {
+            font-size: clamp(1.55rem, 3vw, 2.55rem);
+            font-weight: 950;
+            letter-spacing: -.065em;
+            line-height: .95;
         }
 
-        .comment-card.risk-high::before,
-        .comment-card.risk-critical::before {
-            background: rgb(239, 68, 68);
+        .smart-inbox-subtitle {
+            color: var(--inbox-muted);
+            font-size: .95rem;
+            margin-top: .55rem;
         }
 
-        .comment-card.risk-medium::before {
-            background: rgb(245, 158, 11);
+        .smart-search {
+            background: rgba(255, 255, 255, .86);
+            border: 1px solid var(--inbox-line);
+            border-radius: 999px;
+            box-shadow: 0 26px 80px -68px rgba(15, 23, 42, .9);
+            color: var(--inbox-ink);
+            outline: none;
+            padding: .95rem 1.1rem;
+            width: 100%;
         }
 
-        .comment-meta {
+        .smart-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .55rem;
+            margin: 1rem 0 1.25rem;
+        }
+
+        .smart-filter {
             align-items: center;
-            display: flex;
-            flex-wrap: wrap;
-            gap: .45rem;
-        }
-
-        .comment-chip {
-            background: rgb(248, 250, 252);
-            border: 1px solid rgba(15, 23, 42, .07);
+            background: rgba(255, 255, 255, .78);
+            border: 1px solid var(--inbox-line);
             border-radius: 999px;
-            color: rgb(51, 65, 85);
-            font-size: .7rem;
-            font-weight: 800;
-            letter-spacing: .06em;
-            padding: .36rem .55rem;
-            text-transform: uppercase;
-        }
-
-        .comment-chip.danger {
-            background: rgb(254, 242, 242);
-            border-color: rgb(254, 202, 202);
-            color: rgb(185, 28, 28);
-        }
-
-        .comment-chip.success {
-            background: rgb(240, 253, 250);
-            border-color: rgb(153, 246, 228);
-            color: rgb(15, 118, 110);
-        }
-
-        .comment-author {
-            color: rgb(15, 23, 42);
-            font-size: .85rem;
-            font-weight: 800;
-            margin-top: .65rem;
-        }
-
-        .comment-text {
-            color: rgb(15, 23, 42);
-            font-size: clamp(.88rem, 1.4vw, 1.02rem);
-            font-weight: 600;
-            letter-spacing: -.02em;
-            line-height: 1.4;
-            margin-top: .4rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .comment-context {
-            color: rgb(100, 116, 139);
-            font-size: .78rem;
-            line-height: 1.45;
-            margin-top: .6rem;
-        }
-
-        .reply-draft {
-            background: linear-gradient(180deg, rgb(248, 250, 252), rgb(255, 255, 255));
-            border: 1px solid rgba(15, 23, 42, .07);
-            border-radius: 1.1rem;
-            color: rgb(51, 65, 85);
-            font-size: .88rem;
-            line-height: 1.55;
-            padding: .9rem;
-        }
-
-        .reply-draft span {
-            color: rgb(13, 148, 136);
-            display: block;
-            font-size: .68rem;
+            color: #334155;
+            display: inline-flex;
+            font-size: .84rem;
             font-weight: 850;
-            letter-spacing: .12em;
-            margin-bottom: .45rem;
-            text-transform: uppercase;
-        }
-
-        .comment-actions {
-            display: flex;
-            flex-wrap: wrap;
             gap: .45rem;
-            margin-top: .8rem;
+            padding: .68rem .9rem;
+            transition: .18s ease;
         }
 
-        .comment-action {
-            border-radius: 999px;
-            font-size: .78rem;
-            font-weight: 800;
-            padding: .55rem .75rem;
-            transition: all .18s ease;
-        }
-
-        .comment-action:hover {
+        .smart-filter:hover,
+        .smart-filter.is-active {
+            background: #0f172a;
+            border-color: #0f172a;
+            color: white;
             transform: translateY(-1px);
         }
 
-        .comment-action.primary {
-            background: rgb(15, 23, 42);
+        .smart-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        @media (min-width: 1120px) {
+            .smart-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .smart-card {
+            background: var(--inbox-card);
+            border: 1px solid var(--inbox-line);
+            border-left: 6px solid #14b8a6;
+            border-radius: 1.55rem;
+            box-shadow: 0 26px 90px -74px rgba(15, 23, 42, .95);
+            display: grid;
+            gap: 1rem;
+            overflow: hidden;
+            padding: clamp(1rem, 1.5vw, 1.25rem);
+            position: relative;
+        }
+
+        .smart-card.intent-crisis {
+            border-left-color: #dc2626;
+            box-shadow: 0 0 0 1px rgba(220, 38, 38, .08), 0 30px 95px -74px rgba(127, 29, 29, .9);
+        }
+
+        .smart-card.intent-lead { border-left-color: #0891b2; }
+        .smart-card.intent-vip { border-left-color: #16a34a; }
+        .smart-card.intent-medical { border-left-color: #f59e0b; }
+
+        .smart-card.intent-crisis.risk-critical::after {
+            animation: inboxPulse 1.25s ease-in-out infinite;
+            background: radial-gradient(circle, rgba(239, 68, 68, .24), transparent 62%);
+            content: '';
+            height: 8rem;
+            inset: -3rem -3rem auto auto;
+            position: absolute;
+            width: 8rem;
+        }
+
+        @keyframes inboxPulse {
+            0%, 100% { opacity: .45; transform: scale(.96); }
+            50% { opacity: .95; transform: scale(1.08); }
+        }
+
+        .smart-card-top {
+            align-items: start;
+            display: flex;
+            gap: .85rem;
+            justify-content: space-between;
+        }
+
+        .smart-person {
+            display: flex;
+            gap: .75rem;
+            min-width: 0;
+        }
+
+        .smart-avatar {
+            align-items: center;
+            background: linear-gradient(145deg, #0f766e, #14b8a6);
+            border-radius: 1rem;
             color: white;
+            display: flex;
+            flex: 0 0 auto;
+            font-size: .92rem;
+            font-weight: 950;
+            height: 2.7rem;
+            justify-content: center;
+            text-transform: uppercase;
+            width: 2.7rem;
         }
 
-        .comment-action.warning {
-            background: rgb(255, 251, 235);
-            color: rgb(180, 83, 9);
+        .intent-crisis .smart-avatar { background: linear-gradient(145deg, #991b1b, #ef4444); }
+        .intent-lead .smart-avatar { background: linear-gradient(145deg, #155e75, #06b6d4); }
+        .intent-vip .smart-avatar { background: linear-gradient(145deg, #166534, #22c55e); }
+        .intent-medical .smart-avatar { background: linear-gradient(145deg, #92400e, #f59e0b); }
+
+        .smart-user {
+            color: var(--inbox-ink);
+            font-size: 1rem;
+            font-weight: 900;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
         }
 
-        .comment-action.muted {
-            background: rgb(241, 245, 249);
-            color: rgb(71, 85, 105);
+        .smart-source,
+        .smart-time {
+            color: var(--inbox-muted);
+            font-size: .78rem;
+            font-weight: 700;
+            margin-top: .25rem;
         }
 
-        .comment-action.danger {
-            background: rgb(254, 242, 242);
-            color: rgb(185, 28, 28);
+        .smart-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
         }
 
-        .empty-state {
+        .smart-badge {
+            border-radius: 999px;
+            font-size: .68rem;
+            font-weight: 900;
+            letter-spacing: .06em;
+            padding: .38rem .55rem;
+            text-transform: uppercase;
+        }
+
+        .smart-badge.danger { background: #fef2f2; color: #b91c1c; }
+        .smart-badge.info { background: #ecfeff; color: #0e7490; }
+        .smart-badge.warning { background: #fffbeb; color: #b45309; }
+        .smart-badge.success { background: #ecfdf5; color: #047857; }
+        .smart-badge.neutral { background: #f1f5f9; color: #475569; }
+
+        .smart-message {
+            color: #111827;
+            font-size: clamp(1rem, 1.45vw, 1.18rem);
+            font-weight: 750;
+            letter-spacing: -.025em;
+            line-height: 1.42;
+        }
+
+        .smart-panels {
+            display: grid;
+            gap: .75rem;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        @media (min-width: 760px) {
+            .smart-panels {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .smart-panel {
+            background: linear-gradient(180deg, rgba(248, 250, 252, .9), rgba(255, 255, 255, .96));
+            border: 1px solid var(--inbox-line);
+            border-radius: 1.05rem;
+            padding: .85rem;
+        }
+
+        .smart-panel h3 {
+            color: #475569;
+            font-size: .68rem;
+            font-weight: 950;
+            letter-spacing: .12em;
+            margin: 0 0 .5rem;
+            text-transform: uppercase;
+        }
+
+        .smart-panel p,
+        .smart-panel strong {
+            color: #0f172a;
+            font-size: .86rem;
+            line-height: 1.45;
+            margin: 0;
+        }
+
+        .smart-muted { color: #64748b !important; }
+
+        .smart-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+
+        .smart-action {
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 900;
+            padding: .62rem .82rem;
+            transition: .18s ease;
+        }
+
+        .smart-action:hover { transform: translateY(-1px); }
+        .smart-action.primary { background: #0f172a; color: white; }
+        .smart-action.success { background: #0f766e; color: white; }
+        .smart-action.warning { background: #fffbeb; color: #b45309; }
+        .smart-action.danger { background: #fef2f2; color: #b91c1c; }
+        .smart-action.muted { background: #f1f5f9; color: #475569; }
+
+        .smart-empty {
             background: rgba(255, 255, 255, .86);
             border: 1px dashed rgba(15, 23, 42, .15);
             border-radius: 1.6rem;
-            color: rgb(71, 85, 105);
+            color: #475569;
             padding: 2rem;
             text-align: center;
         }
     </style>
 
-    <section class="reputation-shell">
-        <div class="reputation-hero">
+    <section class="smart-inbox">
+        <header class="smart-inbox-header">
+            <div>
+                <div class="smart-inbox-title">Smart Inbox</div>
+                <p class="smart-inbox-subtitle">Comentarios priorizados por intencion, riesgo y contexto clinico.</p>
+            </div>
+
             <input
-                class="reputation-search"
+                class="smart-search"
                 type="search"
                 wire:model.live.debounce.350ms="search"
                 placeholder="Buscar por comentario, autor o usuario"
             />
-        </div>
+        </header>
 
-        <div class="reputation-stats">
-            <button class="reputation-stat" type="button" wire:click="setFilter('review')">
-                <strong>{{ $stats['review'] }}</strong>
-                <span>Revision</span>
-            </button>
-            <button class="reputation-stat" type="button" wire:click="setFilter('high_risk')">
-                <strong>{{ $stats['high_risk'] }}</strong>
-                <span>Riesgo alto</span>
-            </button>
-            <button class="reputation-stat" type="button" wire:click="setFilter('leads')">
-                <strong>{{ $stats['leads'] }}</strong>
-                <span>Leads</span>
-            </button>
-            <button class="reputation-stat" type="button" wire:click="setFilter('complaints')">
-                <strong>{{ $stats['complaints'] }}</strong>
-                <span>Quejas</span>
-            </button>
-            <button class="reputation-stat" type="button" wire:click="setFilter('spam')">
-                <strong>{{ $stats['spam'] }}</strong>
-                <span>Spam</span>
-            </button>
-        </div>
-
-        <div class="reputation-filters">
+        <div class="smart-filters">
             @foreach ($filters as $key => $item)
                 <button
                     type="button"
                     wire:click="setFilter('{{ $key }}')"
-                    @class(['reputation-filter', 'is-active' => $filter === $key])
+                    @class(['smart-filter', 'is-active' => $filter === $key])
                 >
-                    {{ $item['label'] }}
-                    @if (! is_null($item['count']))
-                        · {{ $item['count'] }}
-                    @endif
+                    <span>{{ $item['icon'] }}</span>
+                    <span>{{ $item['label'] }}</span>
+                    <strong>{{ $item['count'] }}</strong>
                 </button>
             @endforeach
         </div>
 
-        <div class="comment-grid">
+        <div class="smart-grid">
             @forelse ($comments as $comment)
                 @php
                     $risk = $comment->reputation_risk?->value ?? 'low';
-                    $isLead = in_array($comment->classification, [
+                    $classification = $comment->classification;
+                    $patient = $comment->socialIdentity?->patient ?: $comment->convertedPatient;
+                    $lastActivity = $patient?->activityRecords?->sortByDesc('activity_date')->sortByDesc('id')->first();
+                    $isLead = in_array($classification, [
                         \App\Enums\SocialCommentClassification::SalesLead,
                         \App\Enums\SocialCommentClassification::CommercialQuestion,
                     ], true);
+                    $isCrisis = in_array($risk, ['high', 'critical'], true) || in_array($classification, [
+                        \App\Enums\SocialCommentClassification::Complaint,
+                        \App\Enums\SocialCommentClassification::NegativeOpinion,
+                        \App\Enums\SocialCommentClassification::LegalSensitive,
+                    ], true);
+                    $isMedical = $classification === \App\Enums\SocialCommentClassification::MedicalSensitive;
+                    $isVip = filled($patient) && ($patient->activityRecords?->count() ?? 0) > 0;
+                    $intent = $isCrisis ? 'crisis' : ($isVip ? 'vip' : ($isMedical ? 'medical' : ($isLead ? 'lead' : 'normal')));
+                    $intentTitle = match ($intent) {
+                        'crisis' => 'RIESGO CRITICO',
+                        'vip' => 'PACIENTE VIP',
+                        'medical' => 'ATENCION MEDICA',
+                        'lead' => 'LEAD COMERCIAL',
+                        default => 'COMENTARIO SOCIAL',
+                    };
+                    $initial = \Illuminate\Support\Str::of($comment->author_name ?: $comment->author_username ?: '?')->substr(0, 1)->upper();
+                    $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $comment]);
+                    $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
                 @endphp
 
-                <article class="comment-card risk-{{ $risk }}">
-                    <div>
-                        <div class="comment-meta">
-                            <span class="comment-chip">{{ $comment->platform->label() }}</span>
-                            <span @class(['comment-chip', 'danger' => in_array($risk, ['high', 'critical'], true), 'success' => $isLead])>
-                                {{ $comment->classification?->label() ?? 'Sin clasificar' }}
+                <article class="smart-card intent-{{ $intent }} risk-{{ $risk }}">
+                    <div class="smart-card-top">
+                        <div class="smart-person">
+                            <div class="smart-avatar">{{ $initial }}</div>
+                            <div>
+                                <div class="smart-user">
+                                    {{ $comment->author_username ? '@' . $comment->author_username : ($comment->author_name ?: 'Autor desconocido') }}
+                                </div>
+                                <div class="smart-source">via {{ $comment->platform->label() }} / {{ $intentTitle }}</div>
+                                <div class="smart-time">{{ $comment->created_at?->diffForHumans() }}</div>
+                            </div>
+                        </div>
+
+                        <div class="smart-badges">
+                            <span @class(['smart-badge', 'danger' => $isCrisis, 'info' => $isLead, 'warning' => $isMedical, 'success' => $isVip, 'neutral' => ! $isCrisis && ! $isLead && ! $isMedical && ! $isVip])>
+                                {{ $classification?->label() ?? 'Sin clasificar' }}
                             </span>
-                            <span @class(['comment-chip', 'danger' => in_array($risk, ['high', 'critical'], true)])>
+                            <span @class(['smart-badge', 'danger' => in_array($risk, ['high', 'critical'], true), 'warning' => $risk === 'medium', 'neutral' => $risk === 'low'])>
                                 Riesgo {{ $comment->reputation_risk?->label() ?? 'bajo' }}
                             </span>
-                            @if ($comment->requires_human_review)
-                                <span class="comment-chip danger">Revision humana</span>
-                            @endif
+                            <span class="smart-badge neutral">{{ $comment->sentiment?->label() ?? 'Sin sentimiento' }}</span>
                         </div>
-
-                        <div class="comment-author">
-                            {{ $comment->author_name ?: 'Autor desconocido' }}
-                            @if ($comment->author_username)
-                                <span class="text-sm font-medium text-slate-400">/{{ $comment->author_username }}</span>
-                            @endif
-                        </div>
-
-                        <p class="comment-text">{{ $comment->comment_text }}</p>
-
-                        @if ($comment->socialPost?->caption)
-                            <p class="comment-context">Publicacion: {{ \Illuminate\Support\Str::limit($comment->socialPost->caption, 170) }}</p>
-                        @endif
                     </div>
 
-                    <aside>
-                        <div class="reply-draft">
-                            <span>Respuesta sugerida</span>
-                            {{ $comment->suggested_reply ?: 'Sin respuesta sugerida. Revisar contexto antes de responder.' }}
-                        </div>
+                    <div class="smart-message">"{{ $comment->comment_text }}"</div>
 
-                        @if ($comment->ai_reason)
-                            <p class="comment-context">Motivo: {{ $comment->ai_reason }}</p>
+                    <div class="smart-panels">
+                        <section class="smart-panel">
+                            <h3>Contexto Clinico</h3>
+                            @if ($patient)
+                                <p><strong>Paciente vinculado:</strong> {{ $patient->full_name }}</p>
+                                <p class="smart-muted">{{ $lastActivity ? 'Ultima cita: ' . $lastActivity->activity_date?->format('d/m/Y') : 'Sin cita registrada' }}</p>
+                                <p class="smart-muted">{{ $lastActivity?->doctor?->name ?: 'Doctor no registrado' }}</p>
+                            @else
+                                <p><strong>Nuevo lead:</strong> Sin ficha clinica</p>
+                                <p class="smart-muted">Telefono: {{ $comment->socialIdentity?->phone ?: 'pendiente de capturar' }}</p>
+                                <p class="smart-muted">Procedimiento: {{ $comment->suggestedProcedure?->name ?: 'sin sugerencia' }}</p>
+                            @endif
+                        </section>
+
+                        <section class="smart-panel">
+                            <h3>Sugerencia IA</h3>
+                            <p>{{ $comment->suggested_reply ?: 'Sin respuesta sugerida. Revisar contexto antes de responder.' }}</p>
+                            @if ($comment->ai_reason)
+                                <p class="smart-muted" style="margin-top:.45rem">Motivo: {{ $comment->ai_reason }}</p>
+                            @endif
+                        </section>
+                    </div>
+
+                    <div class="smart-actions">
+                        @if ($isCrisis)
+                            <button class="smart-action danger" type="button" wire:click="escalate({{ $comment->id }})">Escalar a Director</button>
                         @endif
 
-                        <div class="comment-actions">
-                            <button class="comment-action primary" type="button" wire:click="markReviewed({{ $comment->id }})">
-                                Revisado
-                            </button>
-                            <button class="comment-action warning" type="button" wire:click="escalate({{ $comment->id }})">
-                                Escalar
-                            </button>
-                            <button class="comment-action muted" type="button" wire:click="ignore({{ $comment->id }})">
-                                Ignorar
-                            </button>
-                            <button class="comment-action danger" type="button" wire:click="markSpam({{ $comment->id }})">
-                                Spam
-                            </button>
-                            <a class="comment-action muted" href="{{ route('filament.admin.resources.social-comments.view', ['record' => $comment]) }}">
-                                Detalle
-                            </a>
-                        </div>
-                    </aside>
+                        @if ($isLead || blank($comment->tracking_token))
+                            <button class="smart-action success" type="button" wire:click="routeToWhatsapp({{ $comment->id }})">Derivar a WhatsApp</button>
+                        @endif
+
+                        @if ($patientUrl)
+                            <a class="smart-action primary" href="{{ $patientUrl }}">Ver Ficha</a>
+                        @else
+                            <a class="smart-action primary" href="{{ $detailUrl }}">Crear Ficha</a>
+                        @endif
+
+                        <a class="smart-action muted" href="{{ $detailUrl }}">Detalle</a>
+                        <button class="smart-action muted" type="button" wire:click="markReviewed({{ $comment->id }})">Revisado</button>
+                        <button class="smart-action warning" type="button" wire:click="ignore({{ $comment->id }})">Ignorar</button>
+                        <button class="smart-action danger" type="button" wire:click="markSpam({{ $comment->id }})">Spam</button>
+                    </div>
                 </article>
             @empty
-                <div class="empty-state">
-                    No hay comentarios para este filtro. Cambia el segmento o sincroniza nuevos comentarios sociales.
+                <div class="smart-empty">
+                    No hay comentarios para este segmento. Cambia el filtro o sincroniza nuevos comentarios sociales.
                 </div>
             @endforelse
         </div>

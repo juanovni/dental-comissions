@@ -243,6 +243,17 @@ class AiParsingServiceTest extends TestCase
     private function fakeGemini(string $content): void
     {
         Http::fake([
+            '*generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => $content],
+                            ],
+                        ],
+                    ],
+                ],
+            ]),
             'generativelanguage.googleapis.com/*' => Http::response([
                 'candidates' => [
                     [

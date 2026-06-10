@@ -119,4 +119,9 @@ class SocialComment extends Model
     {
         return $this->hasMany(SocialCommentAction::class);
     }
+
+    public function activityRecords(): HasMany
+    {
+        return $this->hasMany(ActivityRecord::class);
+    }
 }

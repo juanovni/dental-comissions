@@ -23,6 +23,8 @@ class WhatsappServiceTest extends TestCase
 
     private WhatsappService $whatsappService;
 
+    private array $geminiContent = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -378,7 +380,7 @@ class WhatsappServiceTest extends TestCase
 
     private function fakeGemini(?array $content = null): void
     {
-        $content ??= [
+        $this->geminiContent = $content ?? [
             'patient_name' => '',
             'procedures' => [],
             'assistants' => [],
@@ -388,19 +390,17 @@ class WhatsappServiceTest extends TestCase
             'review_notes' => 'No se pudo procesar el mensaje',
         ];
 
-        Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::response([
-                'candidates' => [
-                    [
-                        'content' => [
-                            'parts' => [
-                                ['text' => json_encode($content)],
-                            ],
+        Http::fake(fn () => Http::response([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            ['text' => json_encode($this->geminiContent)],
                         ],
                     ],
                 ],
-            ]),
-        ]);
+            ],
+        ]));
     }
 
     private function buildPayload(string $phone, string $message): array

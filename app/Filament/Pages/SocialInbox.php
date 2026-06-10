@@ -5,11 +5,10 @@ namespace App\Filament\Pages;
 use App\Enums\SocialCommentActionType;
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
-use App\Enums\SocialPlatform;
-use App\Enums\SocialPriority;
 use App\Enums\SocialReputationRisk;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Models\SocialComment;
+use App\Services\SocialConversionService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -24,9 +23,9 @@ class SocialInbox extends Page
 
     protected static string | \UnitEnum | null $navigationGroup = 'Reputacion Digital';
 
-    protected static ?string $navigationLabel = 'Bandeja de reputacion';
+    protected static ?string $navigationLabel = 'Smart Inbox';
 
-    protected static ?string $title = 'Bandeja de reputacion';
+    protected static ?string $title = 'Smart Inbox';
 
     protected static ?string $slug = 'social-inbox';
 
@@ -34,7 +33,7 @@ class SocialInbox extends Page
 
     protected string $view = 'filament.pages.social-inbox';
 
-    public string $filter = 'review';
+    public string $filter = 'leads';
 
     public string $search = '';
 
@@ -52,26 +51,18 @@ class SocialInbox extends Page
     public function comments(): LengthAwarePaginator
     {
         return $this->baseQuery()
-            ->when($this->filter === 'review', fn (Builder $query): Builder => $query->where('requires_human_review', true))
-            ->when($this->filter === 'high_risk', fn (Builder $query): Builder => $query->whereIn('reputation_risk', [
-                SocialReputationRisk::High->value,
-                SocialReputationRisk::Critical->value,
-            ]))
+            ->when($this->filter === 'crisis', fn (Builder $query): Builder => $this->applyCrisisQuery($query))
             ->when($this->filter === 'leads', fn (Builder $query): Builder => $query->whereIn('classification', [
                 SocialCommentClassification::SalesLead->value,
                 SocialCommentClassification::CommercialQuestion->value,
             ]))
-            ->when($this->filter === 'complaints', fn (Builder $query): Builder => $query->whereIn('classification', [
-                SocialCommentClassification::Complaint->value,
-                SocialCommentClassification::NegativeOpinion->value,
-                SocialCommentClassification::LegalSensitive->value,
-            ]))
-            ->when($this->filter === 'spam', fn (Builder $query): Builder => $query->whereIn('classification', [
-                SocialCommentClassification::Spam->value,
-                SocialCommentClassification::Offensive->value,
-            ]))
-            ->when($this->filter === 'facebook', fn (Builder $query): Builder => $query->where('platform', SocialPlatform::Facebook->value))
-            ->when($this->filter === 'instagram', fn (Builder $query): Builder => $query->where('platform', SocialPlatform::Instagram->value))
+            ->when($this->filter === 'vip', fn (Builder $query): Builder => $query
+                ->whereHas('socialIdentity.patient')
+                ->whereHas('socialIdentity.patient.activityRecords'))
+            ->when($this->filter === 'medical', fn (Builder $query): Builder => $query->where(
+                'classification',
+                SocialCommentClassification::MedicalSensitive->value,
+            ))
             ->orderByRaw("case when reputation_risk = 'critical' then 0 when reputation_risk = 'high' then 1 when requires_human_review then 2 when priority = 'high' then 3 else 4 end")
             ->latest('created_at')
             ->paginate(8);
@@ -80,25 +71,39 @@ class SocialInbox extends Page
     public function stats(): array
     {
         return [
-            'review' => SocialComment::where('requires_human_review', true)->count(),
-            'high_risk' => SocialComment::whereIn('reputation_risk', [
-                SocialReputationRisk::High->value,
-                SocialReputationRisk::Critical->value,
-            ])->count(),
             'leads' => SocialComment::whereIn('classification', [
                 SocialCommentClassification::SalesLead->value,
                 SocialCommentClassification::CommercialQuestion->value,
             ])->count(),
-            'complaints' => SocialComment::whereIn('classification', [
-                SocialCommentClassification::Complaint->value,
-                SocialCommentClassification::NegativeOpinion->value,
-                SocialCommentClassification::LegalSensitive->value,
-            ])->count(),
-            'spam' => SocialComment::whereIn('classification', [
-                SocialCommentClassification::Spam->value,
-                SocialCommentClassification::Offensive->value,
-            ])->count(),
+            'crisis' => $this->applyCrisisQuery(SocialComment::query())->count(),
+            'vip' => SocialComment::whereHas('socialIdentity.patient')
+                ->whereHas('socialIdentity.patient.activityRecords')
+                ->count(),
+            'medical' => SocialComment::where('classification', SocialCommentClassification::MedicalSensitive->value)->count(),
+            'all' => SocialComment::count(),
         ];
+    }
+
+    public function routeToWhatsapp(int $commentId): void
+    {
+        $comment = SocialComment::find($commentId);
+
+        if (!$comment) {
+            Notification::make()
+                ->title('Comentario no encontrado')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $token = app(SocialConversionService::class)->markRedirectedToWhatsapp($comment);
+
+        Notification::make()
+            ->title('Lead derivado a WhatsApp')
+            ->body("Token generado: {$token}")
+            ->success()
+            ->send();
     }
 
     public function markReviewed(int $commentId): void
@@ -164,7 +169,16 @@ class SocialInbox extends Page
     private function baseQuery(): Builder
     {
         return SocialComment::query()
-            ->with(['socialAccount', 'socialPost'])
+            ->with([
+                'convertedPatient',
+                'convertedPatient.activityRecords.doctor',
+                'convertedPatient.activityRecords.procedure',
+                'socialAccount',
+                'socialIdentity.patient.activityRecords.doctor',
+                'socialIdentity.patient.activityRecords.procedure',
+                'socialPost',
+                'suggestedProcedure',
+            ])
             ->when($this->search !== '', function (Builder $query): Builder {
                 $search = '%' . trim($this->search) . '%';
 
@@ -175,5 +189,19 @@ class SocialInbox extends Page
                         ->orWhere('author_username', 'like', $search);
                 });
             });
+    }
+
+    private function applyCrisisQuery(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query): void {
+            $query->whereIn('reputation_risk', [
+                SocialReputationRisk::High->value,
+                SocialReputationRisk::Critical->value,
+            ])->orWhereIn('classification', [
+                SocialCommentClassification::Complaint->value,
+                SocialCommentClassification::NegativeOpinion->value,
+                SocialCommentClassification::LegalSensitive->value,
+            ]);
+        });
     }
 }

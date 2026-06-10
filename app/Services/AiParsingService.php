@@ -108,6 +108,10 @@ class AiParsingService
             $paymentMethod = app(PaymentMethodResolver::class)->findInMessage($messageBody);
         }
 
+        if ($paymentMethod) {
+            $paymentMethod = $this->normalize($paymentMethod);
+        }
+
         if (!$patientName && empty($procedureNames) && !$paymentMethod) {
             return null;
         }

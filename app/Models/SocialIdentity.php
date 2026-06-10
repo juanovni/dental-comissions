@@ -49,4 +49,9 @@ class SocialIdentity extends Model
     {
         return $this->hasMany(SocialComment::class);
     }
+
+    public function activityRecords(): HasMany
+    {
+        return $this->hasMany(ActivityRecord::class);
+    }
 }

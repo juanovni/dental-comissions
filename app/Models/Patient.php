@@ -30,6 +30,11 @@ class Patient extends Model
         return $this->hasMany(SocialIdentity::class);
     }
 
+    public function activityRecords(): HasMany
+    {
+        return $this->hasMany(ActivityRecord::class);
+    }
+
     public function convertedSocialComments(): HasMany
     {
         return $this->hasMany(SocialComment::class, 'converted_patient_id');
