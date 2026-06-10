@@ -27,13 +27,15 @@ class PaymentMethodCommissionRateResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Comisiones y Pagos';
+
     protected static ?string $navigationLabel = 'Comisiones por pago';
 
     protected static ?string $modelLabel = 'comision por metodo de pago';
 
     protected static ?string $pluralModelLabel = 'comisiones por metodo de pago';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 13;
 
     public static function form(Schema $schema): Schema
     {

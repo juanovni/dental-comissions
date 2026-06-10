@@ -87,4 +87,117 @@
         border-color: color-mix(in srgb, var(--primary-700) 42%, transparent);
         box-shadow: 0 22px 54px -38px rgba(0, 0, 0, 0.75);
     }
+
+    .fi-main-sidebar {
+        --meta-sidebar-bottom-bar-height: 4rem;
+    }
+
+    /* Sidebar scrollbar: ocupa su carril, pero solo se pinta al pasar el mouse por el menu. */
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-nav {
+        padding-bottom: calc(var(--meta-sidebar-bottom-bar-height) + 0.75rem);
+        scrollbar-color: transparent transparent;
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-nav-groups {
+        gap: 0.875rem;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group {
+        gap: 0.25rem;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group-btn {
+        padding-block: 0.375rem;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group-items {
+        gap: 0.125rem;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-item-btn {
+        min-height: 2rem;
+        padding-block: 0.375rem;
+    }
+
+    .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav {
+        padding-block: 0.75rem 1rem;
+        padding-inline: 0.75rem;
+        scrollbar-gutter: auto;
+    }
+
+    .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav-groups {
+        gap: 0.5rem;
+    }
+
+    .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-group-items {
+        gap: 0.25rem;
+    }
+
+    .fi-main-sidebar:hover .fi-sidebar-nav {
+        scrollbar-color: rgb(156, 163, 175) transparent;
+    }
+
+    .fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-thumb {
+        background-color: transparent;
+        border: 2px solid transparent;
+        border-radius: 9999px;
+        background-clip: content-box;
+    }
+
+    .fi-main-sidebar:hover .fi-sidebar-nav::-webkit-scrollbar-thumb {
+        background-color: rgb(156, 163, 175);
+    }
+
+    .dark .fi-main-sidebar:hover .fi-sidebar-nav {
+        scrollbar-color: rgb(71, 85, 105) transparent;
+    }
+
+    .dark .fi-main-sidebar:hover .fi-sidebar-nav::-webkit-scrollbar-thumb {
+        background-color: rgb(71, 85, 105);
+    }
+
+    @media (min-width: 1024px) {
+        .fi-main-sidebar .fi-sidebar-open-collapse-sidebar-btn,
+        .fi-main-sidebar .fi-sidebar-close-collapse-sidebar-btn {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: 0.5rem;
+            box-shadow: none;
+            color: rgb(75, 85, 99);
+            flex-shrink: 0;
+            height: 2.5rem;
+            justify-content: center;
+            transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+            width: 2.5rem;
+        }
+
+        .fi-main-sidebar .fi-sidebar-open-collapse-sidebar-btn:hover,
+        .fi-main-sidebar .fi-sidebar-close-collapse-sidebar-btn:hover {
+            background: rgb(243, 244, 246);
+            color: rgb(17, 24, 39);
+        }
+
+        .dark .fi-main-sidebar .fi-sidebar-open-collapse-sidebar-btn,
+        .dark .fi-main-sidebar .fi-sidebar-close-collapse-sidebar-btn {
+            background: transparent;
+            color: rgb(203, 213, 225);
+        }
+
+        .dark .fi-main-sidebar .fi-sidebar-open-collapse-sidebar-btn:hover,
+        .dark .fi-main-sidebar .fi-sidebar-close-collapse-sidebar-btn:hover {
+            background: rgb(30, 41, 59);
+            color: rgb(248, 250, 252);
+        }
+    }
 }

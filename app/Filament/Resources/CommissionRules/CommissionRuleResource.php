@@ -31,7 +31,11 @@ class CommissionRuleResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-currency-dollar';
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Comisiones y Pagos';
+
     protected static ?string $navigationLabel = 'Reglas de comision';
+
+    protected static ?int $navigationSort = 11;
 
     protected static ?string $modelLabel = 'regla de comision';
 

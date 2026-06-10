@@ -27,7 +27,11 @@ class ProfessionalResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clínica';
+
     protected static ?string $navigationLabel = 'Profesionales';
+
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $modelLabel = 'profesional';
 

@@ -37,6 +37,8 @@ class ActivityRecordResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clínica';
+
     protected static ?string $navigationLabel = 'Actividades';
 
     protected static ?string $modelLabel = 'actividad';
