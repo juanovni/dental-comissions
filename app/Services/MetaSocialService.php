@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Enums\SocialCommentStatus;
+use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
+use App\Models\SocialIdentity;
 use App\Models\SocialPost;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -218,6 +220,7 @@ class MetaSocialService
     {
         $publishedAt = $commentData['created_time'] ?? $commentData['timestamp'] ?? null;
         $externalParentId = Arr::get($commentData, 'parent.id');
+        $identity = $this->resolveSocialIdentity($account, $commentData, $publishedAt);
 
         $parent = $externalParentId
             ? SocialComment::where('platform', $account->platform->value)
@@ -234,6 +237,7 @@ class MetaSocialService
 
         $comment->fill([
             'social_account_id' => $account->id,
+            'social_identity_id' => $identity?->id,
             'social_post_id' => $post->id,
             'parent_comment_id' => $parent?->id,
             'external_parent_comment_id' => $externalParentId,
@@ -252,6 +256,39 @@ class MetaSocialService
         $comment->save();
 
         return $comment;
+    }
+
+    private function resolveSocialIdentity(SocialAccount $account, array $commentData, mixed $publishedAt = null): ?SocialIdentity
+    {
+        $platformUserId = Arr::get($commentData, 'from.id') ?: ($commentData['username'] ?? null);
+
+        if (blank($platformUserId)) {
+            return null;
+        }
+
+        $seenAt = $publishedAt ? Carbon::parse($publishedAt) : now();
+
+        $identity = SocialIdentity::firstOrNew([
+            'platform' => $account->platform->value,
+            'platform_user_id' => (string) $platformUserId,
+        ]);
+
+        $metadata = $identity->metadata ?? [];
+        $metadata['last_source'] = 'meta_comment_sync';
+        $metadata['social_account_id'] = $account->id;
+
+        $identity->fill([
+            'username' => $commentData['username'] ?? $identity->username,
+            'display_name' => Arr::get($commentData, 'from.name') ?: ($commentData['username'] ?? $identity->display_name),
+            'status' => $identity->status?->value ?? SocialIdentityStatus::NewLead->value,
+            'first_seen_at' => $identity->first_seen_at ?: $seenAt,
+            'last_seen_at' => $seenAt,
+            'metadata' => $metadata,
+        ]);
+
+        $identity->save();
+
+        return $identity;
     }
 
     /**

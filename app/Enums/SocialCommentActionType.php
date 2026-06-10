@@ -12,6 +12,11 @@ enum SocialCommentActionType: string
     case MarkAsSpam = 'mark_as_spam';
     case Classify = 'classify';
     case Sync = 'sync';
+    case GenerateWhatsappToken = 'generate_whatsapp_token';
+    case RedirectToWhatsapp = 'redirect_to_whatsapp';
+    case WhatsappHandshake = 'whatsapp_handshake';
+    case LinkIdentity = 'link_identity';
+    case CreatePatientFromLead = 'create_patient_from_lead';
     case Error = 'error';
 
     public function label(): string
@@ -25,6 +30,11 @@ enum SocialCommentActionType: string
             self::MarkAsSpam => 'Marcar como spam',
             self::Classify => 'Clasificar',
             self::Sync => 'Sincronizar',
+            self::GenerateWhatsappToken => 'Generar token WhatsApp',
+            self::RedirectToWhatsapp => 'Derivar a WhatsApp',
+            self::WhatsappHandshake => 'Handshake WhatsApp',
+            self::LinkIdentity => 'Vincular identidad',
+            self::CreatePatientFromLead => 'Crear paciente desde lead',
             self::Error => 'Error',
         };
     }

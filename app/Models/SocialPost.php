@@ -14,11 +14,17 @@ class SocialPost extends Model
 
     protected $fillable = [
         'social_account_id',
+        'procedure_id',
         'platform',
         'external_post_id',
         'caption',
         'media_url',
         'permalink',
+        'campaign_name',
+        'campaign_goal',
+        'revenue_generated',
+        'conversion_count',
+        'metadata',
         'raw_payload',
         'published_at',
         'last_synced_at',
@@ -28,6 +34,9 @@ class SocialPost extends Model
     {
         return [
             'platform' => SocialPlatform::class,
+            'revenue_generated' => 'decimal:2',
+            'conversion_count' => 'integer',
+            'metadata' => 'array',
             'raw_payload' => 'array',
             'published_at' => 'datetime',
             'last_synced_at' => 'datetime',
@@ -37,6 +46,11 @@ class SocialPost extends Model
     public function socialAccount(): BelongsTo
     {
         return $this->belongsTo(SocialAccount::class);
+    }
+
+    public function procedure(): BelongsTo
+    {
+        return $this->belongsTo(Procedure::class);
     }
 
     public function comments(): HasMany

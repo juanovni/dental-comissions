@@ -84,6 +84,20 @@ class WhatsappService
                     $this->processWithAI($whatsappMessage, $professional);
                 }
             } else {
+                $socialComment = app(SocialConversionService::class)->processIncomingMessage($whatsappMessage);
+
+                if ($socialComment) {
+                    $whatsappMessage->markAsProcessed();
+
+                    if ($socialComment->converted_patient_id) {
+                        $this->sendMessage($fromPhone, 'Gracias. Identificamos tu ficha y daremos seguimiento a tu solicitud.');
+                    } else {
+                        $this->sendMessage($fromPhone, 'Gracias. Recibimos tu codigo y el equipo creara o validara tu ficha para continuar.');
+                    }
+
+                    return $whatsappMessage;
+                }
+
                 $this->sendMessage($fromPhone, 'No pudimos identificar tu numero. Contacta al administrador.');
                 $whatsappMessage->markAsFailed('Profesional no identificado');
             }

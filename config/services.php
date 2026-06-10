@@ -38,6 +38,7 @@ return [
     'whatsapp' => [
         'api_url' => env('WHATSAPP_API_URL', 'https://graph.facebook.com/v19.0'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'business_phone' => env('WHATSAPP_BUSINESS_PHONE'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'dental-commissions-verify'),
         'app_secret' => env('WHATSAPP_APP_SECRET'),

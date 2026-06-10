@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
+use App\Enums\SocialConversionStatus;
 use App\Enums\SocialPlatform;
 use App\Enums\SocialPriority;
 use App\Enums\SocialReputationRisk;
@@ -21,6 +22,7 @@ class SocialComment extends Model
 
     protected $fillable = [
         'social_account_id',
+        'social_identity_id',
         'social_post_id',
         'parent_comment_id',
         'platform',
@@ -38,6 +40,13 @@ class SocialComment extends Model
         'suggested_action',
         'response_channel',
         'suggested_reply',
+        'suggested_procedure_id',
+        'tracking_token',
+        'conversion_status',
+        'converted_patient_id',
+        'converted_at',
+        'is_emergency',
+        'whatsapp_redirected_at',
         'requires_human_review',
         'ai_reason',
         'ai_response',
@@ -56,8 +65,12 @@ class SocialComment extends Model
             'priority' => SocialPriority::class,
             'reputation_risk' => SocialReputationRisk::class,
             'status' => SocialCommentStatus::class,
+            'conversion_status' => SocialConversionStatus::class,
             'suggested_action' => SocialSuggestedAction::class,
             'response_channel' => SocialResponseChannel::class,
+            'converted_at' => 'datetime',
+            'is_emergency' => 'boolean',
+            'whatsapp_redirected_at' => 'datetime',
             'requires_human_review' => 'boolean',
             'ai_response' => 'array',
             'is_hidden' => 'boolean',
@@ -75,6 +88,21 @@ class SocialComment extends Model
     public function socialPost(): BelongsTo
     {
         return $this->belongsTo(SocialPost::class);
+    }
+
+    public function socialIdentity(): BelongsTo
+    {
+        return $this->belongsTo(SocialIdentity::class);
+    }
+
+    public function suggestedProcedure(): BelongsTo
+    {
+        return $this->belongsTo(Procedure::class, 'suggested_procedure_id');
+    }
+
+    public function convertedPatient(): BelongsTo
+    {
+        return $this->belongsTo(Patient::class, 'converted_patient_id');
     }
 
     public function parentComment(): BelongsTo
