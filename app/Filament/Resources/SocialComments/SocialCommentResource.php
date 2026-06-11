@@ -475,8 +475,9 @@ class SocialCommentResource extends Resource
     private static function whatsappReplyText(SocialComment $record): string
     {
         $token = $record->tracking_token ?: 'DNT-XXXXX';
+        $platform = $record->platform->label();
 
-        return "Hola! Vengo de Instagram (ID: {$token}) y quiero mi valoración gratuita...";
+        return "Hola! Vengo de {$platform} (ID: {$token}) y quiero mi valoración gratuita...";
     }
 
     private static function whatsappLinkPreview(SocialComment $record): string

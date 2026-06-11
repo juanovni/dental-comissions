@@ -9,9 +9,9 @@ class ApexSocialTopPostsChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
 
-    protected static ?int $sort = 32;
+    protected static ?int $sort = 37;
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 2];
 
     protected ?string $maxHeight = '320px';
 

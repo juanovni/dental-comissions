@@ -10,9 +10,20 @@ class SocialRoiStatsWidget extends StatsOverviewWidget
 {
     protected static ?int $sort = 30;
 
+    protected int | string | array $columnSpan = 'full';
+
     protected ?string $heading = 'ROI Social';
 
     protected ?string $description = 'Atribucion desde comentario social hasta actividad clinica.';
+
+    protected function getColumns(): int | array
+    {
+        return [
+            'default' => 1,
+            'md' => 2,
+            'xl' => 4,
+        ];
+    }
 
     protected function getStats(): array
     {
@@ -31,6 +42,10 @@ class SocialRoiStatsWidget extends StatsOverviewWidget
                 ->description('Leads sin WhatsApp ni ficha')
                 ->color($summary['leakage_count'] > 0 ? 'danger' : 'success')
                 ->icon($summary['leakage_count'] > 0 ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-shield-check'),
+            Stat::make('Token sin WhatsApp', $summary['orphan_attribution_count'])
+                ->description('Atribucion huerfana: carrito abandonado social')
+                ->color($summary['orphan_attribution_count'] > 0 ? 'warning' : 'success')
+                ->icon($summary['orphan_attribution_count'] > 0 ? 'heroicon-o-link-slash' : 'heroicon-o-check-circle'),
         ];
     }
 }

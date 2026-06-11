@@ -9,9 +9,9 @@ class ApexSocialConversionFunnelChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
 
-    protected static ?int $sort = 31;
+    protected static ?int $sort = 36;
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 2];
 
     protected ?string $maxHeight = '320px';
 
