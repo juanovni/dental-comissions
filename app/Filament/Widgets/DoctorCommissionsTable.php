@@ -15,7 +15,7 @@ class DoctorCommissionsTable extends TableWidget
 {
     protected static ?int $sort = 6;
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int | string | array $columnSpan = ['md' => 2, 'xl' => 2];
 
     public function table(Table $table): Table
     {

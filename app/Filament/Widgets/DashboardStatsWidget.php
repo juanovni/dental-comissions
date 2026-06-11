@@ -14,9 +14,20 @@ class DashboardStatsWidget extends StatsOverviewWidget
 {
     protected static ?int $sort = 1;
 
+    protected int | string | array $columnSpan = 'full';
+
     protected ?string $heading = 'Resumen operativo';
 
     protected ?string $description = 'Indicadores clave para controlar actividad, aprobaciones y pagos.';
+
+    protected function getColumns(): int | array
+    {
+        return [
+            'default' => 1,
+            'md' => 2,
+            'xl' => 3,
+        ];
+    }
 
     protected function getStats(): array
     {

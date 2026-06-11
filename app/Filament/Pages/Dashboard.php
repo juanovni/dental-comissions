@@ -23,14 +23,23 @@ class Dashboard extends BaseDashboard
 
     protected static ?int $navigationSort = 1;
 
+    public function getColumns(): int | array
+    {
+        return [
+            'default' => 1,
+            'md' => 2,
+            'xl' => 4,
+        ];
+    }
+
     public function getWidgets(): array
     {
         return [
             DashboardStatsWidget::class,
-            ApexActivityStatusChart::class,
             ApexTopProceduresChart::class,
-            ApexTopDoctorsChart::class,
+            ApexActivityStatusChart::class,
             ApexPaymentMethodCommissionsChart::class,
+            ApexTopDoctorsChart::class,
             DoctorCommissionsTable::class,
             WhatsappIssuesTable::class,
         ];

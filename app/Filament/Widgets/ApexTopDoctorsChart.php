@@ -9,9 +9,9 @@ class ApexTopDoctorsChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 5;
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 2];
 
     protected ?string $maxHeight = '320px';
 

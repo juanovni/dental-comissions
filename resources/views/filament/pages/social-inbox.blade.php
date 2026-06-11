@@ -18,6 +18,7 @@
             --inbox-line: rgba(15, 23, 42, .08);
             --inbox-card: #ffffff;
             color: var(--inbox-ink);
+            margin-top: -.25rem;
         }
 
         .social-inbox-toolbar {
@@ -25,12 +26,19 @@
             display: flex;
             gap: 1rem;
             justify-content: flex-end;
-            margin-bottom: .875rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 900px) {
+            .social-inbox-toolbar {
+                margin-top: -4.05rem;
+            }
         }
 
         @media (max-width: 760px) {
             .social-inbox-toolbar {
                 justify-content: stretch;
+                margin-bottom: .9rem;
             }
         }
 
@@ -46,32 +54,73 @@
         }
 
         .smart-filters {
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             flex-wrap: wrap;
-            gap: .55rem;
-            margin: 0 0 1.25rem;
+            gap: 1.35rem;
+            margin: 0 0 1rem;
         }
 
         .smart-filter {
             align-items: center;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: .75rem;
+            background: transparent;
+            border: 0;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
             color: #334155;
             display: inline-flex;
             font-size: .84rem;
-            font-weight: 750;
-            gap: .45rem;
-            padding: .62rem .82rem;
-            transition: .18s ease;
+            font-weight: 700;
+            gap: .4rem;
+            margin-bottom: -1px;
+            padding: .65rem .05rem .8rem;
+            transition: border-color .18s ease, color .18s ease;
         }
 
-        .smart-filter:hover,
+        .smart-filter:hover {
+            color: #0f766e;
+        }
+
         .smart-filter.is-active {
-            background: #0f766e;
-            border-color: #0f766e;
-            color: white;
-            box-shadow: 0 8px 20px -16px rgba(15, 118, 110, .9);
+            border-bottom-color: #0f766e;
+            color: #0f766e;
+        }
+
+        .smart-filter-icon {
+            font-size: .9rem;
+            line-height: 1;
+        }
+
+        .smart-filter-count {
+            align-items: center;
+            background: #f1f5f9;
+            border-radius: 999px;
+            color: #64748b;
+            display: inline-flex;
+            font-size: .72rem;
+            font-weight: 800;
+            height: 1.25rem;
+            justify-content: center;
+            min-width: 1.25rem;
+            padding: 0 .38rem;
+        }
+
+        .smart-filter.is-active .smart-filter-count {
+            background: #ccfbf1;
+            color: #0f766e;
+        }
+
+        @media (max-width: 760px) {
+            .smart-filters {
+                gap: 1rem;
+                overflow-x: auto;
+                padding-bottom: .1rem;
+            }
+
+            .smart-filter {
+                flex: 0 0 auto;
+            }
         }
 
         .smart-grid {
@@ -308,9 +357,9 @@
                     wire:click="setFilter('{{ $key }}')"
                     @class(['smart-filter', 'is-active' => $filter === $key])
                 >
-                    <span>{{ $item['icon'] }}</span>
+                    <span class="smart-filter-icon">{{ $item['icon'] }}</span>
                     <span>{{ $item['label'] }}</span>
-                    <strong>{{ $item['count'] }}</strong>
+                    <strong class="smart-filter-count">{{ $item['count'] }}</strong>
                 </button>
             @endforeach
         </div>

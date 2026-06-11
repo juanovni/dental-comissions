@@ -313,9 +313,10 @@ class SocialCommentResource extends Resource
                 ->label('Vincular paciente')
                 ->icon('heroicon-o-link')
                 ->color('info')
-                ->form([
+                ->form(fn (SocialComment $record): array => [
                     Select::make('patient_id')
                         ->label('Paciente')
+                        ->default($record->socialIdentity?->patient_id ?? $record->converted_patient_id)
                         ->options(fn (): array => Patient::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
                         ->searchable()
                         ->required(),
@@ -475,7 +476,7 @@ class SocialCommentResource extends Resource
     {
         $token = $record->tracking_token ?: 'DNT-XXXXX';
 
-        return "Hola, con gusto te ayudamos. Escribenos por WhatsApp y envia este codigo para continuar: {$token}";
+        return "Hola! Vengo de Instagram (ID: {$token}) y quiero mi valoración gratuita...";
     }
 
     private static function whatsappLinkPreview(SocialComment $record): string
