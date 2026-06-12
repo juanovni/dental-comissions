@@ -11,6 +11,7 @@ use App\Models\ActivityRecord;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Models\SocialPost;
+use App\Support\SocialRoiPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
@@ -85,43 +86,49 @@ class SocialRoiService
         ]);
     }
 
-    public function summary(): array
+    public function summary(?array $filters = null): array
     {
-        $socialActivities = ActivityRecord::query()->whereNotNull('social_post_id');
-        $comments = SocialComment::query();
+        $period = SocialRoiPeriod::resolve($filters);
+        $socialActivities = $this->socialActivitiesQuery($period);
+        $comments = $this->commentsQuery($period);
 
         $leadCount = (clone $comments)->whereNotNull('social_identity_id')->count();
         $whatsappCount = (clone $comments)->whereNotNull('whatsapp_redirected_at')->count();
         $linkedCount = (clone $comments)->whereNotNull('converted_patient_id')->count();
         $activityCount = (clone $socialActivities)->count();
         $revenue = (clone $socialActivities)->sum('internal_rate_snapshot');
-        $leakageCount = $this->leakageQuery()->count();
+        $leakageCount = $this->leakageQuery($filters)->count();
 
         return [
+            'period_label' => $period['label'],
+            'previous_period_label' => $period['previous_label'],
             'lead_count' => $leadCount,
             'whatsapp_count' => $whatsappCount,
             'linked_count' => $linkedCount,
             'activity_count' => $activityCount,
             'revenue' => (float) $revenue,
             'leakage_count' => $leakageCount,
-            'orphan_attribution_count' => $this->orphanAttributionCount(),
+            'orphan_attribution_count' => $this->orphanAttributionCount($filters),
             'lead_to_activity_rate' => $leadCount > 0 ? round(($activityCount / $leadCount) * 100, 1) : 0,
         ];
     }
 
-    public function orphanAttributionCount(): int
+    public function orphanAttributionCount(?array $filters = null): int
     {
-        return SocialComment::query()
+        $period = SocialRoiPeriod::resolve($filters);
+
+        return $this->commentsQuery($period)
             ->where('conversion_status', SocialConversionStatus::TokenGenerated->value)
             ->whereNull('whatsapp_redirected_at')
             ->count();
     }
 
-    public function platformPerformanceData(): array
+    public function platformPerformanceData(?array $filters = null): array
     {
+        $period = SocialRoiPeriod::resolve($filters);
         $platforms = collect(SocialPlatform::cases());
 
-        $leadRows = SocialComment::query()
+        $leadRows = $this->commentsQuery($period)
             ->leftJoin('social_identities', 'social_identities.id', '=', 'social_comments.social_identity_id')
             ->whereIn('social_comments.classification', [
                 SocialCommentClassification::SalesLead->value,
@@ -143,6 +150,7 @@ class SocialRoiService
                     ->orWhereNotNull('activity_records.social_comment_id')
                     ->orWhereNotNull('activity_records.social_identity_id');
             })
+            ->whereBetween('activity_records.activity_date', [$period['from_date'], $period['until_date']])
             ->selectRaw('COALESCE(social_posts.platform, social_comments.platform, social_identities.platform) as platform')
             ->selectRaw('COALESCE(SUM(activity_records.internal_rate_snapshot), 0) as revenue')
             ->groupByRaw('COALESCE(social_posts.platform, social_comments.platform, social_identities.platform)')
@@ -156,11 +164,16 @@ class SocialRoiService
         ];
     }
 
-    public function procedureConversionData(int $limit = 5): array
+    public function procedureConversionData(int $limit = 5, ?array $filters = null): array
     {
-        $rows = SocialComment::query()
+        $period = SocialRoiPeriod::resolve($filters);
+
+        $rows = $this->commentsQuery($period)
             ->leftJoin('procedures', 'procedures.id', '=', 'social_comments.suggested_procedure_id')
-            ->leftJoin('activity_records', 'activity_records.social_comment_id', '=', 'social_comments.id')
+            ->leftJoin('activity_records', function ($join) use ($period): void {
+                $join->on('activity_records.social_comment_id', '=', 'social_comments.id')
+                    ->whereBetween('activity_records.activity_date', [$period['from_date'], $period['until_date']]);
+            })
             ->selectRaw("COALESCE(procedures.name, 'Consulta General/Otros') as label")
             ->selectRaw('COUNT(DISTINCT social_comments.id) as comments_count')
             ->selectRaw('COUNT(DISTINCT activity_records.id) as conversions_count')
@@ -184,9 +197,11 @@ class SocialRoiService
         ];
     }
 
-    public function responseTimeVsRevenueData(int $weeks = 12): array
+    public function responseTimeVsRevenueData(?array $filters = null): array
     {
-        $start = now()->startOfWeek()->subWeeks($weeks - 1);
+        $period = SocialRoiPeriod::resolve($filters);
+        $start = $period['from']->copy()->startOfWeek();
+        $end = $period['until']->copy()->endOfWeek();
         $actions = [
             SocialCommentActionType::Reply->value,
             SocialCommentActionType::RedirectToWhatsapp->value,
@@ -203,21 +218,22 @@ class SocialRoiService
         $responseMinutes = [];
         $revenue = [];
 
-        for ($index = 0; $index < $weeks; $index++) {
-            $weekStart = (clone $start)->addWeeks($index)->startOfWeek();
+        for ($weekStart = $start->copy(); $weekStart->lte($end); $weekStart->addWeek()) {
             $weekEnd = (clone $weekStart)->endOfWeek();
+            $bucketStart = $weekStart->copy()->max($period['from']);
+            $bucketEnd = $weekEnd->copy()->min($period['until']);
 
             $averageMinutes = DB::table('social_comments')
                 ->joinSub($firstActions, 'first_actions', function ($join): void {
                     $join->on('first_actions.social_comment_id', '=', 'social_comments.id');
                 })
-                ->whereBetween('social_comments.created_at', [$weekStart, $weekEnd])
+                ->whereBetween('social_comments.created_at', [$bucketStart, $bucketEnd])
                 ->selectRaw('AVG(EXTRACT(EPOCH FROM (first_actions.first_action_at::timestamp - social_comments.created_at::timestamp)) / 60) as average_minutes')
                 ->value('average_minutes');
 
             $weekRevenue = ActivityRecord::query()
                 ->whereNotNull('social_attributed_at')
-                ->whereBetween('activity_date', [$weekStart->toDateString(), $weekEnd->toDateString()])
+                ->whereBetween('activity_date', [$bucketStart->toDateString(), $bucketEnd->toDateString()])
                 ->sum('internal_rate_snapshot');
 
             $labels[] = 'Sem ' . $weekStart->isoWeek();
@@ -232,23 +248,29 @@ class SocialRoiService
         ];
     }
 
-    public function topPosts(int $limit = 8): Collection
+    public function topPosts(int $limit = 8, ?array $filters = null): Collection
     {
+        $period = SocialRoiPeriod::resolve($filters);
+
         return SocialPost::query()
             ->with('socialAccount')
-            ->where(function (Builder $query): void {
-                $query->where('revenue_generated', '>', 0)
-                    ->orWhere('conversion_count', '>', 0);
-            })
-            ->orderByDesc('revenue_generated')
-            ->orderByDesc('conversion_count')
+            ->join('activity_records', 'activity_records.social_post_id', '=', 'social_posts.id')
+            ->whereBetween('activity_records.activity_date', [$period['from_date'], $period['until_date']])
+            ->select('social_posts.*')
+            ->selectRaw('COALESCE(SUM(activity_records.internal_rate_snapshot), 0) as revenue_generated')
+            ->selectRaw('COUNT(activity_records.id) as conversion_count')
+            ->groupBy('social_posts.id')
+            ->orderByDesc(DB::raw('COALESCE(SUM(activity_records.internal_rate_snapshot), 0)'))
+            ->orderByDesc(DB::raw('COUNT(activity_records.id)'))
             ->limit($limit)
             ->get();
     }
 
-    public function leakageQuery(): Builder
+    public function leakageQuery(?array $filters = null): Builder
     {
-        return SocialComment::query()
+        $period = SocialRoiPeriod::resolve($filters);
+
+        return $this->commentsQuery($period)
             ->whereNull('converted_patient_id')
             ->whereNull('whatsapp_redirected_at')
             ->where('created_at', '<=', now()->subDay())
@@ -258,9 +280,9 @@ class SocialRoiService
             });
     }
 
-    public function funnelData(): array
+    public function funnelData(?array $filters = null): array
     {
-        $summary = $this->summary();
+        $summary = $this->summary($filters);
 
         return [
             'labels' => ['Comentarios', 'WhatsApp', 'Ficha', 'Actividad'],
@@ -271,5 +293,18 @@ class SocialRoiService
                 $summary['activity_count'],
             ],
         ];
+    }
+
+    private function commentsQuery(array $period): Builder
+    {
+        return SocialComment::query()
+            ->whereBetween('social_comments.created_at', [$period['from'], $period['until']]);
+    }
+
+    private function socialActivitiesQuery(array $period): Builder
+    {
+        return ActivityRecord::query()
+            ->whereNotNull('social_post_id')
+            ->whereBetween('activity_date', [$period['from_date'], $period['until_date']]);
     }
 }

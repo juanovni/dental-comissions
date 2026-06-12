@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Teal,
             ])
             ->sidebarCollapsibleOnDesktop()
-            ->maxContentWidth('fi-width-9xl')
+            ->maxContentWidth('fi-width-full')
             ->viteTheme('resources/css/app.css')
             ->assets([
                 Js::make('admin-app')

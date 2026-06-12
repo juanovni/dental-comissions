@@ -25,9 +25,11 @@ class MetaSocialService
         ];
     }
 
-    public function syncAll(): array
+    public function syncAll(bool $refreshAccounts = false): array
     {
-        $this->syncAuthorizedAccounts();
+        if ($refreshAccounts) {
+            $this->syncAuthorizedAccounts();
+        }
 
         $summary = [
             'accounts' => 0,
@@ -59,6 +61,47 @@ class MetaSocialService
         return $summary;
     }
 
+    public function processWebhookPayload(array $payload): array
+    {
+        $summary = [
+            'entries' => count($payload['entry'] ?? []),
+            'comments' => 0,
+            'ignored' => 0,
+            'fallback_sync' => false,
+        ];
+
+        foreach ($payload['entry'] ?? [] as $entry) {
+            foreach ($entry['changes'] ?? [] as $change) {
+                $webhookComment = $this->normalizeWebhookComment($payload, $entry, $change);
+
+                if (! $webhookComment) {
+                    $summary['ignored']++;
+
+                    continue;
+                }
+
+                $account = $this->resolveWebhookAccount(
+                    $webhookComment['platform'],
+                    $webhookComment['account_id'],
+                );
+
+                $post = $this->storeWebhookPost($account, $webhookComment['post']);
+                $comment = $this->storeComment($account, $post, $webhookComment['comment']);
+                app(SocialCommentClassificationService::class)->classify($comment);
+
+                $summary['comments']++;
+            }
+        }
+
+        if ($summary['comments'] === 0 && $summary['ignored'] === 0) {
+            $summary['fallback_sync'] = true;
+            $syncSummary = $this->syncAll();
+            $summary = array_merge($summary, $syncSummary);
+        }
+
+        return $summary;
+    }
+
     public function syncAuthorizedAccounts(): void
     {
         foreach ($this->getPages() as $page) {
@@ -78,7 +121,7 @@ class MetaSocialService
 
             $instagramAccount = $this->getInstagramAccountForPage($page['id'], $pageAccount);
 
-            if (!$instagramAccount) {
+            if (! $instagramAccount) {
                 continue;
             }
 
@@ -249,13 +292,144 @@ class MetaSocialService
             'published_at' => $publishedAt ? Carbon::parse($publishedAt) : null,
         ]);
 
-        if (!$comment->exists) {
+        if (! $comment->exists) {
             $comment->status = SocialCommentStatus::New;
         }
 
         $comment->save();
 
         return $comment;
+    }
+
+    private function normalizeWebhookComment(array $payload, array $entry, array $change): ?array
+    {
+        $value = $change['value'] ?? [];
+
+        if (($value['verb'] ?? 'add') !== 'add') {
+            return null;
+        }
+
+        $platform = ($payload['object'] ?? '') === 'instagram'
+            ? SocialPlatform::Instagram
+            : SocialPlatform::Facebook;
+
+        if ($platform === SocialPlatform::Instagram) {
+            $commentId = $value['id'] ?? $value['comment_id'] ?? null;
+            $message = $value['text'] ?? $value['message'] ?? null;
+            $postId = Arr::get($value, 'media.id') ?? $value['media_id'] ?? $value['post_id'] ?? null;
+            $accountId = (string) ($entry['id'] ?? Arr::get($value, 'media.owner.id') ?? '');
+
+            if (blank($commentId) || blank($message) || blank($accountId)) {
+                return null;
+            }
+
+            return [
+                'platform' => SocialPlatform::Instagram,
+                'account_id' => $accountId,
+                'post' => [
+                    'id' => $postId ?: 'instagram-comment-'.$commentId,
+                    'caption' => null,
+                    'timestamp' => $value['timestamp'] ?? null,
+                    'raw_payload' => $value,
+                ],
+                'comment' => [
+                    'id' => $commentId,
+                    'text' => $message,
+                    'username' => Arr::get($value, 'from.username') ?? $value['username'] ?? null,
+                    'from' => [
+                        'id' => Arr::get($value, 'from.id') ?? Arr::get($value, 'from.username') ?? null,
+                        'name' => Arr::get($value, 'from.username') ?? $value['username'] ?? null,
+                    ],
+                    'timestamp' => $value['timestamp'] ?? null,
+                    'parent' => ['id' => $value['parent_id'] ?? null],
+                    'raw_webhook_payload' => $value,
+                ],
+            ];
+        }
+
+        if (($value['item'] ?? null) !== 'comment' && ! isset($value['comment_id'])) {
+            return null;
+        }
+
+        $commentId = $value['comment_id'] ?? $value['id'] ?? null;
+        $message = $value['message'] ?? $value['text'] ?? null;
+        $postId = $value['post_id'] ?? $value['parent_id'] ?? null;
+        $accountId = (string) ($entry['id'] ?? $value['page_id'] ?? '');
+
+        if (blank($commentId) || blank($message) || blank($accountId)) {
+            return null;
+        }
+
+        return [
+            'platform' => SocialPlatform::Facebook,
+            'account_id' => $accountId,
+            'post' => [
+                'id' => $postId ?: 'facebook-comment-'.$commentId,
+                'caption' => null,
+                'created_time' => isset($value['created_time']) && is_numeric($value['created_time'])
+                    ? Carbon::createFromTimestamp((int) $value['created_time'])->toIso8601String()
+                    : ($value['created_time'] ?? null),
+                'raw_payload' => $value,
+            ],
+            'comment' => [
+                'id' => $commentId,
+                'message' => $message,
+                'from' => [
+                    'id' => Arr::get($value, 'from.id') ?? $value['sender_id'] ?? null,
+                    'name' => Arr::get($value, 'from.name') ?? $value['sender_name'] ?? null,
+                ],
+                'created_time' => isset($value['created_time']) && is_numeric($value['created_time'])
+                    ? Carbon::createFromTimestamp((int) $value['created_time'])->toIso8601String()
+                    : ($value['created_time'] ?? null),
+                'parent' => ['id' => $value['parent_id'] ?? null],
+                'raw_webhook_payload' => $value,
+            ],
+        ];
+    }
+
+    private function resolveWebhookAccount(SocialPlatform $platform, string $externalAccountId): SocialAccount
+    {
+        $query = SocialAccount::query()->where('platform', $platform->value);
+
+        if ($platform === SocialPlatform::Instagram) {
+            $query->where(function ($query) use ($externalAccountId): void {
+                $query->where('external_account_id', $externalAccountId)
+                    ->orWhere('instagram_business_account_id', $externalAccountId);
+            });
+        } else {
+            $query->where(function ($query) use ($externalAccountId): void {
+                $query->where('external_account_id', $externalAccountId)
+                    ->orWhere('page_id', $externalAccountId);
+            });
+        }
+
+        $account = $query->first();
+
+        if ($account) {
+            return $account;
+        }
+
+        return SocialAccount::create([
+            'platform' => $platform->value,
+            'account_name' => $platform === SocialPlatform::Instagram ? 'Instagram Business' : 'Facebook Page',
+            'external_account_id' => $externalAccountId,
+            'page_id' => $platform === SocialPlatform::Facebook ? $externalAccountId : null,
+            'instagram_business_account_id' => $platform === SocialPlatform::Instagram ? $externalAccountId : null,
+            'is_active' => true,
+            'sync_settings' => ['source' => 'meta_webhook'],
+        ]);
+    }
+
+    private function storeWebhookPost(SocialAccount $account, array $postData): SocialPost
+    {
+        return $this->storePost($account, [
+            'id' => $postData['id'],
+            'message' => $postData['caption'] ?? null,
+            'caption' => $postData['caption'] ?? null,
+            'created_time' => $postData['created_time'] ?? $postData['timestamp'] ?? null,
+            'timestamp' => $postData['timestamp'] ?? $postData['created_time'] ?? null,
+            'raw_payload' => $postData['raw_payload'] ?? $postData,
+        ]);
     }
 
     private function resolveSocialIdentity(SocialAccount $account, array $commentData, mixed $publishedAt = null): ?SocialIdentity
@@ -327,6 +501,7 @@ class MetaSocialService
 
         $response = Http::withToken($token)
             ->acceptJson()
+            ->withOptions($this->httpOptions())
             ->get($url, $params);
 
         if ($response->failed()) {
@@ -342,12 +517,19 @@ class MetaSocialService
         return $response->json() ?? [];
     }
 
+    private function httpOptions(): array
+    {
+        return defined('CURLOPT_IPRESOLVE') && defined('CURL_IPRESOLVE_V4')
+            ? ['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]]
+            : [];
+    }
+
     private function url(string $path): string
     {
         if (str_starts_with($path, 'http')) {
             return $path;
         }
 
-        return $this->config()['api_url'] . '/' . ltrim($path, '/');
+        return $this->config()['api_url'].'/'.ltrim($path, '/');
     }
 }

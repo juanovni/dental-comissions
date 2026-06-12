@@ -46,7 +46,12 @@ return [
 
     'meta' => [
         'api_url' => env('META_GRAPH_API_URL', 'https://graph.facebook.com/v25.0'),
+        'graph_version' => env('META_GRAPH_VERSION', 'v25.0'),
+        'app_id' => env('META_APP_ID'),
+        'app_secret' => env('META_APP_SECRET'),
+        'redirect_uri' => env('META_REDIRECT_URI'),
         'access_token' => env('META_ACCESS_TOKEN'),
+        'page_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('META_PAGE_IDS', ''))))),
         'verify_token' => env('META_VERIFY_TOKEN', 'dental-social-verify'),
         'sync_days' => (int) env('META_SYNC_DAYS', 30),
     ],

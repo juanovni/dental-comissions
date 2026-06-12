@@ -2,12 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
 use App\Services\SocialRoiService;
 
 class ApexSocialProcedureConversionChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
+    use HasSocialRoiPeriod;
 
     protected static ?int $sort = 34;
 
@@ -17,11 +19,16 @@ class ApexSocialProcedureConversionChart extends ApexChartWidget
 
     protected ?string $description = 'Volumen de comentarios clasificados por IA vs tasa de conversion a actividad pagada.';
 
+    public function getDescription(): ?string
+    {
+        return $this->socialRoiDescription($this->description);
+    }
+
     protected ?string $maxHeight = '380px';
 
     protected function getOptions(): array
     {
-        $data = app(SocialRoiService::class)->procedureConversionData(5);
+        $data = app(SocialRoiService::class)->procedureConversionData(5, $this->pageFilters);
 
         return $this->baseApexOptions([
             'chart' => [

@@ -9,6 +9,7 @@
         @endif
 
         <div
+            wire:key="apex-chart-{{ $this->getChartRenderKey() }}"
             x-data="{
                 chart: null,
                 failedAttempts: 0,

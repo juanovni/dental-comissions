@@ -2,12 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
 use App\Services\SocialRoiService;
 
 class ApexSocialTopPostsChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
+    use HasSocialRoiPeriod;
 
     protected static ?int $sort = 37;
 
@@ -19,9 +21,14 @@ class ApexSocialTopPostsChart extends ApexChartWidget
 
     protected ?string $description = 'Publicaciones que generan actividad clinica atribuida.';
 
+    public function getDescription(): ?string
+    {
+        return $this->socialRoiDescription($this->description);
+    }
+
     protected function getOptions(): array
     {
-        $posts = app(SocialRoiService::class)->topPosts(8);
+        $posts = app(SocialRoiService::class)->topPosts(8, $this->pageFilters);
 
         return $this->baseApexOptions([
             'chart' => [

@@ -340,7 +340,7 @@
         }
     </style>
 
-    <section class="social-inbox-page">
+    <section class="social-inbox-page" wire:poll.10s>
         <header class="social-inbox-toolbar">
             <input
                 class="smart-search"

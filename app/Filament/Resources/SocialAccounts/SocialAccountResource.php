@@ -15,6 +15,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class SocialAccountResource extends Resource
@@ -66,6 +67,12 @@ class SocialAccountResource extends Resource
                 SelectFilter::make('platform')
                     ->label('Red')
                     ->options(collect(SocialPlatform::cases())->mapWithKeys(fn ($case) => [$case->value => $case->label()])),
+                TernaryFilter::make('is_active')
+                    ->label('Estado')
+                    ->trueLabel('Activas')
+                    ->falseLabel('Inactivas')
+                    ->placeholder('Todas')
+                    ->default(true),
             ])
             ->recordActions([
                 EditAction::make(),

@@ -2,12 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
 use App\Services\SocialRoiService;
 
 class ApexSocialConversionFunnelChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
+    use HasSocialRoiPeriod;
 
     protected static ?int $sort = 36;
 
@@ -19,9 +21,14 @@ class ApexSocialConversionFunnelChart extends ApexChartWidget
 
     protected ?string $description = 'Comentario -> WhatsApp -> ficha -> actividad.';
 
+    public function getDescription(): ?string
+    {
+        return $this->socialRoiDescription($this->description);
+    }
+
     protected function getOptions(): array
     {
-        $funnel = app(SocialRoiService::class)->funnelData();
+        $funnel = app(SocialRoiService::class)->funnelData($this->pageFilters);
 
         return $this->baseApexOptions([
             'chart' => [

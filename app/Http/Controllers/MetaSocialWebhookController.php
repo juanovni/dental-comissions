@@ -37,7 +37,7 @@ class MetaSocialWebhookController extends Controller
         ]);
 
         try {
-            $summary = $this->metaSocialService->syncAll();
+            $summary = $this->metaSocialService->processWebhookPayload($payload);
 
             return response()->json([
                 'status' => 'ok',

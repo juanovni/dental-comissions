@@ -2,12 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
 use App\Services\SocialRoiService;
 
 class ApexSocialPlatformPerformanceChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
+    use HasSocialRoiPeriod;
 
     protected static ?int $sort = 33;
 
@@ -17,11 +19,16 @@ class ApexSocialPlatformPerformanceChart extends ApexChartWidget
 
     protected ?string $description = 'Captacion vs fidelizacion e ingreso atribuido por plataforma.';
 
+    public function getDescription(): ?string
+    {
+        return $this->socialRoiDescription($this->description);
+    }
+
     protected ?string $maxHeight = '360px';
 
     protected function getOptions(): array
     {
-        $data = app(SocialRoiService::class)->platformPerformanceData();
+        $data = app(SocialRoiService::class)->platformPerformanceData($this->pageFilters);
 
         return $this->baseApexOptions([
             'chart' => [

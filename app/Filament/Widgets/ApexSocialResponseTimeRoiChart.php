@@ -2,12 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
 use App\Services\SocialRoiService;
 
 class ApexSocialResponseTimeRoiChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
+    use HasSocialRoiPeriod;
 
     protected static ?int $sort = 35;
 
@@ -17,11 +19,16 @@ class ApexSocialResponseTimeRoiChart extends ApexChartWidget
 
     protected ?string $description = 'Velocidad promedio de respuesta comparada con revenue social generado.';
 
+    public function getDescription(): ?string
+    {
+        return $this->socialRoiDescription($this->description);
+    }
+
     protected ?string $maxHeight = '360px';
 
     protected function getOptions(): array
     {
-        $data = app(SocialRoiService::class)->responseTimeVsRevenueData(12);
+        $data = app(SocialRoiService::class)->responseTimeVsRevenueData($this->pageFilters);
 
         return $this->baseApexOptions([
             'chart' => [
