@@ -20,6 +20,7 @@ use App\Models\Patient;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Services\SocialConversionService;
+use App\Services\SocialCrmSettingsService;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -42,9 +43,9 @@ class SocialCommentResource extends Resource
 {
     protected static ?string $model = SocialComment::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Reputacion Digital';
+    protected static string|\UnitEnum|null $navigationGroup = 'Reputacion Digital';
 
     protected static ?string $navigationLabel = 'Comentarios';
 
@@ -391,10 +392,18 @@ class SocialCommentResource extends Resource
         SocialCommentStatus $status,
         string $notes,
     ): void {
-        $record->update([
+        $updates = [
             'status' => $status,
             'requires_human_review' => false,
-        ]);
+        ];
+
+        if ($action === SocialCommentActionType::MarkAsReviewed
+            && app(SocialCrmSettingsService::class)->archiveOnReview()
+        ) {
+            $updates['is_hidden'] = true;
+        }
+
+        $record->update($updates);
 
         $record->actions()->create([
             'action' => $action,
@@ -421,15 +430,14 @@ class SocialCommentResource extends Resource
         Patient $patient,
         string $notes,
         SocialCommentActionType $action,
-    ): void
-    {
+    ): void {
         $identity = $record->socialIdentity;
 
-        if (!$identity) {
+        if (! $identity) {
             $identity = SocialIdentity::firstOrCreate(
                 [
                     'platform' => $record->platform->value,
-                    'platform_user_id' => $record->author_external_id ?: 'unknown-comment-' . $record->id,
+                    'platform_user_id' => $record->author_external_id ?: 'unknown-comment-'.$record->id,
                 ],
                 [
                     'username' => $record->author_username,
@@ -493,7 +501,7 @@ class SocialCommentResource extends Resource
     private static function patientLeadNotes(SocialComment $record): string
     {
         return "Ficha creada desde lead social. Red: {$record->platform->label()}. Comentario ID: {$record->id}. Usuario: "
-            . ($record->author_username ?: $record->author_name ?: 'N/A') . '.';
+            .($record->author_username ?: $record->author_name ?: 'N/A').'.';
     }
 
     private static function normalizeName(string $name): string

@@ -7,7 +7,8 @@
             'crisis' => ['label' => 'Crisis', 'icon' => '🚨', 'count' => $stats['crisis']],
             'vip' => ['label' => 'Pacientes VIP', 'icon' => '🏥', 'count' => $stats['vip']],
             'medical' => ['label' => 'Atencion Medica', 'icon' => '🩺', 'count' => $stats['medical']],
-            'all' => ['label' => 'Ver Todos', 'icon' => '🔍', 'count' => $stats['all']],
+            'all' => ['label' => 'Activos', 'icon' => '🔍', 'count' => $stats['all']],
+            'archived' => ['label' => 'Archivados', 'icon' => '📦', 'count' => $stats['archived']],
         ];
     @endphp
 
@@ -163,6 +164,23 @@
         .smart-card.intent-vip { border-top-color: #16a34a; }
         .smart-card.intent-medical { border-top-color: #f59e0b; }
 
+        .smart-card.is-derived {
+            background: linear-gradient(180deg, #fffbeb, #ffffff 42%);
+            border-color: #fde68a;
+            border-top-color: #f59e0b;
+        }
+
+        .smart-card.is-hot-lead::before {
+            animation: hotLeadPulse 1.15s ease-in-out infinite;
+            background: radial-gradient(circle, rgba(249, 115, 22, .24), transparent 64%);
+            content: '';
+            height: 8rem;
+            inset: -3rem auto auto -3rem;
+            pointer-events: none;
+            position: absolute;
+            width: 8rem;
+        }
+
         .smart-card.intent-crisis.risk-critical::after {
             animation: inboxPulse 1.25s ease-in-out infinite;
             background: radial-gradient(circle, rgba(239, 68, 68, .24), transparent 62%);
@@ -176,6 +194,11 @@
         @keyframes inboxPulse {
             0%, 100% { opacity: .45; transform: scale(.96); }
             50% { opacity: .95; transform: scale(1.08); }
+        }
+
+        @keyframes hotLeadPulse {
+            0%, 100% { opacity: .38; transform: scale(.96); }
+            50% { opacity: .9; transform: scale(1.1); }
         }
 
         .smart-card-top {
@@ -248,6 +271,20 @@
         .smart-badge.warning { background: #fffbeb; color: #b45309; }
         .smart-badge.success { background: #ecfdf5; color: #047857; }
         .smart-badge.neutral { background: #f1f5f9; color: #475569; }
+        .smart-badge.hot { background: #fff7ed; color: #c2410c; }
+
+        .smart-token {
+            align-items: center;
+            background: #fffbeb;
+            border: 1px dashed #f59e0b;
+            border-radius: .7rem;
+            color: #92400e;
+            display: flex;
+            font-size: .8rem;
+            font-weight: 850;
+            gap: .45rem;
+            padding: .55rem .7rem;
+        }
 
         .smart-message {
             color: #111827;
@@ -339,6 +376,45 @@
             padding: 2rem;
             text-align: center;
         }
+
+        .smart-modal-backdrop {
+            align-items: center;
+            background: rgba(15, 23, 42, .48);
+            display: flex;
+            inset: 0;
+            justify-content: center;
+            padding: 1rem;
+            position: fixed;
+            z-index: 60;
+        }
+
+        .smart-modal {
+            background: #ffffff;
+            border-radius: 1.1rem;
+            box-shadow: 0 24px 80px rgba(15, 23, 42, .28);
+            display: grid;
+            gap: .85rem;
+            max-width: 42rem;
+            padding: 1.25rem;
+            width: min(100%, 42rem);
+        }
+
+        .smart-modal h2 {
+            color: #0f172a;
+            font-size: 1.1rem;
+            font-weight: 900;
+            margin: 0;
+        }
+
+        .smart-copy-field {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: .75rem;
+            color: #0f172a;
+            font-size: .86rem;
+            padding: .7rem .8rem;
+            width: 100%;
+        }
     </style>
 
     <section class="social-inbox-page" wire:poll.10s>
@@ -383,6 +459,9 @@
                     ], true);
                     $isMedical = $classification === \App\Enums\SocialCommentClassification::MedicalSensitive;
                     $isVip = filled($patient) && ($patient->activityRecords?->count() ?? 0) > 0;
+                    $isDerived = $comment->conversion_status === \App\Enums\SocialConversionStatus::TokenGenerated;
+                    $isHotLead = filled($comment->hot_lead_at);
+                    $isReheated = filled($comment->reheated_at);
                     $intent = $isCrisis ? 'crisis' : ($isLead ? 'lead' : ($isVip ? 'vip' : ($isMedical ? 'medical' : 'normal')));
                     $intentTitle = match ($intent) {
                         'crisis' => 'RIESGO CRITICO',
@@ -396,7 +475,7 @@
                     $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
                 @endphp
 
-                <article class="smart-card intent-{{ $intent }} risk-{{ $risk }}">
+                <article @class(['smart-card', 'intent-' . $intent, 'risk-' . $risk, 'is-derived' => $isDerived, 'is-hot-lead' => $isHotLead])>
                     <div class="smart-card-top">
                         <div class="smart-person">
                             <div class="smart-avatar">{{ $initial }}</div>
@@ -417,10 +496,26 @@
                                 Riesgo {{ $comment->reputation_risk?->label() ?? 'bajo' }}
                             </span>
                             <span class="smart-badge neutral">{{ $comment->sentiment?->label() ?? 'Sin sentimiento' }}</span>
+                            <span @class(['smart-badge', 'hot' => $isHotLead, 'neutral' => ! $isHotLead])>
+                                {{ $isHotLead ? '🔥 ' : '' }}Score {{ $comment->interest_score ?? 0 }}
+                            </span>
+                            @if ($isDerived)
+                                <span class="smart-badge warning">Derivado</span>
+                            @endif
+                            @if ($isReheated)
+                                <span class="smart-badge hot">Recalentado</span>
+                            @endif
                         </div>
                     </div>
 
                     <div class="smart-message">"{{ $comment->comment_text }}"</div>
+
+                    @if ($isDerived && filled($comment->tracking_token))
+                        <div class="smart-token">
+                            <span>Token WhatsApp:</span>
+                            <strong>{{ $comment->tracking_token }}</strong>
+                        </div>
+                    @endif
 
                     <div class="smart-panels">
                         <section class="smart-panel">
@@ -476,5 +571,59 @@
         <div class="mt-5">
             {{ $comments->links() }}
         </div>
+
+        @if ($whatsappModalOpen)
+            <div class="smart-modal-backdrop" wire:key="whatsapp-bridge-modal">
+                <section class="smart-modal" role="dialog" aria-modal="true" aria-labelledby="whatsapp-modal-title">
+                    <h2 id="whatsapp-modal-title">Derivar lead a WhatsApp</h2>
+                    <p class="smart-muted">El link se copio automaticamente. Pegalo en el chat de Instagram o Facebook.</p>
+
+                    <label>
+                        <span class="smart-muted">Token</span>
+                        <input class="smart-copy-field" type="text" value="{{ $whatsappToken }}" readonly>
+                    </label>
+
+                    <label>
+                        <span class="smart-muted">Link WhatsApp</span>
+                        <input class="smart-copy-field" type="text" value="{{ $whatsappLink ?: 'Configura WHATSAPP_BUSINESS_PHONE para generar link directo' }}" readonly>
+                    </label>
+
+                    <label>
+                        <span class="smart-muted">Smart Link rastreable</span>
+                        <input class="smart-copy-field" type="text" value="{{ $smartLink }}" readonly>
+                    </label>
+
+                    <label>
+                        <span class="smart-muted">Texto sugerido</span>
+                        <textarea class="smart-copy-field" rows="4" readonly>{{ $whatsappReplyText }}</textarea>
+                    </label>
+
+                    <div class="smart-actions">
+                        @if ($whatsappLink)
+                            <button class="smart-action success" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappLink))">Copiar link</button>
+                        @endif
+                        <button class="smart-action warning" type="button" x-data @click="navigator.clipboard?.writeText(@js($smartLink))">Copiar Smart Link</button>
+                        <button class="smart-action primary" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappReplyText))">Copiar texto</button>
+                        <button class="smart-action muted" type="button" wire:click="closeWhatsappModal">Cerrar</button>
+                    </div>
+                </section>
+            </div>
+        @endif
     </section>
+
+    <script>
+        window.addEventListener('social-whatsapp-link-generated', async (event) => {
+            const text = event.detail?.text || '';
+
+            if (! text || ! navigator.clipboard) {
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (error) {
+                console.warn('No se pudo copiar automaticamente el link de WhatsApp.', error);
+            }
+        });
+    </script>
 </x-filament-panels::page>

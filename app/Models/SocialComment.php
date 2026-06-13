@@ -43,6 +43,10 @@ class SocialComment extends Model
         'suggested_procedure_id',
         'tracking_token',
         'conversion_status',
+        'interest_score',
+        'hot_lead_at',
+        'last_smart_link_visited_at',
+        'reheated_at',
         'converted_patient_id',
         'converted_at',
         'is_emergency',
@@ -68,6 +72,10 @@ class SocialComment extends Model
             'conversion_status' => SocialConversionStatus::class,
             'suggested_action' => SocialSuggestedAction::class,
             'response_channel' => SocialResponseChannel::class,
+            'interest_score' => 'integer',
+            'hot_lead_at' => 'datetime',
+            'last_smart_link_visited_at' => 'datetime',
+            'reheated_at' => 'datetime',
             'converted_at' => 'datetime',
             'is_emergency' => 'boolean',
             'whatsapp_redirected_at' => 'datetime',
@@ -118,6 +126,11 @@ class SocialComment extends Model
     public function actions(): HasMany
     {
         return $this->hasMany(SocialCommentAction::class);
+    }
+
+    public function linkEvents(): HasMany
+    {
+        return $this->hasMany(SocialLinkEvent::class);
     }
 
     public function activityRecords(): HasMany

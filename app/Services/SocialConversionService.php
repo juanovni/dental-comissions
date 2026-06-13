@@ -20,7 +20,7 @@ class SocialConversionService
         }
 
         do {
-            $token = 'DNT-' . Str::upper(Str::random(5));
+            $token = 'DNT-'.Str::upper(Str::random(5));
         } while (SocialComment::where('tracking_token', $token)->exists());
 
         $comment->update([
@@ -33,6 +33,8 @@ class SocialConversionService
             'notes' => 'Token de rastreo generado para handshake de WhatsApp.',
             'external_response' => ['tracking_token' => $token],
         ]);
+
+        app(SocialLeadScoringService::class)->scoreTokenGenerated($comment->refresh());
 
         return $token;
     }
@@ -48,7 +50,29 @@ class SocialConversionService
         $token = $this->generateTrackingToken($comment);
         $message = "Hola, vengo de redes sociales. Mi codigo es {$token}.";
 
-        return 'https://wa.me/' . $businessPhone . '?text=' . rawurlencode($message);
+        return 'https://wa.me/'.$businessPhone.'?text='.rawurlencode($message);
+    }
+
+    public function smartLink(SocialComment $comment): string
+    {
+        $token = $this->generateTrackingToken($comment);
+
+        return route('social-smart-link.show', ['trackingToken' => $token]);
+    }
+
+    public function instagramReplyText(SocialComment $comment): string
+    {
+        $token = $this->generateTrackingToken($comment);
+        $link = $this->whatsappLink($comment) ?? '';
+        $smartLink = $this->smartLink($comment);
+        $template = app(SocialCrmSettingsService::class)->whatsappReplyTemplate();
+
+        return strtr($template, [
+            '{token}' => $token,
+            '{platform}' => $comment->platform->label(),
+            '{whatsapp_link}' => $link,
+            '{smart_link}' => $smartLink,
+        ]);
     }
 
     public function markRedirectedToWhatsapp(SocialComment $comment): string
@@ -73,7 +97,7 @@ class SocialConversionService
     {
         $token = $this->extractTrackingToken($message->message_body);
 
-        if (!$token) {
+        if (! $token) {
             return null;
         }
 
@@ -82,16 +106,16 @@ class SocialConversionService
             ->where('tracking_token', $token)
             ->first();
 
-        if (!$comment) {
+        if (! $comment) {
             return null;
         }
 
         $identity = $comment->socialIdentity;
 
-        if (!$identity) {
+        if (! $identity) {
             $identity = SocialIdentity::create([
                 'platform' => $comment->platform->value,
-                'platform_user_id' => 'unknown-' . $comment->id,
+                'platform_user_id' => 'unknown-'.$comment->id,
                 'username' => $comment->author_username,
                 'display_name' => $comment->author_name,
                 'status' => SocialIdentityStatus::NewLead,
@@ -136,6 +160,7 @@ class SocialConversionService
                 'conversion_status' => SocialConversionStatus::IdentityLinked,
                 'converted_patient_id' => $patient->id,
                 'converted_at' => now(),
+                'is_hidden' => true,
             ]);
         } else {
             $identity->update([
@@ -147,6 +172,7 @@ class SocialConversionService
 
             $comment->update([
                 'conversion_status' => SocialConversionStatus::PendingPatientCreation,
+                'is_hidden' => true,
             ]);
         }
 
@@ -166,7 +192,7 @@ class SocialConversionService
     private function findPatientByPhone(string $phone): ?Patient
     {
         $normalizedPhone = $this->normalizePhone($phone);
-        $phones = array_values(array_unique([$phone, $normalizedPhone, '+' . $normalizedPhone]));
+        $phones = array_values(array_unique([$phone, $normalizedPhone, '+'.$normalizedPhone]));
 
         return Patient::whereIn('phone', $phones)->first();
     }

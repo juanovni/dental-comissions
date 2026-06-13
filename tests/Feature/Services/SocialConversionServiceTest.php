@@ -44,6 +44,7 @@ class SocialConversionServiceTest extends TestCase
             'id' => $comment->id,
             'conversion_status' => SocialConversionStatus::IdentityLinked->value,
             'converted_patient_id' => $patient->id,
+            'is_hidden' => true,
         ]);
     }
 
@@ -63,6 +64,7 @@ class SocialConversionServiceTest extends TestCase
             'id' => $comment->id,
             'conversion_status' => SocialConversionStatus::PendingPatientCreation->value,
             'converted_patient_id' => null,
+            'is_hidden' => true,
         ]);
     }
 
@@ -77,6 +79,22 @@ class SocialConversionServiceTest extends TestCase
             'id' => $comment->id,
             'tracking_token' => $token,
             'conversion_status' => SocialConversionStatus::TokenGenerated->value,
+            'interest_score' => 30,
+        ]);
+    }
+
+    public function test_generate_tracking_token_scores_only_once(): void
+    {
+        $comment = $this->socialComment();
+
+        $service = app(SocialConversionService::class);
+        $firstToken = $service->generateTrackingToken($comment);
+        $secondToken = $service->generateTrackingToken($comment->refresh());
+
+        $this->assertSame($firstToken, $secondToken);
+        $this->assertDatabaseHas('social_comments', [
+            'id' => $comment->id,
+            'interest_score' => 30,
         ]);
     }
 
@@ -92,13 +110,13 @@ class SocialConversionServiceTest extends TestCase
         $post = SocialPost::create([
             'social_account_id' => $account->id,
             'platform' => SocialPlatform::Instagram,
-            'external_post_id' => 'post_' . uniqid(),
+            'external_post_id' => 'post_'.uniqid(),
             'caption' => 'Implantes dentales',
         ]);
 
         $identity = SocialIdentity::create([
             'platform' => SocialPlatform::Instagram,
-            'platform_user_id' => 'user_' . uniqid(),
+            'platform_user_id' => 'user_'.uniqid(),
             'username' => 'paciente_test',
             'display_name' => 'Paciente Test',
             'status' => SocialIdentityStatus::NewLead,
@@ -111,7 +129,7 @@ class SocialConversionServiceTest extends TestCase
             'social_identity_id' => $identity->id,
             'social_post_id' => $post->id,
             'platform' => SocialPlatform::Instagram,
-            'external_comment_id' => 'comment_' . uniqid(),
+            'external_comment_id' => 'comment_'.uniqid(),
             'author_name' => 'Paciente Test',
             'author_username' => 'paciente_test',
             'author_external_id' => $identity->platform_user_id,
@@ -128,7 +146,7 @@ class SocialConversionServiceTest extends TestCase
             'from_phone' => $fromPhone,
             'to_phone' => 'test-phone-number-id',
             'message_body' => $body,
-            'message_sid' => 'wamid.' . uniqid(),
+            'message_sid' => 'wamid.'.uniqid(),
         ]);
     }
 }

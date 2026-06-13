@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\SocialCommentActionType;
+use App\Models\SocialComment;
+
+class SocialLeadScoringService
+{
+    public function addScore(
+        SocialComment $comment,
+        int $points,
+        string $reason,
+        array $context = [],
+        ?SocialCommentActionType $action = null,
+    ): SocialComment {
+        if ($points <= 0) {
+            return $comment->refresh();
+        }
+
+        $previousScore = (int) $comment->interest_score;
+        $newScore = $previousScore + $points;
+        $threshold = app(SocialCrmSettingsService::class)->hotLeadThreshold();
+
+        $updates = ['interest_score' => $newScore];
+
+        if ($previousScore < $threshold && $newScore >= $threshold && ! $comment->hot_lead_at) {
+            $updates['hot_lead_at'] = now();
+        }
+
+        $comment->update($updates);
+
+        $comment->actions()->create([
+            'action' => $action ?? SocialCommentActionType::LeadScoreUpdated,
+            'notes' => $reason,
+            'external_response' => array_merge($context, [
+                'points' => $points,
+                'previous_score' => $previousScore,
+                'new_score' => $newScore,
+                'hot_lead_threshold' => $threshold,
+                'hot_lead' => $newScore >= $threshold,
+            ]),
+        ]);
+
+        return $comment->refresh();
+    }
+
+    public function scoreTokenGenerated(SocialComment $comment): SocialComment
+    {
+        return $this->addScore(
+            $comment,
+            app(SocialCrmSettingsService::class)->scoreForTokenGenerated(),
+            'Puntaje sumado por generacion de token WhatsApp.',
+            ['event' => 'token_generated'],
+            SocialCommentActionType::LeadScoreUpdated,
+        );
+    }
+
+    public function scoreSmartLinkVisit(SocialComment $comment): SocialComment
+    {
+        $settings = app(SocialCrmSettingsService::class);
+        $previousVisit = $comment->last_smart_link_visited_at;
+        $isRevisit = filled($previousVisit);
+        $isReheated = $isRevisit && $previousVisit->lte(now()->subHours($settings->reheatedAfterHours()));
+
+        $points = $isRevisit
+            ? $settings->scoreForSmartLinkRevisit()
+            : $settings->scoreForSmartLinkClick();
+
+        if ($isReheated) {
+            $points += $settings->scoreForReheatedRevisitBonus();
+        }
+
+        $comment->update([
+            'last_smart_link_visited_at' => now(),
+            'reheated_at' => $isReheated ? now() : $comment->reheated_at,
+        ]);
+
+        return $this->addScore(
+            $comment->refresh(),
+            $points,
+            $isReheated
+                ? 'Lead recalentado por reingreso al Smart Link despues de tiempo muerto.'
+                : ($isRevisit ? 'Puntaje sumado por reingreso al Smart Link.' : 'Puntaje sumado por primer clic en Smart Link.'),
+            [
+                'event' => $isReheated ? 'smart_link_reheated_revisit' : ($isRevisit ? 'smart_link_revisit' : 'smart_link_first_visit'),
+                'previous_visit_at' => $previousVisit?->toISOString(),
+                'reheated_after_hours' => $settings->reheatedAfterHours(),
+            ],
+            $isReheated
+                ? SocialCommentActionType::LeadReheated
+                : ($isRevisit ? SocialCommentActionType::SmartLinkRevisited : SocialCommentActionType::SmartLinkVisited),
+        );
+    }
+}
