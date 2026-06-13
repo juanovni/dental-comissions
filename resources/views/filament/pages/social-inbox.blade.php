@@ -13,6 +13,7 @@
 
     <style>
         .social-inbox-page {
+            --inbox-accent: oklch(0.59 0.2 259.81);
             --inbox-ink: #0f172a;
             --inbox-muted: #64748b;
             --inbox-line: rgba(15, 23, 42, .08);
@@ -79,12 +80,12 @@
         }
 
         .smart-filter:hover {
-            color: #0f766e;
+            color: var(--inbox-accent);
         }
 
         .smart-filter.is-active {
-            border-bottom-color: #0f766e;
-            color: #0f766e;
+            border-bottom-color: var(--inbox-accent);
+            color: var(--inbox-accent);
         }
 
         .smart-filter-icon {
@@ -107,8 +108,8 @@
         }
 
         .smart-filter.is-active .smart-filter-count {
-            background: #ccfbf1;
-            color: #0f766e;
+            background: color-mix(in oklch, var(--inbox-accent) 16%, white);
+            color: var(--inbox-accent);
         }
 
         @media (max-width: 760px) {
@@ -158,7 +159,7 @@
             border-top-color: #dc2626;
         }
 
-        .smart-card.intent-lead { border-top-color: #2563eb; }
+        .smart-card.intent-lead { border-top-color: var(--inbox-accent); }
         .smart-card.intent-vip { border-top-color: #16a34a; }
         .smart-card.intent-medical { border-top-color: #f59e0b; }
 
@@ -195,7 +196,7 @@
             background: #f1f5f9;
             border: 1px solid #e5e7eb;
             border-radius: 999px;
-            color: #0f766e;
+            color: var(--inbox-accent);
             display: flex;
             flex: 0 0 auto;
             font-size: .9rem;
@@ -207,7 +208,7 @@
         }
 
         .intent-crisis .smart-avatar { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
-        .intent-lead .smart-avatar { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .intent-lead .smart-avatar { background: #eff6ff; border-color: #bfdbfe; color: var(--inbox-accent); }
         .intent-vip .smart-avatar { background: #ecfdf5; border-color: #bbf7d0; color: #047857; }
         .intent-medical .smart-avatar { background: #fffbeb; border-color: #fed7aa; color: #b45309; }
 
@@ -382,7 +383,7 @@
                     ], true);
                     $isMedical = $classification === \App\Enums\SocialCommentClassification::MedicalSensitive;
                     $isVip = filled($patient) && ($patient->activityRecords?->count() ?? 0) > 0;
-                    $intent = $isCrisis ? 'crisis' : ($isVip ? 'vip' : ($isMedical ? 'medical' : ($isLead ? 'lead' : 'normal')));
+                    $intent = $isCrisis ? 'crisis' : ($isLead ? 'lead' : ($isVip ? 'vip' : ($isMedical ? 'medical' : 'normal')));
                     $intentTitle = match ($intent) {
                         'crisis' => 'RIESGO CRITICO',
                         'vip' => 'PACIENTE VIP',

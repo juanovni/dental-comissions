@@ -27,15 +27,16 @@ class DashboardRoiSocial extends BaseDashboard
 
     protected static ?string $navigationLabel = 'ROI Social';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-currency-dollar';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-currency-dollar';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Panel administrativo';
+    protected static string|\UnitEnum|null $navigationGroup = 'Panel administrativo';
 
     protected static ?int $navigationSort = 2;
 
     public function filtersForm(Schema $schema): Schema
     {
         return $schema
+            ->extraAttributes(['class' => 'social-roi-filters-form'], merge: true)
             ->components([
                 Grid::make([
                     'default' => 1,
@@ -60,7 +61,7 @@ class DashboardRoiSocial extends BaseDashboard
             ]);
     }
 
-    public function getColumns(): int | array
+    public function getColumns(): int|array
     {
         return [
             'default' => 1,

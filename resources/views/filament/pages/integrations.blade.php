@@ -56,7 +56,6 @@
             font-size: .92rem;
             line-height: 1.55;
             margin: .65rem 0 0;
-            max-width: 48rem;
         }
 
         .integrations-grid {
@@ -322,7 +321,6 @@
 
     <section class="integrations-page">
         <div class="integrations-hero">
-            <div class="integrations-kicker">Centro de conexiones</div>
             <p class="integrations-subtitle">
                 Conecta redes sociales y canales externos para importar publicaciones, comentarios y oportunidades comerciales sin copiar enlaces manuales.
             </p>

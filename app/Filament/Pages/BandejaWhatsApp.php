@@ -26,6 +26,8 @@ class BandejaWhatsApp extends Page
 
     protected static ?int $navigationSort = 14;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected string $view = 'filament.pages.bandeja-whatsapp';
 
     public string $filter = 'needs_review';

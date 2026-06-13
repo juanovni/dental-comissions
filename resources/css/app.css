@@ -161,6 +161,39 @@
         width: 0.95rem;
     }
 
+    .fi-header-heading {
+        font-size: 18px !important;
+        line-height: 1.35 !important;
+    }
+
+    @media (min-width: 1024px) {
+        .social-roi-filters-form {
+            display: flex;
+            justify-content: flex-end;
+            margin: 0;
+            max-width: min(100%, 42rem);
+            width: 100%;
+        }
+
+        .fi-wi-stats-overview .fi-section-header > .social-roi-filters-form {
+            margin-left: auto;
+            max-width: min(100%, 42rem);
+            width: auto;
+        }
+
+        .social-roi-filters-form .fi-sc-grid {
+            align-items: end;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        .social-roi-filters-form .fi-sc-grid > * {
+            min-width: 10rem;
+            width: auto;
+        }
+    }
+
     .dark .mc-card {
         background: rgba(15, 23, 42, 0.74);
         border-color: rgba(148, 163, 184, 0.16);
