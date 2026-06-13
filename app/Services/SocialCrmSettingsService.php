@@ -117,6 +117,31 @@ class SocialCrmSettingsService
         return is_array($blocks) ? $blocks : [];
     }
 
+    public function salesUrgentScoreThreshold(): int
+    {
+        return (int) $this->get('social_sales_urgent_score_threshold', 75);
+    }
+
+    public function salesMaxHoursWithoutContact(): int
+    {
+        return (int) $this->get('social_sales_max_hours_without_contact', 4);
+    }
+
+    public function salesDefaultFollowUpHours(): int
+    {
+        return (int) $this->get('social_sales_default_follow_up_hours', 24);
+    }
+
+    public function salesLostReasons(): array
+    {
+        $reasons = $this->get('social_sales_lost_reasons', ['sin_respuesta']);
+
+        return collect(is_array($reasons) ? $reasons : ['sin_respuesta'])
+            ->filter(fn (mixed $reason): bool => is_string($reason) && $reason !== '')
+            ->values()
+            ->all();
+    }
+
     public function clearCache(): void
     {
         Cache::forget(self::CACHE_KEY);

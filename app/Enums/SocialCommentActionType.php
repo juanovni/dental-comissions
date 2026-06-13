@@ -21,6 +21,9 @@ enum SocialCommentActionType: string
     case SmartLinkVisited = 'smart_link_visited';
     case SmartLinkRevisited = 'smart_link_revisited';
     case LeadReheated = 'lead_reheated';
+    case MarkAsContacted = 'mark_as_contacted';
+    case ScheduleFollowUp = 'schedule_follow_up';
+    case MarkAsLost = 'mark_as_lost';
     case Error = 'error';
 
     public function label(): string
@@ -43,6 +46,9 @@ enum SocialCommentActionType: string
             self::SmartLinkVisited => 'Visita Smart Link',
             self::SmartLinkRevisited => 'Reingreso Smart Link',
             self::LeadReheated => 'Lead recalentado',
+            self::MarkAsContacted => 'Marcar como contactado',
+            self::ScheduleFollowUp => 'Programar seguimiento',
+            self::MarkAsLost => 'Marcar como perdido',
             self::Error => 'Error',
         };
     }
