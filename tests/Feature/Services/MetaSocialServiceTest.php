@@ -10,6 +10,7 @@ use App\Models\SocialAccount;
 use App\Models\SocialPost;
 use App\Services\MetaSocialService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class MetaSocialServiceTest extends TestCase
@@ -147,6 +148,56 @@ class MetaSocialServiceTest extends TestCase
             'comment_text' => 'Info por favor',
             'author_username' => 'cliente_ig',
             'author_external_id' => 'ig_user_1',
+            'classification' => SocialCommentClassification::SalesLead->value,
+            'status' => SocialCommentStatus::Classified->value,
+        ]);
+    }
+
+    public function test_sync_account_classifies_synced_facebook_comments(): void
+    {
+        config([
+            'services.meta.access_token' => 'test-token',
+            'services.meta.api_url' => 'https://graph.facebook.com/v25.0',
+            'services.gemini.api_key' => null,
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => SocialPlatform::Facebook,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => 'page_1',
+            'page_id' => 'page_1',
+            'access_token' => 'page-token',
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/page_1/posts*' => Http::response([
+                'data' => [
+                    [
+                        'id' => 'post_sync_1',
+                        'message' => 'Promo limpieza dental',
+                        'created_time' => now()->toIso8601String(),
+                    ],
+                ],
+            ]),
+            'https://graph.facebook.com/v25.0/post_sync_1/comments*' => Http::response([
+                'data' => [
+                    [
+                        'id' => 'comment_sync_1',
+                        'message' => 'Precio de una limpieza dental',
+                        'from' => ['id' => 'fb_user_1', 'name' => 'Cliente Facebook'],
+                        'created_time' => now()->toIso8601String(),
+                    ],
+                ],
+            ]),
+        ]);
+
+        $summary = app(MetaSocialService::class)->syncAccount($account);
+
+        $this->assertSame(['posts' => 1, 'comments' => 1], $summary);
+        $this->assertDatabaseHas('social_comments', [
+            'platform' => SocialPlatform::Facebook->value,
+            'external_comment_id' => 'comment_sync_1',
             'classification' => SocialCommentClassification::SalesLead->value,
             'status' => SocialCommentStatus::Classified->value,
         ]);

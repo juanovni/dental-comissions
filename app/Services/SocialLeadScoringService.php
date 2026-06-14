@@ -24,7 +24,9 @@ class SocialLeadScoringService
 
         $updates = ['interest_score' => $newScore];
 
-        if ($previousScore < $threshold && $newScore >= $threshold && ! $comment->hot_lead_at) {
+        $becameHotLead = $previousScore < $threshold && $newScore >= $threshold && ! $comment->hot_lead_at;
+
+        if ($becameHotLead) {
             $updates['hot_lead_at'] = now();
         }
 
@@ -41,6 +43,14 @@ class SocialLeadScoringService
                 'hot_lead' => $newScore >= $threshold,
             ]),
         ]);
+
+        if ($becameHotLead) {
+            app(SocialLeadAlertService::class)->createAlert($comment->refresh(), 'hot_lead_created', 'danger', [
+                'previous_score' => $previousScore,
+                'new_score' => $newScore,
+                'threshold' => $threshold,
+            ]);
+        }
 
         return $comment->refresh();
     }
@@ -76,7 +86,7 @@ class SocialLeadScoringService
             'reheated_at' => $isReheated ? now() : $comment->reheated_at,
         ]);
 
-        return $this->addScore(
+        $comment = $this->addScore(
             $comment->refresh(),
             $points,
             $isReheated
@@ -91,5 +101,14 @@ class SocialLeadScoringService
                 ? SocialCommentActionType::LeadReheated
                 : ($isRevisit ? SocialCommentActionType::SmartLinkRevisited : SocialCommentActionType::SmartLinkVisited),
         );
+
+        if ($isReheated) {
+            app(SocialLeadAlertService::class)->createAlert($comment, 'lead_reheated', 'warning', [
+                'previous_visit_at' => $previousVisit?->toISOString(),
+                'reheated_after_hours' => $settings->reheatedAfterHours(),
+            ]);
+        }
+
+        return $comment;
     }
 }

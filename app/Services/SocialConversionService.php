@@ -174,6 +174,11 @@ class SocialConversionService
                 'conversion_status' => SocialConversionStatus::PendingPatientCreation,
                 'is_hidden' => true,
             ]);
+
+            app(SocialLeadAlertService::class)->createAlert($comment->refresh(), 'pending_patient_creation', 'warning', [
+                'from_phone' => $message->from_phone,
+                'tracking_token' => $comment->tracking_token,
+            ]);
         }
 
         $comment->actions()->create([

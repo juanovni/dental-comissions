@@ -7,6 +7,7 @@ use App\Models\SocialComment;
 use App\Models\SocialLinkEvent;
 use App\Services\SocialConversionService;
 use App\Services\SocialCrmSettingsService;
+use App\Services\SocialLeadAlertService;
 use App\Services\SocialLeadScoringService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -106,6 +107,12 @@ class SocialSmartLinkController extends Controller
                 'social_link_event_id' => $event->id,
             ],
         );
+
+        app(SocialLeadAlertService::class)->createAlert($comment->refresh(), 'high_duration', 'warning', [
+            'duration_seconds' => $event->duration_seconds,
+            'threshold_seconds' => $settings->smartLinkDurationThresholdSeconds(),
+            'social_link_event_id' => $event->id,
+        ]);
     }
 
     private function contentFor(SocialComment $comment, array $blocks): array

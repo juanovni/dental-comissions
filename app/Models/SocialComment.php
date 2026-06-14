@@ -141,6 +141,11 @@ class SocialComment extends Model
         return $this->hasMany(SocialLinkEvent::class);
     }
 
+    public function leadAlerts(): HasMany
+    {
+        return $this->hasMany(SocialLeadAlert::class);
+    }
+
     public function activityRecords(): HasMany
     {
         return $this->hasMany(ActivityRecord::class);

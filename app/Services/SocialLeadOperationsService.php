@@ -47,6 +47,8 @@ class SocialLeadOperationsService
             'notes' => $notes ?: 'Lead contactado desde Leads Calientes.',
         ]);
 
+        $this->resolveOpenAlerts($comment, 'Lead contactado.');
+
         return $comment->refresh();
     }
 
@@ -69,6 +71,8 @@ class SocialLeadOperationsService
                 'hours' => $hours,
             ],
         ]);
+
+        $this->resolveOpenAlerts($comment, 'Lead marcado como perdido.');
 
         return $comment->refresh();
     }
@@ -103,5 +107,13 @@ class SocialLeadOperationsService
         $maxHours = app(SocialCrmSettingsService::class)->salesMaxHoursWithoutContact();
 
         return $anchor?->lte(now()->subHours($maxHours)) ?? false;
+    }
+
+    private function resolveOpenAlerts(SocialComment $comment, string $notes): void
+    {
+        $comment->leadAlerts()
+            ->whereNull('resolved_at')
+            ->get()
+            ->each(fn ($alert) => app(SocialLeadAlertService::class)->resolve($alert, $notes));
     }
 }

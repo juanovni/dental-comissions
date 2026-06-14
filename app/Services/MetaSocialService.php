@@ -197,7 +197,12 @@ class MetaSocialService
             $summary['posts']++;
 
             foreach ($this->getPostComments($post, $account) as $commentData) {
-                $this->storeComment($account, $post, $commentData);
+                $comment = $this->storeComment($account, $post, $commentData);
+
+                if (! $comment->classification) {
+                    app(SocialCommentClassificationService::class)->classify($comment);
+                }
+
                 $summary['comments']++;
             }
         }

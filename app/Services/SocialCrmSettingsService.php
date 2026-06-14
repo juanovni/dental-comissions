@@ -142,6 +142,27 @@ class SocialCrmSettingsService
             ->all();
     }
 
+    public function alertsEnabled(): bool
+    {
+        return (bool) $this->get('social_alerts_enabled', true);
+    }
+
+    public function alertCheckFrequencyMinutes(): int
+    {
+        return max(1, (int) $this->get('social_alert_check_frequency_minutes', 10));
+    }
+
+    public function alertMessage(string $type): array
+    {
+        $messages = $this->get('social_alert_messages', []);
+        $message = is_array($messages) ? ($messages[$type] ?? []) : [];
+
+        return [
+            'title' => (string) ($message['title'] ?? str($type)->replace('_', ' ')->title()),
+            'message' => (string) ($message['message'] ?? 'Alerta operativa generada por el CRM social.'),
+        ];
+    }
+
     public function clearCache(): void
     {
         Cache::forget(self::CACHE_KEY);

@@ -15,3 +15,7 @@ Schedule::command('social:sync-comments')
 Schedule::command('social:classify-comments')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+Schedule::command('social:lead-alerts')
+    ->everyTenMinutes()
+    ->withoutOverlapping();

@@ -27,6 +27,7 @@ class MetaAuthController extends Controller
             'auth_type' => 'rerequest',
             'scope' => implode(',', [
                 'pages_show_list',
+                'pages_manage_metadata',
                 'pages_read_engagement',
                 'pages_read_user_content',
                 'instagram_basic',
@@ -173,7 +174,7 @@ class MetaAuthController extends Controller
 
             $instagramAccount = $this->getInstagramAccount($page['id'], $pageAccessToken);
 
-            if (!$instagramAccount) {
+            if (! $instagramAccount) {
                 continue;
             }
 
@@ -328,7 +329,7 @@ class MetaAuthController extends Controller
             return $path;
         }
 
-        return rtrim((string) config('services.meta.api_url'), '/') . '/' . ltrim($path, '/');
+        return rtrim((string) config('services.meta.api_url'), '/').'/'.ltrim($path, '/');
     }
 
     private function config(): array
