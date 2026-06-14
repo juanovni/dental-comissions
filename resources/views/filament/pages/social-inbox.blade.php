@@ -402,7 +402,7 @@
         .smart-modal h2 {
             color: #0f172a;
             font-size: 1.1rem;
-            font-weight: 900;
+            font-weight: 700;
             margin: 0;
         }
 
