@@ -62,6 +62,26 @@ class SocialInboxTest extends TestCase
         ]);
     }
 
+    public function test_navigation_badge_counts_pending_social_comments(): void
+    {
+        $this->socialComment(['status' => SocialCommentStatus::New]);
+        $this->socialComment(['status' => SocialCommentStatus::ReviewRequired]);
+        $this->socialComment(['status' => SocialCommentStatus::Classified]);
+        $this->socialComment(['status' => SocialCommentStatus::Ignored]);
+        $this->socialComment(['status' => SocialCommentStatus::MarkedAsSpam]);
+        $this->socialComment([
+            'status' => SocialCommentStatus::New,
+            'is_hidden' => true,
+        ]);
+        $this->socialComment([
+            'status' => SocialCommentStatus::Classified,
+            'conversion_status' => SocialConversionStatus::PendingPatientCreation,
+        ]);
+
+        $this->assertSame('3', SocialInbox::getNavigationBadge());
+        $this->assertSame('primary', SocialInbox::getNavigationBadgeColor());
+    }
+
     private function socialComment(array $overrides = []): SocialComment
     {
         $account = SocialAccount::create([

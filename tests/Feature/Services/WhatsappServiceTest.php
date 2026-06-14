@@ -7,11 +7,9 @@ use App\Models\ActivityRecord;
 use App\Models\DoctorAssistantAssignment;
 use App\Models\PaymentMethod;
 use App\Models\PaymentMethodCommissionRate;
-use App\Models\Professional;
 use App\Models\Procedure;
+use App\Models\Professional;
 use App\Models\WhatsappMessage;
-use App\Services\ActivityCreationService;
-use App\Services\AiParsingService;
 use App\Services\WhatsappService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -29,7 +27,10 @@ class WhatsappServiceTest extends TestCase
     {
         parent::setUp();
         $this->whatsappService = app(WhatsappService::class);
-        config(['services.gemini.api_key' => 'test-key']);
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.gemini.api_key' => 'test-key',
+        ]);
         $this->fakeGemini();
     }
 
@@ -409,7 +410,7 @@ class WhatsappServiceTest extends TestCase
             'messages' => [
                 [
                     'from' => $phone,
-                    'id' => 'test_' . uniqid(),
+                    'id' => 'test_'.uniqid(),
                     'timestamp' => now()->timestamp,
                     'type' => 'text',
                     'text' => ['body' => $message],

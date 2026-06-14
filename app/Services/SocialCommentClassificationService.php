@@ -61,10 +61,10 @@ class SocialCommentClassificationService
 
     private function classifyWithAi(SocialComment $comment): array
     {
-        $content = app(GeminiJsonService::class)->generate($this->systemPrompt(), $this->userPrompt($comment));
+        $content = app(AiJsonService::class)->generate($this->systemPrompt(), $this->userPrompt($comment));
         $decoded = json_decode($content, true);
 
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+        if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
             throw new \RuntimeException('Respuesta de IA no es JSON valido.');
         }
 
@@ -219,13 +219,13 @@ class SocialCommentClassificationService
     /**
      * @template T of \BackedEnum
      *
-     * @param class-string<T> $enum
-     * @param T $fallback
+     * @param  class-string<T>  $enum
+     * @param  T  $fallback
      * @return T
      */
     private function enumValue(string $enum, mixed $value, \BackedEnum $fallback): \BackedEnum
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return $fallback;
         }
 

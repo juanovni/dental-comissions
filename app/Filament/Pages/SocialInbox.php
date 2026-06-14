@@ -34,6 +34,29 @@ class SocialInbox extends Page
 
     protected string $view = 'filament.pages.social-inbox';
 
+    public static function getNavigationBadge(): ?string
+    {
+        $archivedStatuses = app(SocialCrmSettingsService::class)->archivedConversionStatuses();
+
+        $count = SocialComment::query()
+            ->where('is_hidden', false)
+            ->when($archivedStatuses !== [], fn (Builder $query): Builder => $query->whereNotIn('conversion_status', $archivedStatuses))
+            ->whereNotIn('status', [
+                SocialCommentStatus::Hidden->value,
+                SocialCommentStatus::Ignored->value,
+                SocialCommentStatus::MarkedAsSpam->value,
+                SocialCommentStatus::Responded->value,
+            ])
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'primary';
+    }
+
     public string $filter = 'leads';
 
     public string $search = '';

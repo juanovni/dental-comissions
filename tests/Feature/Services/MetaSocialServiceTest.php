@@ -17,6 +17,16 @@ class MetaSocialServiceTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.gemini.api_key' => null,
+        ]);
+    }
+
     public function test_store_comment_creates_social_identity_for_author(): void
     {
         $account = SocialAccount::create([
@@ -156,6 +166,7 @@ class MetaSocialServiceTest extends TestCase
     public function test_sync_account_classifies_synced_facebook_comments(): void
     {
         config([
+            'services.ai.provider' => 'gemini',
             'services.meta.access_token' => 'test-token',
             'services.meta.api_url' => 'https://graph.facebook.com/v25.0',
             'services.gemini.api_key' => null,

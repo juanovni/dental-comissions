@@ -2,11 +2,10 @@
 
 namespace Tests\Feature\Http;
 
-use App\Enums\WhatsappMessageStatus;
 use App\Models\PaymentMethod;
 use App\Models\PaymentMethodCommissionRate;
-use App\Models\Professional;
 use App\Models\Procedure;
+use App\Models\Professional;
 use App\Models\WhatsappMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -167,7 +166,10 @@ class WebhookControllerTest extends TestCase
             'is_active' => true,
         ]);
 
-        config(['services.gemini.api_key' => 'test-key']);
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.gemini.api_key' => 'test-key',
+        ]);
 
         Http::fake([
             'generativelanguage.googleapis.com/*' => Http::response([
@@ -176,15 +178,15 @@ class WebhookControllerTest extends TestCase
                         'content' => [
                             'parts' => [
                                 [
-                                'text' => json_encode([
-                                    'patient_name' => 'Juan Perez',
-                                    'procedures' => ['Limpieza dental'],
-                                    'assistants' => [],
-                                    'payment_method' => 'efectivo',
-                                    'date' => now()->format('Y-m-d'),
-                                    'needs_review' => false,
-                                    'review_notes' => '',
-                                ]),
+                                    'text' => json_encode([
+                                        'patient_name' => 'Juan Perez',
+                                        'procedures' => ['Limpieza dental'],
+                                        'assistants' => [],
+                                        'payment_method' => 'efectivo',
+                                        'date' => now()->format('Y-m-d'),
+                                        'needs_review' => false,
+                                        'review_notes' => '',
+                                    ]),
                                 ],
                             ],
                         ],
@@ -199,7 +201,7 @@ class WebhookControllerTest extends TestCase
         ]);
 
         if ($response->status() === 500) {
-            $this->fail('500 error: ' . json_encode($response->json()));
+            $this->fail('500 error: '.json_encode($response->json()));
         }
 
         $response->assertOk();

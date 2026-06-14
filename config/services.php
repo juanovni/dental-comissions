@@ -56,6 +56,17 @@ return [
         'sync_days' => (int) env('META_SYNC_DAYS', 30),
     ],
 
+    'ai' => [
+        'provider' => env('AI_PROVIDER', 'gemini'),
+    ],
+
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'api_url' => env('OPENAI_API_URL', 'https://api.openai.com/v1'),
+        'request_timeout' => (int) env('OPENAI_REQUEST_TIMEOUT', 30),
+    ],
+
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),

@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Services;
 
-use App\Models\Professional;
-use App\Models\Procedure;
-use App\Models\PaymentMethod;
-use App\Services\AiParsingService;
 use App\Models\DoctorAssistantAssignment;
+use App\Models\PaymentMethod;
+use App\Models\Procedure;
+use App\Models\Professional;
+use App\Services\AiParsingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -21,7 +21,10 @@ class AiParsingServiceTest extends TestCase
     {
         parent::setUp();
         $this->aiParsingService = app(AiParsingService::class);
-        config(['services.gemini.api_key' => 'test-key']);
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.gemini.api_key' => 'test-key',
+        ]);
         PaymentMethod::create([
             'name' => 'Efectivo',
             'code' => 'EFECTIVO',

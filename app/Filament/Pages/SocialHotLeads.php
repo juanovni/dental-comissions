@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\SocialConversionStatus;
 use App\Models\SocialComment;
 use App\Services\SocialCrmSettingsService;
 use App\Services\SocialLeadOperationsService;
@@ -41,13 +42,22 @@ class SocialHotLeads extends Page
     public function stats(): array
     {
         $service = app(SocialLeadOperationsService::class);
-        $leads = $service->queryActionableLeads()->get();
+        $maxHoursWithoutContact = app(SocialCrmSettingsService::class)->salesMaxHoursWithoutContact();
+        $overdueCutoff = now()->subHours($maxHoursWithoutContact);
 
         return [
-            'total' => $leads->count(),
-            'overdue' => $leads->filter(fn (SocialComment $comment): bool => $service->isOverdue($comment))->count(),
-            'follow_up_due' => $leads->filter(fn (SocialComment $comment): bool => $comment->follow_up_at?->isPast() ?? false)->count(),
-            'pending_patient' => $leads->where('conversion_status.value', 'pending_patient_creation')->count(),
+            'total' => $service->queryActionableLeads()->count(),
+            'overdue' => $service->queryActionableLeads()
+                ->whereNull('contacted_at')
+                ->whereRaw('coalesce(hot_lead_at, reheated_at, whatsapp_redirected_at, created_at) <= ?', [$overdueCutoff])
+                ->count(),
+            'follow_up_due' => $service->queryActionableLeads()
+                ->whereNotNull('follow_up_at')
+                ->where('follow_up_at', '<=', now())
+                ->count(),
+            'pending_patient' => $service->queryActionableLeads()
+                ->where('conversion_status', SocialConversionStatus::PendingPatientCreation->value)
+                ->count(),
         ];
     }
 
