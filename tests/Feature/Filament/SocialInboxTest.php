@@ -82,6 +82,22 @@ class SocialInboxTest extends TestCase
         $this->assertSame('primary', SocialInbox::getNavigationBadgeColor());
     }
 
+    public function test_route_to_whatsapp_shows_final_tracking_reply_text(): void
+    {
+        config(['services.whatsapp.business_phone' => '+593999999999']);
+
+        $comment = $this->socialComment([
+            'classification' => SocialCommentClassification::SalesLead,
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialInbox::class)
+            ->call('routeToWhatsapp', $comment->id)
+            ->assertSee('Texto final para copiar y responder')
+            ->assertSee('Este es el mensaje recomendado para responder porque incluye tracking')
+            ->assertSee('DNT-');
+    }
+
     private function socialComment(array $overrides = []): SocialComment
     {
         $account = SocialAccount::create([

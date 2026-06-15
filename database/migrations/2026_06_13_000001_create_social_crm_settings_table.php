@@ -51,7 +51,7 @@ return new class extends Migration
                 'key' => 'social_whatsapp_reply_template',
                 'label' => 'Texto sugerido para derivar a WhatsApp',
                 'value_type' => 'string',
-                'value' => json_encode('Hola! Te comparto informacion personalizada aqui: {smart_link}. Si quieres seguimiento directo, abre WhatsApp: {whatsapp_link}'),
+                'value' => json_encode('Hola! Gracias por escribirnos. Para darte una orientacion personalizada, abre este enlace: {smart_link}. Tu codigo de atencion es {token}. Si prefieres WhatsApp directo: {whatsapp_link}'),
                 'notes' => 'Variables disponibles: {token}, {platform}, {whatsapp_link}, {smart_link}.',
                 'is_active' => true,
                 'created_at' => $now,

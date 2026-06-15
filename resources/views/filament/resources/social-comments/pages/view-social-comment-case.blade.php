@@ -42,7 +42,11 @@
     $lastActivityDate = $lastActivity?->activity_date?->diffForHumans() ?? 'Sin citas registradas';
     $lastDoctor = $lastActivity?->doctor?->name ?? 'Sin doctor registrado';
     $lastProcedure = $lastActivity?->procedure?->name ?? 'Sin procedimiento registrado';
-    $postCaption = $record->socialPost?->caption;
+    $socialPost = $record->socialPost;
+    $postCaption = $socialPost?->caption;
+    $postMediaUrl = $socialPost?->media_url;
+    $postPermalink = $socialPost?->permalink;
+    $postAuthor = $record->socialAccount?->account_name ?: $platformLabel;
 @endphp
 
 <style>
@@ -363,6 +367,91 @@
         gap: .45rem;
     }
 
+    .social-case-original {
+        display: grid;
+        gap: .75rem;
+    }
+
+    .social-case-post-media {
+        align-items: center;
+        background: linear-gradient(135deg, #f8fafc, #eef2f7);
+        border: 1px solid var(--case-line);
+        border-radius: .625rem;
+        display: flex;
+        justify-content: center;
+        min-height: 11rem;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .social-case-post-media img {
+        display: block;
+        height: 100%;
+        inset: 0;
+        object-fit: cover;
+        position: absolute;
+        width: 100%;
+    }
+
+    .social-case-post-placeholder {
+        align-items: center;
+        color: var(--case-muted);
+        display: grid;
+        font-size: .8rem;
+        gap: .35rem;
+        justify-items: center;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .social-case-post-placeholder strong {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--case-line);
+        border-radius: .75rem;
+        color: var(--case-accent);
+        display: inline-flex;
+        font-size: .82rem;
+        font-weight: 600;
+        height: 2.5rem;
+        justify-content: center;
+        width: 2.5rem;
+    }
+
+    .social-case-post-meta {
+        color: var(--case-muted);
+        font-size: .76rem;
+        font-weight: 400;
+        line-height: 1.45;
+    }
+
+    .social-case-post-caption {
+        background: var(--case-soft);
+        border: 1px solid var(--case-line);
+        border-radius: .625rem;
+        color: var(--case-ink);
+        font-size: .84rem;
+        font-weight: 400;
+        line-height: 1.55;
+        padding: .75rem;
+    }
+
+    .social-case-post-comment {
+        border-left: 3px solid var(--case-accent);
+        color: var(--case-ink);
+        font-size: .84rem;
+        line-height: 1.55;
+        padding: .1rem 0 .1rem .7rem;
+    }
+
+    .social-case-post-comment span {
+        color: var(--case-muted);
+        display: block;
+        font-size: .72rem;
+        font-weight: 500;
+        margin-bottom: .25rem;
+    }
+
     .social-case-action {
         align-items: center;
         border-radius: .5rem;
@@ -406,6 +495,18 @@
         background: rgba(2, 6, 23, .55);
         border-color: rgba(148, 163, 184, .14);
         color: #cbd5e1;
+    }
+
+    .dark .social-case-post-media,
+    .dark .social-case-post-caption {
+        background: rgba(2, 6, 23, .55);
+        border-color: rgba(148, 163, 184, .14);
+    }
+
+    .dark .social-case-post-placeholder strong {
+        background: rgba(15, 23, 42, .86);
+        border-color: rgba(148, 163, 184, .18);
+        color: #93c5fd;
     }
 
     .dark .social-case-badge,
@@ -628,16 +729,41 @@
             </section>
 
             <section class="social-case-card">
-                <h3>Botones Rapidos</h3>
-                <div class="social-case-actions">
-                    @if ($patientUrl)
-                        <a class="social-case-action primary" href="{{ $patientUrl }}">Ver ficha clinica</a>
+                <h3>Publicacion original</h3>
+                <div class="social-case-original">
+                    <div class="social-case-post-media">
+                        @if ($postMediaUrl)
+                            <img src="{{ $postMediaUrl }}" alt="Imagen de la publicacion relacionada">
+                        @else
+                            <div class="social-case-post-placeholder">
+                                <strong>{{ $platform === 'instagram' ? 'ig' : ($platform === 'facebook' ? 'f' : 'rs') }}</strong>
+                                <span>Sin imagen de publicacion</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="social-case-post-meta">
+                        {{ $postAuthor }} · {{ $platformLabel }} · {{ $socialPost?->published_at?->diffForHumans() ?? 'Fecha no disponible' }}
+                    </div>
+
+                    @if ($postCaption)
+                        <div class="social-case-post-caption">{{ $postCaption }}</div>
                     @else
-                        <span class="social-case-action soft">Crear ficha desde acciones</span>
+                        <p class="social-case-empty">No hay texto de publicacion asociado.</p>
                     @endif
 
-                    <span class="social-case-action soft">Derivar a WA desde acciones</span>
-                    <span class="social-case-action soft">Token: {{ $record->tracking_token ?: 'pendiente' }}</span>
+                    <div class="social-case-post-comment">
+                        <span>Comentario recibido</span>
+                        {{ $record->comment_text ?: 'Sin texto registrado.' }}
+                    </div>
+
+                    <div class="social-case-actions">
+                        @if ($postPermalink)
+                            <a class="social-case-action primary" href="{{ $postPermalink }}" target="_blank" rel="noopener noreferrer">Abrir publicacion</a>
+                        @else
+                            <span class="social-case-action soft">Link no disponible</span>
+                        @endif
+                    </div>
                 </div>
             </section>
 

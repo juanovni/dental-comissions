@@ -9,6 +9,9 @@ use App\Models\PaymentMethod;
 use App\Models\PaymentMethodCommissionRate;
 use App\Models\Procedure;
 use App\Models\Professional;
+use App\Models\SocialAccount;
+use App\Models\SocialComment;
+use App\Models\SocialPost;
 use App\Models\WhatsappMessage;
 use App\Services\WhatsappService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -377,6 +380,50 @@ class WhatsappServiceTest extends TestCase
         $this->assertEquals(WhatsappMessageStatus::NeedsReview, $result->status);
         $this->assertStringContainsString('perteneces a varios doctores', $result->error_message);
         $this->assertEquals(0, ActivityRecord::count());
+    }
+
+    public function test_social_tracking_token_takes_precedence_over_professional_activity_flow(): void
+    {
+        $professional = Professional::factory()->create([
+            'whatsapp_phone' => '+573001112233',
+            'role' => 'doctor',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'instagram',
+            'account_name' => 'Clinica Dental IG',
+            'external_account_id' => 'ig_account_'.uniqid(),
+            'is_active' => true,
+        ]);
+
+        $post = SocialPost::create([
+            'social_account_id' => $account->id,
+            'platform' => 'instagram',
+            'external_post_id' => 'post_'.uniqid(),
+            'caption' => 'Limpieza dental',
+        ]);
+
+        $comment = SocialComment::create([
+            'social_account_id' => $account->id,
+            'social_post_id' => $post->id,
+            'platform' => 'instagram',
+            'external_comment_id' => 'comment_'.uniqid(),
+            'author_name' => 'Paciente Test',
+            'comment_text' => 'Me interesa esta limpieza dental',
+            'tracking_token' => 'DNT-ABC12',
+        ]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('+573001112233', 'Hola, vengo de redes sociales. Mi codigo es DNT-ABC12.'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals($professional->id, $result->professional_id);
+        $this->assertEquals(WhatsappMessageStatus::Processed, $result->status);
+        $this->assertEquals(0, ActivityRecord::count());
+        $this->assertNotNull($comment->refresh()->social_identity_id);
     }
 
     private function fakeGemini(?array $content = null): void

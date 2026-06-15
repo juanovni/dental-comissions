@@ -286,6 +286,37 @@
             padding: .55rem .7rem;
         }
 
+        .smart-followup-steps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+        }
+
+        .smart-followup-step {
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: .55rem;
+            color: #475569;
+            display: inline-flex;
+            font-size: .72rem;
+            font-weight: 700;
+            gap: .35rem;
+            padding: .38rem .5rem;
+        }
+
+        .smart-followup-step strong {
+            align-items: center;
+            background: #eff6ff;
+            border-radius: .4rem;
+            color: #1d4ed8;
+            display: inline-flex;
+            font-size: .68rem;
+            height: 1.15rem;
+            justify-content: center;
+            width: 1.15rem;
+        }
+
         .smart-message {
             color: #111827;
             font-size: clamp(.98rem, 1.35vw, 1.08rem);
@@ -331,6 +362,13 @@
             letter-spacing: .12em;
             margin: 0 0 .5rem;
             text-transform: uppercase;
+        }
+
+        .smart-panel-kicker {
+            color: #64748b;
+            font-size: .74rem;
+            line-height: 1.45;
+            margin: -.25rem 0 .6rem;
         }
 
         .smart-panel p,
@@ -414,6 +452,34 @@
             font-size: .86rem;
             padding: .7rem .8rem;
             width: 100%;
+        }
+
+        .smart-modal-note {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: .75rem;
+            color: #1e40af;
+            font-size: .84rem;
+            line-height: 1.5;
+            padding: .75rem .85rem;
+        }
+
+        .dark .smart-followup-step,
+        .dark .smart-copy-field {
+            background: rgba(15, 23, 42, .86);
+            border-color: rgba(148, 163, 184, .18);
+            color: #cbd5e1;
+        }
+
+        .dark .smart-followup-step strong {
+            background: rgba(29, 78, 216, .24);
+            color: #93c5fd;
+        }
+
+        .dark .smart-modal-note {
+            background: rgba(29, 78, 216, .18);
+            border-color: rgba(96, 165, 250, .24);
+            color: #bfdbfe;
         }
     </style>
 
@@ -517,6 +583,13 @@
                         </div>
                     @endif
 
+                    <div class="smart-followup-steps" aria-label="Flujo recomendado de seguimiento">
+                        <span class="smart-followup-step"><strong>1</strong> Derivar</span>
+                        <span class="smart-followup-step"><strong>2</strong> Copiar texto final</span>
+                        <span class="smart-followup-step"><strong>3</strong> Pegar en la red social</span>
+                        <span class="smart-followup-step"><strong>4</strong> Revisar leads calientes</span>
+                    </div>
+
                     <div class="smart-panels">
                         <section class="smart-panel">
                             <h3>Contexto Clinico</h3>
@@ -532,7 +605,8 @@
                         </section>
 
                         <section class="smart-panel smart-ai-panel">
-                            <h3>Sugerencia IA</h3>
+                            <h3>Respuesta base IA</h3>
+                            <div class="smart-panel-kicker">Antes de derivar. No incluye token ni link de seguimiento.</div>
                             <p>{{ $comment->suggested_reply ?: 'Sin respuesta sugerida. Revisar contexto antes de responder.' }}</p>
                             @if ($comment->ai_reason)
                                 <p class="smart-muted" style="margin-top:.45rem">Motivo: {{ $comment->ai_reason }}</p>
@@ -546,7 +620,9 @@
                         @endif
 
                         @if ($isLead || blank($comment->tracking_token))
-                            <button class="smart-action success" type="button" wire:click="routeToWhatsapp({{ $comment->id }})">WhatsApp</button>
+                            <button class="smart-action success" type="button" wire:click="routeToWhatsapp({{ $comment->id }})">
+                                {{ $isDerived ? 'Ver texto de seguimiento' : 'WhatsApp' }}
+                            </button>
                         @endif
 
                         @if ($patientUrl)
@@ -576,7 +652,11 @@
             <div class="smart-modal-backdrop" wire:key="whatsapp-bridge-modal">
                 <section class="smart-modal" role="dialog" aria-modal="true" aria-labelledby="whatsapp-modal-title">
                     <h2 id="whatsapp-modal-title">Derivar lead a WhatsApp</h2>
-                    <p class="smart-muted">El link se copio automaticamente. Pegalo en el chat de Instagram o Facebook.</p>
+                    <p class="smart-muted">El texto final se copio automaticamente. Pegalo como respuesta al comentario en Instagram o Facebook.</p>
+
+                    <div class="smart-modal-note">
+                        Este es el mensaje recomendado para responder porque incluye tracking. El texto de la card es solo una respuesta base generada por IA.
+                    </div>
 
                     <label>
                         <span class="smart-muted">Token</span>
@@ -594,7 +674,7 @@
                     </label>
 
                     <label>
-                        <span class="smart-muted">Texto sugerido</span>
+                        <span class="smart-muted">Texto final para copiar y responder</span>
                         <textarea class="smart-copy-field" rows="4" readonly>{{ $whatsappReplyText }}</textarea>
                     </label>
 

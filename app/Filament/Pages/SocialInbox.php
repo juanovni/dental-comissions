@@ -148,18 +148,18 @@ class SocialInbox extends Page
         $this->whatsappReplyText = $conversionService->instagramReplyText($comment);
         $this->whatsappModalOpen = true;
 
-        $copyText = $this->whatsappLink ?: $this->whatsappReplyText;
+        $copyText = $this->whatsappReplyText ?: $this->whatsappLink;
 
         if ($copyText !== '') {
             $this->dispatch('social-whatsapp-link-generated',
                 text: $copyText,
-                toast: app(SocialCrmSettingsService::class)->autoCopyToast(),
+                toast: 'Texto de seguimiento copiado. Pegalo como respuesta al comentario.',
             );
         }
 
         Notification::make()
             ->title('Lead derivado a WhatsApp')
-            ->body(app(SocialCrmSettingsService::class)->autoCopyToast()." Token: {$token}")
+            ->body("Texto de seguimiento copiado. Token: {$token}")
             ->success()
             ->send();
     }
