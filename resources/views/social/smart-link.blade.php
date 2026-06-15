@@ -4,293 +4,703 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ $csrfToken }}">
-    <title>{{ $content['eyebrow'] ?? 'Valoracion dental' }} | CRM Dental</title>
+    <meta name="description" content="{{ $content['subtitle'] ?? 'Valoracion dental personalizada, clara y sin presion.' }}">
+    <meta property="og:title" content="{{ $content['title'] ?? 'Tu nueva sonrisa, planificada a medida.' }}">
+    <meta property="og:description" content="{{ $preview['text'] }}">
+    <title>{{ $content['eyebrow'] ?? 'Valoracion dental' }} | Clinica Dental</title>
+    @php
+        $videoUrl = (string) ($content['video_url'] ?? '');
+        $isVideoFile = filled($videoUrl) && \Illuminate\Support\Str::of($videoUrl)->lower()->endsWith(['.mp4', '.webm', '.ogg']);
+    @endphp
     <style>
         :root {
-            --ink: #17201d;
-            --muted: #66736f;
-            --cream: #f7f1e7;
-            --paper: #fffaf1;
-            --mint: #9fd8c2;
-            --deep: #123c35;
-            --gold: #c89149;
-            --line: rgba(18, 60, 53, .14);
+            --sp-bg: #f4f8fb;
+            --sp-surface: #ffffff;
+            --sp-ink: #081126;
+            --sp-muted: #63718a;
+            --sp-border: #e6edf5;
+            --sp-teal: #009b8f;
+            --sp-teal-dark: #00856f;
+            --sp-teal-soft: #e9fbf7;
+            --sp-blue-soft: #eef6ff;
+            --sp-dark: #071126;
+            --sp-shadow: 0 22px 60px rgba(15, 23, 42, .08);
+            font-family: Aptos, "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
         }
 
         * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
 
         body {
-            background:
-                radial-gradient(circle at 12% 12%, rgba(159, 216, 194, .5), transparent 26rem),
-                radial-gradient(circle at 88% 10%, rgba(200, 145, 73, .24), transparent 24rem),
-                linear-gradient(135deg, #fbf7ef, #eef6ef 54%, #f7f1e7);
-            color: var(--ink);
-            font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+            background: var(--sp-bg);
+            color: var(--sp-ink);
             margin: 0;
             min-height: 100vh;
         }
 
-        .shell {
+        a { color: inherit; }
+
+        .sp-shell {
             margin: 0 auto;
             max-width: 1180px;
-            padding: clamp(1rem, 3vw, 2.5rem);
+            padding: 0 clamp(1rem, 3vw, 2rem);
         }
 
-        .nav {
+        .sp-nav {
             align-items: center;
+            background: rgba(255, 255, 255, .9);
+            border-bottom: 1px solid var(--sp-border);
             display: flex;
             justify-content: space-between;
-            margin-bottom: clamp(1.5rem, 5vw, 4rem);
+            min-height: 4.25rem;
         }
 
-        .brand {
+        .sp-brand,
+        .sp-token {
             align-items: center;
             display: inline-flex;
-            gap: .7rem;
-            font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: .78rem;
-            font-weight: 850;
-            letter-spacing: .14em;
-            text-transform: uppercase;
+            gap: .55rem;
         }
 
-        .brand-mark {
-            background: var(--deep);
+        .sp-brand-mark {
+            align-items: center;
+            background: var(--sp-teal);
+            border-radius: .65rem;
+            color: #ffffff;
+            display: inline-flex;
+            font-size: .8rem;
+            font-weight: 800;
+            height: 2rem;
+            justify-content: center;
+            width: 2rem;
+        }
+
+        .sp-brand strong {
+            color: var(--sp-ink);
+            font-size: .96rem;
+            font-weight: 700;
+        }
+
+        .sp-token {
+            background: #f8fbfd;
+            border: 1px solid var(--sp-border);
             border-radius: 999px;
-            box-shadow: 0 14px 34px rgba(18, 60, 53, .24);
-            height: 2.25rem;
-            position: relative;
-            width: 2.25rem;
+            color: #50617a;
+            font-size: .72rem;
+            font-weight: 700;
+            padding: .32rem .62rem;
         }
 
-        .brand-mark::after {
-            background: var(--mint);
+        .sp-token::before {
+            background: var(--sp-teal);
             border-radius: 999px;
             content: '';
-            height: .62rem;
-            inset: .48rem auto auto .82rem;
-            position: absolute;
-            width: .62rem;
+            height: .4rem;
+            width: .4rem;
         }
 
-        .token {
-            background: rgba(255, 250, 241, .72);
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            color: var(--deep);
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: .78rem;
-            font-weight: 800;
-            padding: .55rem .78rem;
+        .sp-hero-wrap {
+            background:
+                radial-gradient(circle at 50% 18%, rgba(0, 155, 143, .07), transparent 23rem),
+                linear-gradient(180deg, #f7fbff, #f4f8fb);
+            border-bottom: 1px solid #eef3f8;
         }
 
-        .hero {
-            display: grid;
-            gap: clamp(1.5rem, 5vw, 4rem);
-            grid-template-columns: minmax(0, 1.04fr) minmax(18rem, .96fr);
+        .sp-hero {
             align-items: center;
+            display: grid;
+            gap: clamp(2rem, 5vw, 5rem);
+            grid-template-columns: minmax(0, .98fr) minmax(21rem, .88fr);
+            min-height: 38rem;
+            padding: clamp(2.5rem, 7vw, 6rem) 0 clamp(2rem, 5vw, 4rem);
         }
 
-        .eyebrow {
-            color: var(--gold);
-            font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: .78rem;
-            font-weight: 900;
-            letter-spacing: .16em;
-            margin: 0 0 1rem;
+        .sp-eyebrow {
+            color: var(--sp-teal);
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: .12em;
+            margin: 0 0 .95rem;
             text-transform: uppercase;
         }
 
-        h1 {
-            font-size: clamp(2.55rem, 7vw, 6.7rem);
-            letter-spacing: -.07em;
-            line-height: .88;
+        .sp-title {
+            color: var(--sp-ink);
+            font-size: clamp(2.8rem, 6vw, 4.9rem);
+            font-weight: 800;
+            letter-spacing: -.06em;
+            line-height: 1.02;
             margin: 0;
-            max-width: 10ch;
+            max-width: 10.8ch;
         }
 
-        .subtitle {
-            color: var(--muted);
-            font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: clamp(1rem, 1.5vw, 1.18rem);
+        .sp-title span {
+            color: var(--sp-teal);
+            display: block;
+        }
+
+        .sp-subtitle {
+            color: var(--sp-muted);
+            font-size: 1rem;
             line-height: 1.7;
-            margin: 1.35rem 0 0;
-            max-width: 42rem;
+            margin: 1.25rem 0 0;
+            max-width: 38rem;
         }
 
-        .actions {
+        .sp-actions {
             display: flex;
             flex-wrap: wrap;
-            gap: .75rem;
-            margin-top: 1.6rem;
+            gap: .8rem;
+            margin-top: 1.4rem;
         }
 
-        .cta {
+        .sp-btn {
             align-items: center;
-            background: var(--deep);
-            border: 1px solid var(--deep);
-            border-radius: 999px;
-            box-shadow: 0 18px 40px rgba(18, 60, 53, .24);
-            color: #fff;
+            border-radius: .8rem;
             display: inline-flex;
-            font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: .92rem;
-            font-weight: 850;
-            gap: .55rem;
-            padding: .9rem 1.15rem;
+            font-size: .88rem;
+            font-weight: 800;
+            justify-content: center;
+            min-height: 3rem;
+            padding: .8rem 1.15rem;
             text-decoration: none;
-            transition: transform .18s ease, box-shadow .18s ease;
+            transition: transform .16s ease, box-shadow .16s ease;
         }
 
-        .cta:hover { box-shadow: 0 22px 48px rgba(18, 60, 53, .3); transform: translateY(-2px); }
+        .sp-btn:hover { transform: translateY(-1px); }
 
-        .ghost {
-            background: rgba(255, 250, 241, .7);
-            color: var(--deep);
+        .sp-btn-whatsapp {
+            background: #079455;
+            box-shadow: 0 14px 28px rgba(7, 148, 85, .2);
+            color: #ffffff;
         }
 
-        .visual-card {
-            aspect-ratio: 4 / 5;
-            background:
-                linear-gradient(145deg, rgba(255, 255, 255, .62), rgba(255, 250, 241, .86)),
-                repeating-linear-gradient(45deg, rgba(18, 60, 53, .055) 0 1px, transparent 1px 14px);
-            border: 1px solid rgba(18, 60, 53, .16);
-            border-radius: 2.2rem;
-            box-shadow: 0 30px 80px rgba(18, 60, 53, .18);
-            display: grid;
-            overflow: hidden;
-            padding: 1.1rem;
+        .sp-btn-soft {
+            background: #ffffff;
+            border: 1px solid var(--sp-border);
+            color: var(--sp-ink);
+        }
+
+        .sp-plan-card {
+            background: var(--sp-surface);
+            border: 1px solid var(--sp-border);
+            border-radius: 1.45rem;
+            box-shadow: var(--sp-shadow);
+            padding: 1.65rem;
             position: relative;
         }
 
-        .visual-card::before {
-            background: radial-gradient(circle, rgba(159, 216, 194, .75), transparent 66%);
-            content: '';
-            height: 18rem;
-            position: absolute;
-            right: -7rem;
-            top: -6rem;
-            width: 18rem;
-        }
-
-        .video-box {
+        .sp-phase {
             align-items: center;
-            background: linear-gradient(160deg, #183f38, #97cbb8);
-            border-radius: 1.55rem;
-            color: white;
-            display: grid;
-            min-height: 16rem;
-            overflow: hidden;
-            place-items: center;
-            position: relative;
-            text-align: center;
+            background: #ffffff;
+            border: 4px solid #e0f5f2;
+            border-radius: 999px;
+            color: var(--sp-teal-dark);
+            display: flex;
+            font-size: .72rem;
+            font-weight: 900;
+            height: 4.4rem;
+            justify-content: center;
+            position: absolute;
+            right: 1.35rem;
+            top: 1.35rem;
+            width: 4.4rem;
         }
 
-        .video-box iframe,
-        .video-box video {
+        .sp-card-label {
+            color: #8797b1;
+            font-size: .68rem;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        .sp-procedure {
+            color: var(--sp-ink);
+            font-size: 1.35rem;
+            font-weight: 800;
+            margin: .28rem 5rem 1rem 0;
+        }
+
+        .sp-facts {
+            display: grid;
+            gap: .75rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            margin-bottom: 1rem;
+        }
+
+        .sp-fact {
+            background: #f6f9fc;
+            border-radius: .8rem;
+            padding: .9rem;
+        }
+
+        .sp-fact span {
+            color: #8a98af;
+            display: block;
+            font-size: .68rem;
+            font-weight: 800;
+            letter-spacing: .08em;
+            margin-bottom: .35rem;
+            text-transform: uppercase;
+        }
+
+        .sp-fact strong {
+            color: var(--sp-ink);
+            font-size: .9rem;
+            font-weight: 800;
+        }
+
+        .sp-checks {
+            display: grid;
+            gap: .52rem;
+            margin: 1rem 0;
+        }
+
+        .sp-check {
+            align-items: center;
+            color: #42516a;
+            display: flex;
+            font-size: .84rem;
+            gap: .5rem;
+        }
+
+        .sp-check::before {
+            align-items: center;
+            background: #d9fbf4;
+            border-radius: 999px;
+            color: var(--sp-teal);
+            content: '✓';
+            display: inline-flex;
+            flex: 0 0 auto;
+            font-size: .68rem;
+            font-weight: 900;
+            height: 1rem;
+            justify-content: center;
+            width: 1rem;
+        }
+
+        .sp-media {
+            background:
+                linear-gradient(180deg, rgba(207, 243, 252, .88), rgba(255, 255, 255, .4)),
+                #eef8fb;
+            border: 1px solid #cdebf3;
+            border-radius: 1rem;
+            min-height: 12.6rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sp-media iframe,
+        .sp-media video {
             border: 0;
             height: 100%;
             inset: 0;
+            object-fit: cover;
             position: absolute;
             width: 100%;
         }
 
-        .play-orb {
-            align-items: center;
-            backdrop-filter: blur(12px);
-            background: rgba(255, 255, 255, .18);
-            border: 1px solid rgba(255, 255, 255, .36);
+        .sp-aligner {
+            border: 3px solid rgba(8, 17, 38, .13);
+            border-top-color: rgba(8, 17, 38, .24);
+            border-radius: 44% 48% 36% 40%;
+            height: 4.6rem;
+            left: 50%;
+            position: absolute;
+            top: 48%;
+            transform: translate(-50%, -50%) rotate(-8deg);
+            width: 12.5rem;
+        }
+
+        .sp-aligner::before,
+        .sp-aligner::after {
+            background: rgba(255, 255, 255, .45);
             border-radius: 999px;
-            display: flex;
-            font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: .78rem;
-            font-weight: 900;
-            height: 8.5rem;
-            justify-content: center;
-            letter-spacing: .1em;
+            content: '';
+            height: 1rem;
+            position: absolute;
+            top: 1.2rem;
+            width: 2.2rem;
+        }
+
+        .sp-aligner::before { left: 2rem; }
+        .sp-aligner::after { right: 2rem; }
+
+        .sp-media-caption {
+            background: rgba(255, 255, 255, .82);
+            border-radius: 999px;
+            bottom: .7rem;
+            color: #718199;
+            font-size: .65rem;
+            font-weight: 800;
+            left: .7rem;
+            letter-spacing: .08em;
+            padding: .3rem .55rem;
+            position: absolute;
             text-transform: uppercase;
-            width: 8.5rem;
         }
 
-        .visual-label {
-            align-self: end;
-            color: var(--deep);
-            display: grid;
-            font-family: ui-sans-serif, system-ui, sans-serif;
-            gap: .45rem;
-            margin-top: 1rem;
-        }
-
-        .visual-label strong { font-size: 1.1rem; }
-        .visual-label span { color: var(--muted); font-size: .86rem; line-height: 1.55; }
-
-        .proof {
+        .sp-benefits {
             display: grid;
             gap: 1rem;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            margin-top: clamp(2rem, 5vw, 4rem);
+            padding-bottom: clamp(2rem, 5vw, 4rem);
         }
 
-        .proof-card {
-            background: rgba(255, 250, 241, .7);
-            border: 1px solid var(--line);
-            border-radius: 1.2rem;
-            color: var(--deep);
-            font-family: ui-sans-serif, system-ui, sans-serif;
+        .sp-benefit {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid var(--sp-border);
+            border-radius: 1rem;
+            display: flex;
+            gap: .95rem;
             padding: 1rem;
         }
 
-        .proof-card strong { display: block; font-size: .95rem; margin-bottom: .4rem; }
-        .proof-card span { color: var(--muted); font-size: .84rem; line-height: 1.55; }
+        .sp-benefit-icon {
+            align-items: center;
+            background: #f0fbfa;
+            border-radius: .85rem;
+            color: var(--sp-teal);
+            display: inline-flex;
+            flex: 0 0 auto;
+            font-size: 1rem;
+            height: 2.45rem;
+            justify-content: center;
+            width: 2.45rem;
+        }
 
-        @media (max-width: 840px) {
-            .hero { grid-template-columns: 1fr; }
-            .visual-card { aspect-ratio: auto; }
-            .proof { grid-template-columns: 1fr; }
-            h1 { max-width: none; }
+        .sp-benefit strong {
+            color: var(--sp-ink);
+            display: block;
+            font-size: .9rem;
+            font-weight: 800;
+        }
+
+        .sp-benefit span {
+            color: var(--sp-muted);
+            display: block;
+            font-size: .75rem;
+            line-height: 1.45;
+            margin-top: .12rem;
+        }
+
+        .sp-section {
+            background: #ffffff;
+            padding: clamp(3rem, 7vw, 5.5rem) 0;
+        }
+
+        .sp-section.alt {
+            background: var(--sp-bg);
+        }
+
+        .sp-section-heading {
+            margin: 0 auto clamp(2.2rem, 4vw, 3rem);
+            max-width: 42rem;
+            text-align: center;
+        }
+
+        .sp-section-kicker {
+            color: var(--sp-teal);
+            font-size: .7rem;
+            font-weight: 900;
+            letter-spacing: .12em;
+            margin-bottom: .55rem;
+            text-transform: uppercase;
+        }
+
+        .sp-section-heading h2 {
+            color: var(--sp-ink);
+            font-size: clamp(1.7rem, 3vw, 2.25rem);
+            font-weight: 800;
+            letter-spacing: -.035em;
+            line-height: 1.1;
+            margin: 0;
+        }
+
+        .sp-section-heading p {
+            color: var(--sp-muted);
+            font-size: .95rem;
+            line-height: 1.65;
+            margin: .85rem 0 0;
+        }
+
+        .sp-steps {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            text-align: center;
+        }
+
+        .sp-step-number {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid var(--sp-border);
+            border-radius: .85rem;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, .05);
+            color: var(--sp-teal);
+            display: inline-flex;
+            font-size: 1.1rem;
+            font-weight: 900;
+            height: 3.2rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+            width: 3.2rem;
+        }
+
+        .sp-step strong {
+            color: var(--sp-ink);
+            display: block;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .sp-step p {
+            color: var(--sp-muted);
+            font-size: .84rem;
+            line-height: 1.65;
+            margin: .75rem auto 0;
+            max-width: 18rem;
+        }
+
+        .sp-results {
+            display: grid;
+            gap: 1.25rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .sp-result-card {
+            border-radius: 1.2rem;
+            min-height: 24rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sp-result-card.before {
+            background:
+                radial-gradient(circle at 20% 12%, rgba(255, 255, 255, .78), transparent 8rem),
+                repeating-linear-gradient(90deg, rgba(255,255,255,.18) 0 2.4rem, transparent 2.4rem 4.9rem),
+                linear-gradient(135deg, #c96f5b, #f1d4a8 52%, #048b97);
+        }
+
+        .sp-result-card.after {
+            background:
+                radial-gradient(circle at 52% 38%, rgba(255, 255, 255, .95), transparent 6.5rem),
+                radial-gradient(circle at 52% 56%, rgba(255, 255, 255, .85), transparent 8rem),
+                linear-gradient(135deg, #76ead9, #0fbc9f 58%, #099072);
+        }
+
+        .sp-result-label {
+            background: rgba(255, 255, 255, .82);
+            border-radius: 999px;
+            color: #334155;
+            font-size: .72rem;
+            font-weight: 900;
+            left: 1rem;
+            padding: .4rem .7rem;
+            position: absolute;
+            top: 1rem;
+        }
+
+        .sp-cta-band {
+            align-items: center;
+            background:
+                radial-gradient(circle at 16% 0%, rgba(255, 255, 255, .08), transparent 10rem),
+                var(--sp-dark);
+            border-radius: 1.35rem;
+            color: #ffffff;
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            margin: clamp(2rem, 5vw, 3.5rem) 0 0;
+            overflow: hidden;
+            padding: clamp(1.25rem, 3vw, 2rem);
+        }
+
+        .sp-cta-band strong {
+            display: block;
+            font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+            font-weight: 900;
+            letter-spacing: -.03em;
+        }
+
+        .sp-cta-band span {
+            color: #9aa8bf;
+            display: block;
+            font-size: .9rem;
+            line-height: 1.6;
+            margin-top: .35rem;
+        }
+
+        @media (max-width: 980px) {
+            .sp-hero {
+                grid-template-columns: minmax(0, 1fr);
+                min-height: auto;
+            }
+
+            .sp-title { max-width: 12ch; }
+        }
+
+        @media (max-width: 760px) {
+            .sp-nav,
+            .sp-cta-band {
+                align-items: stretch;
+                display: grid;
+            }
+
+            .sp-token,
+            .sp-btn,
+            .sp-cta-band .sp-btn {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .sp-facts,
+            .sp-benefits,
+            .sp-steps,
+            .sp-results {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .sp-result-card { min-height: 17rem; }
+            .sp-media { min-height: 14.5rem; }
+        }
+
+        @media (max-width: 440px) {
+            .sp-shell { padding: 0 .9rem; }
+            .sp-title { font-size: 2.45rem; }
+            .sp-plan-card { padding: 1rem; }
+            .sp-phase { height: 3.7rem; width: 3.7rem; }
+            .sp-procedure { margin-right: 4rem; }
         }
     </style>
 </head>
 <body>
-    <main class="shell" data-track-url="{{ $trackUrl }}" data-threshold="{{ $durationThreshold }}" data-ping="{{ $pingSeconds }}">
-        <nav class="nav" aria-label="Identidad de landing">
-            <div class="brand"><span class="brand-mark"></span><span>Clinica Dental</span></div>
-            <div class="token">{{ $trackingToken }}</div>
-        </nav>
-
-        <section class="hero">
-            <div>
-                <p class="eyebrow">{{ $content['eyebrow'] ?? 'Valoracion dental personalizada' }}</p>
-                <h1>{{ $content['title'] ?? 'Tu sonrisa merece un plan claro.' }}</h1>
-                <p class="subtitle">{{ $content['subtitle'] ?? 'Continua por WhatsApp para recibir orientacion personalizada.' }}</p>
-
-                <div class="actions">
-                    @if ($whatsappLink)
-                        <a class="cta" href="{{ $whatsappLink }}">Continuar por WhatsApp</a>
-                    @endif
-                    <a class="cta ghost" href="#resultados">Ver resultados visuales</a>
-                </div>
+    <header class="sp-nav">
+        <div class="sp-shell" style="align-items:center;display:flex;justify-content:space-between;width:100%;gap:1rem;">
+            <div class="sp-brand">
+                <span class="sp-brand-mark">DC</span>
+                <strong>VitalSmile</strong>
             </div>
 
-            <aside class="visual-card" id="resultados">
-                <div class="video-box">
-                    @if (filled($content['video_url'] ?? null))
-                        <iframe src="{{ $content['video_url'] }}" title="Video informativo dental" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    @else
-                        <div class="play-orb">Preview</div>
-                    @endif
+            <div class="sp-token">ID: {{ $trackingToken }}</div>
+        </div>
+    </header>
+
+    <main data-track-url="{{ $trackUrl }}" data-threshold="{{ $durationThreshold }}" data-ping="{{ $pingSeconds }}">
+        <section class="sp-hero-wrap">
+            <div class="sp-shell">
+                <div class="sp-hero">
+                    <div>
+                        <p class="sp-eyebrow">{{ $content['eyebrow'] ?? 'Plan dental personalizado' }}</p>
+                        <h1 class="sp-title">Tu nueva sonrisa, <span>planificada a medida.</span></h1>
+                        <p class="sp-subtitle">Hola, hemos preparado los detalles para tu valoracion de {{ strtolower($preview['procedure']) }}. Todo esta listo para comenzar con claridad, sin presion y con seguimiento humano.</p>
+
+                        <div class="sp-actions">
+                            @if ($whatsappLink)
+                                <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}">Confirmar por WhatsApp</a>
+                            @endif
+                            <a class="sp-btn sp-btn-soft" href="#visita">Ver primera visita</a>
+                        </div>
+                    </div>
+
+                    <aside class="sp-plan-card" aria-label="Resumen del plan dental">
+                        <div class="sp-phase">FASE 1</div>
+                        <div class="sp-card-label">Procedimiento</div>
+                        <div class="sp-procedure">{{ $preview['procedure'] }}</div>
+
+                        <div class="sp-facts">
+                            <div class="sp-fact">
+                                <span>Duracion est.</span>
+                                <strong>{{ $preview['duration'] }}</strong>
+                            </div>
+                            <div class="sp-fact">
+                                <span>Complejidad</span>
+                                <strong>{{ $preview['complexity'] }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="sp-checks">
+                            @foreach ($preview['steps'] as $step)
+                                <div class="sp-check">{{ $step['label'] }}</div>
+                            @endforeach
+                        </div>
+
+                        <div class="sp-media">
+                            @if (filled($videoUrl))
+                                @if ($isVideoFile)
+                                    <video src="{{ $videoUrl }}" controls playsinline preload="metadata"></video>
+                                @else
+                                    <iframe src="{{ $videoUrl }}" title="Video informativo dental" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                @endif
+                            @else
+                                <div class="sp-aligner" aria-hidden="true"></div>
+                                <span class="sp-media-caption">Visualizacion diagnostica</span>
+                            @endif
+                        </div>
+                    </aside>
                 </div>
-                <div class="visual-label">
-                    <strong>{{ $content['visual_label'] ?? 'Diagnostico integral' }}</strong>
-                    <span>Esta pagina esta conectada a tu solicitud original. El equipo puede ver tu interes y darte seguimiento con mejor contexto.</span>
+
+                <div class="sp-benefits" aria-label="Beneficios de la valoracion">
+                    <article class="sp-benefit">
+                        <span class="sp-benefit-icon">✦</span>
+                        <div><strong>Tecnologia digital</strong><span>Precision y diagnostico visual.</span></div>
+                    </article>
+                    <article class="sp-benefit">
+                        <span class="sp-benefit-icon">★</span>
+                        <div><strong>Especialistas</strong><span>Evaluacion guiada por criterio clinico.</span></div>
+                    </article>
+                    <article class="sp-benefit">
+                        <span class="sp-benefit-icon">▣</span>
+                        <div><strong>Plan claro</strong><span>Opciones, tiempos y presupuesto sin sorpresas.</span></div>
+                    </article>
                 </div>
-            </aside>
+            </div>
         </section>
 
-        <section class="proof" aria-label="Beneficios de seguimiento">
-            <div class="proof-card"><strong>Contexto claro</strong><span>Tu codigo mantiene unida la conversacion de redes y WhatsApp.</span></div>
-            <div class="proof-card"><strong>Atencion guiada</strong><span>La secretaria sabe que tema dental te interesa antes de responder.</span></div>
-            <div class="proof-card"><strong>Sin presion</strong><span>Revisa la informacion y continua cuando estes listo.</span></div>
+        <section class="sp-section" id="visita">
+            <div class="sp-shell">
+                <div class="sp-section-heading">
+                    <h2>¿Que pasara en tu primera visita?</h2>
+                    <p>Queremos que te sientas comodo desde el primer segundo.</p>
+                </div>
+
+                <div class="sp-steps">
+                    @foreach ($preview['steps'] as $index => $step)
+                        <article class="sp-step">
+                            <span class="sp-step-number">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</span>
+                            <strong>{{ $step['label'] }}</strong>
+                            <p>{{ $step['text'] }}</p>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
+        <section class="sp-section alt">
+            <div class="sp-shell">
+                <div class="sp-section-heading">
+                    <div class="sp-section-kicker">Resultados visuales</div>
+                    <h2>Tu sonrisa, transformada.</h2>
+                    <p>Placeholder visual para mostrar el tipo de cambio que buscamos explicar en tu valoracion. Luego puedes reemplazarlo por casos reales o video.</p>
+                </div>
+
+                <div class="sp-results">
+                    <div class="sp-result-card before"><span class="sp-result-label">Antes / placeholder</span></div>
+                    <div class="sp-result-card after"><span class="sp-result-label">Despues / placeholder</span></div>
+                </div>
+
+                <section class="sp-cta-band" aria-label="CTA final">
+                    <div>
+                        <strong>¿Listo para dar el primer paso?</strong>
+                        <span>Agenda tu valoracion y conserva tu codigo {{ $trackingToken }} para mantener el contexto de tu solicitud.</span>
+                    </div>
+                    @if ($whatsappLink)
+                        <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}">Hablar con un asesor</a>
+                    @endif
+                </section>
+            </div>
         </section>
     </main>
 

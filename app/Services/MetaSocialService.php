@@ -85,7 +85,7 @@ class MetaSocialService
                     $webhookComment['account_id'],
                 );
 
-                $post = $this->storeWebhookPost($account, $webhookComment['post']);
+                $post = $this->storeWebhookPost($account, $this->enrichWebhookPost($account, $webhookComment['post']));
                 $comment = $this->storeComment($account, $post, $webhookComment['comment']);
                 app(SocialCommentClassificationService::class)->classify($comment);
 
@@ -431,9 +431,58 @@ class MetaSocialService
             'id' => $postData['id'],
             'message' => $postData['caption'] ?? null,
             'caption' => $postData['caption'] ?? null,
+            'full_picture' => $postData['full_picture'] ?? null,
+            'media_url' => $postData['media_url'] ?? null,
+            'permalink_url' => $postData['permalink_url'] ?? null,
+            'permalink' => $postData['permalink'] ?? null,
             'created_time' => $postData['created_time'] ?? $postData['timestamp'] ?? null,
             'timestamp' => $postData['timestamp'] ?? $postData['created_time'] ?? null,
             'raw_payload' => $postData['raw_payload'] ?? $postData,
+        ]);
+    }
+
+    private function enrichWebhookPost(SocialAccount $account, array $postData): array
+    {
+        if (blank($postData['id'] ?? null)) {
+            return $postData;
+        }
+
+        try {
+            $details = $account->platform === SocialPlatform::Instagram
+                ? $this->get("/{$postData['id']}", [
+                    'fields' => 'id,caption,media_url,permalink,timestamp',
+                ], $account)
+                : $this->get("/{$postData['id']}", [
+                    'fields' => 'id,message,permalink_url,full_picture,created_time',
+                ], $account);
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo enriquecer publicacion relacionada desde Meta.', [
+                'post_id' => $postData['id'],
+                'platform' => $account->platform->value,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $postData;
+        }
+
+        if ($details === []) {
+            return $postData;
+        }
+
+        $rawPayload = array_merge(
+            $postData['raw_payload'] ?? [],
+            ['post_details' => $details],
+        );
+
+        return array_merge($postData, [
+            'caption' => $details['caption'] ?? $details['message'] ?? ($postData['caption'] ?? null),
+            'media_url' => $details['media_url'] ?? ($postData['media_url'] ?? null),
+            'full_picture' => $details['full_picture'] ?? ($postData['full_picture'] ?? null),
+            'permalink' => $details['permalink'] ?? ($postData['permalink'] ?? null),
+            'permalink_url' => $details['permalink_url'] ?? ($postData['permalink_url'] ?? null),
+            'timestamp' => $details['timestamp'] ?? ($postData['timestamp'] ?? null),
+            'created_time' => $details['created_time'] ?? ($postData['created_time'] ?? null),
+            'raw_payload' => $rawPayload,
         ]);
     }
 

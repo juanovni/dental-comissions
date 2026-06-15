@@ -306,7 +306,6 @@
     <section class="hot-leads" wire:poll.15s>
         <div class="hot-leads-header">
             <div>
-                <h2 class="hot-leads-title">Leads calientes</h2>
                 <div class="hot-leads-subtitle">Prioriza contactos, seguimientos y fichas pendientes desde una cola operativa.</div>
             </div>
 

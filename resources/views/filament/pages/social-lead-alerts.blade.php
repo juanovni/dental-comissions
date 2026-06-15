@@ -341,7 +341,6 @@
     <section class="lead-alerts" wire:poll.20s>
         <div class="lead-alerts-header">
             <div>
-                <h2 class="lead-alerts-title">Alertas de leads</h2>
                 <div class="lead-alerts-subtitle">Monitorea oportunidades calientes, seguimientos vencidos y eventos que requieren accion.</div>
             </div>
 

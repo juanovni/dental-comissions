@@ -163,6 +163,124 @@ class MetaSocialServiceTest extends TestCase
         ]);
     }
 
+    public function test_process_webhook_payload_enriches_instagram_related_post(): void
+    {
+        config([
+            'services.meta.access_token' => 'test-token',
+            'services.meta.api_url' => 'https://graph.facebook.com/v25.0',
+        ]);
+
+        SocialAccount::create([
+            'platform' => SocialPlatform::Instagram,
+            'account_name' => 'Clinica Dental IG',
+            'external_account_id' => 'ig_1',
+            'instagram_business_account_id' => 'ig_1',
+            'access_token' => 'page-token',
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/ig_media_1*' => Http::response([
+                'id' => 'ig_media_1',
+                'caption' => 'Ortodoncia invisible para adultos. Consulta si eres candidato.',
+                'media_url' => 'https://cdn.example.test/ig_media_1.jpg',
+                'permalink' => 'https://instagram.com/p/abc123',
+                'timestamp' => now()->toIso8601String(),
+            ]),
+        ]);
+
+        app(MetaSocialService::class)->processWebhookPayload([
+            'object' => 'instagram',
+            'entry' => [
+                [
+                    'id' => 'ig_1',
+                    'changes' => [
+                        [
+                            'field' => 'comments',
+                            'value' => [
+                                'id' => 'ig_comment_1',
+                                'text' => 'Me interesa esta promocion',
+                                'media' => ['id' => 'ig_media_1'],
+                                'from' => [
+                                    'id' => 'ig_user_1',
+                                    'username' => 'cliente_ig',
+                                ],
+                                'timestamp' => now()->toIso8601String(),
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertDatabaseHas('social_posts', [
+            'platform' => SocialPlatform::Instagram->value,
+            'external_post_id' => 'ig_media_1',
+            'caption' => 'Ortodoncia invisible para adultos. Consulta si eres candidato.',
+            'media_url' => 'https://cdn.example.test/ig_media_1.jpg',
+            'permalink' => 'https://instagram.com/p/abc123',
+        ]);
+    }
+
+    public function test_process_webhook_payload_enriches_facebook_related_post(): void
+    {
+        config([
+            'services.meta.access_token' => 'test-token',
+            'services.meta.api_url' => 'https://graph.facebook.com/v25.0',
+        ]);
+
+        SocialAccount::create([
+            'platform' => SocialPlatform::Facebook,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => 'page_1',
+            'page_id' => 'page_1',
+            'access_token' => 'page-token',
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/post_1*' => Http::response([
+                'id' => 'post_1',
+                'message' => 'Promocion especial de implantes dentales.',
+                'full_picture' => 'https://cdn.example.test/post_1.jpg',
+                'permalink_url' => 'https://facebook.com/post_1',
+                'created_time' => now()->toIso8601String(),
+            ]),
+        ]);
+
+        app(MetaSocialService::class)->processWebhookPayload([
+            'object' => 'page',
+            'entry' => [
+                [
+                    'id' => 'page_1',
+                    'changes' => [
+                        [
+                            'field' => 'feed',
+                            'value' => [
+                                'item' => 'comment',
+                                'verb' => 'add',
+                                'post_id' => 'post_1',
+                                'comment_id' => 'comment_1',
+                                'message' => 'Cuanto cuesta?',
+                                'sender_id' => 'facebook_user_1',
+                                'sender_name' => 'Carlos Cliente',
+                                'created_time' => now()->timestamp,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertDatabaseHas('social_posts', [
+            'platform' => SocialPlatform::Facebook->value,
+            'external_post_id' => 'post_1',
+            'caption' => 'Promocion especial de implantes dentales.',
+            'media_url' => 'https://cdn.example.test/post_1.jpg',
+            'permalink' => 'https://facebook.com/post_1',
+        ]);
+    }
+
     public function test_sync_account_classifies_synced_facebook_comments(): void
     {
         config([

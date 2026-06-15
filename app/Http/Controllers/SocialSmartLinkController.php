@@ -24,6 +24,7 @@ class SocialSmartLinkController extends Controller
         return view('social.smart-link', [
             'comment' => $comment,
             'content' => $content,
+            'preview' => $this->previewFor($comment),
             'trackingToken' => $comment->tracking_token,
             'trackUrl' => route('social-smart-link.track', ['trackingToken' => $comment->tracking_token]),
             'csrfToken' => csrf_token(),
@@ -130,5 +131,71 @@ class SocialSmartLinkController extends Controller
                 'visual_label' => 'Diagnostico integral',
                 'video_url' => '',
             ];
+    }
+
+    private function previewFor(SocialComment $comment): array
+    {
+        $procedureText = str($comment->suggestedProcedure?->name.' '.$comment->suggestedProcedure?->category.' '.$comment->suggestedProcedure?->code)
+            ->ascii()
+            ->lower()
+            ->toString();
+
+        if (str_contains($procedureText, 'implante')) {
+            return [
+                'procedure' => 'Implantes dentales',
+                'duration' => 'Segun evaluacion',
+                'complexity' => 'Personalizada',
+                'title' => 'Analisis para una solucion permanente',
+                'text' => "Hemos reservado contexto para tu codigo {$comment->tracking_token}. En la valoracion revisaremos estabilidad, salud osea y opciones claras antes de cualquier decision.",
+                'steps' => [
+                    ['label' => 'Revision inicial', 'text' => 'Escuchamos que necesitas recuperar seguridad al morder o sonreir.'],
+                    ['label' => 'Evaluacion clinica', 'text' => 'El equipo valida si necesitas imagenes, densidad osea o alternativas.'],
+                    ['label' => 'Plan transparente', 'text' => 'Recibes tiempos, opciones y presupuesto sin presion.'],
+                ],
+            ];
+        }
+
+        if (str_contains($procedureText, 'sonrisa') || str_contains($procedureText, 'estetica') || str_contains($procedureText, 'diseno')) {
+            return [
+                'procedure' => 'Diseno de sonrisa',
+                'duration' => 'Plan por fases',
+                'complexity' => 'Media',
+                'title' => 'Valoracion estetica con vision facial',
+                'text' => "Tu codigo {$comment->tracking_token} indica interes en estetica dental. En la primera sesion revisamos simetria, color y proporciones para construir un plan realista.",
+                'steps' => [
+                    ['label' => 'Fotos y contexto', 'text' => 'Entendemos que deseas cambiar y que resultado te gustaria lograr.'],
+                    ['label' => 'Analisis estetico', 'text' => 'Revisamos rostro, sonrisa, color y linea dental.'],
+                    ['label' => 'Ruta visual', 'text' => 'Te explicamos que se puede lograr, en que orden y con que alternativas.'],
+                ],
+            ];
+        }
+
+        if (str_contains($procedureText, 'ortodoncia') || str_contains($procedureText, 'invisalign') || str_contains($procedureText, 'alineador')) {
+            return [
+                'procedure' => 'Ortodoncia invisible',
+                'duration' => '12 meses',
+                'complexity' => 'Media',
+                'title' => 'Camino claro para alinear tu sonrisa',
+                'text' => "Con tu codigo {$comment->tracking_token}, el equipo sabra que buscas ortodoncia o alineadores. La cita se enfoca en revisar viabilidad, tiempos y comodidad.",
+                'steps' => [
+                    ['label' => 'Revision de mordida', 'text' => 'Evaluamos alineacion, espacio y objetivos.'],
+                    ['label' => 'Simulacion o plan', 'text' => 'Te mostramos el camino probable antes de iniciar.'],
+                    ['label' => 'Opciones claras', 'text' => 'Comparas alternativas, tiempos y costos sin sorpresas.'],
+                ],
+            ];
+        }
+
+        return [
+            'procedure' => $comment->suggestedProcedure?->name ?: 'Diagnostico integral',
+            'duration' => 'Primera cita',
+            'complexity' => 'Sin presion',
+            'title' => 'Diagnostico integral sin compromiso',
+            'text' => "Este espacio es para que veas como eliminamos el estres de ir al dentista. Tu codigo {$comment->tracking_token} garantiza una valoracion guiada y sin presion.",
+            'steps' => [
+                ['label' => 'Escucha primero', 'text' => 'Nos cuentas que te preocupa y que resultado esperas.'],
+                ['label' => 'Revision clara', 'text' => 'Revisamos tu caso con criterio clinico y lenguaje simple.'],
+                ['label' => 'Plan humano', 'text' => 'Te explicamos opciones, tiempos y presupuesto antes de decidir.'],
+            ],
+        ];
     }
 }

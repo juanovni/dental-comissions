@@ -23,7 +23,7 @@ class SocialSmartLinkControllerTest extends TestCase
         $this->get(route('social-smart-link.show', ['trackingToken' => $comment->tracking_token]))
             ->assertOk()
             ->assertSee('DNT-LAND1')
-            ->assertSee('Continuar por WhatsApp', false);
+            ->assertSee('Confirmar por WhatsApp', false);
     }
 
     public function test_smart_link_view_event_is_recorded_and_scores_lead(): void

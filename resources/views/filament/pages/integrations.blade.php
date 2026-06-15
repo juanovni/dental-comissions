@@ -320,12 +320,7 @@
     </style>
 
     <section class="integrations-page">
-        <div class="integrations-hero">
-            <p class="integrations-subtitle">
-                Conecta redes sociales y canales externos para importar publicaciones, comentarios y oportunidades comerciales sin copiar enlaces manuales.
-            </p>
-        </div>
-
+        
         <div class="integrations-grid">
             <article class="integration-card">
                 <div class="integration-body">
