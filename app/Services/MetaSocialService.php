@@ -85,6 +85,12 @@ class MetaSocialService
                     $webhookComment['account_id'],
                 );
 
+                if ($this->isOwnAccountComment($account, $webhookComment['comment'])) {
+                    $summary['ignored']++;
+
+                    continue;
+                }
+
                 $post = $this->storeWebhookPost($account, $this->enrichWebhookPost($account, $webhookComment['post']));
                 $comment = $this->storeComment($account, $post, $webhookComment['comment']);
                 app(SocialCommentClassificationService::class)->classify($comment);
@@ -197,6 +203,10 @@ class MetaSocialService
             $summary['posts']++;
 
             foreach ($this->getPostComments($post, $account) as $commentData) {
+                if ($this->isOwnAccountComment($account, $commentData)) {
+                    continue;
+                }
+
                 $comment = $this->storeComment($account, $post, $commentData);
 
                 if (! $comment->classification) {
@@ -517,6 +527,41 @@ class MetaSocialService
         $identity->save();
 
         return $identity;
+    }
+
+    private function isOwnAccountComment(SocialAccount $account, array $commentData): bool
+    {
+        $authorId = (string) (Arr::get($commentData, 'from.id') ?? '');
+        $authorUsername = (string) ($commentData['username'] ?? Arr::get($commentData, 'from.username') ?? '');
+        $authorName = (string) (Arr::get($commentData, 'from.name') ?? '');
+
+        $accountIds = array_filter([
+            (string) $account->external_account_id,
+            (string) $account->page_id,
+            (string) $account->instagram_business_account_id,
+        ]);
+
+        if ($authorId !== '' && in_array($authorId, $accountIds, true)) {
+            return true;
+        }
+
+        $accountName = $this->normalizeAccountHandle((string) $account->account_name);
+
+        if ($accountName === '') {
+            return false;
+        }
+
+        return $this->normalizeAccountHandle($authorUsername) === $accountName
+            || $this->normalizeAccountHandle($authorName) === $accountName;
+    }
+
+    private function normalizeAccountHandle(string $value): string
+    {
+        return str($value)
+            ->lower()
+            ->trim()
+            ->ltrim('@')
+            ->toString();
     }
 
     /**

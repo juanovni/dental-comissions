@@ -163,6 +163,47 @@ class MetaSocialServiceTest extends TestCase
         ]);
     }
 
+    public function test_process_webhook_payload_ignores_own_instagram_comment(): void
+    {
+        SocialAccount::create([
+            'platform' => SocialPlatform::Instagram,
+            'account_name' => 'macbotdata',
+            'external_account_id' => 'ig_1',
+            'instagram_business_account_id' => 'ig_1',
+            'is_active' => true,
+        ]);
+
+        $summary = app(MetaSocialService::class)->processWebhookPayload([
+            'object' => 'instagram',
+            'entry' => [
+                [
+                    'id' => 'ig_1',
+                    'changes' => [
+                        [
+                            'field' => 'comments',
+                            'value' => [
+                                'id' => 'ig_comment_own_1',
+                                'text' => '@detanlinfodeunaec Hola! Gracias por escribirnos.',
+                                'media' => ['id' => 'ig_media_1'],
+                                'from' => [
+                                    'id' => 'ig_1',
+                                    'username' => 'macbotdata',
+                                ],
+                                'timestamp' => now()->toIso8601String(),
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(0, $summary['comments']);
+        $this->assertSame(1, $summary['ignored']);
+        $this->assertDatabaseMissing('social_comments', [
+            'external_comment_id' => 'ig_comment_own_1',
+        ]);
+    }
+
     public function test_process_webhook_payload_enriches_instagram_related_post(): void
     {
         config([

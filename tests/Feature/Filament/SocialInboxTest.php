@@ -82,6 +82,51 @@ class SocialInboxTest extends TestCase
         $this->assertSame('primary', SocialInbox::getNavigationBadgeColor());
     }
 
+    public function test_social_inbox_excludes_comments_from_own_connected_account(): void
+    {
+        $account = SocialAccount::create([
+            'platform' => SocialPlatform::Instagram,
+            'account_name' => 'macbotdata',
+            'external_account_id' => 'ig_account_1',
+            'instagram_business_account_id' => 'ig_account_1',
+            'is_active' => true,
+        ]);
+
+        $post = SocialPost::create([
+            'social_account_id' => $account->id,
+            'platform' => SocialPlatform::Instagram,
+            'external_post_id' => 'post_own_1',
+            'caption' => 'Ortodoncia invisible',
+        ]);
+
+        SocialComment::create([
+            'social_account_id' => $account->id,
+            'social_post_id' => $post->id,
+            'platform' => SocialPlatform::Instagram,
+            'external_comment_id' => 'comment_own_1',
+            'author_name' => 'macbotdata',
+            'author_username' => 'macbotdata',
+            'author_external_id' => 'ig_account_1',
+            'comment_text' => '@detanlinfodeunaec Hola! Gracias por escribirnos.',
+            'classification' => SocialCommentClassification::SalesLead,
+            'conversion_status' => SocialConversionStatus::None,
+            'status' => SocialCommentStatus::New,
+            'is_hidden' => false,
+        ]);
+
+        $external = $this->socialComment([
+            'comment_text' => 'Quiero informacion de ortodoncia',
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialInbox::class)
+            ->set('filter', 'leads')
+            ->assertSee($external->comment_text)
+            ->assertDontSee('@detanlinfodeunaec Hola! Gracias por escribirnos.');
+
+        $this->assertSame('1', SocialInbox::getNavigationBadge());
+    }
+
     public function test_route_to_whatsapp_shows_final_tracking_reply_text(): void
     {
         config(['services.whatsapp.business_phone' => '+593999999999']);

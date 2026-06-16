@@ -39,6 +39,7 @@ class SocialInbox extends Page
         $archivedStatuses = app(SocialCrmSettingsService::class)->archivedConversionStatuses();
 
         $count = SocialComment::query()
+            ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
             ->where('is_hidden', false)
             ->when($archivedStatuses !== [], fn (Builder $query): Builder => $query->whereNotIn('conversion_status', $archivedStatuses))
             ->whereNotIn('status', [
@@ -234,6 +235,7 @@ class SocialInbox extends Page
         $archivedStatuses = app(SocialCrmSettingsService::class)->archivedConversionStatuses();
 
         return $query
+            ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
             ->where('is_hidden', false)
             ->when($archivedStatuses !== [], fn (Builder $query): Builder => $query->whereNotIn('conversion_status', $archivedStatuses));
     }
@@ -242,15 +244,18 @@ class SocialInbox extends Page
     {
         $archivedStatuses = app(SocialCrmSettingsService::class)->archivedConversionStatuses();
 
-        return $query->where(function (Builder $query) use ($archivedStatuses): void {
-            $query->where('is_hidden', true)
-                ->when($archivedStatuses !== [], fn (Builder $query): Builder => $query->orWhereIn('conversion_status', $archivedStatuses));
-        });
+        return $query
+            ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
+            ->where(function (Builder $query) use ($archivedStatuses): void {
+                $query->where('is_hidden', true)
+                    ->when($archivedStatuses !== [], fn (Builder $query): Builder => $query->orWhereIn('conversion_status', $archivedStatuses));
+            });
     }
 
     private function baseQuery(): Builder
     {
         return SocialComment::query()
+            ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
             ->with([
                 'convertedPatient',
                 'convertedPatient.activityRecords.doctor',
@@ -284,6 +289,17 @@ class SocialInbox extends Page
                 SocialCommentClassification::NegativeOpinion->value,
                 SocialCommentClassification::LegalSensitive->value,
             ]);
+        });
+    }
+
+    private static function applyExternalAuthorQuery(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('socialAccount', function (Builder $query): void {
+            $query->whereColumn('social_accounts.external_account_id', 'social_comments.author_external_id')
+                ->orWhereColumn('social_accounts.page_id', 'social_comments.author_external_id')
+                ->orWhereColumn('social_accounts.instagram_business_account_id', 'social_comments.author_external_id')
+                ->orWhereRaw("lower(replace(social_comments.author_username, '@', '')) = lower(replace(social_accounts.account_name, '@', ''))")
+                ->orWhereRaw("lower(replace(social_comments.author_name, '@', '')) = lower(replace(social_accounts.account_name, '@', ''))");
         });
     }
 }
