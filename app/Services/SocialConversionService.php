@@ -141,6 +141,15 @@ class SocialConversionService
         return Str::upper($matches[0]);
     }
 
+    public function hasMalformedTrackingToken(string $text): bool
+    {
+        if ($this->extractTrackingToken($text)) {
+            return false;
+        }
+
+        return preg_match('/\bDNT(?:-[A-Z0-9]{0,4}|\b)/i', $text) === 1;
+    }
+
     private function applyHandshake(SocialComment $comment, SocialIdentity $identity, WhatsappMessage $message): void
     {
         $normalizedPhone = $this->normalizePhone($message->from_phone);

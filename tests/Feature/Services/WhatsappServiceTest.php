@@ -426,6 +426,97 @@ class WhatsappServiceTest extends TestCase
         $this->assertNotNull($comment->refresh()->social_identity_id);
     }
 
+    public function test_unknown_phone_cannot_register_activity_without_tracking_token(): void
+    {
+        Procedure::factory()->create(['name' => 'Extraccion quirurgica', 'is_active' => true]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Procedimiento: extraccion quirurgica Paciente: Antonio Pepe Auxiliar: Ana Garcia Pago: Efectivo'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertNull($result->professional_id);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertStringContainsString('Profesional no activo o no autorizado', $result->error_message);
+        $this->assertEquals(0, ActivityRecord::count());
+    }
+
+    public function test_unknown_phone_with_tracking_token_is_processed_as_social_lead(): void
+    {
+        $account = SocialAccount::create([
+            'platform' => 'instagram',
+            'account_name' => 'Clinica Dental IG',
+            'external_account_id' => 'ig_account_'.uniqid(),
+            'is_active' => true,
+        ]);
+
+        $post = SocialPost::create([
+            'social_account_id' => $account->id,
+            'platform' => 'instagram',
+            'external_post_id' => 'post_'.uniqid(),
+            'caption' => 'Implantes dentales',
+        ]);
+
+        $comment = SocialComment::create([
+            'social_account_id' => $account->id,
+            'social_post_id' => $post->id,
+            'platform' => 'instagram',
+            'external_comment_id' => 'comment_'.uniqid(),
+            'author_name' => 'Paciente Test',
+            'comment_text' => 'Me interesa una valoracion',
+            'tracking_token' => 'DNT-YG4SV',
+        ]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Hola, Mi codigo es DNT-YG4SV.'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertNull($result->professional_id);
+        $this->assertEquals(WhatsappMessageStatus::Processed, $result->status);
+        $this->assertEquals(0, ActivityRecord::count());
+        $this->assertNotNull($comment->refresh()->social_identity_id);
+    }
+
+    public function test_unknown_tracking_token_does_not_fall_back_to_activity_flow(): void
+    {
+        Professional::factory()->create([
+            'whatsapp_phone' => '+593985925100',
+            'role' => 'doctor',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Hola, vengo de redes sociales. Mi codigo es DNT-FMNPQ.'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertStringContainsString('Codigo de lead no encontrado: DNT-FMNPQ', $result->error_message);
+        $this->assertEquals(0, ActivityRecord::count());
+    }
+
+    public function test_malformed_tracking_token_from_professional_does_not_fall_back_to_activity_flow(): void
+    {
+        $doctor = Professional::factory()->create([
+            'whatsapp_phone' => '+593985925100',
+            'role' => 'doctor',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Hola, vengo de redes sociales. Mi codigo es DNT-BY'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals($doctor->id, $result->professional_id);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertStringContainsString('Codigo de lead incompleto o invalido', $result->error_message);
+        $this->assertEquals(0, ActivityRecord::count());
+    }
+
     private function fakeGemini(?array $content = null): void
     {
         $this->geminiContent = $content ?? [

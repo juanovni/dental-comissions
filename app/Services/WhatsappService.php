@@ -64,7 +64,9 @@ class WhatsappService
                 'message_sid' => $messageSid,
             ]);
 
-            $socialComment = app(SocialConversionService::class)->processIncomingMessage($whatsappMessage);
+            $socialConversionService = app(SocialConversionService::class);
+            $trackingToken = $socialConversionService->extractTrackingToken($body);
+            $socialComment = $socialConversionService->processIncomingMessage($whatsappMessage);
 
             if ($socialComment) {
                 $whatsappMessage->markAsProcessed();
@@ -74,6 +76,36 @@ class WhatsappService
                 } else {
                     $this->sendMessage($fromPhone, 'Gracias. Recibimos tu codigo y el equipo creara o validara tu ficha para continuar.');
                 }
+
+                return $whatsappMessage;
+            }
+
+            if ($trackingToken) {
+                $this->sendMessage(
+                    $fromPhone,
+                    "No encontramos un lead asociado al codigo {$trackingToken}. Revisa que el codigo este escrito correctamente o contacta a la clinica.",
+                );
+                $whatsappMessage->markAsFailed('Codigo de lead no encontrado: '.$trackingToken);
+
+                return $whatsappMessage;
+            }
+
+            if ($socialConversionService->hasMalformedTrackingToken($body)) {
+                $this->sendMessage(
+                    $fromPhone,
+                    'El codigo parece incompleto. Debe tener el formato DNT-XXXXX, por ejemplo: Mi codigo es DNT-ABCDE.',
+                );
+                $whatsappMessage->markAsFailed('Codigo de lead incompleto o invalido');
+
+                return $whatsappMessage;
+            }
+
+            if (! $professional) {
+                $this->sendMessage(
+                    $fromPhone,
+                    'No eres un profesional activo autorizado para registrar actividades. Si vienes de redes sociales, envia tu codigo, por ejemplo: Mi codigo es DNT-ABCDE.',
+                );
+                $whatsappMessage->markAsFailed('Profesional no activo o no autorizado');
 
                 return $whatsappMessage;
             }
@@ -90,7 +122,7 @@ class WhatsappService
                     ]);
                     $this->processReply($whatsappMessage, $originalMessage);
                 }
-            } elseif ($professional) {
+            } else {
                 $originalMessage = $this->findPendingOriginalForReply($whatsappMessage);
 
                 if ($originalMessage) {
@@ -99,9 +131,6 @@ class WhatsappService
                 } else {
                     $this->processWithAI($whatsappMessage, $professional);
                 }
-            } else {
-                $this->sendMessage($fromPhone, 'No pudimos identificar tu numero. Contacta al administrador.');
-                $whatsappMessage->markAsFailed('Profesional no identificado');
             }
 
             return $whatsappMessage;
