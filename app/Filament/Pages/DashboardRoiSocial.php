@@ -29,7 +29,7 @@ class DashboardRoiSocial extends BaseDashboard
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-currency-dollar';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Panel administrativo';
+    protected static string|\UnitEnum|null $navigationGroup = 'Dashboards';
 
     protected static ?int $navigationSort = 2;
 

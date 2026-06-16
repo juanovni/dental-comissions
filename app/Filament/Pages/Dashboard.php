@@ -17,13 +17,13 @@ class Dashboard extends BaseDashboard
 
     protected static ?string $navigationLabel = 'Actividad y comisiones';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar-square';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar-square';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Panel administrativo';
+    protected static string|\UnitEnum|null $navigationGroup = 'Dashboards';
 
     protected static ?int $navigationSort = 1;
 
-    public function getColumns(): int | array
+    public function getColumns(): int|array
     {
         return [
             'default' => 1,
