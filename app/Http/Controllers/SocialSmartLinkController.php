@@ -24,6 +24,7 @@ class SocialSmartLinkController extends Controller
         return view('social.smart-link', [
             'comment' => $comment,
             'content' => $content,
+            'hero' => $this->heroFor($comment, $content),
             'preview' => $this->previewFor($comment),
             'trackingToken' => $comment->tracking_token,
             'trackUrl' => route('social-smart-link.track', ['trackingToken' => $comment->tracking_token]),
@@ -67,7 +68,7 @@ class SocialSmartLinkController extends Controller
     private function findComment(string $trackingToken): SocialComment
     {
         return SocialComment::query()
-            ->with(['suggestedProcedure', 'socialAccount'])
+            ->with(['suggestedProcedure', 'socialAccount', 'socialIdentity'])
             ->where('tracking_token', strtoupper($trackingToken))
             ->firstOrFail();
     }
@@ -131,6 +132,74 @@ class SocialSmartLinkController extends Controller
                 'visual_label' => 'Diagnostico integral',
                 'video_url' => '',
             ];
+    }
+
+    private function heroFor(SocialComment $comment, array $content): array
+    {
+        [$titleStatic, $titleTyped] = $this->splitHeroTitle(
+            (string) ($content['title'] ?? 'Tu sonrisa merece un plan claro, humano y sin presion.'),
+        );
+
+        $subtitle = (string) ($content['subtitle'] ?? 'Mira como trabajamos y continua por WhatsApp para recibir orientacion de la clinica.');
+        $visitorName = $this->visitorName($comment);
+
+        if ($visitorName) {
+            $subtitle = "Hola, {$visitorName}. {$subtitle}";
+        }
+
+        return [
+            'title_static' => $titleStatic,
+            'title_typed' => $titleTyped,
+            'subtitle' => $subtitle,
+            'visual_label' => (string) ($content['visual_label'] ?? 'Diagnostico integral'),
+            'visual_image_url' => (string) ($content['visual_image_url'] ?? ''),
+            'before_image_url' => (string) ($content['before_image_url'] ?? ''),
+            'after_image_url' => (string) ($content['after_image_url'] ?? ''),
+        ];
+    }
+
+    private function splitHeroTitle(string $title): array
+    {
+        $title = str($title)->squish()->toString();
+
+        if ($title === '') {
+            return ['Tu nueva sonrisa,', 'planificada a medida.'];
+        }
+
+        $commaPosition = strrpos($title, ',');
+
+        if ($commaPosition !== false) {
+            return [
+                trim(substr($title, 0, $commaPosition + 1)),
+                trim(substr($title, $commaPosition + 1)),
+            ];
+        }
+
+        $words = preg_split('/\s+/', $title) ?: [];
+
+        if (count($words) <= 4) {
+            return [$title, ''];
+        }
+
+        $splitAt = max(2, (int) floor(count($words) * 0.58));
+
+        return [
+            implode(' ', array_slice($words, 0, $splitAt)),
+            implode(' ', array_slice($words, $splitAt)),
+        ];
+    }
+
+    private function visitorName(SocialComment $comment): ?string
+    {
+        $name = trim((string) ($comment->socialIdentity?->display_name ?: $comment->author_name));
+
+        if ($name === '' || str_starts_with($name, '@') || preg_match('/[0-9_]/', $name)) {
+            return null;
+        }
+
+        $firstName = str($name)->squish()->explode(' ')->first();
+
+        return is_string($firstName) && strlen($firstName) >= 2 ? $firstName : null;
     }
 
     private function previewFor(SocialComment $comment): array

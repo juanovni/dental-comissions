@@ -7,6 +7,7 @@ use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
+use App\Models\SocialCrmSetting;
 use App\Models\SocialIdentity;
 use App\Models\SocialPost;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,6 +25,44 @@ class SocialSmartLinkControllerTest extends TestCase
             ->assertOk()
             ->assertSee('DNT-LAND1')
             ->assertSee('Confirmar por WhatsApp', false);
+    }
+
+    public function test_smart_link_uses_configured_unknown_content_block(): void
+    {
+        SocialCrmSetting::updateOrCreate(
+            ['key' => 'social_smart_link_content_blocks'],
+            [
+                'setting_group' => 'smart_links',
+                'label' => 'Contenido dinamico de landing por categoria',
+                'value_type' => 'array',
+                'value' => [
+                    'unknown' => [
+                        'eyebrow' => 'Valoracion dental personalizada',
+                        'title' => 'Tu sonrisa merece un plan claro, humano y sin presion.',
+                        'subtitle' => 'Mira como trabajamos y continua por WhatsApp para recibir orientacion de la clinica.',
+                        'visual_label' => 'Diagnostico integral',
+                        'visual_image_url' => '/images/smart-links/unknown/hero.webp',
+                        'before_image_url' => '/images/smart-links/unknown/before.webp',
+                        'after_image_url' => '/images/smart-links/unknown/after.webp',
+                        'video_url' => '',
+                    ],
+                ],
+                'is_active' => true,
+            ],
+        );
+
+        $comment = $this->socialComment('DNT-CONF1');
+
+        $this->get(route('social-smart-link.show', ['trackingToken' => $comment->tracking_token]))
+            ->assertOk()
+            ->assertSee('Valoracion dental personalizada')
+            ->assertSee('Tu sonrisa merece un plan claro')
+            ->assertSee('humano y sin presion.')
+            ->assertSee('Hola, Paciente. Mira como trabajamos')
+            ->assertSee('Diagnostico integral')
+            ->assertSee('/images/smart-links/unknown/hero.webp')
+            ->assertSee('/images/smart-links/unknown/before.webp')
+            ->assertSee('/images/smart-links/unknown/after.webp');
     }
 
     public function test_smart_link_view_event_is_recorded_and_scores_lead(): void

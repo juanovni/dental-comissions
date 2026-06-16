@@ -319,6 +319,7 @@
         }
 
         .sp-media iframe,
+        .sp-media img,
         .sp-media video {
             border: 0;
             height: 100%;
@@ -326,6 +327,10 @@
             object-fit: cover;
             position: absolute;
             width: 100%;
+        }
+
+        .sp-media img {
+            display: block;
         }
 
         .sp-aligner {
@@ -514,6 +519,15 @@
             position: relative;
         }
 
+        .sp-result-card img {
+            display: block;
+            height: 100%;
+            inset: 0;
+            object-fit: cover;
+            position: absolute;
+            width: 100%;
+        }
+
         .sp-result-card.before {
             background:
                 radial-gradient(circle at 20% 12%, rgba(255, 255, 255, .78), transparent 8rem),
@@ -638,8 +652,13 @@
                 <div class="sp-hero">
                     <div>
                         <p class="sp-eyebrow">{{ $content['eyebrow'] ?? 'Plan dental personalizado' }}</p>
-                        <h1 class="sp-title">Tu nueva sonrisa, <span class="sp-typewriter" data-typewriter-text="planificada a medida.">planificada a medida.</span></h1>
-                        <p class="sp-subtitle">Hola, hemos preparado los detalles para tu valoracion de {{ strtolower($preview['procedure']) }}. Todo esta listo para comenzar con claridad, sin presion y con seguimiento humano.</p>
+                        <h1 class="sp-title">
+                            {{ $hero['title_static'] }}
+                            @if (filled($hero['title_typed']))
+                                <span class="sp-typewriter" data-typewriter-text="{{ $hero['title_typed'] }}">{{ $hero['title_typed'] }}</span>
+                            @endif
+                        </h1>
+                        <p class="sp-subtitle">{{ $hero['subtitle'] }}</p>
 
                         <div class="sp-actions">
                             @if ($whatsappLink)
@@ -683,10 +702,12 @@
                                 @else
                                     <iframe src="{{ $videoUrl }}" title="Video informativo dental" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                                 @endif
+                            @elseif (filled($hero['visual_image_url']))
+                                <img src="{{ $hero['visual_image_url'] }}" alt="{{ $hero['visual_label'] }}" loading="lazy">
                             @else
                                 <div class="sp-aligner" aria-hidden="true"></div>
-                                <span class="sp-media-caption">Visualizacion diagnostica</span>
                             @endif
+                            <span class="sp-media-caption">{{ $hero['visual_label'] }}</span>
                         </div>
                     </aside>
                 </div>
@@ -736,8 +757,18 @@
                 </div>
 
                 <div class="sp-results">
-                    <div class="sp-result-card before"><span class="sp-result-label">Antes / placeholder</span></div>
-                    <div class="sp-result-card after"><span class="sp-result-label">Despues / placeholder</span></div>
+                    <div class="sp-result-card before">
+                        @if (filled($hero['before_image_url']))
+                            <img src="{{ $hero['before_image_url'] }}" alt="Antes de la valoracion" loading="lazy">
+                        @endif
+                        <span class="sp-result-label">Antes</span>
+                    </div>
+                    <div class="sp-result-card after">
+                        @if (filled($hero['after_image_url']))
+                            <img src="{{ $hero['after_image_url'] }}" alt="Despues de la valoracion" loading="lazy">
+                        @endif
+                        <span class="sp-result-label">Despues</span>
+                    </div>
                 </div>
 
                 <section class="sp-cta-band" aria-label="CTA final">
