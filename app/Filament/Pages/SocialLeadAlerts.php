@@ -24,7 +24,7 @@ class SocialLeadAlerts extends Page
 
     protected static ?string $slug = 'social-lead-alerts';
 
-    protected static ?int $navigationSort = 17;
+    protected static ?int $navigationSort = 16;
 
     protected string $view = 'filament.pages.social-lead-alerts';
 

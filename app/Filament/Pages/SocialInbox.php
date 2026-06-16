@@ -30,7 +30,7 @@ class SocialInbox extends Page
 
     protected static ?string $slug = 'social-inbox';
 
-    protected static ?int $navigationSort = 19;
+    protected static ?int $navigationSort = 17;
 
     protected string $view = 'filament.pages.social-inbox';
 

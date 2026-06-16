@@ -8,6 +8,9 @@
     <meta property="og:title" content="{{ $content['title'] ?? 'Tu nueva sonrisa, planificada a medida.' }}">
     <meta property="og:description" content="{{ $preview['text'] }}">
     <title>{{ $content['eyebrow'] ?? 'Valoracion dental' }} | Clinica Dental</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     @php
         $videoUrl = (string) ($content['video_url'] ?? '');
         $isVideoFile = filled($videoUrl) && \Illuminate\Support\Str::of($videoUrl)->lower()->endsWith(['.mp4', '.webm', '.ogg']);
@@ -25,7 +28,7 @@
             --sp-blue-soft: #eef6ff;
             --sp-dark: #071126;
             --sp-shadow: 0 22px 60px rgba(15, 23, 42, .08);
-            font-family: Aptos, "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+            font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
         }
 
         * { box-sizing: border-box; }
@@ -139,6 +142,23 @@
             display: block;
         }
 
+        .sp-typewriter {
+            border-right: .08em solid currentColor;
+            display: inline;
+            padding-right: .04em;
+            animation: sp-caret .72s step-end infinite;
+        }
+
+        .sp-typewriter.is-complete {
+            animation: none;
+            border-right: 0;
+            padding-right: 0;
+        }
+
+        @keyframes sp-caret {
+            50% { border-color: transparent; }
+        }
+
         .sp-subtitle {
             color: var(--sp-muted);
             font-size: 1rem;
@@ -160,11 +180,18 @@
             display: inline-flex;
             font-size: .88rem;
             font-weight: 800;
+            gap: .48rem;
             justify-content: center;
             min-height: 3rem;
             padding: .8rem 1.15rem;
             text-decoration: none;
             transition: transform .16s ease, box-shadow .16s ease;
+        }
+
+        .sp-btn svg {
+            flex: 0 0 auto;
+            height: 1.05rem;
+            width: 1.05rem;
         }
 
         .sp-btn:hover { transform: translateY(-1px); }
@@ -368,6 +395,8 @@
             font-size: 1rem;
             height: 2.45rem;
             justify-content: center;
+            line-height: 1;
+            text-align: center;
             width: 2.45rem;
         }
 
@@ -380,8 +409,16 @@
 
         .sp-benefit span {
             color: var(--sp-muted);
-            display: block;
-            font-size: .75rem;
+            display: grid;
+            font-size: 1rem;
+            line-height: 1.45;
+            margin-top: .12rem;
+        }
+
+        .sp-benefit-text {
+            color: var(--sp-muted);
+            display: grid;
+            font-size: 0.875rem !important;
             line-height: 1.45;
             margin-top: .12rem;
         }
@@ -574,6 +611,13 @@
             .sp-phase { height: 3.7rem; width: 3.7rem; }
             .sp-procedure { margin-right: 4rem; }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            .sp-typewriter {
+                animation: none;
+                border-right: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -594,12 +638,17 @@
                 <div class="sp-hero">
                     <div>
                         <p class="sp-eyebrow">{{ $content['eyebrow'] ?? 'Plan dental personalizado' }}</p>
-                        <h1 class="sp-title">Tu nueva sonrisa, <span>planificada a medida.</span></h1>
+                        <h1 class="sp-title">Tu nueva sonrisa, <span class="sp-typewriter" data-typewriter-text="planificada a medida.">planificada a medida.</span></h1>
                         <p class="sp-subtitle">Hola, hemos preparado los detalles para tu valoracion de {{ strtolower($preview['procedure']) }}. Todo esta listo para comenzar con claridad, sin presion y con seguimiento humano.</p>
 
                         <div class="sp-actions">
                             @if ($whatsappLink)
-                                <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}">Confirmar por WhatsApp</a>
+                                <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}">
+                                    <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+                                        <path fill="currentColor" d="M16.04 3.2A12.73 12.73 0 0 0 3.3 15.92c0 2.24.59 4.42 1.7 6.34L3.2 28.8l6.72-1.76a12.72 12.72 0 0 0 6.12 1.56h.01A12.73 12.73 0 0 0 28.8 15.88 12.74 12.74 0 0 0 16.04 3.2Zm0 23.24h-.01c-1.87 0-3.7-.5-5.3-1.45l-.38-.22-3.99 1.04 1.06-3.88-.25-.4a10.49 10.49 0 0 1-1.61-5.6c0-5.78 4.7-10.48 10.49-10.48a10.48 10.48 0 0 1 10.5 10.44c0 5.79-4.71 10.5-10.5 10.5Zm5.75-7.85c-.31-.16-1.86-.92-2.15-1.02-.29-.1-.5-.16-.71.16-.21.31-.81 1.02-1 1.23-.18.21-.37.23-.68.08-.31-.16-1.32-.49-2.52-1.55-.93-.83-1.56-1.86-1.74-2.17-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.55.16-.18.21-.31.31-.52.1-.21.05-.39-.03-.55-.08-.16-.71-1.71-.97-2.34-.26-.61-.52-.53-.71-.54h-.6c-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.62 0 1.55 1.13 3.04 1.29 3.25.16.21 2.22 3.39 5.38 4.75.75.32 1.34.52 1.8.66.76.24 1.45.2 1.99.12.61-.09 1.86-.76 2.12-1.5.26-.73.26-1.36.18-1.5-.08-.13-.29-.21-.6-.37Z" />
+                                    </svg>
+                                    Confirmar por WhatsApp
+                                </a>
                             @endif
                             <a class="sp-btn sp-btn-soft" href="#visita">Ver primera visita</a>
                         </div>
@@ -644,16 +693,16 @@
 
                 <div class="sp-benefits" aria-label="Beneficios de la valoracion">
                     <article class="sp-benefit">
-                        <span class="sp-benefit-icon">✦</span>
-                        <div><strong>Tecnologia digital</strong><span>Precision y diagnostico visual.</span></div>
+                        <span class="sp-benefit-icon" aria-hidden="true">✨</span>
+                        <div><strong>Tecnologia Laser</strong><span class="sp-benefit-text">Precision sin dolor.</span></div>
                     </article>
                     <article class="sp-benefit">
-                        <span class="sp-benefit-icon">★</span>
-                        <div><strong>Especialistas</strong><span>Evaluacion guiada por criterio clinico.</span></div>
+                        <span class="sp-benefit-icon" aria-hidden="true">🏆</span>
+                        <div><strong>Especialistas</strong><span class="sp-benefit-text">Certificacion internacional.</span></div>
                     </article>
                     <article class="sp-benefit">
-                        <span class="sp-benefit-icon">▣</span>
-                        <div><strong>Plan claro</strong><span>Opciones, tiempos y presupuesto sin sorpresas.</span></div>
+                        <span class="sp-benefit-icon" aria-hidden="true">💳</span>
+                        <div><strong>Financiacion</strong><span class="sp-benefit-text">Hasta 24 cuotas sin interes.</span></div>
                     </article>
                 </div>
             </div>
@@ -697,7 +746,12 @@
                         <span>Agenda tu valoracion y conserva tu codigo {{ $trackingToken }} para mantener el contexto de tu solicitud.</span>
                     </div>
                     @if ($whatsappLink)
-                        <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}">Hablar con un asesor</a>
+                        <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}">
+                            <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+                                <path fill="currentColor" d="M16.04 3.2A12.73 12.73 0 0 0 3.3 15.92c0 2.24.59 4.42 1.7 6.34L3.2 28.8l6.72-1.76a12.72 12.72 0 0 0 6.12 1.56h.01A12.73 12.73 0 0 0 28.8 15.88 12.74 12.74 0 0 0 16.04 3.2Zm0 23.24h-.01c-1.87 0-3.7-.5-5.3-1.45l-.38-.22-3.99 1.04 1.06-3.88-.25-.4a10.49 10.49 0 0 1-1.61-5.6c0-5.78 4.7-10.48 10.49-10.48a10.48 10.48 0 0 1 10.5 10.44c0 5.79-4.71 10.5-10.5 10.5Zm5.75-7.85c-.31-.16-1.86-.92-2.15-1.02-.29-.1-.5-.16-.71.16-.21.31-.81 1.02-1 1.23-.18.21-.37.23-.68.08-.31-.16-1.32-.49-2.52-1.55-.93-.83-1.56-1.86-1.74-2.17-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.55.16-.18.21-.31.31-.52.1-.21.05-.39-.03-.55-.08-.16-.71-1.71-.97-2.34-.26-.61-.52-.53-.71-.54h-.6c-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.62 0 1.55 1.13 3.04 1.29 3.25.16.21 2.22 3.39 5.38 4.75.75.32 1.34.52 1.8.66.76.24 1.45.2 1.99.12.61-.09 1.86-.76 2.12-1.5.26-.73.26-1.36.18-1.5-.08-.13-.29-.21-.6-.37Z" />
+                            </svg>
+                            Hablar con un asesor
+                        </a>
                     @endif
                 </section>
             </div>
@@ -706,6 +760,30 @@
 
     <script>
         (() => {
+            const typewriter = document.querySelector('[data-typewriter-text]');
+
+            if (typewriter && ! window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                const text = typewriter.dataset.typewriterText || typewriter.textContent;
+                let index = 0;
+
+                typewriter.textContent = '';
+
+                const typeNextCharacter = () => {
+                    index += 1;
+                    typewriter.textContent = text.slice(0, index);
+
+                    if (index < text.length) {
+                        setTimeout(typeNextCharacter, 70);
+
+                        return;
+                    }
+
+                    typewriter.classList.add('is-complete');
+                };
+
+                setTimeout(typeNextCharacter, 350);
+            }
+
             const root = document.querySelector('[data-track-url]');
             const trackUrl = root.dataset.trackUrl;
             const threshold = Number(root.dataset.threshold || 60);

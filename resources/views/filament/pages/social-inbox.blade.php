@@ -286,35 +286,105 @@
             padding: .55rem .7rem;
         }
 
-        .smart-followup-steps {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .4rem;
+        .smart-stepper {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .75rem;
+            display: grid;
+            gap: 0;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            list-style: none;
+            margin: 0;
+            overflow: hidden;
+            padding: .55rem .6rem;
         }
 
-        .smart-followup-step {
+        .smart-step {
+            align-items: center;
+            color: #64748b;
+            display: flex;
+            font-size: .73rem;
+            font-weight: 700;
+            gap: .42rem;
+            min-width: 0;
+            position: relative;
+        }
+
+        .smart-step:not(:last-child)::after {
+            background: #e5e7eb;
+            content: '';
+            height: 1px;
+            left: calc(1.45rem + .55rem);
+            position: absolute;
+            right: .65rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .smart-step-number,
+        .smart-step-label {
+            position: relative;
+            z-index: 1;
+        }
+
+        .smart-step-number {
             align-items: center;
             background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: .55rem;
+            border: 1px solid #dbe3ef;
+            border-radius: 999px;
             color: #475569;
             display: inline-flex;
-            font-size: .72rem;
-            font-weight: 700;
-            gap: .35rem;
-            padding: .38rem .5rem;
+            flex: 0 0 auto;
+            font-size: .68rem;
+            font-weight: 800;
+            height: 1.45rem;
+            justify-content: center;
+            width: 1.45rem;
         }
 
-        .smart-followup-step strong {
-            align-items: center;
-            background: #eff6ff;
-            border-radius: .4rem;
+        .smart-step-label {
+            background: #ffffff;
+            overflow: hidden;
+            padding-right: .25rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .smart-step.is-active {
             color: #1d4ed8;
-            display: inline-flex;
-            font-size: .68rem;
-            height: 1.15rem;
-            justify-content: center;
-            width: 1.15rem;
+        }
+
+        .smart-step.is-active .smart-step-number {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        .smart-step.is-complete {
+            color: #0f766e;
+        }
+
+        .smart-step.is-complete .smart-step-number {
+            background: #ecfdf5;
+            border-color: #99f6e4;
+            color: #0f766e;
+        }
+
+        .smart-step.is-complete:not(:last-child)::after {
+            background: #99f6e4;
+        }
+
+        @media (max-width: 760px) {
+            .smart-stepper {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                row-gap: .55rem;
+            }
+
+            .smart-step:nth-child(2)::after {
+                display: none;
+            }
         }
 
         .smart-message {
@@ -407,12 +477,43 @@
         .smart-action.muted { background: #ffffff; border-color: #e5e7eb; color: #475569; }
 
         .smart-empty {
-            background: rgba(255, 255, 255, .86);
-            border: 1px dashed rgba(15, 23, 42, .15);
-            border-radius: 1.6rem;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 1rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
             color: #475569;
-            padding: 2rem;
+            display: grid;
+            grid-column: 1 / -1;
+            justify-items: center;
+            min-height: 20rem;
+            padding: clamp(2rem, 4vw, 3.25rem) 1.25rem;
             text-align: center;
+            width: 100%;
+        }
+
+        .smart-empty-illustration {
+            height: 8.25rem;
+            margin-bottom: 1.1rem;
+            object-fit: contain;
+            width: 8.8rem;
+        }
+
+        .smart-empty-title {
+            color: #111827;
+            font-size: 1.12rem;
+            font-weight: 750;
+            letter-spacing: -.015em;
+            line-height: 1.25;
+            margin: 0;
+        }
+
+        .smart-empty-copy {
+            color: #64748b;
+            font-size: .88rem;
+            line-height: 1.55;
+            margin: .55rem 0 0;
+            max-width: 32rem;
         }
 
         .smart-modal-backdrop {
@@ -464,22 +565,72 @@
             padding: .75rem .85rem;
         }
 
-        .dark .smart-followup-step,
+        .dark .smart-stepper,
         .dark .smart-copy-field {
             background: rgba(15, 23, 42, .86);
             border-color: rgba(148, 163, 184, .18);
             color: #cbd5e1;
         }
 
-        .dark .smart-followup-step strong {
-            background: rgba(29, 78, 216, .24);
+        .dark .smart-step {
+            color: #94a3b8;
+        }
+
+        .dark .smart-step:not(:last-child)::after {
+            background: rgba(148, 163, 184, .2);
+        }
+
+        .dark .smart-step-label {
+            background: rgb(15, 23, 42);
+        }
+
+        .dark .smart-step-number {
+            background: rgba(15, 23, 42, .9);
+            border-color: rgba(148, 163, 184, .22);
+            color: #cbd5e1;
+        }
+
+        .dark .smart-step.is-active {
             color: #93c5fd;
+        }
+
+        .dark .smart-step.is-active .smart-step-number {
+            background: rgba(29, 78, 216, .24);
+            border-color: rgba(96, 165, 250, .32);
+            color: #93c5fd;
+        }
+
+        .dark .smart-step.is-complete {
+            color: #5eead4;
+        }
+
+        .dark .smart-step.is-complete .smart-step-number {
+            background: rgba(20, 184, 166, .16);
+            border-color: rgba(45, 212, 191, .28);
+            color: #5eead4;
+        }
+
+        .dark .smart-step.is-complete:not(:last-child)::after {
+            background: rgba(45, 212, 191, .32);
         }
 
         .dark .smart-modal-note {
             background: rgba(29, 78, 216, .18);
             border-color: rgba(96, 165, 250, .24);
             color: #bfdbfe;
+        }
+
+        .dark .smart-empty {
+            background: rgba(15, 23, 42, .86);
+            border-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-empty-title {
+            color: #f8fafc;
+        }
+
+        .dark .smart-empty-copy {
+            color: #94a3b8;
         }
     </style>
 
@@ -583,12 +734,24 @@
                         </div>
                     @endif
 
-                    <div class="smart-followup-steps" aria-label="Flujo recomendado de seguimiento">
-                        <span class="smart-followup-step"><strong>1</strong> Derivar</span>
-                        <span class="smart-followup-step"><strong>2</strong> Copiar texto final</span>
-                        <span class="smart-followup-step"><strong>3</strong> Pegar en la red social</span>
-                        <span class="smart-followup-step"><strong>4</strong> Revisar leads calientes</span>
-                    </div>
+                    <ol class="smart-stepper" aria-label="Flujo recomendado de seguimiento">
+                        <li class="smart-step {{ $isDerived ? 'is-complete' : 'is-active' }}">
+                            <span class="smart-step-number">1</span>
+                            <span class="smart-step-label">Derivar</span>
+                        </li>
+                        <li class="smart-step {{ $isDerived ? 'is-active' : '' }}">
+                            <span class="smart-step-number">2</span>
+                            <span class="smart-step-label">Copiar texto</span>
+                        </li>
+                        <li class="smart-step">
+                            <span class="smart-step-number">3</span>
+                            <span class="smart-step-label">Responder</span>
+                        </li>
+                        <li class="smart-step">
+                            <span class="smart-step-number">4</span>
+                            <span class="smart-step-label">Seguimiento</span>
+                        </li>
+                    </ol>
 
                     <div class="smart-panels">
                         <section class="smart-panel">
@@ -639,7 +802,11 @@
                 </article>
             @empty
                 <div class="smart-empty">
-                    No hay comentarios para este segmento. Cambia el filtro o sincroniza nuevos comentarios sociales.
+                    <img class="smart-empty-illustration" src="{{ asset('images/social-empty-comments.svg') }}" alt="" aria-hidden="true">
+                    <h3 class="smart-empty-title">Sin comentarios por ahora</h3>
+                    <p class="smart-empty-copy">
+                        No hay comentarios disponibles para este segmento. Prueba otro filtro o espera la proxima sincronizacion social.
+                    </p>
                 </div>
             @endforelse
         </div>

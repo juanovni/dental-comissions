@@ -281,32 +281,37 @@ class SocialCommentResource extends Resource
                     'Comentario marcado como spam internamente.',
                 )),
             Action::make('route_to_whatsapp')
-                ->label('Derivar a WhatsApp')
+                ->label(fn (SocialComment $record): string => $record->whatsapp_redirected_at ? 'Ver texto de seguimiento' : 'Derivar')
                 ->icon('heroicon-o-chat-bubble-left-ellipsis')
                 ->color('success')
-                ->modalHeading('Derivar lead a WhatsApp')
-                ->modalSubmitActionLabel('Generar token')
+                ->modalHeading('Texto final para copiar y responder')
+                ->modalDescription('Este mensaje incluye tracking. Pegalo como respuesta al comentario en Instagram o Facebook.')
+                ->modalSubmitActionLabel(fn (SocialComment $record): string => $record->whatsapp_redirected_at ? 'Actualizar seguimiento' : 'Generar seguimiento')
                 ->form(fn (SocialComment $record): array => [
+                    Textarea::make('final_reply')
+                        ->label('Texto final')
+                        ->default(fn (): string => self::whatsappReplyText($record))
+                        ->rows(4)
+                        ->columnSpanFull(),
+                    TextInput::make('smart_link')
+                        ->label('Smart Link')
+                        ->default(fn (): string => self::smartLinkPreview($record))
+                        ->readOnly(),
+                    TextInput::make('whatsapp_link')
+                        ->label('WhatsApp directo')
+                        ->default(fn (): string => self::whatsappLinkPreview($record))
+                        ->readOnly(),
                     TextInput::make('tracking_token')
                         ->label('Token')
                         ->default(fn (): string => $record->tracking_token ?: 'Se generara al confirmar')
                         ->readOnly(),
-                    TextInput::make('whatsapp_link')
-                        ->label('Link WhatsApp')
-                        ->default(fn (): string => self::whatsappLinkPreview($record))
-                        ->readOnly(),
-                    Textarea::make('suggested_reply')
-                        ->label('Respuesta sugerida')
-                        ->default(fn (): string => self::whatsappReplyText($record))
-                        ->rows(4)
-                        ->columnSpanFull(),
                 ])
                 ->action(function (SocialComment $record): void {
                     $token = app(SocialConversionService::class)->markRedirectedToWhatsapp($record);
 
                     Notification::make()
-                        ->title('Lead derivado a WhatsApp')
-                        ->body("Token generado: {$token}")
+                        ->title('Texto de seguimiento generado')
+                        ->body("Copialo y pegalo como respuesta al comentario. Token: {$token}")
                         ->success()
                         ->send();
                 }),
@@ -482,18 +487,16 @@ class SocialCommentResource extends Resource
 
     private static function whatsappReplyText(SocialComment $record): string
     {
-        $token = $record->tracking_token ?: 'DNT-XXXXX';
-        $platform = $record->platform->label();
+        return app(SocialConversionService::class)->instagramReplyText($record);
+    }
 
-        return "Hola! Vengo de {$platform} (ID: {$token}) y quiero mi valoración gratuita...";
+    private static function smartLinkPreview(SocialComment $record): string
+    {
+        return app(SocialConversionService::class)->smartLink($record);
     }
 
     private static function whatsappLinkPreview(SocialComment $record): string
     {
-        if (blank($record->tracking_token)) {
-            return 'Se generara al confirmar si WHATSAPP_BUSINESS_PHONE esta configurado';
-        }
-
         return app(SocialConversionService::class)->whatsappLink($record)
             ?? 'Configura WHATSAPP_BUSINESS_PHONE para generar link directo';
     }

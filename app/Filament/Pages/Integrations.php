@@ -10,9 +10,9 @@ use Filament\Pages\Page;
 
 class Integrations extends Page
 {
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-puzzle-piece';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-puzzle-piece';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Reputacion Digital';
+    protected static string|\UnitEnum|null $navigationGroup = 'Reputacion Digital';
 
     protected static ?string $navigationLabel = 'Integraciones';
 
@@ -20,7 +20,7 @@ class Integrations extends Page
 
     protected static ?string $slug = 'integrations';
 
-    protected static ?int $navigationSort = 18;
+    protected static ?int $navigationSort = 25;
 
     protected string $view = 'filament.pages.integrations';
 

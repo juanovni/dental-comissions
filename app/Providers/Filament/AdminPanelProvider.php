@@ -2,11 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use App\Filament\Pages\Dashboard;
+use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Assets\Js;
@@ -33,6 +34,15 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Teal,
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->navigationGroups([
+                NavigationGroup::make('Dashboards'),
+                NavigationGroup::make('Operación Clínica'),
+                NavigationGroup::make('Comisiones y Pagos'),
+                NavigationGroup::make('Reputacion Digital')
+                    ->collapsible(false),
+                NavigationGroup::make('Configuración'),
+                NavigationGroup::make('WhatsApp'),
+            ])
             ->maxContentWidth('fi-width-full')
             ->viteTheme('resources/css/app.css')
             ->assets([
