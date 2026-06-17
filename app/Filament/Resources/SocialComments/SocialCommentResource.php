@@ -17,6 +17,7 @@ use App\Filament\Resources\SocialComments\Pages\EditSocialComment;
 use App\Filament\Resources\SocialComments\Pages\ListSocialComments;
 use App\Filament\Resources\SocialComments\Pages\ViewSocialComment;
 use App\Models\Patient;
+use App\Models\Procedure;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Services\SocialConversionService;
@@ -293,6 +294,14 @@ class SocialCommentResource extends Resource
                         ->default(fn (): string => self::whatsappReplyText($record))
                         ->rows(4)
                         ->columnSpanFull(),
+                    Select::make('suggested_procedure_id')
+                        ->label('Procedimiento de interes')
+                        ->default(fn (): ?int => $record->suggested_procedure_id ?? $record->socialPost?->procedure_id)
+                        ->options(fn (): array => Procedure::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                        ->searchable()
+                        ->preload()
+                        ->nullable()
+                        ->helperText('Define que bloque de Smart Link vera el paciente.'),
                     TextInput::make('smart_link')
                         ->label('Smart Link')
                         ->default(fn (): string => self::smartLinkPreview($record))
@@ -306,7 +315,13 @@ class SocialCommentResource extends Resource
                         ->default(fn (): string => $record->tracking_token ?: 'Se generara al confirmar')
                         ->readOnly(),
                 ])
-                ->action(function (SocialComment $record): void {
+                ->action(function (SocialComment $record, array $data): void {
+                    $record->update([
+                        'suggested_procedure_id' => filled($data['suggested_procedure_id'] ?? null)
+                            ? (int) $data['suggested_procedure_id']
+                            : null,
+                    ]);
+
                     $token = app(SocialConversionService::class)->markRedirectedToWhatsapp($record);
 
                     Notification::make()

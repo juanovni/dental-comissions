@@ -10,8 +10,10 @@ use App\Enums\SocialPlatform;
 use App\Filament\Pages\SocialInbox;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
+use App\Models\SocialCrmSetting;
 use App\Models\SocialIdentity;
 use App\Models\SocialPost;
+use App\Models\Procedure;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -131,16 +133,57 @@ class SocialInboxTest extends TestCase
     {
         config(['services.whatsapp.business_phone' => '+593999999999']);
 
+        SocialCrmSetting::updateOrCreate(
+            ['key' => 'social_smart_link_content_blocks'],
+            [
+                'setting_group' => 'smart_links',
+                'label' => 'Contenido dinamico de landing por categoria',
+                'value_type' => 'array',
+                'value' => [
+                    'implantes' => [
+                        'eyebrow' => 'Implantes dentales',
+                        'title' => 'Recupera seguridad al morder, sonreir y hablar.',
+                        'subtitle' => 'Explora resultados visuales y resuelve tus dudas por WhatsApp.',
+                        'visual_label' => 'Rehabilitacion oral',
+                        'video_url' => '/videos/smart-links/implantes/hero.mp4',
+                        'before_video_url' => '/videos/smart-links/implantes/before.mp4',
+                        'after_video_url' => '/videos/smart-links/implantes/after.mp4',
+                    ],
+                ],
+                'is_active' => true,
+            ],
+        );
+
+        $procedure = Procedure::create([
+            'name' => 'Implantes dentales',
+            'code' => 'implantes',
+            'category' => 'implantes',
+            'is_active' => true,
+        ]);
+
         $comment = $this->socialComment([
             'classification' => SocialCommentClassification::SalesLead,
+            'suggested_procedure_id' => $procedure->id,
         ]);
 
         Livewire::actingAs(User::factory()->create())
             ->test(SocialInbox::class)
             ->call('routeToWhatsapp', $comment->id)
+            ->assertSet('whatsappGenerated', false)
+            ->assertSet('whatsappProcedureId', $procedure->id)
+            ->assertSee('Preview del Smart Link')
+            ->assertSee('/videos/smart-links/implantes/before.mp4')
+            ->assertSee('/videos/smart-links/implantes/after.mp4')
+            ->assertSee('Generar seguimiento')
+            ->call('confirmWhatsappRouting')
+            ->assertSet('whatsappGenerated', true)
             ->assertSee('Texto final para copiar y responder')
-            ->assertSee('Este es el mensaje recomendado para responder porque incluye tracking')
             ->assertSee('DNT-');
+
+        $this->assertDatabaseHas('social_comments', [
+            'id' => $comment->id,
+            'suggested_procedure_id' => $procedure->id,
+        ]);
     }
 
     private function socialComment(array $overrides = []): SocialComment

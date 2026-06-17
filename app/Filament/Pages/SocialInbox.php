@@ -7,6 +7,7 @@ use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialReputationRisk;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
+use App\Models\Procedure;
 use App\Models\SocialComment;
 use App\Services\SocialConversionService;
 use App\Services\SocialCrmSettingsService;
@@ -74,6 +75,14 @@ class SocialInbox extends Page
 
     public string $whatsappReplyText = '';
 
+    public int|string|null $whatsappProcedureId = null;
+
+    public array $whatsappProcedureOptions = [];
+
+    public array $smartLinkPreview = [];
+
+    public bool $whatsappGenerated = false;
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -127,7 +136,9 @@ class SocialInbox extends Page
 
     public function routeToWhatsapp(int $commentId): void
     {
-        $comment = SocialComment::find($commentId);
+        $comment = SocialComment::query()
+            ->with(['socialPost.procedure', 'suggestedProcedure'])
+            ->find($commentId);
 
         if (! $comment) {
             Notification::make()
@@ -138,16 +149,59 @@ class SocialInbox extends Page
             return;
         }
 
+        $this->whatsappCommentId = $comment->id;
+        $this->whatsappProcedureOptions = Procedure::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+        $this->whatsappProcedureId = $comment->suggested_procedure_id
+            ?? $comment->socialPost?->procedure_id
+            ?? $this->suggestProcedureId($comment);
+        $this->whatsappGenerated = filled($comment->tracking_token);
+        $this->whatsappToken = $comment->tracking_token ?: 'Se generara al confirmar';
+        $this->whatsappLink = '';
+        $this->smartLink = $comment->tracking_token ? app(SocialConversionService::class)->smartLink($comment) : '';
+        $this->whatsappReplyText = $comment->tracking_token ? app(SocialConversionService::class)->instagramReplyText($comment) : '';
+        $this->refreshSmartLinkPreview();
+        $this->whatsappModalOpen = true;
+    }
+
+    public function updatedWhatsappProcedureId(): void
+    {
+        $this->refreshSmartLinkPreview();
+    }
+
+    public function confirmWhatsappRouting(): void
+    {
+        if (! $this->whatsappCommentId) {
+            return;
+        }
+
+        $comment = SocialComment::find($this->whatsappCommentId);
+
+        if (! $comment) {
+            Notification::make()
+                ->title('Comentario no encontrado')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $procedureId = filled($this->whatsappProcedureId) ? (int) $this->whatsappProcedureId : null;
+
+        $comment->update(['suggested_procedure_id' => $procedureId]);
+
         $conversionService = app(SocialConversionService::class);
-        $token = $conversionService->markRedirectedToWhatsapp($comment);
+        $token = $conversionService->markRedirectedToWhatsapp($comment->refresh());
         $comment->refresh();
 
-        $this->whatsappCommentId = $comment->id;
         $this->whatsappToken = $token;
         $this->whatsappLink = $conversionService->whatsappLink($comment) ?? '';
         $this->smartLink = $conversionService->smartLink($comment);
         $this->whatsappReplyText = $conversionService->instagramReplyText($comment);
-        $this->whatsappModalOpen = true;
+        $this->whatsappGenerated = true;
 
         $copyText = $this->whatsappReplyText ?: $this->whatsappLink;
 
@@ -168,6 +222,80 @@ class SocialInbox extends Page
     public function closeWhatsappModal(): void
     {
         $this->whatsappModalOpen = false;
+    }
+
+    private function refreshSmartLinkPreview(): void
+    {
+        $procedure = filled($this->whatsappProcedureId) ? Procedure::find((int) $this->whatsappProcedureId) : null;
+        $category = strtolower((string) ($procedure?->category ?: $procedure?->code ?: 'unknown'));
+        $normalizedCategory = str($category)->ascii()->lower()->replace([' ', '-'], '_')->toString();
+        $blocks = app(SocialCrmSettingsService::class)->smartLinkContentBlocks();
+        $content = $blocks[$normalizedCategory]
+            ?? $blocks[$category]
+            ?? $blocks['unknown']
+            ?? [
+                'eyebrow' => 'Valoracion dental personalizada',
+                'title' => 'Tu sonrisa merece un plan claro, humano y sin presion.',
+                'subtitle' => 'Mira como trabajamos y continua por WhatsApp para recibir orientacion de la clinica.',
+                'visual_label' => 'Diagnostico integral',
+                'visual_image_url' => '',
+                'before_image_url' => '',
+                'before_video_url' => '',
+                'after_image_url' => '',
+                'after_video_url' => '',
+                'video_url' => '',
+            ];
+
+        $this->smartLinkPreview = [
+            'procedure' => $procedure?->name ?: 'Sin definir',
+            'category' => $procedure ? $normalizedCategory : 'unknown',
+            'uses_unknown' => ! $procedure || (! isset($blocks[$normalizedCategory]) && ! isset($blocks[$category])),
+            'eyebrow' => (string) ($content['eyebrow'] ?? 'Valoracion dental personalizada'),
+            'title' => (string) ($content['title'] ?? 'Tu sonrisa merece un plan claro, humano y sin presion.'),
+            'subtitle' => (string) ($content['subtitle'] ?? 'Mira como trabajamos y continua por WhatsApp para recibir orientacion de la clinica.'),
+            'visual_label' => (string) ($content['visual_label'] ?? 'Diagnostico integral'),
+            'visual_image_url' => (string) ($content['visual_image_url'] ?? ''),
+            'before_image_url' => (string) ($content['before_image_url'] ?? ''),
+            'before_video_url' => (string) ($content['before_video_url'] ?? ''),
+            'after_image_url' => (string) ($content['after_image_url'] ?? ''),
+            'after_video_url' => (string) ($content['after_video_url'] ?? ''),
+            'video_url' => (string) ($content['video_url'] ?? ''),
+        ];
+    }
+
+    private function suggestProcedureId(SocialComment $comment): ?int
+    {
+        $haystack = str($comment->comment_text.' '.$comment->socialPost?->caption)->ascii()->lower()->toString();
+
+        $category = match (true) {
+            str_contains($haystack, 'implante'),
+            str_contains($haystack, 'diente perdido'),
+            str_contains($haystack, 'pieza perdida') => 'implantes',
+            str_contains($haystack, 'limpieza'),
+            str_contains($haystack, 'profilaxis'),
+            str_contains($haystack, 'sarro') => 'limpieza',
+            str_contains($haystack, 'invisalign'),
+            str_contains($haystack, 'alineador'),
+            str_contains($haystack, 'ortodoncia invisible'),
+            str_contains($haystack, 'bracket') => 'invisalign',
+            str_contains($haystack, 'diseno de sonrisa'),
+            str_contains($haystack, 'carilla'),
+            str_contains($haystack, 'estetica'),
+            str_contains($haystack, 'blanqueamiento') => 'diseno_sonrisa',
+            default => null,
+        };
+
+        if (! $category) {
+            return null;
+        }
+
+        return Procedure::query()
+            ->where('is_active', true)
+            ->where(function (Builder $query) use ($category): void {
+                $query->where('category', $category)
+                    ->orWhere('code', $category);
+            })
+            ->value('id');
     }
 
     public function markReviewed(int $commentId): void

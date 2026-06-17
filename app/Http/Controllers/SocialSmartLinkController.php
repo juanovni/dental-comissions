@@ -154,7 +154,9 @@ class SocialSmartLinkController extends Controller
             'visual_label' => (string) ($content['visual_label'] ?? 'Diagnostico integral'),
             'visual_image_url' => (string) ($content['visual_image_url'] ?? ''),
             'before_image_url' => (string) ($content['before_image_url'] ?? ''),
+            'before_video_url' => (string) ($content['before_video_url'] ?? ''),
             'after_image_url' => (string) ($content['after_image_url'] ?? ''),
+            'after_video_url' => (string) ($content['after_video_url'] ?? ''),
         ];
     }
 

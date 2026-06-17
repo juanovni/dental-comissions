@@ -533,9 +533,11 @@
             box-shadow: 0 24px 80px rgba(15, 23, 42, .28);
             display: grid;
             gap: .85rem;
-            max-width: 42rem;
+            max-height: calc(100vh - 2rem);
+            max-width: 48rem;
+            overflow-y: auto;
             padding: 1.25rem;
-            width: min(100%, 42rem);
+            width: min(100%, 48rem);
         }
 
         .smart-modal h2 {
@@ -563,6 +565,59 @@
             font-size: .84rem;
             line-height: 1.5;
             padding: .75rem .85rem;
+        }
+
+        .smart-modal-warning {
+            background: #fffbeb;
+            border: 1px solid #fed7aa;
+            border-radius: .75rem;
+            color: #92400e;
+            font-size: .84rem;
+            line-height: 1.5;
+            padding: .75rem .85rem;
+        }
+
+        .smart-preview-grid {
+            display: grid;
+            gap: .75rem;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        @media (min-width: 760px) {
+            .smart-preview-grid {
+                grid-template-columns: .85fr 1.15fr;
+            }
+        }
+
+        .smart-preview-card {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: .9rem;
+            padding: .9rem;
+        }
+
+        .smart-preview-kicker {
+            color: #0f766e;
+            font-size: .68rem;
+            font-weight: 900;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        .smart-preview-title {
+            color: #0f172a;
+            font-size: 1.08rem;
+            font-weight: 850;
+            letter-spacing: -.025em;
+            line-height: 1.15;
+            margin-top: .35rem;
+        }
+
+        .smart-preview-copy {
+            color: #475569;
+            font-size: .82rem;
+            line-height: 1.5;
+            margin-top: .45rem;
         }
 
         .dark .smart-stepper,
@@ -819,10 +874,57 @@
             <div class="smart-modal-backdrop" wire:key="whatsapp-bridge-modal">
                 <section class="smart-modal" role="dialog" aria-modal="true" aria-labelledby="whatsapp-modal-title">
                     <h2 id="whatsapp-modal-title">Derivar lead a WhatsApp</h2>
-                    <p class="smart-muted">El texto final se copio automaticamente. Pegalo como respuesta al comentario en Instagram o Facebook.</p>
+                    <p class="smart-muted">Selecciona el procedimiento de interes para personalizar el Smart Link antes de generar el token.</p>
 
                     <div class="smart-modal-note">
-                        Este es el mensaje recomendado para responder porque incluye tracking. El texto de la card es solo una respuesta base generada por IA.
+                        El paciente vera el contenido del bloque seleccionado en <strong>social_smart_link_content_blocks</strong>. Si queda sin definir, se usara contenido generico.
+                    </div>
+
+                    <label>
+                        <span class="smart-muted">Procedimiento de interes</span>
+                        <select class="smart-copy-field" wire:model.live="whatsappProcedureId">
+                            <option value="">Sin definir / contenido generico</option>
+                            @foreach ($whatsappProcedureOptions as $procedureId => $procedureName)
+                                <option value="{{ $procedureId }}">{{ $procedureName }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    @if ($smartLinkPreview['uses_unknown'] ?? false)
+                        <div class="smart-modal-warning">
+                            Este Smart Link usara contenido generico. Selecciona un procedimiento con categoria configurada para mostrar una landing personalizada.
+                        </div>
+                    @endif
+
+                    <div class="smart-preview-grid">
+                        <section class="smart-preview-card">
+                            <div class="smart-preview-kicker">Preview del Smart Link</div>
+                            <div class="smart-preview-title">{{ $smartLinkPreview['title'] ?? 'Tu sonrisa merece un plan claro, humano y sin presion.' }}</div>
+                            <div class="smart-preview-copy">{{ $smartLinkPreview['subtitle'] ?? 'Mira como trabajamos y continua por WhatsApp para recibir orientacion de la clinica.' }}</div>
+                        </section>
+
+                        <section class="smart-preview-card">
+                            <div class="smart-preview-kicker">Contenido seleccionado</div>
+                            <p><strong>Procedimiento:</strong> {{ $smartLinkPreview['procedure'] ?? 'Sin definir' }}</p>
+                            <p class="smart-muted"><strong>Clave:</strong> {{ $smartLinkPreview['category'] ?? 'unknown' }}</p>
+                            <p class="smart-muted"><strong>Etiqueta:</strong> {{ $smartLinkPreview['eyebrow'] ?? 'Valoracion dental personalizada' }}</p>
+                            <p class="smart-muted"><strong>Visual:</strong> {{ $smartLinkPreview['visual_label'] ?? 'Diagnostico integral' }}</p>
+                            @if (filled($smartLinkPreview['visual_image_url'] ?? ''))
+                                <p class="smart-muted"><strong>Imagen:</strong> {{ $smartLinkPreview['visual_image_url'] }}</p>
+                            @elseif (filled($smartLinkPreview['video_url'] ?? ''))
+                                <p class="smart-muted"><strong>Video:</strong> {{ $smartLinkPreview['video_url'] }}</p>
+                            @endif
+                            @if (filled($smartLinkPreview['before_video_url'] ?? ''))
+                                <p class="smart-muted"><strong>Video antes:</strong> {{ $smartLinkPreview['before_video_url'] }}</p>
+                            @elseif (filled($smartLinkPreview['before_image_url'] ?? ''))
+                                <p class="smart-muted"><strong>Imagen antes:</strong> {{ $smartLinkPreview['before_image_url'] }}</p>
+                            @endif
+                            @if (filled($smartLinkPreview['after_video_url'] ?? ''))
+                                <p class="smart-muted"><strong>Video despues:</strong> {{ $smartLinkPreview['after_video_url'] }}</p>
+                            @elseif (filled($smartLinkPreview['after_image_url'] ?? ''))
+                                <p class="smart-muted"><strong>Imagen despues:</strong> {{ $smartLinkPreview['after_image_url'] }}</p>
+                            @endif
+                        </section>
                     </div>
 
                     <label>
@@ -840,17 +942,24 @@
                         <input class="smart-copy-field" type="text" value="{{ $smartLink }}" readonly>
                     </label>
 
-                    <label>
-                        <span class="smart-muted">Texto final para copiar y responder</span>
-                        <textarea class="smart-copy-field" rows="4" readonly>{{ $whatsappReplyText }}</textarea>
-                    </label>
+                    @if ($whatsappGenerated)
+                        <label>
+                            <span class="smart-muted">Texto final para copiar y responder</span>
+                            <textarea class="smart-copy-field" rows="4" readonly>{{ $whatsappReplyText }}</textarea>
+                        </label>
+                    @endif
 
                     <div class="smart-actions">
-                        @if ($whatsappLink)
+                        <button class="smart-action success" type="button" wire:click="confirmWhatsappRouting">
+                            {{ $whatsappGenerated ? 'Actualizar y copiar texto' : 'Generar seguimiento' }}
+                        </button>
+                        @if ($whatsappGenerated && $whatsappLink)
                             <button class="smart-action success" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappLink))">Copiar link</button>
                         @endif
-                        <button class="smart-action warning" type="button" x-data @click="navigator.clipboard?.writeText(@js($smartLink))">Copiar Smart Link</button>
-                        <button class="smart-action primary" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappReplyText))">Copiar texto</button>
+                        @if ($whatsappGenerated)
+                            <button class="smart-action warning" type="button" x-data @click="navigator.clipboard?.writeText(@js($smartLink))">Copiar Smart Link</button>
+                            <button class="smart-action primary" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappReplyText))">Copiar texto</button>
+                        @endif
                         <button class="smart-action muted" type="button" wire:click="closeWhatsappModal">Cerrar</button>
                     </div>
                 </section>

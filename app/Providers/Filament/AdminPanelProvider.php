@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Dental Comisiones')
+            ->brandName('OdonCRM')
             ->colors([
                 'primary' => Color::Teal,
             ])

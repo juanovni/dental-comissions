@@ -43,7 +43,9 @@ class SocialSmartLinkControllerTest extends TestCase
                         'visual_label' => 'Diagnostico integral',
                         'visual_image_url' => '/images/smart-links/unknown/hero.webp',
                         'before_image_url' => '/images/smart-links/unknown/before.webp',
+                        'before_video_url' => '/videos/smart-links/unknown/before.mp4',
                         'after_image_url' => '/images/smart-links/unknown/after.webp',
+                        'after_video_url' => '/videos/smart-links/unknown/after.mp4',
                         'video_url' => '',
                     ],
                 ],
@@ -61,8 +63,10 @@ class SocialSmartLinkControllerTest extends TestCase
             ->assertSee('Hola, Paciente. Mira como trabajamos')
             ->assertSee('Diagnostico integral')
             ->assertSee('/images/smart-links/unknown/hero.webp')
-            ->assertSee('/images/smart-links/unknown/before.webp')
-            ->assertSee('/images/smart-links/unknown/after.webp');
+            ->assertSee('/videos/smart-links/unknown/before.mp4')
+            ->assertSee('/videos/smart-links/unknown/after.mp4')
+            ->assertDontSee('/images/smart-links/unknown/before.webp')
+            ->assertDontSee('/images/smart-links/unknown/after.webp');
     }
 
     public function test_smart_link_view_event_is_recorded_and_scores_lead(): void

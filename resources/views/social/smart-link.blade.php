@@ -519,7 +519,8 @@
             position: relative;
         }
 
-        .sp-result-card img {
+        .sp-result-card img,
+        .sp-result-card video {
             display: block;
             height: 100%;
             inset: 0;
@@ -758,13 +759,17 @@
 
                 <div class="sp-results">
                     <div class="sp-result-card before">
-                        @if (filled($hero['before_image_url']))
+                        @if (filled($hero['before_video_url']))
+                            <video src="{{ $hero['before_video_url'] }}" controls playsinline preload="metadata"></video>
+                        @elseif (filled($hero['before_image_url']))
                             <img src="{{ $hero['before_image_url'] }}" alt="Antes de la valoracion" loading="lazy">
                         @endif
                         <span class="sp-result-label">Antes</span>
                     </div>
                     <div class="sp-result-card after">
-                        @if (filled($hero['after_image_url']))
+                        @if (filled($hero['after_video_url']))
+                            <video src="{{ $hero['after_video_url'] }}" controls playsinline preload="metadata"></video>
+                        @elseif (filled($hero['after_image_url']))
                             <img src="{{ $hero['after_image_url'] }}" alt="Despues de la valoracion" loading="lazy">
                         @endif
                         <span class="sp-result-label">Despues</span>
