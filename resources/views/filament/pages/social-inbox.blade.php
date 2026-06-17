@@ -984,7 +984,7 @@
 
                             <section class="smart-modal-section">
                                 <div>
-                                    <div class="smart-preview-kicker">Texto final</div>
+                                    <div class="smart-preview-kicker">Texto final para copiar y responder</div>
                                     <p class="smart-preview-copy">Mensaje listo para copiar y responder al comentario.</p>
                                 </div>
 
@@ -1043,6 +1043,15 @@
                                     <p class="smart-muted"><strong>Clave:</strong> {{ $smartLinkPreview['category'] ?? 'unknown' }}</p>
                                     <p class="smart-muted"><strong>Etiqueta:</strong> {{ $smartLinkPreview['eyebrow'] ?? 'Valoracion dental personalizada' }}</p>
                                     <p class="smart-muted"><strong>Visual:</strong> {{ $smartLinkPreview['visual_label'] ?? 'Diagnostico integral' }}</p>
+                                    @if (filled($smartLinkPreview['video_url'] ?? null))
+                                        <p class="smart-muted"><strong>Video:</strong> {{ $smartLinkPreview['video_url'] }}</p>
+                                    @endif
+                                    @if (filled($smartLinkPreview['before_video_url'] ?? null))
+                                        <p class="smart-muted"><strong>Antes:</strong> {{ $smartLinkPreview['before_video_url'] }}</p>
+                                    @endif
+                                    @if (filled($smartLinkPreview['after_video_url'] ?? null))
+                                        <p class="smart-muted"><strong>Despues:</strong> {{ $smartLinkPreview['after_video_url'] }}</p>
+                                    @endif
                                 </section>
                             </div>
 

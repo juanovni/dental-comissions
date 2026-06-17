@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\SocialCommentActionType;
+use App\Events\LeadActivityDetected;
+use App\Models\Procedure;
 use App\Models\SocialComment;
 use App\Models\SocialLinkEvent;
 use App\Services\SocialConversionService;
@@ -18,20 +20,23 @@ class SocialSmartLinkController extends Controller
     public function show(string $trackingToken, Request $request): View
     {
         $comment = $this->findComment($trackingToken);
+        $procedure = $this->procedureFromRequest($request) ?? $comment->suggestedProcedure;
         $settings = app(SocialCrmSettingsService::class);
-        $content = $this->contentFor($comment, $settings->smartLinkContentBlocks());
+        $content = $this->contentFor($comment, $settings->smartLinkContentBlocks(), $procedure);
 
         return view('social.smart-link', [
             'comment' => $comment,
             'content' => $content,
             'hero' => $this->heroFor($comment, $content),
-            'preview' => $this->previewFor($comment),
+            'preview' => $this->previewFor($comment, $procedure),
+            'leadName' => $this->visitorName($comment),
             'trackingToken' => $comment->tracking_token,
             'trackUrl' => route('social-smart-link.track', ['trackingToken' => $comment->tracking_token]),
             'csrfToken' => csrf_token(),
             'durationThreshold' => $settings->smartLinkDurationThresholdSeconds(),
             'pingSeconds' => $settings->smartLinkPingSeconds(),
             'whatsappLink' => app(SocialConversionService::class)->whatsappLink($comment),
+            'attribution' => $this->attributionFromRequest($request, $procedure),
         ]);
     }
 
@@ -39,7 +44,7 @@ class SocialSmartLinkController extends Controller
     {
         $comment = $this->findComment($trackingToken);
         $data = $request->validate([
-            'event_type' => ['required', 'string', 'in:view,revisit,engagement_ping,duration_threshold'],
+            'event_type' => ['required', 'string', 'in:view,revisit,engagement_ping,duration_threshold,video_start,video_25,video_50,video_75,video_complete,whatsapp_click'],
             'session_id' => ['nullable', 'string', 'max:80'],
             'duration_seconds' => ['nullable', 'integer', 'min:0', 'max:86400'],
             'metadata' => ['nullable', 'array'],
@@ -56,6 +61,7 @@ class SocialSmartLinkController extends Controller
         ]);
 
         $this->applyTrackingEffects($comment->refresh(), $event);
+        LeadActivityDetected::dispatch($comment->refresh(), $event);
 
         return response()->json([
             'status' => 'ok',
@@ -117,9 +123,43 @@ class SocialSmartLinkController extends Controller
         ]);
     }
 
-    private function contentFor(SocialComment $comment, array $blocks): array
+    private function procedureFromRequest(Request $request): ?Procedure
     {
-        $category = strtolower((string) ($comment->suggestedProcedure?->category ?: $comment->suggestedProcedure?->code ?: 'unknown'));
+        $treatmentId = $request->integer('treatment_id');
+
+        if ($treatmentId <= 0) {
+            return null;
+        }
+
+        return Procedure::query()->find($treatmentId);
+    }
+
+    private function attributionFromRequest(Request $request, ?Procedure $procedure): array
+    {
+        return array_filter([
+            'utm_source' => $this->cleanQueryValue($request->query('utm_source')),
+            'utm_medium' => $this->cleanQueryValue($request->query('utm_medium')),
+            'utm_campaign' => $this->cleanQueryValue($request->query('utm_campaign')),
+            'treatment_id' => $procedure?->id,
+            'treatment_name' => $procedure?->name,
+        ], static fn ($value): bool => filled($value));
+    }
+
+    private function cleanQueryValue(mixed $value): ?string
+    {
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        $value = str((string) $value)->squish()->limit(120, '')->toString();
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function contentFor(SocialComment $comment, array $blocks, ?Procedure $procedure = null): array
+    {
+        $procedure ??= $comment->suggestedProcedure;
+        $category = strtolower((string) ($procedure?->category ?: $procedure?->code ?: 'unknown'));
         $normalizedCategory = str($category)->ascii()->lower()->replace([' ', '-'], '_')->toString();
 
         return $blocks[$normalizedCategory]
@@ -204,9 +244,10 @@ class SocialSmartLinkController extends Controller
         return is_string($firstName) && strlen($firstName) >= 2 ? $firstName : null;
     }
 
-    private function previewFor(SocialComment $comment): array
+    private function previewFor(SocialComment $comment, ?Procedure $procedure = null): array
     {
-        $procedureText = str($comment->suggestedProcedure?->name.' '.$comment->suggestedProcedure?->category.' '.$comment->suggestedProcedure?->code)
+        $procedure ??= $comment->suggestedProcedure;
+        $procedureText = str($procedure?->name.' '.$procedure?->category.' '.$procedure?->code)
             ->ascii()
             ->lower()
             ->toString();
@@ -257,7 +298,7 @@ class SocialSmartLinkController extends Controller
         }
 
         return [
-            'procedure' => $comment->suggestedProcedure?->name ?: 'Diagnostico integral',
+            'procedure' => $procedure?->name ?: 'Diagnostico integral',
             'duration' => 'Primera cita',
             'complexity' => 'Sin presion',
             'title' => 'Diagnostico integral sin compromiso',

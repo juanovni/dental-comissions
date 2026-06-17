@@ -208,6 +208,13 @@
             color: var(--sp-ink);
         }
 
+        .sp-sticky-whatsapp {
+            bottom: 1.25rem;
+            position: fixed;
+            right: 1.25rem;
+            z-index: 40;
+        }
+
         .sp-plan-card {
             background: var(--sp-surface);
             border: 1px solid var(--sp-border);
@@ -371,6 +378,26 @@
             padding: .3rem .55rem;
             position: absolute;
             text-transform: uppercase;
+        }
+
+        .sp-video-progress {
+            background: rgba(8, 17, 38, .12);
+            border-radius: 999px;
+            bottom: .85rem;
+            height: .42rem;
+            left: .85rem;
+            overflow: hidden;
+            position: absolute;
+            right: .85rem;
+            z-index: 2;
+        }
+
+        .sp-video-progress span {
+            background: linear-gradient(90deg, #079455, #0fbc9f);
+            display: block;
+            height: 100%;
+            transition: width .2s ease;
+            width: 0%;
         }
 
         .sp-benefits {
@@ -608,6 +635,12 @@
                 width: 100%;
             }
 
+            .sp-sticky-whatsapp {
+                bottom: .8rem;
+                left: .9rem;
+                right: .9rem;
+            }
+
             .sp-facts,
             .sp-benefits,
             .sp-steps,
@@ -647,23 +680,33 @@
         </div>
     </header>
 
-    <main data-track-url="{{ $trackUrl }}" data-threshold="{{ $durationThreshold }}" data-ping="{{ $pingSeconds }}">
+    <main
+        data-track-url="{{ $trackUrl }}"
+        data-threshold="{{ $durationThreshold }}"
+        data-ping="{{ $pingSeconds }}"
+        data-attribution='@json($attribution)'
+    >
         <section class="sp-hero-wrap">
             <div class="sp-shell">
                 <div class="sp-hero">
                     <div>
                         <p class="sp-eyebrow">{{ $content['eyebrow'] ?? 'Plan dental personalizado' }}</p>
                         <h1 class="sp-title">
-                            {{ $hero['title_static'] }}
-                            @if (filled($hero['title_typed']))
-                                <span class="sp-typewriter" data-typewriter-text="{{ $hero['title_typed'] }}">{{ $hero['title_typed'] }}</span>
+                            @if (filled($leadName))
+                                Hola {{ $leadName }},
+                                <span class="sp-typewriter" data-typewriter-text="tu plan dental esta listo">tu plan dental esta listo</span>
+                            @else
+                                {{ $hero['title_static'] }}
+                                @if (filled($hero['title_typed']))
+                                    <span class="sp-typewriter" data-typewriter-text="{{ $hero['title_typed'] }}">{{ $hero['title_typed'] }}</span>
+                                @endif
                             @endif
                         </h1>
                         <p class="sp-subtitle">{{ $hero['subtitle'] }}</p>
 
                         <div class="sp-actions">
                             @if ($whatsappLink)
-                                <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}">
+                                <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}" data-whatsapp-link>
                                     <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
                                         <path fill="currentColor" d="M16.04 3.2A12.73 12.73 0 0 0 3.3 15.92c0 2.24.59 4.42 1.7 6.34L3.2 28.8l6.72-1.76a12.72 12.72 0 0 0 6.12 1.56h.01A12.73 12.73 0 0 0 28.8 15.88 12.74 12.74 0 0 0 16.04 3.2Zm0 23.24h-.01c-1.87 0-3.7-.5-5.3-1.45l-.38-.22-3.99 1.04 1.06-3.88-.25-.4a10.49 10.49 0 0 1-1.61-5.6c0-5.78 4.7-10.48 10.49-10.48a10.48 10.48 0 0 1 10.5 10.44c0 5.79-4.71 10.5-10.5 10.5Zm5.75-7.85c-.31-.16-1.86-.92-2.15-1.02-.29-.1-.5-.16-.71.16-.21.31-.81 1.02-1 1.23-.18.21-.37.23-.68.08-.31-.16-1.32-.49-2.52-1.55-.93-.83-1.56-1.86-1.74-2.17-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.55.16-.18.21-.31.31-.52.1-.21.05-.39-.03-.55-.08-.16-.71-1.71-.97-2.34-.26-.61-.52-.53-.71-.54h-.6c-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.62 0 1.55 1.13 3.04 1.29 3.25.16.21 2.22 3.39 5.38 4.75.75.32 1.34.52 1.8.66.76.24 1.45.2 1.99.12.61-.09 1.86-.76 2.12-1.5.26-.73.26-1.36.18-1.5-.08-.13-.29-.21-.6-.37Z" />
                                     </svg>
@@ -709,6 +752,7 @@
                                 <div class="sp-aligner" aria-hidden="true"></div>
                             @endif
                             <span class="sp-media-caption">{{ $hero['visual_label'] }}</span>
+                            <div class="sp-video-progress" aria-hidden="true"><span data-video-progress></span></div>
                         </div>
                     </aside>
                 </div>
@@ -782,7 +826,7 @@
                         <span>Agenda tu valoracion y conserva tu codigo {{ $trackingToken }} para mantener el contexto de tu solicitud.</span>
                     </div>
                     @if ($whatsappLink)
-                        <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}">
+                        <a class="sp-btn sp-btn-whatsapp" href="{{ $whatsappLink }}" data-whatsapp-link>
                             <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
                                 <path fill="currentColor" d="M16.04 3.2A12.73 12.73 0 0 0 3.3 15.92c0 2.24.59 4.42 1.7 6.34L3.2 28.8l6.72-1.76a12.72 12.72 0 0 0 6.12 1.56h.01A12.73 12.73 0 0 0 28.8 15.88 12.74 12.74 0 0 0 16.04 3.2Zm0 23.24h-.01c-1.87 0-3.7-.5-5.3-1.45l-.38-.22-3.99 1.04 1.06-3.88-.25-.4a10.49 10.49 0 0 1-1.61-5.6c0-5.78 4.7-10.48 10.49-10.48a10.48 10.48 0 0 1 10.5 10.44c0 5.79-4.71 10.5-10.5 10.5Zm5.75-7.85c-.31-.16-1.86-.92-2.15-1.02-.29-.1-.5-.16-.71.16-.21.31-.81 1.02-1 1.23-.18.21-.37.23-.68.08-.31-.16-1.32-.49-2.52-1.55-.93-.83-1.56-1.86-1.74-2.17-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.55.16-.18.21-.31.31-.52.1-.21.05-.39-.03-.55-.08-.16-.71-1.71-.97-2.34-.26-.61-.52-.53-.71-.54h-.6c-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.62 0 1.55 1.13 3.04 1.29 3.25.16.21 2.22 3.39 5.38 4.75.75.32 1.34.52 1.8.66.76.24 1.45.2 1.99.12.61-.09 1.86-.76 2.12-1.5.26-.73.26-1.36.18-1.5-.08-.13-.29-.21-.6-.37Z" />
                             </svg>
@@ -793,6 +837,15 @@
             </div>
         </section>
     </main>
+
+    @if ($whatsappLink)
+        <a class="sp-btn sp-btn-whatsapp sp-sticky-whatsapp" href="{{ $whatsappLink }}" data-whatsapp-link>
+            <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M16.04 3.2A12.73 12.73 0 0 0 3.3 15.92c0 2.24.59 4.42 1.7 6.34L3.2 28.8l6.72-1.76a12.72 12.72 0 0 0 6.12 1.56h.01A12.73 12.73 0 0 0 28.8 15.88 12.74 12.74 0 0 0 16.04 3.2Zm0 23.24h-.01c-1.87 0-3.7-.5-5.3-1.45l-.38-.22-3.99 1.04 1.06-3.88-.25-.4a10.49 10.49 0 0 1-1.61-5.6c0-5.78 4.7-10.48 10.49-10.48a10.48 10.48 0 0 1 10.5 10.44c0 5.79-4.71 10.5-10.5 10.5Zm5.75-7.85c-.31-.16-1.86-.92-2.15-1.02-.29-.1-.5-.16-.71.16-.21.31-.81 1.02-1 1.23-.18.21-.37.23-.68.08-.31-.16-1.32-.49-2.52-1.55-.93-.83-1.56-1.86-1.74-2.17-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.55.16-.18.21-.31.31-.52.1-.21.05-.39-.03-.55-.08-.16-.71-1.71-.97-2.34-.26-.61-.52-.53-.71-.54h-.6c-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.62 0 1.55 1.13 3.04 1.29 3.25.16.21 2.22 3.39 5.38 4.75.75.32 1.34.52 1.8.66.76.24 1.45.2 1.99.12.61-.09 1.86-.76 2.12-1.5.26-.73.26-1.36.18-1.5-.08-.13-.29-.21-.6-.37Z" />
+            </svg>
+            Continuar por WhatsApp
+        </a>
+    @endif
 
     <script>
         (() => {
@@ -824,6 +877,7 @@
             const trackUrl = root.dataset.trackUrl;
             const threshold = Number(root.dataset.threshold || 60);
             const pingSeconds = Number(root.dataset.ping || 15);
+            const attribution = JSON.parse(root.dataset.attribution || '{}');
             const storageKey = `social-smart-link-session:${trackUrl}`;
             const visitKey = `social-smart-link-visited:${trackUrl}`;
             const thresholdKey = `social-smart-link-threshold:${trackUrl}`;
@@ -844,7 +898,10 @@
                         event_type: eventType,
                         session_id: sessionId,
                         duration_seconds: durationSeconds,
-                        metadata,
+                        metadata: {
+                            ...attribution,
+                            ...metadata,
+                        },
                     }),
                     keepalive: true,
                 }).catch(() => {});
@@ -853,6 +910,61 @@
             const alreadyVisited = localStorage.getItem(visitKey) === '1';
             send(alreadyVisited ? 'revisit' : 'view', 0, { source: 'landing_load' });
             localStorage.setItem(visitKey, '1');
+
+            document.querySelectorAll('[data-whatsapp-link]').forEach((link) => {
+                link.addEventListener('click', () => {
+                    const duration = Math.round((Date.now() - startedAt) / 1000);
+                    send('whatsapp_click', duration, { source: 'whatsapp_cta' });
+                });
+            });
+
+            document.querySelectorAll('video').forEach((video) => {
+                const reached = new Set();
+                const progressBar = video.closest('.sp-media, .sp-result-card')?.querySelector('[data-video-progress]');
+
+                const mark = (eventType, progress = null) => {
+                    if (reached.has(eventType)) {
+                        return;
+                    }
+
+                    reached.add(eventType);
+                    send(eventType, Math.round((Date.now() - startedAt) / 1000), {
+                        source: 'video',
+                        progress,
+                        duration: Number.isFinite(video.duration) ? Math.round(video.duration) : null,
+                    });
+                };
+
+                video.addEventListener('play', () => mark('video_start', 0));
+                video.addEventListener('timeupdate', () => {
+                    if (! Number.isFinite(video.duration) || video.duration <= 0) {
+                        return;
+                    }
+
+                    const progress = Math.min(100, Math.round((video.currentTime / video.duration) * 100));
+
+                    if (progressBar) {
+                        progressBar.style.width = `${progress}%`;
+                    }
+
+                    if (progress >= 25) mark('video_25', progress);
+                    if (progress >= 50) mark('video_50', progress);
+                    if (progress >= 75) mark('video_75', progress);
+                });
+                video.addEventListener('ended', () => {
+                    if (progressBar) {
+                        progressBar.style.width = '100%';
+                    }
+
+                    mark('video_complete', 100);
+                });
+            });
+
+            document.querySelectorAll('iframe').forEach((iframe) => {
+                iframe.addEventListener('pointerenter', () => {
+                    send('video_start', Math.round((Date.now() - startedAt) / 1000), { source: 'iframe_preview' });
+                }, { once: true });
+            });
 
             setInterval(() => {
                 const duration = Math.round((Date.now() - startedAt) / 1000);

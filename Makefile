@@ -1,7 +1,8 @@
-.PHONY: help up down build restart shell migrate seed fresh test pint composer npm install clean logs
+.PHONY: help up down build restart shell migrate seed fresh test pint composer npm install clean logs reverb logs-reverb
 
 APP_SERVICE = dental.app
 DB_SERVICE = dental.pgsql
+REVERB_SERVICE = dental.reverb
 
 help:
 	@echo "Dental Commissions MVP - Docker commands"
@@ -19,6 +20,8 @@ help:
 	@echo "  make composer    Run composer (e.g. make composer cmd=install)"
 	@echo "  make npm         Run npm (e.g. make npm cmd=install)"
 	@echo "  make logs        Tail app container logs"
+	@echo "  make reverb      Run Reverb server"
+	@echo "  make logs-reverb Tail Reverb container logs"
 	@echo "  make clean       Remove all containers, volumes and images"
 
 up:
@@ -59,6 +62,12 @@ npm:
 
 logs:
 	docker compose logs -f $(APP_SERVICE)
+
+reverb:
+	docker compose up -d $(REVERB_SERVICE)
+
+logs-reverb:
+	docker compose logs -f $(REVERB_SERVICE)
 
 clean:
 	docker compose down -v --rmi all --remove-orphans
