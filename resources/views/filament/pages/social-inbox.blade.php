@@ -522,22 +522,58 @@
             display: flex;
             inset: 0;
             justify-content: center;
-            padding: 1rem;
+            padding: clamp(.6rem, 1.5vh, 1rem);
             position: fixed;
             z-index: 60;
         }
 
         .smart-modal {
             background: #ffffff;
-            border-radius: 1.1rem;
+            border-radius: 1.15rem;
             box-shadow: 0 24px 80px rgba(15, 23, 42, .28);
             display: grid;
-            gap: .85rem;
-            max-height: calc(100vh - 2rem);
-            max-width: 48rem;
+            gap: 1rem;
+            max-height: calc(100dvh - clamp(1.2rem, 3vh, 2rem));
+            max-width: 78rem;
             overflow-y: auto;
-            padding: 1.25rem;
-            width: min(100%, 48rem);
+            padding: 1.15rem;
+            position: relative;
+            width: min(100%, 78rem);
+        }
+
+        @supports not (height: 100dvh) {
+            .smart-modal {
+                max-height: calc(100vh - clamp(1.2rem, 3vh, 2rem));
+            }
+        }
+
+        .smart-modal-close {
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            color: #64748b;
+            display: inline-flex;
+            font-size: 1.05rem;
+            font-weight: 850;
+            height: 2.1rem;
+            justify-content: center;
+            line-height: 1;
+            position: absolute;
+            right: .85rem;
+            top: .85rem;
+            transition: .16s ease;
+            width: 2.1rem;
+        }
+
+        .smart-modal-close:hover {
+            background: #eef2f7;
+            color: #0f172a;
+            transform: translateY(-1px);
+        }
+
+        .smart-modal-header {
+            padding-right: 2.6rem;
         }
 
         .smart-modal h2 {
@@ -547,14 +583,59 @@
             margin: 0;
         }
 
+        .smart-modal-layout {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        @media (min-width: 980px) {
+            .smart-modal-layout {
+                grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+            }
+        }
+
+        .smart-modal-column {
+            align-content: start;
+            display: grid;
+            gap: .75rem;
+        }
+
+        .smart-modal-section {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .95rem;
+            display: grid;
+            gap: .7rem;
+            padding: .9rem;
+        }
+
+        .smart-modal-section.is-soft {
+            background: #f8fafc;
+        }
+
+        .smart-field-label {
+            color: #000000;
+            display: block;
+            font-size: .72rem;
+            font-weight: 800;
+            margin-bottom: .28rem;
+        }
+
         .smart-copy-field {
             background: #f8fafc;
             border: 1px solid #e5e7eb;
-            border-radius: .75rem;
+            border-radius: .62rem;
             color: #0f172a;
-            font-size: .86rem;
-            padding: .7rem .8rem;
+            font-size: .8rem;
+            line-height: 1.4;
+            padding: .52rem .64rem;
             width: 100%;
+            height: auto;
+        }
+
+        .smart-copy-field[readonly] {
+            cursor: text;
         }
 
         .smart-modal-note {
@@ -585,7 +666,7 @@
 
         @media (min-width: 760px) {
             .smart-preview-grid {
-                grid-template-columns: .85fr 1.15fr;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
@@ -873,94 +954,99 @@
         @if ($whatsappModalOpen)
             <div class="smart-modal-backdrop" wire:key="whatsapp-bridge-modal">
                 <section class="smart-modal" role="dialog" aria-modal="true" aria-labelledby="whatsapp-modal-title">
-                    <h2 id="whatsapp-modal-title">Derivar lead a WhatsApp</h2>
-                    <p class="smart-muted">Selecciona el procedimiento de interes para personalizar el Smart Link antes de generar el token.</p>
+                    <button class="smart-modal-close" type="button" wire:click="closeWhatsappModal" aria-label="Cerrar modal">×</button>
 
-                    <div class="smart-modal-note">
-                        El paciente vera el contenido del bloque seleccionado en <strong>social_smart_link_content_blocks</strong>. Si queda sin definir, se usara contenido generico.
-                    </div>
+                    <header class="smart-modal-header">
+                        <h2 id="whatsapp-modal-title">Derivar lead a WhatsApp</h2>
+                        <p class="smart-muted">Personaliza el Smart Link, revisa el contenido visual y copia la respuesta final para publicar en Instagram o Facebook.</p>
+                    </header>
 
-                    <label>
-                        <span class="smart-muted">Procedimiento de interes</span>
-                        <select class="smart-copy-field" wire:model.live="whatsappProcedureId">
-                            <option value="">Sin definir / contenido generico</option>
-                            @foreach ($whatsappProcedureOptions as $procedureId => $procedureName)
-                                <option value="{{ $procedureId }}">{{ $procedureName }}</option>
-                            @endforeach
-                        </select>
-                    </label>
+                    <div class="smart-modal-layout">
+                        <div class="smart-modal-column">
+                            <section class="smart-modal-section is-soft">
+                                <div class="smart-preview-kicker">Seguimiento</div>
 
-                    @if ($smartLinkPreview['uses_unknown'] ?? false)
-                        <div class="smart-modal-warning">
-                            Este Smart Link usara contenido generico. Selecciona un procedimiento con categoria configurada para mostrar una landing personalizada.
+                                <label>
+                                    <span class="smart-field-label">Token</span>
+                                    <input class="smart-copy-field" type="text" value="{{ $whatsappToken }}" readonly>
+                                </label>
+
+                                <label>
+                                    <span class="smart-field-label">Link WhatsApp</span>
+                                    <input class="smart-copy-field" type="text" value="{{ $whatsappLink ?: 'Configura WHATSAPP_BUSINESS_PHONE para generar link directo' }}" readonly>
+                                </label>
+
+                                <label>
+                                    <span class="smart-field-label">Smart Link rastreable</span>
+                                    <input class="smart-copy-field" type="text" value="{{ $smartLink ?: 'Se generara al confirmar' }}" readonly>
+                                </label>
+                            </section>
+
+                            <section class="smart-modal-section">
+                                <div>
+                                    <div class="smart-preview-kicker">Texto final</div>
+                                    <p class="smart-preview-copy">Mensaje listo para copiar y responder al comentario.</p>
+                                </div>
+
+                                @if ($whatsappGenerated)
+                                    <textarea class="smart-copy-field" style="height: 200px;" rows="3" readonly>{{ $whatsappReplyText }}</textarea>
+                                @else
+                                    <div class="smart-modal-note">
+                                        El texto final aparecera despues de generar el seguimiento. El token no se crea hasta confirmar.
+                                    </div>
+                                @endif
+                            </section>
+
+                            <div class="smart-actions">
+                                <button class="smart-action success" type="button" wire:click="confirmWhatsappRouting">
+                                    {{ $whatsappGenerated ? 'Actualizar y copiar texto' : 'Generar seguimiento' }}
+                                </button>
+                                @if ($whatsappGenerated && $whatsappLink)
+                                    <button class="smart-action success" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappLink))">Copiar link</button>
+                                @endif
+                                @if ($whatsappGenerated)
+                                    <button class="smart-action warning" type="button" x-data @click="navigator.clipboard?.writeText(@js($smartLink))">Copiar Smart Link</button>
+                                    <button class="smart-action primary" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappReplyText))">Copiar texto</button>
+                                @endif
+                            </div>
                         </div>
-                    @endif
 
-                    <div class="smart-preview-grid">
-                        <section class="smart-preview-card">
-                            <div class="smart-preview-kicker">Preview del Smart Link</div>
-                            <div class="smart-preview-title">{{ $smartLinkPreview['title'] ?? 'Tu sonrisa merece un plan claro, humano y sin presion.' }}</div>
-                            <div class="smart-preview-copy">{{ $smartLinkPreview['subtitle'] ?? 'Mira como trabajamos y continua por WhatsApp para recibir orientacion de la clinica.' }}</div>
-                        </section>
+                        <div class="smart-modal-column">
+                            <section class="smart-modal-section">
+                                <label>
+                                    <span class="smart-field-label">Procedimiento de interes</span>
+                                    <select class="smart-copy-field" wire:model.live="whatsappProcedureId">
+                                        <option value="">Sin definir / contenido generico</option>
+                                        @foreach ($whatsappProcedureOptions as $procedureId => $procedureName)
+                                            <option value="{{ $procedureId }}">{{ $procedureName }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
 
-                        <section class="smart-preview-card">
-                            <div class="smart-preview-kicker">Contenido seleccionado</div>
-                            <p><strong>Procedimiento:</strong> {{ $smartLinkPreview['procedure'] ?? 'Sin definir' }}</p>
-                            <p class="smart-muted"><strong>Clave:</strong> {{ $smartLinkPreview['category'] ?? 'unknown' }}</p>
-                            <p class="smart-muted"><strong>Etiqueta:</strong> {{ $smartLinkPreview['eyebrow'] ?? 'Valoracion dental personalizada' }}</p>
-                            <p class="smart-muted"><strong>Visual:</strong> {{ $smartLinkPreview['visual_label'] ?? 'Diagnostico integral' }}</p>
-                            @if (filled($smartLinkPreview['visual_image_url'] ?? ''))
-                                <p class="smart-muted"><strong>Imagen:</strong> {{ $smartLinkPreview['visual_image_url'] }}</p>
-                            @elseif (filled($smartLinkPreview['video_url'] ?? ''))
-                                <p class="smart-muted"><strong>Video:</strong> {{ $smartLinkPreview['video_url'] }}</p>
-                            @endif
-                            @if (filled($smartLinkPreview['before_video_url'] ?? ''))
-                                <p class="smart-muted"><strong>Video antes:</strong> {{ $smartLinkPreview['before_video_url'] }}</p>
-                            @elseif (filled($smartLinkPreview['before_image_url'] ?? ''))
-                                <p class="smart-muted"><strong>Imagen antes:</strong> {{ $smartLinkPreview['before_image_url'] }}</p>
-                            @endif
-                            @if (filled($smartLinkPreview['after_video_url'] ?? ''))
-                                <p class="smart-muted"><strong>Video despues:</strong> {{ $smartLinkPreview['after_video_url'] }}</p>
-                            @elseif (filled($smartLinkPreview['after_image_url'] ?? ''))
-                                <p class="smart-muted"><strong>Imagen despues:</strong> {{ $smartLinkPreview['after_image_url'] }}</p>
-                            @endif
-                        </section>
-                    </div>
+                                @if ($smartLinkPreview['uses_unknown'] ?? false)
+                                    <div class="smart-modal-warning">
+                                        Este Smart Link usara contenido generico. Selecciona un procedimiento con categoria configurada para mostrar una landing personalizada.
+                                    </div>
+                                @endif
+                            </section>
 
-                    <label>
-                        <span class="smart-muted">Token</span>
-                        <input class="smart-copy-field" type="text" value="{{ $whatsappToken }}" readonly>
-                    </label>
+                            <div class="smart-preview-grid">
+                                <section class="smart-preview-card">
+                                    <div class="smart-preview-kicker">Preview del Smart Link</div>
+                                    <div class="smart-preview-title">{{ $smartLinkPreview['title'] ?? 'Tu sonrisa merece un plan claro, humano y sin presion.' }}</div>
+                                    <div class="smart-preview-copy">{{ $smartLinkPreview['subtitle'] ?? 'Mira como trabajamos y continua por WhatsApp para recibir orientacion de la clinica.' }}</div>
+                                </section>
 
-                    <label>
-                        <span class="smart-muted">Link WhatsApp</span>
-                        <input class="smart-copy-field" type="text" value="{{ $whatsappLink ?: 'Configura WHATSAPP_BUSINESS_PHONE para generar link directo' }}" readonly>
-                    </label>
+                                <section class="smart-preview-card">
+                                    <div class="smart-preview-kicker">Contenido seleccionado</div>
+                                    <p><strong>Procedimiento:</strong> {{ $smartLinkPreview['procedure'] ?? 'Sin definir' }}</p>
+                                    <p class="smart-muted"><strong>Clave:</strong> {{ $smartLinkPreview['category'] ?? 'unknown' }}</p>
+                                    <p class="smart-muted"><strong>Etiqueta:</strong> {{ $smartLinkPreview['eyebrow'] ?? 'Valoracion dental personalizada' }}</p>
+                                    <p class="smart-muted"><strong>Visual:</strong> {{ $smartLinkPreview['visual_label'] ?? 'Diagnostico integral' }}</p>
+                                </section>
+                            </div>
 
-                    <label>
-                        <span class="smart-muted">Smart Link rastreable</span>
-                        <input class="smart-copy-field" type="text" value="{{ $smartLink }}" readonly>
-                    </label>
-
-                    @if ($whatsappGenerated)
-                        <label>
-                            <span class="smart-muted">Texto final para copiar y responder</span>
-                            <textarea class="smart-copy-field" rows="4" readonly>{{ $whatsappReplyText }}</textarea>
-                        </label>
-                    @endif
-
-                    <div class="smart-actions">
-                        <button class="smart-action success" type="button" wire:click="confirmWhatsappRouting">
-                            {{ $whatsappGenerated ? 'Actualizar y copiar texto' : 'Generar seguimiento' }}
-                        </button>
-                        @if ($whatsappGenerated && $whatsappLink)
-                            <button class="smart-action success" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappLink))">Copiar link</button>
-                        @endif
-                        @if ($whatsappGenerated)
-                            <button class="smart-action warning" type="button" x-data @click="navigator.clipboard?.writeText(@js($smartLink))">Copiar Smart Link</button>
-                            <button class="smart-action primary" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappReplyText))">Copiar texto</button>
-                        @endif
-                        <button class="smart-action muted" type="button" wire:click="closeWhatsappModal">Cerrar</button>
+                        </div>
                     </div>
                 </section>
             </div>
