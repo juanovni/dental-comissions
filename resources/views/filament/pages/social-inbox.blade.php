@@ -920,7 +920,7 @@
 
                         @if ($isLead || blank($comment->tracking_token))
                             <button class="smart-action success" type="button" wire:click="routeToWhatsapp({{ $comment->id }})">
-                                {{ $isDerived ? 'Ver texto de seguimiento' : 'WhatsApp' }}
+                                {{ $isDerived ? 'Ver texto de seguimiento' : 'Derivar' }}
                             </button>
                         @endif
 
