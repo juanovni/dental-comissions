@@ -15,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Livewire\Attributes\On;
 use Livewire\WithPagination;
 
 class SocialInbox extends Page
@@ -83,6 +84,8 @@ class SocialInbox extends Page
 
     public bool $whatsappGenerated = false;
 
+    public ?int $recentActivityLeadId = null;
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -91,6 +94,15 @@ class SocialInbox extends Page
     public function setFilter(string $filter): void
     {
         $this->filter = $filter;
+        $this->resetPage();
+    }
+
+    #[On('echo-private:admin-notifications,LeadActivityDetected')]
+    public function handleLeadActivityDetected(array $payload): void
+    {
+        $leadId = isset($payload['lead_id']) ? (int) $payload['lead_id'] : null;
+
+        $this->recentActivityLeadId = $leadId ?: null;
         $this->resetPage();
     }
 

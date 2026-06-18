@@ -6,4 +6,68 @@ services:
             APP_ENV: local
             APP_DEBUG: 'true'
             VITE_DEV_SERVER_URL: 'http://${VITE_HOST:-localhost}:${VITE_PORT:-5173}'
+            VITE_REVERB_APP_KEY: '${REVERB_APP_KEY:-local-key}'
+            VITE_REVERB_HOST: '${VITE_REVERB_HOST:-localhost}'
+            VITE_REVERB_PORT: '${REVERB_PORT:-8081}'
+            VITE_REVERB_SCHEME: '${REVERB_SCHEME:-http}'
 
+    dental.vite:
+        image: dental-commissions/app:8.4
+        container_name: dental-vite
+        command: npm run dev -- --host=0.0.0.0
+        ports:
+            - '${VITE_PORT:-5173}:5173'
+        environment:
+            WWWUSER: '${WWWUSER:-1000}'
+            WWWGROUP: '${WWWGROUP:-1000}'
+            APP_ENV: local
+            APP_DEBUG: 'true'
+            VITE_DEV_SERVER_URL: 'http://${VITE_HOST:-localhost}:${VITE_PORT:-5173}'
+            VITE_REVERB_APP_KEY: '${REVERB_APP_KEY:-local-key}'
+            VITE_REVERB_HOST: '${VITE_REVERB_HOST:-localhost}'
+            VITE_REVERB_PORT: '${REVERB_PORT:-8081}'
+            VITE_REVERB_SCHEME: '${REVERB_SCHEME:-http}'
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - dental
+        depends_on:
+            dental.app:
+                condition: service_started
+
+    dental.worker:
+        image: dental-commissions/app:8.4
+        container_name: dental-worker
+        command: php artisan queue:work --sleep=3 --tries=3 --timeout=90
+        environment:
+            WWWUSER: '${WWWUSER:-1000}'
+            WWWGROUP: '${WWWGROUP:-1000}'
+            APP_ENV: '${APP_ENV:-local}'
+            APP_DEBUG: '${APP_DEBUG:-true}'
+            APP_URL: '${APP_URL:-http://localhost:8080}'
+            DB_CONNECTION: pgsql
+            DB_HOST: dental.pgsql
+            DB_PORT: 5432
+            DB_DATABASE: '${DB_DATABASE:-dental_commissions_mvp}'
+            DB_USERNAME: '${DB_USERNAME:-dental}'
+            DB_PASSWORD: '${DB_PASSWORD:-dental}'
+            CACHE_STORE: database
+            SESSION_DRIVER: database
+            QUEUE_CONNECTION: database
+            BROADCAST_CONNECTION: '${BROADCAST_CONNECTION:-reverb}'
+            REVERB_APP_ID: '${REVERB_APP_ID:-odoncrm}'
+            REVERB_APP_KEY: '${REVERB_APP_KEY:-local-key}'
+            REVERB_APP_SECRET: '${REVERB_APP_SECRET:-local-secret}'
+            REVERB_HOST: '${REVERB_INTERNAL_HOST:-dental.reverb}'
+            REVERB_PORT: '${REVERB_PORT:-8081}'
+            REVERB_SCHEME: '${REVERB_SCHEME:-http}'
+        volumes:
+            - '.:/var/www/html'
+            - './docker/8.4/php.ini:/usr/local/etc/php/conf.d/99-sail.ini'
+        networks:
+            - dental
+        depends_on:
+            dental.app:
+                condition: service_started
+            dental.pgsql:
+                condition: service_healthy
