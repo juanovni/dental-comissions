@@ -24,6 +24,7 @@ enum SocialCommentActionType: string
     case MarkAsContacted = 'mark_as_contacted';
     case ScheduleFollowUp = 'schedule_follow_up';
     case MarkAsLost = 'mark_as_lost';
+    case PipelineStageChanged = 'pipeline_stage_changed';
     case Error = 'error';
 
     public function label(): string
@@ -49,6 +50,7 @@ enum SocialCommentActionType: string
             self::MarkAsContacted => 'Marcar como contactado',
             self::ScheduleFollowUp => 'Programar seguimiento',
             self::MarkAsLost => 'Marcar como perdido',
+            self::PipelineStageChanged => 'Cambiar etapa del pipeline',
             self::Error => 'Error',
         };
     }

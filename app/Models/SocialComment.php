@@ -5,12 +5,14 @@ namespace App\Models;
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialConversionStatus;
+use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
 use App\Enums\SocialPriority;
 use App\Enums\SocialReputationRisk;
 use App\Enums\SocialResponseChannel;
 use App\Enums\SocialSentiment;
 use App\Enums\SocialSuggestedAction;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,6 +46,8 @@ class SocialComment extends Model
         'tracking_token',
         'conversion_status',
         'interest_score',
+        'pipeline_stage',
+        'estimated_value',
         'hot_lead_at',
         'last_smart_link_visited_at',
         'reheated_at',
@@ -75,6 +79,8 @@ class SocialComment extends Model
             'reputation_risk' => SocialReputationRisk::class,
             'status' => SocialCommentStatus::class,
             'conversion_status' => SocialConversionStatus::class,
+            'pipeline_stage' => SocialPipelineStage::class,
+            'estimated_value' => 'decimal:2',
             'suggested_action' => SocialSuggestedAction::class,
             'response_channel' => SocialResponseChannel::class,
             'interest_score' => 'integer',
@@ -94,6 +100,64 @@ class SocialComment extends Model
             'published_at' => 'datetime',
             'processed_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (SocialComment $comment): void {
+            if ($comment->isDirty('conversion_status') && ! $comment->isDirty('pipeline_stage')) {
+                $comment->pipeline_stage = SocialPipelineStage::fromConversionStatus($comment->conversion_status);
+            }
+
+            if ($comment->isDirty('pipeline_stage') && ! $comment->isDirty('conversion_status')) {
+                $lostStatuses = [SocialConversionStatus::Lost];
+                if ($comment->pipeline_stage === SocialPipelineStage::Lost && $comment->conversion_status && ! in_array($comment->conversion_status, $lostStatuses, true)) {
+                    $comment->lost_at ??= now();
+                }
+            }
+        });
+    }
+
+    public function scopeByPipelineStage(Builder $query, SocialPipelineStage $stage): Builder
+    {
+        return $query->where('pipeline_stage', $stage);
+    }
+
+    public function scopeHotLeads(Builder $query): Builder
+    {
+        return $query->where('last_smart_link_visited_at', '>=', now()->subMinutes(10));
+    }
+
+    public function scopeColdLeads(Builder $query, ?int $hours = null): Builder
+    {
+        $hours ??= 48;
+
+        return $query->where(function (Builder $q) use ($hours): void {
+            $q->whereNull('last_smart_link_visited_at')
+                ->orWhere('last_smart_link_visited_at', '<', now()->subHours($hours));
+        });
+    }
+
+    public function scopeFollowUpToday(Builder $query): Builder
+    {
+        return $query->whereNotNull('follow_up_at')
+            ->whereDate('follow_up_at', today());
+    }
+
+    public static function totalEstimatedValueByStage(?SocialPipelineStage $stage = null): array
+    {
+        $query = self::query()
+            ->selectRaw('pipeline_stage, count(*) as total_count, coalesce(sum(estimated_value), 0) as total_value')
+            ->whereNotNull('pipeline_stage')
+            ->groupBy('pipeline_stage');
+
+        if ($stage) {
+            $query->where('pipeline_stage', $stage);
+        }
+
+        return $query
+            ->pluck('total_value', 'pipeline_stage')
+            ->toArray();
     }
 
     public function socialAccount(): BelongsTo

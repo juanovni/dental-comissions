@@ -600,6 +600,11 @@
 
     <div class="social-case-grid">
         <main class="social-case-main">
+            <section class="social-case-card" style="padding:0;overflow:visible;background:transparent;border:0;box-shadow:none">
+                <h3>Pulso del Cliente - Timeline</h3>
+                <livewire:customer-pulse-timeline :commentId="$record->id" />
+            </section>
+
             <section class="social-case-card">
                 <h3>Comentario recibido</h3>
                 <div class="social-case-comment risk-{{ $risk }}">
