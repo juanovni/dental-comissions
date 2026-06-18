@@ -15,7 +15,7 @@ class SocialRoiStatsWidget extends StatsOverviewWidget
 
     protected static ?int $sort = 30;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected ?string $heading = 'ROI Social';
 
@@ -26,12 +26,12 @@ class SocialRoiStatsWidget extends StatsOverviewWidget
         return $this->socialRoiDescription($this->description);
     }
 
-    protected function getColumns(): int | array
+    protected function getColumns(): int|array
     {
         return [
             'default' => 1,
             'md' => 2,
-            'xl' => 4,
+            'xl' => 5,
         ];
     }
 
@@ -47,41 +47,50 @@ class SocialRoiStatsWidget extends StatsOverviewWidget
         ]);
 
         return [
-            Stat::make('Revenue social', $this->valueWithBadge(
-                '$' . number_format($summary['revenue'], 2),
-                $this->percentageTrend($summary['revenue'], $previousSummary['revenue'])
+            Stat::make('Dinero en pipeline', $this->valueWithBadge(
+                '$'.number_format($summary['pipeline_value'], 2),
+                $this->percentageTrend($summary['pipeline_value'], $previousSummary['pipeline_value'])
             ))
-                ->description($this->previousValueDescription($period['comparison_label'], '$' . number_format($previousSummary['revenue'], 2)))
+                ->description('Oportunidades abiertas estimadas en USD')
                 ->descriptionColor('gray')
                 ->color('success')
                 ->icon('heroicon-o-banknotes')
                 ->extraAttributes(['class' => 'social-roi-stat']),
-            Stat::make('Conversion lead-actividad', $this->valueWithBadge(
-                $summary['lead_to_activity_rate'] . '%',
-                $this->pointsTrend($summary['lead_to_activity_rate'], $previousSummary['lead_to_activity_rate'])
+            Stat::make('Ganado este mes', $this->valueWithBadge(
+                '$'.number_format($summary['won_value_month'], 2),
+                $this->percentageTrend($summary['won_value_month'], $previousSummary['won_value_month'])
             ))
-                ->description($this->previousValueDescription($period['comparison_label'], $previousSummary['lead_to_activity_rate'] . '%'))
+                ->description('Valor estimado en etapa Ganado')
                 ->descriptionColor('gray')
-                ->color($summary['lead_to_activity_rate'] > 0 ? 'info' : 'gray')
-                ->icon('heroicon-o-arrow-trending-up')
+                ->color('info')
+                ->icon('heroicon-o-trophy')
                 ->extraAttributes(['class' => 'social-roi-stat']),
-            Stat::make('Fuga +24h', $this->valueWithBadge(
-                (string) $summary['leakage_count'],
-                $this->percentageTrend($summary['leakage_count'], $previousSummary['leakage_count'])
+            Stat::make('Perdidos +$1,000', $this->valueWithBadge(
+                (string) $summary['high_value_lost_count'],
+                $this->percentageTrend($summary['high_value_lost_count'], $previousSummary['high_value_lost_count'])
             ))
-                ->description($this->previousValueDescription($period['comparison_label'], (string) $previousSummary['leakage_count']))
+                ->description('Leads perdidos con presupuesto alto')
                 ->descriptionColor('gray')
-                ->color($summary['leakage_count'] > 0 ? 'danger' : 'success')
-                ->icon($summary['leakage_count'] > 0 ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-shield-check')
+                ->color($summary['high_value_lost_count'] > 0 ? 'danger' : 'success')
+                ->icon($summary['high_value_lost_count'] > 0 ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-shield-check')
                 ->extraAttributes(['class' => 'social-roi-stat']),
-            Stat::make('Token sin WhatsApp', $this->valueWithBadge(
-                (string) $summary['orphan_attribution_count'],
-                $this->percentageTrend($summary['orphan_attribution_count'], $previousSummary['orphan_attribution_count'])
+            Stat::make('Smart Link -> WhatsApp', $this->valueWithBadge(
+                $summary['smart_link_to_whatsapp_rate'].'%',
+                $this->pointsTrend($summary['smart_link_to_whatsapp_rate'], $previousSummary['smart_link_to_whatsapp_rate'])
             ))
-                ->description($this->previousValueDescription($period['comparison_label'], (string) $previousSummary['orphan_attribution_count']))
+                ->description($this->previousValueDescription($period['comparison_label'], $previousSummary['smart_link_to_whatsapp_rate'].'%'))
                 ->descriptionColor('gray')
-                ->color($summary['orphan_attribution_count'] > 0 ? 'warning' : 'success')
-                ->icon($summary['orphan_attribution_count'] > 0 ? 'heroicon-o-link-slash' : 'heroicon-o-check-circle')
+                ->color($summary['smart_link_to_whatsapp_rate'] > 0 ? 'warning' : 'gray')
+                ->icon('heroicon-o-chat-bubble-left-right')
+                ->extraAttributes(['class' => 'social-roi-stat']),
+            Stat::make('Hot leads activos', $this->valueWithBadge(
+                (string) $summary['active_hot_leads_count'],
+                $this->percentageTrend($summary['active_hot_leads_count'], $previousSummary['active_hot_leads_count'])
+            ))
+                ->description('Interes alto sin cierre ganado/perdido')
+                ->descriptionColor('gray')
+                ->color($summary['active_hot_leads_count'] > 0 ? 'warning' : 'success')
+                ->icon('heroicon-o-fire')
                 ->extraAttributes(['class' => 'social-roi-stat']),
         ];
     }
@@ -144,7 +153,7 @@ HTML);
 
         return [
             'change' => $change,
-            'label' => ($change > 0 ? '+' : '') . $change . $suffix,
+            'label' => ($change > 0 ? '+' : '').$change.$suffix,
             'status' => $status,
         ];
     }

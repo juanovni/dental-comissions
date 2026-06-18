@@ -6,6 +6,7 @@ use App\Enums\ActivityStatus;
 use App\Enums\ProfessionalRole;
 use App\Enums\SocialConversionStatus;
 use App\Enums\SocialIdentityStatus;
+use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
 use App\Models\ActivityRecord;
 use App\Models\Patient;
@@ -17,6 +18,7 @@ use App\Models\SocialIdentity;
 use App\Models\SocialPost;
 use App\Services\SocialRoiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class SocialRoiServiceTest extends TestCase
@@ -110,6 +112,80 @@ class SocialRoiServiceTest extends TestCase
         $this->assertDatabaseHas('social_comments', [
             'id' => $comment->id,
             'conversion_status' => SocialConversionStatus::Converted->value,
+        ]);
+    }
+
+    public function test_weekly_leakage_report_includes_high_value_lost_leads(): void
+    {
+        $account = $this->socialAccount('ig_account_leakage');
+        $procedure = Procedure::factory()->create(['name' => 'Implante premium']);
+
+        $included = SocialComment::create([
+            'social_account_id' => $account->id,
+            'platform' => SocialPlatform::Instagram,
+            'external_comment_id' => 'lost_high_value',
+            'author_name' => 'Lead Perdido',
+            'comment_text' => 'Me interesa el implante',
+            'suggested_procedure_id' => $procedure->id,
+            'pipeline_stage' => SocialPipelineStage::Lost,
+            'estimated_value' => 2500,
+            'lost_reason' => 'precio',
+            'lost_at' => now()->startOfWeek()->addDay(),
+        ]);
+
+        SocialComment::create([
+            'social_account_id' => $account->id,
+            'platform' => SocialPlatform::Instagram,
+            'external_comment_id' => 'lost_low_value',
+            'author_name' => 'Lead Bajo',
+            'comment_text' => 'Consulta',
+            'pipeline_stage' => SocialPipelineStage::Lost,
+            'estimated_value' => 500,
+            'lost_reason' => 'tiempo',
+            'lost_at' => now()->startOfWeek()->addDay(),
+        ]);
+
+        $report = app(SocialRoiService::class)->weeklyLeakageReport(now()->startOfWeek(), 1000);
+
+        $this->assertSame(1, $report['total_leads']);
+        $this->assertSame(2500.0, $report['total_value']);
+        $this->assertSame($included->id, $report['leads']->first()['id']);
+        $this->assertSame('Implante premium', $report['leads']->first()['procedure']);
+        $this->assertSame('local', $report['audit']['source']);
+    }
+
+    public function test_roi_leakage_report_command_writes_pdf(): void
+    {
+        Storage::fake('local');
+        $account = $this->socialAccount('ig_account_command');
+
+        SocialComment::create([
+            'social_account_id' => $account->id,
+            'platform' => SocialPlatform::Instagram,
+            'external_comment_id' => 'lost_command',
+            'author_name' => 'Lead PDF',
+            'comment_text' => 'Quiero presupuesto',
+            'pipeline_stage' => SocialPipelineStage::Lost,
+            'estimated_value' => 1800,
+            'lost_reason' => 'financiacion',
+            'lost_at' => now()->startOfWeek()->addDay(),
+        ]);
+
+        $this->artisan('social:roi-leakage-report', [
+            '--week' => now()->toDateString(),
+            '--output' => 'testing/fuga.pdf',
+        ])->assertSuccessful();
+
+        Storage::disk('local')->assertExists('testing/fuga.pdf');
+    }
+
+    private function socialAccount(string $externalAccountId): SocialAccount
+    {
+        return SocialAccount::create([
+            'platform' => SocialPlatform::Instagram,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => $externalAccountId,
+            'is_active' => true,
         ]);
     }
 }

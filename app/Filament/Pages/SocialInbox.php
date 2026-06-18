@@ -9,8 +9,10 @@ use App\Enums\SocialReputationRisk;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Models\Procedure;
 use App\Models\SocialComment;
+use App\Services\GeminiJsonService;
 use App\Services\SocialConversionService;
 use App\Services\SocialCrmSettingsService;
+use App\Services\SocialLinkEventMapper;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -86,6 +88,12 @@ class SocialInbox extends Page
 
     public ?int $recentActivityLeadId = null;
 
+    public ?int $selectedCommentId = null;
+
+    public ?int $historicalSuggestionCommentId = null;
+
+    public ?string $historicalReplySuggestion = null;
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -94,6 +102,7 @@ class SocialInbox extends Page
     public function setFilter(string $filter): void
     {
         $this->filter = $filter;
+        $this->selectedCommentId = null;
         $this->resetPage();
     }
 
@@ -103,7 +112,95 @@ class SocialInbox extends Page
         $leadId = isset($payload['lead_id']) ? (int) $payload['lead_id'] : null;
 
         $this->recentActivityLeadId = $leadId ?: null;
+        $this->selectedCommentId = $leadId ?: $this->selectedCommentId;
         $this->resetPage();
+    }
+
+    public function selectComment(int $commentId): void
+    {
+        $this->selectedCommentId = $commentId;
+        $this->historicalSuggestionCommentId = null;
+        $this->historicalReplySuggestion = null;
+    }
+
+    public function selectedComment(?int $fallbackId = null): ?SocialComment
+    {
+        $commentId = $this->selectedCommentId ?: $fallbackId;
+
+        if (! $commentId) {
+            return null;
+        }
+
+        return $this->baseQuery()
+            ->with(['actions' => fn ($query) => $query->latest()->limit(6), 'leadAlerts' => fn ($query) => $query->latest()->limit(6)])
+            ->find($commentId);
+    }
+
+    public function timelineEvents(int $commentId): array
+    {
+        return SocialComment::find($commentId)?->linkEvents()
+            ->latest('created_at')
+            ->limit(6)
+            ->get()
+            ->map(fn ($event): array => [
+                'label' => SocialLinkEventMapper::label($event->event_type),
+                'type' => $event->event_type,
+                'date' => $event->created_at?->diffForHumans(),
+                'duration' => $event->duration_seconds,
+            ])
+            ->all() ?? [];
+    }
+
+    public function suggestHistoricalReply(int $commentId): void
+    {
+        $comment = SocialComment::query()
+            ->with(['actions', 'linkEvents', 'suggestedProcedure'])
+            ->find($commentId);
+
+        if (! $comment) {
+            Notification::make()->title('Lead no encontrado')->danger()->send();
+
+            return;
+        }
+
+        $eventSummary = $comment->linkEvents
+            ->sortBy('created_at')
+            ->map(fn ($event): string => '- '.SocialLinkEventMapper::label($event->event_type).' '.$event->created_at?->format('Y-m-d H:i'))
+            ->implode("\n");
+        $actionSummary = $comment->actions
+            ->sortBy('created_at')
+            ->map(fn ($action): string => '- '.$action->action->label().': '.($action->notes ?: $action->response_text ?: 'sin detalle'))
+            ->implode("\n");
+
+        try {
+            $response = app(GeminiJsonService::class)->generate(
+                'Eres un asesor comercial dental. Devuelve JSON con respuesta, tono y proxima_accion.',
+                "Comentario original: {$comment->comment_text}\nProcedimiento: ".($comment->suggestedProcedure?->name ?? 'Sin procedimiento')."\nEstado: ".($comment->conversion_status?->label() ?? 'Sin estado')."\nEventos:\n{$eventSummary}\nAcciones previas:\n{$actionSummary}",
+            );
+            $data = json_decode($response, true);
+            $suggestion = is_array($data)
+                ? 'Respuesta: '.($data['respuesta'] ?? 'Sin respuesta')."\nTono: ".($data['tono'] ?? 'No definido')."\nProxima accion: ".($data['proxima_accion'] ?? 'No definida')
+                : $response;
+        } catch (\Throwable) {
+            $suggestion = 'Respuesta: Hola, gracias por escribirnos. Vi que te interesa '.($comment->suggestedProcedure?->name ?? 'un tratamiento dental').". Podemos orientarte por WhatsApp y ayudarte a resolver tus dudas sin compromiso.\nTono: cercano y claro\nProxima accion: enviar Smart Link o derivar a WhatsApp para seguimiento.";
+        }
+
+        $comment->actions()->create([
+            'action' => SocialCommentActionType::Reply,
+            'performed_by' => auth()->id(),
+            'notes' => 'Sugerencia IA basada en historial generada desde bandeja split-view.',
+            'response_text' => $suggestion,
+            'external_response' => ['source' => 'social_inbox_history_suggestion'],
+        ]);
+
+        $this->historicalSuggestionCommentId = $comment->id;
+        $this->historicalReplySuggestion = $suggestion;
+
+        Notification::make()
+            ->title('Sugerencia generada')
+            ->body('La respuesta basada en historial fue auditada en el lead.')
+            ->success()
+            ->send();
     }
 
     public function comments(): LengthAwarePaginator
@@ -415,7 +512,8 @@ class SocialInbox extends Page
                         ->orWhere('author_name', 'like', $search)
                         ->orWhere('author_username', 'like', $search);
                 });
-            });
+            })
+            ->when($this->recentActivityLeadId, fn (Builder $query): Builder => $query->orderByRaw('case when social_comments.id = ? then 0 else 1 end', [$this->recentActivityLeadId]));
     }
 
     private function applyCrisisQuery(Builder $query): Builder

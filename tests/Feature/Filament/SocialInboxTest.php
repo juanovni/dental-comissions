@@ -2,18 +2,20 @@
 
 namespace Tests\Feature\Filament;
 
+use App\Enums\SocialCommentActionType;
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialConversionStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
 use App\Filament\Pages\SocialInbox;
+use App\Models\Procedure;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialCrmSetting;
 use App\Models\SocialIdentity;
+use App\Models\SocialLinkEvent;
 use App\Models\SocialPost;
-use App\Models\Procedure;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -183,6 +185,51 @@ class SocialInboxTest extends TestCase
         $this->assertDatabaseHas('social_comments', [
             'id' => $comment->id,
             'suggested_procedure_id' => $procedure->id,
+        ]);
+    }
+
+    public function test_live_lead_activity_selects_and_highlights_lead(): void
+    {
+        $comment = $this->socialComment([
+            'tracking_token' => 'DNT-LIVE1',
+            'interest_score' => 70,
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialInbox::class)
+            ->call('handleLeadActivityDetected', [
+                'lead_id' => $comment->id,
+                'tracking_token' => 'DNT-LIVE1',
+                'event_type' => 'whatsapp_click',
+                'interest_score' => 70,
+            ])
+            ->assertSet('recentActivityLeadId', $comment->id)
+            ->assertSet('selectedCommentId', $comment->id);
+    }
+
+    public function test_historical_reply_suggestion_is_audited(): void
+    {
+        $comment = $this->socialComment([
+            'tracking_token' => 'DNT-HIST1',
+            'suggested_reply' => 'Respuesta base',
+        ]);
+
+        SocialLinkEvent::create([
+            'social_comment_id' => $comment->id,
+            'event_type' => 'view',
+            'session_id' => 'history-session',
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialInbox::class)
+            ->call('suggestHistoricalReply', $comment->id)
+            ->assertSet('historicalSuggestionCommentId', $comment->id)
+            ->assertSee('Sugerencia basada en historial');
+
+        $this->assertDatabaseHas('social_comment_actions', [
+            'social_comment_id' => $comment->id,
+            'action' => SocialCommentActionType::Reply->value,
+            'notes' => 'Sugerencia IA basada en historial generada desde bandeja split-view.',
         ]);
     }
 

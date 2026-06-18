@@ -6,21 +6,25 @@ use App\Enums\SocialCommentActionType;
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialConversionStatus;
 use App\Enums\SocialIdentityStatus;
+use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
 use App\Models\ActivityRecord;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
+use App\Models\SocialLinkEvent;
 use App\Models\SocialPost;
 use App\Support\SocialRoiPeriod;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class SocialRoiService
 {
     public function attributeActivity(ActivityRecord $activity): ?ActivityRecord
     {
-        if ($activity->social_comment_id || !$activity->patient_id) {
+        if ($activity->social_comment_id || ! $activity->patient_id) {
             return $activity->social_comment_id ? $activity : null;
         }
 
@@ -30,7 +34,7 @@ class SocialRoiService
             ->latest('last_seen_at')
             ->first();
 
-        if (!$identity) {
+        if (! $identity) {
             return null;
         }
 
@@ -42,7 +46,7 @@ class SocialRoiService
             ->latest('created_at')
             ->first();
 
-        if (!$comment) {
+        if (! $comment) {
             return null;
         }
 
@@ -71,7 +75,7 @@ class SocialRoiService
 
     public function refreshPostMetrics(?SocialPost $post): void
     {
-        if (!$post) {
+        if (! $post) {
             return;
         }
 
@@ -91,6 +95,7 @@ class SocialRoiService
         $period = SocialRoiPeriod::resolve($filters);
         $socialActivities = $this->socialActivitiesQuery($period);
         $comments = $this->commentsQuery($period);
+        $commercial = $this->commercialSummary($filters);
 
         $leadCount = (clone $comments)->whereNotNull('social_identity_id')->count();
         $whatsappCount = (clone $comments)->whereNotNull('whatsapp_redirected_at')->count();
@@ -110,6 +115,45 @@ class SocialRoiService
             'leakage_count' => $leakageCount,
             'orphan_attribution_count' => $this->orphanAttributionCount($filters),
             'lead_to_activity_rate' => $leadCount > 0 ? round(($activityCount / $leadCount) * 100, 1) : 0,
+            ...$commercial,
+        ];
+    }
+
+    public function commercialSummary(?array $filters = null): array
+    {
+        $period = SocialRoiPeriod::resolve($filters);
+        $comments = $this->commentsQuery($period);
+
+        $leadCount = (clone $comments)->whereNotNull('tracking_token')->count();
+        $whatsappCount = (clone $comments)->whereNotNull('whatsapp_redirected_at')->count();
+
+        return [
+            'pipeline_value' => (float) SocialComment::query()
+                ->whereNotIn('pipeline_stage', [
+                    SocialPipelineStage::Won->value,
+                    SocialPipelineStage::Lost->value,
+                ])
+                ->sum('estimated_value'),
+            'won_value_month' => (float) SocialComment::query()
+                ->where('pipeline_stage', SocialPipelineStage::Won->value)
+                ->whereBetween('updated_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->sum('estimated_value'),
+            'high_value_lost_count' => SocialComment::query()
+                ->where('pipeline_stage', SocialPipelineStage::Lost->value)
+                ->where('estimated_value', '>=', 1000)
+                ->count(),
+            'smart_link_to_whatsapp_rate' => $leadCount > 0 ? round(($whatsappCount / $leadCount) * 100, 1) : 0,
+            'active_hot_leads_count' => SocialComment::query()
+                ->whereNotNull('hot_lead_at')
+                ->whereNull('lost_at')
+                ->where(function (Builder $query): void {
+                    $query->whereNull('pipeline_stage')
+                        ->orWhereNotIn('pipeline_stage', [
+                            SocialPipelineStage::Won->value,
+                            SocialPipelineStage::Lost->value,
+                        ]);
+                })
+                ->count(),
         ];
     }
 
@@ -236,7 +280,7 @@ class SocialRoiService
                 ->whereBetween('activity_date', [$bucketStart->toDateString(), $bucketEnd->toDateString()])
                 ->sum('internal_rate_snapshot');
 
-            $labels[] = 'Sem ' . $weekStart->isoWeek();
+            $labels[] = 'Sem '.$weekStart->isoWeek();
             $responseMinutes[] = round((float) ($averageMinutes ?? 0), 1);
             $revenue[] = round((float) $weekRevenue, 2);
         }
@@ -264,6 +308,144 @@ class SocialRoiService
             ->orderByDesc(DB::raw('COUNT(activity_records.id)'))
             ->limit($limit)
             ->get();
+    }
+
+    public function pipelineValueByStage(?array $filters = null): array
+    {
+        $period = SocialRoiPeriod::resolve($filters);
+        $rows = $this->commentsQuery($period)
+            ->selectRaw('pipeline_stage, COUNT(*) as total_count, COALESCE(SUM(estimated_value), 0) as total_value')
+            ->whereNotNull('pipeline_stage')
+            ->groupBy('pipeline_stage')
+            ->get()
+            ->keyBy('pipeline_stage');
+
+        $stages = collect(SocialPipelineStage::cases());
+
+        return [
+            'labels' => $stages->map(fn (SocialPipelineStage $stage): string => $stage->label())->all(),
+            'values' => $stages->map(fn (SocialPipelineStage $stage): float => round((float) ($rows[$stage->value]->total_value ?? 0), 2))->all(),
+            'counts' => $stages->map(fn (SocialPipelineStage $stage): int => (int) ($rows[$stage->value]->total_count ?? 0))->all(),
+        ];
+    }
+
+    public function lostReasonsData(?array $filters = null): array
+    {
+        $period = SocialRoiPeriod::resolve($filters);
+        $rows = $this->commentsQuery($period)
+            ->where('pipeline_stage', SocialPipelineStage::Lost->value)
+            ->selectRaw("COALESCE(NULLIF(lost_reason, ''), 'Sin motivo') as reason")
+            ->selectRaw('COUNT(*) as total_count')
+            ->selectRaw('COALESCE(SUM(estimated_value), 0) as total_value')
+            ->groupByRaw("COALESCE(NULLIF(lost_reason, ''), 'Sin motivo')")
+            ->orderByDesc('total_value')
+            ->orderByDesc('total_count')
+            ->limit(8)
+            ->get();
+
+        return [
+            'labels' => $rows->pluck('reason')->all(),
+            'counts' => $rows->map(fn ($row): int => (int) $row->total_count)->all(),
+            'values' => $rows->map(fn ($row): float => round((float) $row->total_value, 2))->all(),
+        ];
+    }
+
+    public function weeklyLeakageReport(?CarbonInterface $weekStart = null, float $minimumValue = 1000): array
+    {
+        $start = ($weekStart ? $weekStart->copy() : now()->subWeek())->startOfWeek();
+        $end = $start->copy()->endOfWeek();
+
+        $leads = SocialComment::query()
+            ->with(['suggestedProcedure', 'socialIdentity.patient', 'convertedPatient'])
+            ->where('pipeline_stage', SocialPipelineStage::Lost->value)
+            ->where('estimated_value', '>=', $minimumValue)
+            ->whereBetween(DB::raw('COALESCE(lost_at, updated_at)'), [$start, $end])
+            ->orderByDesc('estimated_value')
+            ->get()
+            ->map(function (SocialComment $comment): array {
+                return [
+                    'id' => $comment->id,
+                    'lead_name' => $comment->socialIdentity?->patient?->full_name
+                        ?? $comment->convertedPatient?->full_name
+                        ?? $comment->author_name
+                        ?? $comment->author_username
+                        ?? 'Lead #'.$comment->id,
+                    'procedure' => $comment->suggestedProcedure?->name ?? 'Sin procedimiento',
+                    'estimated_value' => (float) $comment->estimated_value,
+                    'lost_reason' => $comment->lost_reason ?: 'Sin motivo registrado',
+                    'last_activity_at' => $this->lastLeadActivityAt($comment)?->format('d/m/Y H:i') ?? 'Sin actividad',
+                    'recovery_recommendation' => $this->recoveryRecommendation($comment),
+                ];
+            });
+
+        return [
+            'period_start' => $start,
+            'period_end' => $end,
+            'minimum_value' => $minimumValue,
+            'total_value' => round((float) $leads->sum('estimated_value'), 2),
+            'total_leads' => $leads->count(),
+            'leads' => $leads,
+            'audit' => $this->lostReasonAudit([
+                'period' => 'custom',
+                'from' => $start->toDateString(),
+                'until' => $end->toDateString(),
+            ]),
+        ];
+    }
+
+    public function lostReasonAudit(?array $filters = null): array
+    {
+        $data = $this->lostReasonsData($filters);
+        $totalLost = array_sum($data['counts']);
+
+        if ($totalLost === 0) {
+            return [
+                'source' => 'local',
+                'top_motivos' => [],
+                'recomendaciones' => ['No hay leads perdidos en el periodo seleccionado.'],
+                'alertas' => [],
+            ];
+        }
+
+        $rows = collect($data['labels'])->map(function (string $reason, int $index) use ($data, $totalLost): array {
+            $count = (int) ($data['counts'][$index] ?? 0);
+
+            return [
+                'motivo' => $reason,
+                'cantidad' => $count,
+                'porcentaje' => $totalLost > 0 ? round(($count / $totalLost) * 100, 1) : 0,
+                'valor_estimado' => (float) ($data['values'][$index] ?? 0),
+            ];
+        });
+
+        try {
+            $response = app(GeminiJsonService::class)->generate(
+                'Eres un auditor comercial para una clinica dental. Responde solo JSON valido.',
+                "Analiza estos motivos de perdida y devuelve top_motivos, recomendaciones y alertas: \n".$rows->toJson(JSON_UNESCAPED_UNICODE),
+            );
+            $decoded = json_decode($response, true);
+
+            if (is_array($decoded)) {
+                return ['source' => 'gemini', ...$decoded];
+            }
+        } catch (\Throwable) {
+            // El reporte debe poder generarse aunque Gemini no este configurado.
+        }
+
+        return [
+            'source' => 'local',
+            'top_motivos' => $rows->take(5)->values()->all(),
+            'recomendaciones' => [
+                'Contactar primero los leads perdidos con mayor valor estimado.',
+                'Crear guiones por objecion recurrente: precio, tiempo, confianza y financiacion.',
+                'Revisar en reunion semanal cualquier motivo que concentre mas del 30% de perdidas.',
+            ],
+            'alertas' => $rows
+                ->filter(fn (array $row): bool => $row['porcentaje'] >= 30 || $row['valor_estimado'] >= 3000)
+                ->map(fn (array $row): string => "{$row['motivo']} concentra {$row['porcentaje']}% de perdidas por $".number_format($row['valor_estimado'], 2))
+                ->values()
+                ->all(),
+        ];
     }
 
     public function leakageQuery(?array $filters = null): Builder
@@ -306,5 +488,28 @@ class SocialRoiService
         return ActivityRecord::query()
             ->whereNotNull('social_post_id')
             ->whereBetween('activity_date', [$period['from_date'], $period['until_date']]);
+    }
+
+    private function lastLeadActivityAt(SocialComment $comment): ?CarbonInterface
+    {
+        $lastEventAt = SocialLinkEvent::query()
+            ->where('social_comment_id', $comment->id)
+            ->latest('created_at')
+            ->value('created_at');
+
+        return $lastEventAt ? Carbon::parse($lastEventAt) : $comment->updated_at;
+    }
+
+    private function recoveryRecommendation(SocialComment $comment): string
+    {
+        $reason = str($comment->lost_reason ?? '')->ascii()->lower()->toString();
+
+        return match (true) {
+            str_contains($reason, 'precio') => 'Ofrecer alternativa de financiacion, explicar fases del tratamiento y reforzar valor clinico.',
+            str_contains($reason, 'tiempo') => 'Proponer horarios flexibles y una cita corta de reactivacion por WhatsApp.',
+            str_contains($reason, 'confianza') => 'Enviar caso similar, testimonio y llamada breve con el doctor.',
+            str_contains($reason, 'financi') => 'Enviar plan de pago y separar valoracion sin compromiso.',
+            default => 'Reactivar con mensaje personalizado, beneficio claro y una unica proxima accion.',
+        };
     }
 }

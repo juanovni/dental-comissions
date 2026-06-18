@@ -3,6 +3,8 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\ApexSocialConversionFunnelChart;
+use App\Filament\Widgets\ApexSocialLostReasonsChart;
+use App\Filament\Widgets\ApexSocialPipelineValueChart;
 use App\Filament\Widgets\ApexSocialPlatformPerformanceChart;
 use App\Filament\Widgets\ApexSocialProcedureConversionChart;
 use App\Filament\Widgets\ApexSocialResponseTimeRoiChart;
@@ -74,6 +76,8 @@ class DashboardRoiSocial extends BaseDashboard
     {
         return [
             SocialRoiStatsWidget::class,
+            ApexSocialPipelineValueChart::class,
+            ApexSocialLostReasonsChart::class,
             ApexSocialPlatformPerformanceChart::class,
             ApexSocialProcedureConversionChart::class,
             ApexSocialResponseTimeRoiChart::class,

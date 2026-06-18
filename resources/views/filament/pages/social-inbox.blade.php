@@ -10,6 +10,9 @@
             'all' => ['label' => 'Activos', 'icon' => '🔍', 'count' => $stats['all']],
             'archived' => ['label' => 'Archivados', 'icon' => '📦', 'count' => $stats['archived']],
         ];
+        $selectedComment = $this->selectedComment($comments->first()?->id);
+        $selectedPatient = $selectedComment?->socialIdentity?->patient ?: $selectedComment?->convertedPatient;
+        $selectedTimeline = $selectedComment ? $this->timelineEvents($selectedComment->id) : [];
     @endphp
 
     <style>
@@ -137,6 +140,90 @@
             }
         }
 
+        .smart-split-view {
+            align-items: start;
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        @media (min-width: 1180px) {
+            .smart-split-view {
+                grid-template-columns: minmax(280px, .85fr) minmax(360px, 1.05fr) minmax(280px, .8fr);
+            }
+
+            .smart-list-column {
+                max-height: calc(100vh - 15rem);
+                overflow: auto;
+                padding-right: .2rem;
+            }
+        }
+
+        .smart-list-column {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .smart-detail-column,
+        .smart-profile-column {
+            align-content: start;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .smart-command-panel {
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            border: 1px solid #e5e7eb;
+            border-radius: 1.1rem;
+            box-shadow: 0 18px 60px -52px rgba(15, 23, 42, .85);
+            padding: 1rem;
+        }
+
+        .smart-command-panel h3 {
+            color: #0f172a;
+            font-size: .98rem;
+            font-weight: 900;
+            margin: 0 0 .55rem;
+        }
+
+        .smart-command-kicker {
+            color: #0f766e;
+            font-size: .68rem;
+            font-weight: 900;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        .smart-command-text {
+            color: #334155;
+            font-size: .88rem;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+
+        .smart-timeline-mini {
+            display: grid;
+            gap: .7rem;
+            margin-top: .6rem;
+        }
+
+        .smart-timeline-item {
+            border-left: 3px solid #14b8a6;
+            padding-left: .7rem;
+        }
+
+        .smart-timeline-item strong {
+            color: #0f172a;
+            display: block;
+            font-size: .82rem;
+        }
+
+        .smart-timeline-item span {
+            color: #64748b;
+            display: block;
+            font-size: .76rem;
+            margin-top: .1rem;
+        }
+
         .smart-card {
             background: var(--inbox-card);
             border: 1px solid #e5e7eb;
@@ -199,6 +286,20 @@
         @keyframes hotLeadPulse {
             0%, 100% { opacity: .38; transform: scale(.96); }
             50% { opacity: .9; transform: scale(1.1); }
+        }
+
+        .smart-card.is-selected {
+            border-color: #0f766e;
+            box-shadow: 0 0 0 2px rgba(20, 184, 166, .18), 0 18px 60px -52px rgba(15, 23, 42, .9);
+        }
+
+        .smart-card.is-live {
+            animation: livePulse 1.8s ease-in-out 3;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0), 0 18px 60px -52px rgba(15, 23, 42, .85); }
+            45% { box-shadow: 0 0 0 6px rgba(34, 197, 94, .2), 0 18px 60px -52px rgba(15, 23, 42, .85); }
         }
 
         .smart-card-top {
@@ -794,7 +895,8 @@
             @endforeach
         </div>
 
-        <div class="smart-grid">
+        <div class="smart-split-view">
+        <div class="smart-grid smart-list-column">
             @forelse ($comments as $comment)
                 @php
                     $risk = $comment->reputation_risk?->value ?? 'low';
@@ -828,7 +930,15 @@
                     $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
                 @endphp
 
-                <article @class(['smart-card', 'intent-' . $intent, 'risk-' . $risk, 'is-derived' => $isDerived, 'is-hot-lead' => $isHotLead])>
+                <article @class([
+                    'smart-card',
+                    'intent-' . $intent,
+                    'risk-' . $risk,
+                    'is-derived' => $isDerived,
+                    'is-hot-lead' => $isHotLead,
+                    'is-selected' => $selectedComment?->id === $comment->id,
+                    'is-live' => $recentActivityLeadId === $comment->id,
+                ])>
                     <div class="smart-card-top">
                         <div class="smart-person">
                             <div class="smart-avatar">{{ $initial }}</div>
@@ -918,6 +1028,8 @@
                             <button class="smart-action danger" type="button" wire:click="escalate({{ $comment->id }})">Escalar</button>
                         @endif
 
+                        <button class="smart-action primary" type="button" wire:click="selectComment({{ $comment->id }})">Abrir 360</button>
+
                         @if ($isLead || blank($comment->tracking_token))
                             <button class="smart-action success" type="button" wire:click="routeToWhatsapp({{ $comment->id }})">
                                 {{ $isDerived ? 'Ver texto de seguimiento' : 'Derivar' }}
@@ -945,6 +1057,93 @@
                     </p>
                 </div>
             @endforelse
+        </div>
+
+        <div class="smart-detail-column">
+            @if ($selectedComment)
+                <section class="smart-command-panel">
+                    <div class="smart-command-kicker">Conversacion / Detalle</div>
+                    <h3>{{ $selectedComment->author_username ? '@' . $selectedComment->author_username : ($selectedComment->author_name ?: 'Lead seleccionado') }}</h3>
+                    <p class="smart-command-text">{{ $selectedComment->comment_text }}</p>
+
+                    <div class="smart-panels" style="margin-top: .85rem;">
+                        <section class="smart-panel">
+                            <h3>Respuesta sugerida actual</h3>
+                            <p>{{ $selectedComment->suggested_reply ?: 'Sin respuesta base. Usa la accion IA para generar una respuesta con historial.' }}</p>
+                        </section>
+                        <section class="smart-panel">
+                            <h3>Seguimiento comercial</h3>
+                            <p><strong>Estado:</strong> {{ $selectedComment->conversion_status?->label() ?? 'Sin estado' }}</p>
+                            <p class="smart-muted"><strong>Pipeline:</strong> {{ $selectedComment->pipeline_stage?->label() ?? 'Sin etapa' }}</p>
+                            <p class="smart-muted"><strong>Valor:</strong> ${{ number_format((float) $selectedComment->estimated_value, 2) }}</p>
+                        </section>
+                    </div>
+
+                    <div class="smart-actions" style="margin-top: .85rem;">
+                        <button class="smart-action success" type="button" wire:click="suggestHistoricalReply({{ $selectedComment->id }})">
+                            Sugerir respuesta basada en historial
+                        </button>
+                        <a class="smart-action muted" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Ver caso completo</a>
+                    </div>
+                </section>
+
+                @if ($historicalSuggestionCommentId === $selectedComment->id && filled($historicalReplySuggestion))
+                    <section class="smart-command-panel">
+                        <div class="smart-command-kicker">Gemini / auditoria</div>
+                        <h3>Sugerencia basada en historial</h3>
+                        <p class="smart-command-text">{{ $historicalReplySuggestion }}</p>
+                    </section>
+                @endif
+            @else
+                <section class="smart-command-panel">
+                    <h3>Selecciona un lead</h3>
+                    <p class="smart-command-text">Abre un comentario para ver conversacion, scoring, timeline y acciones comerciales.</p>
+                </section>
+            @endif
+        </div>
+
+        <aside class="smart-profile-column">
+            @if ($selectedComment)
+                <section class="smart-command-panel">
+                    <div class="smart-command-kicker">Mini CRM</div>
+                    <h3>{{ $selectedPatient?->full_name ?? 'Lead sin ficha clinica' }}</h3>
+                    <p class="smart-command-text">
+                        Score: {{ $selectedComment->interest_score ?? 0 }}
+                        @if (filled($selectedComment->hot_lead_at))
+                            \nHot lead desde {{ $selectedComment->hot_lead_at->diffForHumans() }}
+                        @endif
+                        @if (filled($selectedComment->reheated_at))
+                            \nRecalentado {{ $selectedComment->reheated_at->diffForHumans() }}
+                        @endif
+                    </p>
+                    <div class="smart-panels" style="margin-top: .85rem;">
+                        <section class="smart-panel">
+                            <h3>Procedimiento</h3>
+                            <p>{{ $selectedComment->suggestedProcedure?->name ?: 'Sin sugerencia' }}</p>
+                        </section>
+                        <section class="smart-panel">
+                            <h3>Alertas</h3>
+                            <p>{{ $selectedComment->leadAlerts?->whereNull('resolved_at')->count() ?: 0 }} abiertas</p>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="smart-command-panel">
+                    <div class="smart-command-kicker">Pulso del cliente</div>
+                    <h3>Timeline reciente</h3>
+                    <div class="smart-timeline-mini">
+                        @forelse ($selectedTimeline as $event)
+                            <div class="smart-timeline-item">
+                                <strong>{{ $event['label'] }}</strong>
+                                <span>{{ $event['date'] }}{{ $event['duration'] ? ' / ' . $event['duration'] . 's' : '' }}</span>
+                            </div>
+                        @empty
+                            <p class="smart-muted">Sin eventos de Smart Link todavia.</p>
+                        @endforelse
+                    </div>
+                </section>
+            @endif
+        </aside>
         </div>
 
         <div class="mt-5">
