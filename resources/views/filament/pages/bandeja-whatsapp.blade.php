@@ -94,9 +94,9 @@
             border-radius: 999px;
             color: rgb(51, 65, 85);
             font-size: .82rem;
-            font-weight: 700;
+            font-weight: 500;
             padding: .62rem .85rem;
-            transition: all .18s ease;
+            transition: background-color .18s ease, border-color .18s ease, color .18s ease;
         }
 
         .whatsapp-filter:hover,
@@ -104,7 +104,6 @@
             background: rgb(15, 23, 42);
             border-color: rgb(15, 23, 42);
             color: white;
-            transform: translateY(-1px);
         }
 
         .message-grid {

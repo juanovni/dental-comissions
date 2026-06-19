@@ -277,7 +277,7 @@
         }
 
         .smart-drawer-card-kicker {
-            color: #0f766e;
+            color: #000000;
             font-size: .66rem;
             font-weight: 900;
             letter-spacing: .1em;
@@ -475,12 +475,11 @@
             overflow: hidden;
             padding: clamp(1rem, 1.5vw, 1.2rem);
             position: relative;
-            transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+            transition: border-color .18s ease, box-shadow .18s ease;
         }
 
         .smart-card:hover {
-            box-shadow: 0 3px 12px rgba(15, 23, 42, .06), 0 24px 70px -56px rgba(15, 23, 42, .75);
-            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
         }
 
         .smart-card.intent-crisis {
@@ -704,13 +703,13 @@
         }
 
         .smart-step.is-complete {
-            color: #0f766e;
+            color: #000000;
         }
 
         .smart-step.is-complete .smart-step-number {
             background: #ecfdf5;
             border-color: #99f6e4;
-            color: #0f766e;
+            color: #000000;
         }
 
         .smart-step.is-complete:not(:last-child)::after {
@@ -804,18 +803,19 @@
             border-radius: .55rem;
             display: inline-flex;
             font-size: .78rem;
-            font-weight: 750;
+            font-weight: 500;
             line-height: 1;
             padding: .58rem .78rem;
-            transition: .18s ease;
+            transition: background-color .14s ease, border-color .14s ease, color .14s ease, filter .14s ease;
         }
 
-        .smart-action:hover { filter: brightness(.98); transform: translateY(-1px); }
-        .smart-action.primary { background: #2563eb; color: white; }
+        .smart-action:hover { filter: brightness(.98); }
+        .smart-action.primary { background: #1d7afc; color: white; }
         .smart-action.success { background: #0f766e; color: white; }
         .smart-action.warning { background: #ffffff; border-color: #fed7aa; color: #b45309; }
         .smart-action.danger { background: #ffffff; border-color: #fecaca; color: #b91c1c; }
         .smart-action.muted { background: #ffffff; border-color: #e5e7eb; color: #475569; }
+        .smart-action.muted:hover { background: #f9fafb; border-color: #d1d5db; color: #374151; }
 
         .smart-empty {
             align-items: center;
@@ -910,7 +910,6 @@
         .smart-modal-close:hover {
             background: #eef2f7;
             color: #0f172a;
-            transform: translateY(-1px);
         }
 
         .smart-modal-header {
@@ -1019,7 +1018,7 @@
         }
 
         .smart-preview-kicker {
-            color: #0f766e;
+            color: #000000;
             font-size: .68rem;
             font-weight: 900;
             letter-spacing: .1em;

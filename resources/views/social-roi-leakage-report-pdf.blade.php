@@ -10,8 +10,8 @@
         .header p { margin: 0; opacity: .9; }
         .summary { background: #f0fdfa; border: 1px solid #99f6e4; margin: 18px 0; padding: 14px; }
         .summary table { margin: 0; }
-        .metric { color: #0f766e; font-size: 18px; font-weight: bold; }
-        h2 { border-bottom: 1px solid #d1d5db; color: #0f766e; font-size: 15px; margin: 22px 0 10px; padding-bottom: 6px; }
+        .metric { color: #000000; font-size: 18px; font-weight: bold; }
+        h2 { border-bottom: 1px solid #d1d5db; color: #000000; font-size: 15px; margin: 22px 0 10px; padding-bottom: 6px; }
         table { border-collapse: collapse; margin-bottom: 14px; width: 100%; }
         th { background: #134e4a; color: #fff; font-size: 9px; padding: 7px 5px; text-align: left; text-transform: uppercase; }
         td { border-bottom: 1px solid #e5e7eb; padding: 7px 5px; vertical-align: top; }

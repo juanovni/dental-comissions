@@ -157,7 +157,7 @@
             border-radius: .45rem;
             display: inline-flex;
             font-size: .68rem;
-            font-weight: 750;
+            font-weight: 500;
             gap: .4rem;
             padding: .34rem .52rem;
         }
@@ -224,23 +224,22 @@
             border-radius: .48rem;
             display: inline-flex;
             font-size: .78rem;
-            font-weight: 750;
+            font-weight: 500;
             gap: .4rem;
             justify-content: center;
             line-height: 1;
             min-height: 2.05rem;
             padding: .56rem .72rem;
             text-decoration: none;
-            transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+            transition: background-color .16s ease, border-color .16s ease, filter .16s ease;
         }
 
         .integration-btn:hover {
-            transform: translateY(-1px);
+            filter: brightness(.98);
         }
 
         .integration-btn.primary {
             background: #1d7afc;
-            box-shadow: 0 8px 18px -14px rgba(37, 99, 235, .8);
             color: #ffffff;
         }
 

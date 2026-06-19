@@ -118,7 +118,7 @@
         }
 
         .kanban-column-total {
-            color: #0f766e;
+            color: #000000;
             font-size: .72rem;
             font-weight: 800;
             margin-left: auto;
@@ -158,13 +158,12 @@
             display: grid;
             gap: .55rem;
             padding: .75rem;
-            transition: box-shadow .16s ease, transform .16s ease;
+            transition: box-shadow .16s ease, border-color .16s ease;
             user-select: none;
         }
 
         .kanban-card:hover {
             box-shadow: 0 3px 8px rgba(15, 23, 42, .07);
-            transform: translateY(-1px);
         }
 
         .kanban-card.is-dragging {
@@ -267,7 +266,7 @@
             background: transparent;
             border: 1px solid transparent;
             border-radius: .35rem;
-            color: #0f766e;
+            color: #000000;
             font-size: .78rem;
             font-weight: 750;
             outline: none;
