@@ -11,6 +11,7 @@ use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\WithPagination;
 
 class SocialPipelineKanban extends Page
@@ -36,6 +37,9 @@ class SocialPipelineKanban extends Page
     public ?int $lostModalCommentId = null;
 
     public string $lostReason = '';
+
+    #[Url(as: 'lead')]
+    public ?int $selectedLeadId = null;
 
     public function updatedSearch(): void
     {
@@ -156,6 +160,34 @@ class SocialPipelineKanban extends Page
             'notes' => 'Valor estimado actualizado.',
             'external_response' => ['estimated_value' => $value],
         ]);
+    }
+
+    public function openLeadDetail(int $commentId): void
+    {
+        $comment = $this->findComment($commentId);
+
+        if (! $comment) {
+            return;
+        }
+
+        $this->selectedLeadId = $comment->id;
+    }
+
+    public function closeLeadDetail(): void
+    {
+        $this->selectedLeadId = null;
+    }
+
+    public function selectedLead(): ?SocialComment
+    {
+        if (! $this->selectedLeadId) {
+            return null;
+        }
+
+        return SocialComment::query()
+            ->with(['socialIdentity.patient', 'convertedPatient', 'socialAccount', 'suggestedProcedure', 'leadAlerts' => fn ($query) => $query->whereNull('resolved_at')->latest()])
+            ->where('is_hidden', false)
+            ->find($this->selectedLeadId);
     }
 
     private function applyStageChange(SocialComment $comment, SocialPipelineStage $stage, ?string $lostReason = null): void

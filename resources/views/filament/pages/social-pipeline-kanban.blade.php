@@ -70,6 +70,14 @@
             .kanban-board {
                 grid-template-columns: minmax(260px, 1fr);
             }
+
+            .kanban-detail-panel {
+                border-radius: 0;
+                max-height: 100vh;
+                right: 0;
+                top: 0;
+                width: 100vw;
+            }
         }
 
         .kanban-column {
@@ -504,6 +512,182 @@
             background: #f8fafc;
         }
 
+        .kanban-detail-backdrop {
+            background: rgba(15, 23, 42, .22);
+            inset: 0;
+            position: fixed;
+            z-index: 48;
+        }
+
+        .kanban-detail-panel {
+            background: #ffffff;
+            border: 1px solid var(--pk-border);
+            border-radius: .875rem;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+            color: var(--pk-ink);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 2rem);
+            overflow: hidden;
+            position: fixed;
+            right: 1rem;
+            top: 1rem;
+            width: min(29rem, calc(100vw - 2rem));
+            z-index: 49;
+        }
+
+        .kanban-detail-header {
+            align-items: start;
+            border-bottom: 1px solid var(--pk-border);
+            display: flex;
+            gap: .75rem;
+            justify-content: space-between;
+            padding: 1rem;
+        }
+
+        .kanban-detail-title {
+            color: var(--pk-ink);
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .kanban-detail-meta {
+            color: var(--pk-muted);
+            font-size: .76rem;
+            margin-top: .2rem;
+        }
+
+        .kanban-detail-close {
+            align-items: center;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: .45rem;
+            color: var(--pk-muted);
+            display: inline-flex;
+            height: 2rem;
+            justify-content: center;
+            width: 2rem;
+        }
+
+        .kanban-detail-close:hover {
+            background: #f9fafb;
+            border-color: var(--pk-border);
+            color: var(--pk-ink);
+        }
+
+        .kanban-detail-body {
+            display: grid;
+            gap: .8rem;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .kanban-detail-section {
+            background: #ffffff;
+            border: 1px solid var(--pk-border);
+            border-radius: .75rem;
+            display: grid;
+            gap: .55rem;
+            padding: .85rem;
+        }
+
+        .kanban-detail-section-title {
+            color: var(--pk-ink);
+            font-size: .78rem;
+            font-weight: 600;
+        }
+
+        .kanban-detail-text {
+            background: #f8fafc;
+            border: 1px solid #eef2f7;
+            border-radius: .625rem;
+            color: #111827;
+            font-size: .82rem;
+            line-height: 1.45;
+            padding: .7rem;
+        }
+
+        .kanban-detail-grid {
+            display: grid;
+            gap: .5rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .kanban-detail-metric {
+            background: #f8fafc;
+            border: 1px solid #eef2f7;
+            border-radius: .625rem;
+            padding: .65rem;
+        }
+
+        .kanban-detail-metric strong {
+            color: #000000;
+            display: block;
+            font-size: .95rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .kanban-detail-metric span {
+            color: var(--pk-muted);
+            display: block;
+            font-size: .7rem;
+            margin-top: .25rem;
+        }
+
+        .kanban-detail-alert {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: .625rem;
+            color: #9a3412;
+            display: grid;
+            font-size: .78rem;
+            gap: .18rem;
+            padding: .65rem;
+        }
+
+        .kanban-detail-actions {
+            border-top: 1px solid var(--pk-border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+            padding: .9rem 1rem;
+        }
+
+        .kanban-detail-btn {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid var(--pk-border);
+            border-radius: .45rem;
+            color: #111827;
+            display: inline-flex;
+            font-size: .76rem;
+            font-weight: 500;
+            justify-content: center;
+            min-height: 2rem;
+            padding: .38rem .65rem;
+            text-decoration: none;
+        }
+
+        .kanban-detail-btn:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            color: #111827;
+        }
+
+        .kanban-detail-btn-primary {
+            background: var(--pk-accent);
+            border-color: var(--pk-accent);
+            color: #ffffff;
+        }
+
+        .kanban-detail-btn-primary:hover {
+            background: #1669d8;
+            border-color: #1669d8;
+            color: #ffffff;
+        }
+
         .dark .pipeline-kanban {
             --pk-column-bg: rgba(15, 23, 42, .72);
             --pk-card-bg: rgba(15, 23, 42, .86);
@@ -562,6 +746,29 @@
         .dark .kanban-modal-btn-soft {
             background: transparent;
             color: #cbd5e1;
+        }
+
+        .dark .kanban-detail-panel,
+        .dark .kanban-detail-section,
+        .dark .kanban-detail-btn {
+            background: rgba(15, 23, 42, .92);
+            border-color: var(--pk-border);
+        }
+
+        .dark .kanban-detail-text,
+        .dark .kanban-detail-metric {
+            background: rgba(2, 6, 23, .36);
+            border-color: rgba(148, 163, 184, .14);
+            color: #e5e7eb;
+        }
+
+        .dark .kanban-detail-btn {
+            color: #e5e7eb;
+        }
+
+        .dark .kanban-detail-close:hover,
+        .dark .kanban-detail-btn:hover {
+            background: rgba(30, 41, 59, .86);
         }
 
         .dark .kanban-estimated-input {
@@ -698,7 +905,7 @@
                                         </div>
 
                                         <div class="kanban-card-actions">
-                                            <a class="kanban-card-action" href="{{ $detailUrl }}" title="Ver detalle">Detalle</a>
+                                            <button class="kanban-card-action" type="button" wire:click="openLeadDetail({{ $comment->id }})" title="Ver detalle">Detalle</button>
                                             @if ($patientUrl)
                                                 <a class="kanban-card-action" href="{{ $patientUrl }}" title="Ver ficha del paciente">Paciente</a>
                                             @endif
@@ -737,6 +944,88 @@
             </div>
         </div>
     </section>
+
+    @if ($selectedLead = $this->selectedLead())
+        @php
+            $patient = $selectedLead->socialIdentity?->patient ?: $selectedLead->convertedPatient;
+            $leadName = $selectedLead->author_username ? '@'.$selectedLead->author_username : ($selectedLead->author_name ?: 'Lead social');
+            $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedLead]);
+            $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
+            $realScore = (int) $selectedLead->recent_engagement_score;
+            $displayScore = min(100, max(0, $realScore));
+        @endphp
+
+        <div class="kanban-detail-backdrop" wire:click="closeLeadDetail" wire:key="kanban-detail-backdrop"></div>
+        <aside class="kanban-detail-panel" role="dialog" aria-modal="true" aria-label="Detalle del lead" wire:key="kanban-detail-panel-{{ $selectedLead->id }}">
+            <header class="kanban-detail-header">
+                <div>
+                    <div class="kanban-detail-title">{{ $leadName }}</div>
+                    <div class="kanban-detail-meta">
+                        {{ $selectedLead->platform?->label() ?? 'Social' }} · {{ $selectedLead->pipeline_stage?->label() ?? 'Sin etapa' }} · {{ $selectedLead->created_at?->diffForHumans() }}
+                    </div>
+                </div>
+
+                <button class="kanban-detail-close" type="button" wire:click="closeLeadDetail" aria-label="Cerrar detalle">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true" style="height:1rem;width:1rem">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </header>
+
+            <div class="kanban-detail-body">
+                <section class="kanban-detail-section">
+                    <div class="kanban-detail-section-title">Pulso comercial</div>
+                    <div class="kanban-detail-grid">
+                        <div class="kanban-detail-metric">
+                            <strong>{{ $realScore }}</strong>
+                            <span>Score reciente</span>
+                        </div>
+                        <div class="kanban-detail-metric">
+                            <strong>{{ (int) $selectedLead->interest_score }}</strong>
+                            <span>Score historico</span>
+                        </div>
+                    </div>
+                    <span class="kanban-score-bar">
+                        <span class="kanban-score-fill {{ $realScore >= 71 ? 'temp-hot' : ($realScore >= 31 ? 'temp-warm' : 'temp-cold') }}" style="width:{{ $displayScore }}%"></span>
+                    </span>
+                </section>
+
+                <section class="kanban-detail-section">
+                    <div class="kanban-detail-section-title">Mensaje</div>
+                    <div class="kanban-detail-text">{{ $selectedLead->comment_text }}</div>
+                </section>
+
+                <section class="kanban-detail-section">
+                    <div class="kanban-detail-section-title">Contexto</div>
+                    <div class="kanban-detail-meta">Paciente: {{ $patient?->full_name ?: 'Sin ficha vinculada' }}</div>
+                    <div class="kanban-detail-meta">Procedimiento: {{ $selectedLead->suggestedProcedure?->name ?: 'Pendiente' }}</div>
+                    @if ($selectedLead->last_engagement_at)
+                        <div class="kanban-detail-meta">Ultima actividad: {{ $selectedLead->last_engagement_at->diffForHumans() }}</div>
+                    @endif
+                </section>
+
+                @if ($selectedLead->leadAlerts->isNotEmpty())
+                    <section class="kanban-detail-section">
+                        <div class="kanban-detail-section-title">Alertas abiertas</div>
+                        @foreach ($selectedLead->leadAlerts as $alert)
+                            <div class="kanban-detail-alert">
+                                <strong style="font-weight:600">{{ $alert->title }}</strong>
+                                <span>{{ $alert->message }}</span>
+                            </div>
+                        @endforeach
+                    </section>
+                @endif
+            </div>
+
+            <footer class="kanban-detail-actions">
+                <a class="kanban-detail-btn kanban-detail-btn-primary" href="{{ $detailUrl }}">Abrir ficha CRM</a>
+                @if ($patientUrl)
+                    <a class="kanban-detail-btn" href="{{ $patientUrl }}">Ver paciente</a>
+                @endif
+                <button class="kanban-detail-btn" type="button" wire:click="closeLeadDetail">Cerrar</button>
+            </footer>
+        </aside>
+    @endif
 
     @if ($lostModalCommentId)
         <div class="kanban-modal-backdrop" wire:key="lost-reason-modal">

@@ -107,6 +107,22 @@ class SocialPipelineKanbanTest extends TestCase
         $this->assertSame('No contesto', $comment->lost_reason);
     }
 
+    public function test_pipeline_kanban_opens_selected_lead_detail(): void
+    {
+        $comment = $this->socialComment([
+            'comment_text' => 'Lead abierto desde campana',
+            'recent_engagement_score' => 85,
+            'interest_score' => 90,
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialPipelineKanban::class)
+            ->call('openLeadDetail', $comment->id)
+            ->assertSet('selectedLeadId', $comment->id)
+            ->assertSee('Pulso comercial')
+            ->assertSee('Lead abierto desde campana');
+    }
+
     private function socialComment(array $overrides = []): SocialComment
     {
         $account = SocialAccount::create([
