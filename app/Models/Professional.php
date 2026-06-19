@@ -6,7 +6,6 @@ use App\Enums\ProfessionalRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Professional extends Model
 {
@@ -51,8 +50,4 @@ class Professional extends Model
         )->withPivot(['is_active', 'starts_at', 'ends_at'])->withTimestamps();
     }
 
-    public function commissionRules(): HasMany
-    {
-        return $this->hasMany(CommissionRule::class);
-    }
 }

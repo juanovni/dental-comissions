@@ -27,11 +27,6 @@ class Procedure extends Model
         ];
     }
 
-    public function commissionRules(): HasMany
-    {
-        return $this->hasMany(CommissionRule::class);
-    }
-
     public function socialPosts(): HasMany
     {
         return $this->hasMany(SocialPost::class);

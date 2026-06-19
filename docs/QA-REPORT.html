@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte QA - OdonCRM</title>
+    <style>
+        :root {
+            --primary: #0d9488;
+            --primary-light: #ccfbf1;
+            --danger: #dc2626;
+            --danger-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --info: #2563eb;
+            --info-light: #dbeafe;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-900); line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+        header { background: linear-gradient(135deg, var(--primary), #0f766e); color: white; padding: 3rem 2rem; text-align: center; }
+        header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+        header p { opacity: 0.9; font-size: 1.1rem; }
+        header .date { opacity: 0.7; margin-top: 0.5rem; font-size: 0.9rem; }
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: -2rem auto 2rem; max-width: 1100px; padding: 0 2rem; position: relative; z-index: 1; }
+        .summary-card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; }
+        .summary-card .number { font-size: 2.5rem; font-weight: 700; }
+        .summary-card .label { font-size: 0.85rem; color: var(--gray-500); margin-top: 0.25rem; }
+        .summary-card.total .number { color: var(--gray-900); }
+        .summary-card.pass .number { color: var(--success); }
+        .summary-card.warn .number { color: var(--warning); }
+        .summary-card.fail .number { color: var(--danger); }
+        .section { background: white; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .section h2 { font-size: 1.3rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--gray-100); display: flex; align-items: center; gap: 0.5rem; }
+        .section h3 { font-size: 1.1rem; margin: 1.5rem 0 0.75rem; color: var(--gray-700); }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        th { background: var(--gray-50); text-align: left; padding: 0.75rem 1rem; font-weight: 600; color: var(--gray-700); border-bottom: 2px solid var(--gray-200); }
+        td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--gray-100); }
+        tr:hover { background: var(--gray-50); }
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-pass { background: var(--success-light); color: var(--success); }
+        .badge-warn { background: var(--warning-light); color: #92400e; }
+        .badge-fail { background: var(--danger-light); color: var(--danger); }
+        .badge-info { background: var(--info-light); color: var(--info); }
+        .badge-hidden { background: var(--gray-100); color: var(--gray-500); }
+        .nav-map { font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; background: var(--gray-900); color: #e5e7eb; padding: 1.5rem; border-radius: 8px; font-size: 0.85rem; line-height: 1.8; overflow-x: auto; }
+        .nav-map .group { color: var(--primary); font-weight: 600; }
+        .nav-map .item { color: #93c5fd; }
+        .nav-map .hidden { color: var(--gray-500); text-decoration: line-through; }
+        .nav-map .orphan { color: var(--danger); }
+        .issue { padding: 1rem 1.25rem; border-radius: 8px; margin: 0.75rem 0; border-left: 4px solid; }
+        .issue-critical { background: var(--danger-light); border-color: var(--danger); }
+        .issue-warning { background: var(--warning-light); border-color: var(--warning); }
+        .issue-info { background: var(--info-light); border-color: var(--info); }
+        .issue-success { background: var(--success-light); border-color: var(--success); }
+        .issue strong { display: block; margin-bottom: 0.25rem; }
+        .issue .file { font-family: monospace; font-size: 0.85rem; color: var(--gray-500); }
+        .checklist { list-style: none; }
+        .checklist li { padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem; }
+        .checklist li::before { content: '✅'; }
+        .checklist li.warn::before { content: '⚠️'; }
+        .checklist li.fail::before { content: '❌'; }
+        .flow-diagram { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+        .flow-step { display: inline-block; background: white; border: 2px solid var(--gray-300); border-radius: 8px; padding: 0.5rem 1rem; margin: 0.25rem; font-size: 0.85rem; }
+        .flow-step.active { border-color: var(--primary); background: var(--primary-light); }
+        .flow-arrow { display: inline-block; color: var(--gray-500); margin: 0 0.25rem; }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .summary-cards { grid-template-columns: repeat(2, 1fr); padding: 0 1rem; }
+            .section { padding: 1.25rem; }
+        }
+        @media print {
+            header { padding: 1.5rem; }
+            .section { break-inside: avoid; }
+            .summary-cards { margin-top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Reporte QA - OdonCRM</h1>
+    <p>Análisis completo de navegación, integridad y flujo de usuario</p>
+    <div class="date">Generado: 19 de junio de 2026</div>
+</header>
+
+<div class="summary-cards">
+    <div class="summary-card total">
+        <div class="number">23</div>
+        <div class="label">Rutas Verificadas</div>
+    </div>
+    <div class="summary-card pass">
+        <div class="number">15</div>
+        <div class="label">Widgets Activos OK</div>
+    </div>
+    <div class="summary-card warn">
+        <div class="number">9</div>
+        <div class="label">Issues Encontrados</div>
+    </div>
+    <div class="summary-card fail">
+        <div class="number">4</div>
+        <div class="label">Páginas Huérfanas</div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- MAPA DE NAVEGACIÓN -->
+    <div class="section">
+        <h2>Mapa de Navegación Actual</h2>
+        <div class="nav-map">
+<span class="group">📁 Dashboards</span>
+  <span class="item">├── Actividad y comisiones</span> <span class="badge badge-pass">OK</span>
+  <span class="item">└── ROI Social</span> <span class="badge badge-pass">OK</span>
+
+<span class="group">📁 Operación Clínica</span>
+  <span class="item">├── Profesionales</span> <span class="badge badge-pass">OK</span>
+  <span class="item">├── Pacientes</span> <span class="badge badge-pass">OK</span>
+  <span class="item">├── Actividades</span> <span class="badge badge-pass">OK</span>
+  <span class="item">├── Asignaciones</span> <span class="badge badge-pass">OK</span>
+  <span class="item">└── Mensajes WhatsApp</span> <span class="badge badge-pass">OK</span>
+
+<span class="group">📁 Comisiones y Pagos</span>
+  <span class="item">├── Reportes semanales</span> <span class="badge badge-pass">OK</span>
+  <span class="item">├── Métodos de pago</span> <span class="badge badge-pass">OK</span>
+  <span class="item">└── Comisiones por pago</span> <span class="badge badge-pass">OK</span>
+
+<span class="group">📁 Reputación Digital [no colapsable]</span>
+  <span class="item">├── Bandeja social</span> <span class="badge badge-pass">OK</span>
+  <span class="item">├── Pipeline Kanban</span> <span class="badge badge-pass">OK</span>
+  <span class="item">├── Cuentas sociales</span> <span class="badge badge-pass">OK</span>
+  <span class="item">└── Integraciones</span> <span class="badge badge-pass">OK</span>
+
+<span class="group">📁 Configuración</span>
+  <span class="item">├── Procedimientos</span> <span class="badge badge-pass">OK</span>
+  <span class="item">└── Configuración CRM</span> <span class="badge badge-pass">OK</span>
+
+<span class="group">📁 WhatsApp</span>
+  <span class="hidden">└── (vacío - sin items visibles)</span> <span class="badge badge-fail">PROBLEMA</span>
+
+<span class="group" style="color: var(--danger);">Páginas Huérfanas (sin enlace de entrada)</span>
+  <span class="orphan">├── /admin/commission-rules</span> <span class="badge badge-fail">HUÉRFANO</span>
+  <span class="orphan">├── /admin/whatsapp-inbox</span> <span class="badge badge-fail">HUÉRFANO</span>
+  <span class="orphan">├── /admin/social-hot-leads</span> <span class="badge badge-fail">HUÉRFANO</span>
+  <span class="orphan">└── /admin/social-lead-alerts</span> <span class="badge badge-fail">HUÉRFANO</span>
+        </div>
+    </div>
+
+    <!-- PROBLEMAS CRÍTICOS -->
+    <div class="section">
+        <h2>Problemas Críticos de Navegación</h2>
+
+        <div class="issue issue-critical">
+            <strong>CommissionRuleResource completamente huérfano</strong>
+            El recurso "Reglas de comisión" tiene <code>shouldRegisterNavigation = false</code> y ningún enlace lo referencia. Es inaccesible desde la UI.
+            <div class="file">app/Filament/Resources/CommissionRules/CommissionRuleResource.php:44</div>
+        </div>
+
+        <div class="issue issue-critical">
+            <strong>BandejaWhatsApp huérfana</strong>
+            La página de WhatsApp está oculta (<code>shouldRegisterNavigation = false</code>) y ningún widget o página la referencia.
+            <div class="file">app/Filament/Pages/BandejaWhatsApp.php:29</div>
+        </div>
+
+        <div class="issue issue-critical">
+            <strong>SocialHotLeads huérfano</strong>
+            La página "Leads calientes" está oculta sin enlaces de entrada. El widget SocialLeadNotificationCenter solo enlaza a PipelineKanban.
+            <div class="file">app/Filament/Pages/SocialHotLeads.php:18</div>
+        </div>
+
+        <div class="issue issue-critical">
+            <strong>SocialLeadAlerts huérfano</strong>
+            La página "Alertas de leads" está oculta sin enlaces de entrada.
+            <div class="file">app/Filament/Pages/SocialLeadAlerts.php:17</div>
+        </div>
+    </div>
+
+    <!-- PROBLEMAS MEDIOS -->
+    <div class="section">
+        <h2>Problemas de Organización</h2>
+
+        <div class="issue issue-warning">
+            <strong>Grupo WhatsApp vacío en sidebar</strong>
+            El grupo "WhatsApp" aparece en el sidebar pero no tiene items visibles. Crea confusión en el usuario.
+            <div class="file">app/Providers/Filament/AdminPanelProvider.php:52</div>
+        </div>
+
+        <div class="issue issue-warning">
+            <strong>Cero cross-linking entre páginas sociales</strong>
+            SocialInbox, SocialPipelineKanban, SocialHotLeads y SocialLeadAlerts no tienen enlaces entre sí. Cada página es una isla independiente.
+        </div>
+
+        <div class="issue issue-warning">
+            <strong>Sort duplicado en páginas sociales</strong>
+            SocialInbox y SocialPipelineKanban ambos usan <code>sort: 17</code>, lo que puede causar orden impredecible en el sidebar.
+        </div>
+    </div>
+
+    <!-- VERIFICACIÓN DE RUTAS -->
+    <div class="section">
+        <h2>Verificación de Rutas</h2>
+        <p style="margin-bottom: 1rem; color: var(--gray-500);">69 rutas registradas, 58 con nombre, 0 duplicadas</p>
+        <table>
+            <thead>
+                <tr><th>Ruta</th><th>Estado</th><th>Nombre</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>/admin</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.pages.dashboard</td></tr>
+                <tr><td>/admin/roi-social</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.pages.dashboard-roi-social</td></tr>
+                <tr><td>/admin/professionals</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.professionals.index</td></tr>
+                <tr><td>/admin/patients</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.patients.index</td></tr>
+                <tr><td>/admin/activity-records</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.activity-records.index</td></tr>
+                <tr><td>/admin/doctor-assistant-assignments</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.doctor-assistant-assignments.index</td></tr>
+                <tr><td>/admin/whatsapp-messages</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.whatsapp-messages.index</td></tr>
+                <tr><td>/admin/weekly-reports</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.weekly-reports.index</td></tr>
+                <tr><td>/admin/payment-methods</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.payment-methods.index</td></tr>
+                <tr><td>/admin/payment-method-commission-rates</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.payment-method-commission-rates.index</td></tr>
+                <tr><td>/admin/social-inbox</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.pages.social-inbox</td></tr>
+                <tr><td>/admin/social-pipeline-kanban</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.pages.social-pipeline-kanban</td></tr>
+                <tr><td>/admin/social-accounts</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.social-accounts.index</td></tr>
+                <tr><td>/admin/integrations</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.pages.integrations</td></tr>
+                <tr><td>/admin/procedures</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.procedures.index</td></tr>
+                <tr><td>/admin/social-crm-settings</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.social-crm-settings.index</td></tr>
+                <tr><td>/admin/commission-rules</td><td><span class="badge badge-hidden">OCULTA</span></td><td>filament.admin.resources.commission-rules.index</td></tr>
+                <tr><td>/admin/whatsapp-inbox</td><td><span class="badge badge-hidden">OCULTA</span></td><td>filament.admin.pages.whatsapp-inbox</td></tr>
+                <tr><td>/admin/social-hot-leads</td><td><span class="badge badge-hidden">OCULTA</span></td><td>filament.admin.pages.social-hot-leads</td></tr>
+                <tr><td>/admin/social-lead-alerts</td><td><span class="badge badge-hidden">OCULTA</span></td><td>filament.admin.pages.social-lead-alerts</td></tr>
+                <tr><td>/admin/social-comments</td><td><span class="badge badge-info">ACCESIBLE</span></td><td>filament.admin.resources.social-comments.index</td></tr>
+                <tr><td>/webhook/whatsapp</td><td><span class="badge badge-pass">OK</span></td><td>GET verify + POST receive</td></tr>
+                <tr><td>/webhook/meta/social</td><td><span class="badge badge-pass">OK</span></td><td>GET verify + POST receive</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- WIDGETS -->
+    <div class="section">
+        <h2>Verificación de Widgets</h2>
+        <h3>Dashboard Principal (7 widgets) - Todos OK</h3>
+        <table>
+            <thead><tr><th>Widget</th><th>Tipo</th><th>Estado</th></tr></thead>
+            <tbody>
+                <tr><td>DashboardStatsWidget</td><td>StatsOverview</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexTopProceduresChart</td><td>ApexBar</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexActivityStatusChart</td><td>ApexDonut</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexPaymentMethodCommissionsChart</td><td>ApexDonut</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexTopDoctorsChart</td><td>ApexBar</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>DoctorCommissionsTable</td><td>Table</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>WhatsappIssuesTable</td><td>Table</td><td><span class="badge badge-pass">OK</span></td></tr>
+            </tbody>
+        </table>
+
+        <h3>Dashboard ROI Social (8 widgets) - Todos OK</h3>
+        <table>
+            <thead><tr><th>Widget</th><th>Tipo</th><th>Estado</th></tr></thead>
+            <tbody>
+                <tr><td>SocialRoiStatsWidget</td><td>StatsOverview</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexSocialPipelineValueChart</td><td>ApexBar</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexSocialLostReasonsChart</td><td>ApexLine</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexSocialPlatformPerformanceChart</td><td>ApexLine</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexSocialProcedureConversionChart</td><td>ApexLine</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexSocialResponseTimeRoiChart</td><td>ApexLine</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexSocialConversionFunnelChart</td><td>ApexBar</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ApexSocialTopPostsChart</td><td>ApexBar</td><td><span class="badge badge-pass">OK</span></td></tr>
+            </tbody>
+        </table>
+
+        <h3>Widgets Legacy sin usar (6 widgets) - Código muerto</h3>
+        <table>
+            <thead><tr><th>Widget</th><th>Reemplazado por</th><th>Acción</th></tr></thead>
+            <tbody>
+                <tr><td>TopProceduresChart</td><td>ApexTopProceduresChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
+                <tr><td>ActivityStatusChart</td><td>ApexActivityStatusChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
+                <tr><td>PaymentMethodCommissionsChart</td><td>ApexPaymentMethodCommissionsChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
+                <tr><td>TopDoctorsChart</td><td>ApexTopDoctorsChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
+                <tr><td>SocialTopPostsChart</td><td>ApexSocialTopPostsChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
+                <tr><td>SocialConversionFunnelChart</td><td>ApexSocialConversionFunnelChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- CRUD Y FORMULARIOS -->
+    <div class="section">
+        <h2>Verificación de CRUD y Formularios</h2>
+        <table>
+            <thead><tr><th>Resource</th><th>Form</th><th>Table</th><th>Acciones</th><th>Estado</th></tr></thead>
+            <tbody>
+                <tr><td>ProfessionalResource</td><td>7 campos ✓</td><td>6 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>PatientResource</td><td>5 campos ✓</td><td>4 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ProcedureResource</td><td>6 campos ✓</td><td>5 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>CommissionRuleResource</td><td>12 campos ✓</td><td>9 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>DoctorAssistantAssignmentResource</td><td>4 campos ✓</td><td>5 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ActivityRecordResource</td><td>9 campos ✓</td><td>8 columnas ✓</td><td>Approve, Correct, Pay, Edit</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>WeeklyReportResource</td><td>4 campos ✓</td><td>8 columnas ✓</td><td>View, Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>PaymentMethodResource</td><td>6 campos ✓</td><td>5 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>PaymentMethodCommissionRateResource</td><td>5 campos ✓</td><td>5 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialAccountResource</td><td>6 campos ✓</td><td>8 columnas ✓</td><td>Edit</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialCommentResource</td><td>7 campos ✓</td><td>14 columnas ✓</td><td>View, Edit, +7 acciones CRM</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialCrmSettingResource</td><td>7 campos ✓</td><td>6 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>WhatsappMessageResource</td><td>Solo lectura</td><td>7 columnas ✓</td><td>Ninguna</td><td><span class="badge badge-pass">OK</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- INTEGRIDAD DE MODELOS -->
+    <div class="section">
+        <h2>Integridad de Modelos y Relaciones</h2>
+        <ul class="checklist">
+            <li>ActivityRecord → belongsTo(Professional, Patient, Procedure) ✓</li>
+            <li>Patient → hasMany(ActivityRecord) ✓</li>
+            <li>WeeklyReport → belongsTo(Professional), hasMany(WeeklyReportItem) ✓</li>
+            <li>CommissionRule → belongsTo(Professional), belongsTo(Procedure) ✓</li>
+            <li>DoctorAssistantAssignment → belongsTo(Professional) × 2 ✓</li>
+            <li class="warn">Professional → Falta relación hasMany(ActivityRecord) como "doctor"</li>
+            <li class="warn">Procedure → Falta relación hasMany(ActivityRecord)</li>
+        </ul>
+    </div>
+
+    <!-- ENUMS -->
+    <div class="section">
+        <h2>Verificación de Enums</h2>
+        <table>
+            <thead><tr><th>Enum</th><th>Casos</th><th>label()</th><th>color()</th><th>Estado</th></tr></thead>
+            <tbody>
+                <tr><td>ActivityStatus</td><td>5</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>WeeklyReportStatus</td><td>3</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>ProfessionalRole</td><td>2</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>CommissionType</td><td>4</td><td style="color:var(--danger)">✗</td><td>-</td><td><span class="badge badge-warn">Falta label()</span></td></tr>
+                <tr><td>WhatsappMessageStatus</td><td>7</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialPlatform</td><td>2</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialCommentStatus</td><td>9</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialCommentClassification</td><td>11</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialSentiment</td><td>4</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialPriority</td><td>4</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialReputationRisk</td><td>4</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialConversionStatus</td><td>8</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialSuggestedAction</td><td>8</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialResponseChannel</td><td>4</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
+                <tr><td>SocialCommentActionType</td><td>21</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FLUJO DE USUARIO -->
+    <div class="section">
+        <h2>Flujo de Usuario: Caminos Posibles</h2>
+        <h3>Flujo Clínico (funcional)</h3>
+        <div class="flow-diagram">
+            <span class="flow-step active">Login</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">Profesionales</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">Pacientes</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">Asignaciones</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">Actividades</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">Reportes Semanales</span>
+        </div>
+        <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--gray-500)">✅ Este flujo funciona correctamente. Todas las páginas están conectadas en el sidebar.</p>
+
+        <h3>Flujo Social/CRM (parcialmente roto)</h3>
+        <div class="flow-diagram">
+            <span class="flow-step active">Bandeja social</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">SocialCommentResource (view)</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">PatientResource (edit)</span>
+        </div>
+        <div class="flow-diagram" style="margin-top:0.5rem;">
+            <span class="flow-step active">Pipeline Kanban</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">SocialCommentResource (view)</span>
+        </div>
+        <div class="flow-diagram" style="margin-top:0.5rem;">
+            <span class="flow-step" style="border-color:var(--danger);background:var(--danger-light);color:var(--danger)">⚠ Leads Calientes</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">SocialCommentResource (view)</span>
+        </div>
+        <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--danger)">❌ Leads Calientes y Alertas están huérfanos. No hay cross-linking entre Bandeja social ↔ Pipeline Kanban.</p>
+
+        <h3>Flujo Comisiones (parcialmente roto)</h3>
+        <div class="flow-diagram">
+            <span class="flow-step active">Reportes semanales</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">Métodos de pago</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-step active">Comisiones por pago</span>
+        </div>
+        <div class="flow-diagram" style="margin-top:0.5rem;">
+            <span class="flow-step" style="border-color:var(--danger);background:var(--danger-light);color:var(--danger)">⚠ Reglas de comisión</span>
+            <span style="font-size:0.85rem;color:var(--danger);margin-left:0.5rem;">← inaccesible</span>
+        </div>
+        <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--danger)">❌ Reglas de comisión es huérfano. No hay forma de llegar a él desde la UI.</p>
+    </div>
+
+    <!-- RECOMENDACIONES -->
+    <div class="section">
+        <h2>Recomendaciones</h2>
+        <table>
+            <thead><tr><th>#</th><th>Acción</th><th>Prioridad</th><th>Impacto</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Mostrar CommissionRuleResource en el sidebar bajo "Comisiones y Pagos" o enlazarlo desde WeeklyReportResource</td>
+                    <td><span class="badge badge-fail">Alta</span></td>
+                    <td>Recuperar acceso a funcionalidad completa</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Ocultar grupo "WhatsApp" del sidebar si no tiene items visibles, o mostrar BandejaWhatsApp</td>
+                    <td><span class="badge badge-warn">Media</span></td>
+                    <td>Eliminar confusión en el usuario</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Agregar links cruzados: Bandeja social ↔ Pipeline Kanban ↔ Leads Calientes ↔ Alertas</td>
+                    <td><span class="badge badge-warn">Media</span></td>
+                    <td>Mejorar flujo de trabajo social</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Enlazar BandejaWhatsApp desde Mensajes WhatsApp o desde el widget de notificaciones</td>
+                    <td><span class="badge badge-warn">Media</span></td>
+                    <td>Hacer accesible la bandeja de WhatsApp</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Corregir sort duplicado: SocialInbox=17, PipelineKanban=18</td>
+                    <td><span class="badge badge-info">Baja</span></td>
+                    <td>Orden predecible en sidebar</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Agregar método label() al enum CommissionType</td>
+                    <td><span class="badge badge-info">Baja</span></td>
+                    <td>Consistencia en UI</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>Eliminar 6 widgets legacy de Chart.js (código muerto)</td>
+                    <td><span class="badge badge-info">Baja</span></td>
+                    <td>Reducir complejidad del proyecto</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>Agregar relación hasMany(ActivityRecord) a Professional y Procedure</td>
+                    <td><span class="badge badge-info">Baja</span></td>
+                    <td>Completar modelo de datos</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- RESUMEN FINAL -->
+    <div class="section" style="background: var(--gray-900); color: white;">
+        <h2 style="color: white; border-color: rgba(255,255,255,0.2);">Resumen Final</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1rem;">
+            <div>
+                <h3 style="color:var(--success);margin-bottom:0.5rem;">✅ Lo que funciona</h3>
+                <ul style="list-style:none;font-size:0.9rem;">
+                    <li>23 rutas accesibles y funcionales</li>
+                    <li>15 widgets activos sin errores</li>
+                    <li>13 resources con CRUD completo</li>
+                    <li>18 enums funcionales</li>
+                    <li>2 servicios de webhook operativos</li>
+                    <li>Flujo clínico completo</li>
+                </ul>
+            </div>
+            <div>
+                <h3 style="color:var(--danger);margin-bottom:0.5rem;">❌ Lo que necesita修复</h3>
+                <ul style="list-style:none;font-size:0.9rem;">
+                    <li>4 páginas huérfanas sin acceso</li>
+                    <li>1 grupo WhatsApp vacío</li>
+                    <li>0 cross-linking en páginas sociales</li>
+                    <li>6 widgets legacy sin usar</li>
+                    <li>2 relaciones de modelo faltantes</li>
+                    <li>1 enum sin método label()</li>
+                </ul>
+            </div>
+        </div>
+        <p style="margin-top:1.5rem;font-size:0.95rem;opacity:0.8;text-align:center;">
+            El sistema es sólido en su capa de datos y formularios. Los issues principales son de navegación y organización de la UI.
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -49,7 +49,6 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Reputacion Digital')
                     ->collapsible(false),
                 NavigationGroup::make('Configuración'),
-                NavigationGroup::make('WhatsApp'),
             ])
             ->maxContentWidth('fi-width-full')
             ->viteTheme('resources/css/app.css')
