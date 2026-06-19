@@ -29,7 +29,14 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 ## Badges y Botones
 
 - Badges compactos: `font-size: .7rem`, `font-weight: 500`, `border-radius: .375rem`, padding pequeno.
-- Botones superiores y acciones internas: compactos, `font-size: .75rem`, `font-weight: 500`, `min-height` alrededor de `2rem`.
+- Botones superiores y acciones internas: minimalistas, compactos, `font-size: .75rem`, `font-weight: 500`, `min-height` entre `1.9rem` y `2.15rem`.
+- Botones tipo outline/neutro: fondo blanco, borde `#d1d5db` o `#e5e7eb`, texto `#374151`, `border-radius: .45rem` a `.55rem`, sin sombra.
+- Botones primarios: usar un solo color plano (`#1d7afc` o primary del panel), texto blanco, sin gradientes ni sombras decorativas.
+- Padding recomendado para botones: `.38rem .65rem`; evitar botones altos, anchos o con padding excesivo salvo CTA principal.
+- Iconos dentro de botones: maximo `.9rem` a `1rem`, color heredado, alineados con `gap: .35rem`; no usar iconos grandes ni multiples iconos.
+- Hover/focus: cambios sutiles (`background: #f9fafb`, borde un poco mas oscuro o `filter: brightness(.98)`); evitar `translateY`, escalados, glow o sombras fuertes.
+- Estados `disabled/loading`: opacidad `.6`, cursor no permitido, sin alterar layout ni mostrar spinners grandes.
+- Evitar `font-weight` mayor a `600` en botones; no usar uppercase forzado salvo badges pequenos.
 - Usar colores de estado sobrios: verde para exito, amarillo para alerta, rojo para peligro, gris para neutro.
 
 ## Colores
@@ -49,6 +56,7 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 
 - Antes de crear CSS nuevo para tarjetas, badges, botones o grids, revisar las clases `mc-*` en `resources/css/app.css`.
 - Preferir reutilizar `mc-card`, `mc-badge`, `mc-btn`, `mc-facts`, `mc-fact`, `mc-grid-main` y variantes relacionadas.
+- Para botones nuevos, partir de `mc-btn`, `mc-btn-soft` o `mc-btn-primary`; si se requiere una clase propia, mantener la misma escala visual y no duplicar estilos innecesarios.
 - Si una vista requiere estilos propios, mantenerlos pequenos y alineados con esta guia.
 
 ## Charts
