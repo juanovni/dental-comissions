@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\SocialCommentActionType;
+use App\Enums\SocialConversionStatus;
 use App\Enums\SocialPipelineStage;
 use App\Models\SocialComment;
 use Filament\Notifications\Notification;
@@ -44,26 +45,32 @@ class SocialPipelineKanban extends Page
     public function columns(): array
     {
         return [
-            SocialPipelineStage::New,
-            SocialPipelineStage::Qualified,
-            SocialPipelineStage::Appointment,
-            SocialPipelineStage::Proposal,
-            SocialPipelineStage::Won,
-            SocialPipelineStage::Lost,
+            'smart_inbox' => 'Smart Inbox',
+            SocialPipelineStage::Appointment->value => SocialPipelineStage::Appointment->label(),
+            SocialPipelineStage::Proposal->value => SocialPipelineStage::Proposal->label(),
         ];
     }
 
-    public function cards(SocialPipelineStage $stage): Collection
+    public function cards(string $stage): Collection
     {
         return SocialComment::query()
             ->with(['socialIdentity.patient', 'socialAccount', 'suggestedProcedure'])
-            ->where('pipeline_stage', $stage)
+            ->when(
+                $stage === 'smart_inbox',
+                fn (Builder $query): Builder => $query->whereIn('pipeline_stage', [
+                    SocialPipelineStage::New->value,
+                    SocialPipelineStage::Qualified->value,
+                ]),
+                fn (Builder $query): Builder => $query->where('pipeline_stage', $stage),
+            )
             ->where('is_hidden', false)
             ->when($this->search, fn (Builder $q) => $q->where(function (Builder $q): void {
                 $q->where('comment_text', 'ilike', "%{$this->search}%")
                     ->orWhere('author_name', 'ilike', "%{$this->search}%")
                     ->orWhere('author_username', 'ilike', "%{$this->search}%");
             }))
+            ->orderByDesc('recent_engagement_score')
+            ->orderByDesc('last_engagement_at')
             ->orderByDesc('interest_score')
             ->latest('updated_at')
             ->get();
@@ -71,11 +78,9 @@ class SocialPipelineKanban extends Page
 
     public function stageTotals(): array
     {
-        $totals = SocialComment::totalEstimatedValueByStage();
-
         $result = [];
-        foreach ($this->columns() as $stage) {
-            $result[$stage->value] = (float) ($totals[$stage->value] ?? 0);
+        foreach (array_keys($this->columns()) as $stage) {
+            $result[$stage] = (float) $this->baseStageQuery($stage)->sum('estimated_value');
         }
 
         return $result;
@@ -83,17 +88,9 @@ class SocialPipelineKanban extends Page
 
     public function stageCounts(): array
     {
-        $counts = SocialComment::query()
-            ->selectRaw('pipeline_stage, count(*) as cnt')
-            ->whereNotNull('pipeline_stage')
-            ->where('is_hidden', false)
-            ->groupBy('pipeline_stage')
-            ->pluck('cnt', 'pipeline_stage')
-            ->toArray();
-
         $result = [];
-        foreach ($this->columns() as $stage) {
-            $result[$stage->value] = (int) ($counts[$stage->value] ?? 0);
+        foreach (array_keys($this->columns()) as $stage) {
+            $result[$stage] = $this->baseStageQuery($stage)->count();
         }
 
         return $result;
@@ -108,7 +105,9 @@ class SocialPipelineKanban extends Page
             return;
         }
 
-        $stage = SocialPipelineStage::tryFrom($toStage);
+        $stage = $toStage === 'smart_inbox'
+            ? SocialPipelineStage::Qualified
+            : SocialPipelineStage::tryFrom($toStage);
 
         if (! $stage) {
             return;
@@ -168,11 +167,11 @@ class SocialPipelineKanban extends Page
         if ($stage === SocialPipelineStage::Lost) {
             $data['lost_at'] = now();
             $data['lost_reason'] = $lostReason ?: null;
-            $data['conversion_status'] = \App\Enums\SocialConversionStatus::Lost;
+            $data['conversion_status'] = SocialConversionStatus::Lost;
         }
 
         if ($stage === SocialPipelineStage::Won) {
-            $data['conversion_status'] = \App\Enums\SocialConversionStatus::Converted;
+            $data['conversion_status'] = SocialConversionStatus::Converted;
             $data['converted_at'] ??= now();
         }
 
@@ -210,5 +209,19 @@ class SocialPipelineKanban extends Page
         }
 
         return $comment;
+    }
+
+    private function baseStageQuery(string $stage): Builder
+    {
+        return SocialComment::query()
+            ->where('is_hidden', false)
+            ->when(
+                $stage === 'smart_inbox',
+                fn (Builder $query): Builder => $query->whereIn('pipeline_stage', [
+                    SocialPipelineStage::New->value,
+                    SocialPipelineStage::Qualified->value,
+                ]),
+                fn (Builder $query): Builder => $query->where('pipeline_stage', $stage),
+            );
     }
 }

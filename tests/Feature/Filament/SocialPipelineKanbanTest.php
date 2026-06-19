@@ -34,7 +34,77 @@ class SocialPipelineKanbanTest extends TestCase
             ->assertSee($visible->comment_text)
             ->assertDontSee($hidden->comment_text);
 
-        $this->assertSame(1, app(SocialPipelineKanban::class)->cards(SocialPipelineStage::Qualified)->count());
+        $this->assertSame(1, app(SocialPipelineKanban::class)->cards('smart_inbox')->count());
+    }
+
+    public function test_smart_inbox_merges_new_and_qualified_and_orders_by_recent_engagement(): void
+    {
+        $qualified = $this->socialComment([
+            'comment_text' => 'Lead calificado intenso',
+            'pipeline_stage' => SocialPipelineStage::Qualified,
+            'recent_engagement_score' => 120,
+            'last_engagement_at' => now(),
+        ]);
+        $new = $this->socialComment([
+            'comment_text' => 'Lead nuevo frio',
+            'conversion_status' => SocialConversionStatus::None,
+            'pipeline_stage' => SocialPipelineStage::New,
+            'recent_engagement_score' => 10,
+            'last_engagement_at' => now()->subMinutes(5),
+        ]);
+
+        $cards = app(SocialPipelineKanban::class)->cards('smart_inbox');
+
+        $this->assertTrue($cards->contains($qualified));
+        $this->assertTrue($cards->contains($new));
+        $this->assertSame($qualified->id, $cards->first()->id);
+    }
+
+    public function test_archive_drop_to_won_converts_directly(): void
+    {
+        $comment = $this->socialComment();
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialPipelineKanban::class)
+            ->call('moveCard', $comment->id, SocialPipelineStage::Won->value);
+
+        $comment->refresh();
+
+        $this->assertSame(SocialPipelineStage::Won, $comment->pipeline_stage);
+        $this->assertSame(SocialConversionStatus::Converted, $comment->conversion_status);
+        $this->assertNotNull($comment->converted_at);
+    }
+
+    public function test_card_can_move_back_to_smart_inbox(): void
+    {
+        $comment = $this->socialComment([
+            'pipeline_stage' => SocialPipelineStage::Appointment,
+            'conversion_status' => SocialConversionStatus::PendingPatientCreation,
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialPipelineKanban::class)
+            ->call('moveCard', $comment->id, 'smart_inbox');
+
+        $this->assertSame(SocialPipelineStage::Qualified, $comment->refresh()->pipeline_stage);
+    }
+
+    public function test_archive_drop_to_lost_asks_for_reason_then_archives(): void
+    {
+        $comment = $this->socialComment();
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialPipelineKanban::class)
+            ->call('moveCard', $comment->id, SocialPipelineStage::Lost->value)
+            ->assertSet('lostModalCommentId', $comment->id)
+            ->set('lostReason', 'No contesto')
+            ->call('confirmLost');
+
+        $comment->refresh();
+
+        $this->assertSame(SocialPipelineStage::Lost, $comment->pipeline_stage);
+        $this->assertSame(SocialConversionStatus::Lost, $comment->conversion_status);
+        $this->assertSame('No contesto', $comment->lost_reason);
     }
 
     private function socialComment(array $overrides = []): SocialComment
