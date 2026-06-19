@@ -30,9 +30,9 @@
         .social-inbox-toolbar {
             align-items: center;
             display: flex;
-            gap: 1rem;
+            gap: .75rem;
             justify-content: flex-end;
-            margin-bottom: 1rem;
+            margin-bottom: .9rem;
         }
 
         @media (min-width: 900px) {
@@ -51,12 +51,14 @@
         .smart-search {
             background: #ffffff;
             border: 1px solid #e5e7eb;
-            border-radius: .85rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
-            color: var(--inbox-ink);
+            border-radius: .5rem;
+            box-shadow: none;
+            color: var(--pk-ink);
+            font-size: .82rem;
+            height: 2.35rem;
             outline: none;
-            padding: .82rem 1rem;
-            width: min(100%, 32rem);
+            padding: .45rem .75rem;
+            width: min(100%, 24rem);
         }
 
         .smart-filters {
