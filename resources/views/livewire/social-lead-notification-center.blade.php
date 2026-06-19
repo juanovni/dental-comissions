@@ -275,14 +275,14 @@
         }
 
         .ln-btn-primary {
-            background: var(--ln-primary);
-            border-color: var(--ln-primary);
+            background: #000000;
+            border-color: #000000;
             color: #ffffff;
         }
 
         .ln-btn-primary:hover {
-            background: #1669d8;
-            border-color: #1669d8;
+            background: #1a1a1a;
+            border-color: #1a1a1a;
             color: #ffffff;
         }
 

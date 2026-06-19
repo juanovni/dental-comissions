@@ -677,14 +677,14 @@
         }
 
         .kanban-detail-btn-primary {
-            background: var(--pk-accent);
-            border-color: var(--pk-accent);
+            background: #000000;
+            border-color: #000000;
             color: #ffffff;
         }
 
         .kanban-detail-btn-primary:hover {
-            background: #1669d8;
-            border-color: #1669d8;
+            background: #1a1a1a;
+            border-color: #1a1a1a;
             color: #ffffff;
         }
 
