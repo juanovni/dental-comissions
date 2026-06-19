@@ -36,6 +36,12 @@ class LeadActivityDetected implements ShouldBroadcastNow
             'tracking_token' => $this->comment->tracking_token,
             'event_type' => $this->event->event_type,
             'interest_score' => (int) $this->comment->interest_score,
+            'recent_engagement_score' => (int) $this->comment->recent_engagement_score,
+            'last_engagement_at' => $this->comment->last_engagement_at?->toISOString(),
+            'engagement_event_count_1h' => (int) $this->comment->engagement_event_count_1h,
+            'engagement_event_count_24h' => (int) $this->comment->engagement_event_count_24h,
+            'last_engagement_event_type' => $this->comment->last_engagement_event_type,
+            'engagement_priority_reason' => $this->comment->engagement_priority_reason,
             'hot_lead' => filled($this->comment->hot_lead_at),
             'created_at' => $this->event->created_at?->toISOString(),
         ];

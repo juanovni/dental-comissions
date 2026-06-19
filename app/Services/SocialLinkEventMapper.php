@@ -29,6 +29,18 @@ class SocialLinkEventMapper
             'color' => 'orange',
             'group' => 'engagement',
         ],
+        'button_click' => [
+            'label' => 'Hizo clic en un boton del Smart Link',
+            'icon' => 'cursor-arrow-rays',
+            'color' => 'orange',
+            'group' => 'engagement',
+        ],
+        'video_play_seconds' => [
+            'label' => 'Acumulo tiempo viendo video',
+            'icon' => 'clock',
+            'color' => 'orange',
+            'group' => 'video',
+        ],
         'video_start' => [
             'label' => 'Inicio el video',
             'icon' => 'play',

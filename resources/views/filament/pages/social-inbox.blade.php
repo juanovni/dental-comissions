@@ -10,9 +10,10 @@
             'all' => ['label' => 'Activos', 'icon' => '🔍', 'count' => $stats['all']],
             'archived' => ['label' => 'Archivados', 'icon' => '📦', 'count' => $stats['archived']],
         ];
-        $selectedComment = $this->selectedComment($comments->first()?->id);
+        $selectedComment = $this->selectedComment();
         $selectedPatient = $selectedComment?->socialIdentity?->patient ?: $selectedComment?->convertedPatient;
         $selectedTimeline = $selectedComment ? $this->timelineEvents($selectedComment->id) : [];
+        $selectedMilestones = $selectedComment ? $this->recentMilestones($selectedComment->id) : [];
     @endphp
 
     <style>
@@ -140,88 +141,327 @@
             }
         }
 
-        .smart-split-view {
-            align-items: start;
-            display: grid;
-            gap: 1rem;
-            grid-template-columns: minmax(0, 1fr);
-        }
-
-        @media (min-width: 1180px) {
-            .smart-split-view {
-                grid-template-columns: minmax(280px, .85fr) minmax(360px, 1.05fr) minmax(280px, .8fr);
-            }
-
-            .smart-list-column {
-                max-height: calc(100vh - 15rem);
-                overflow: auto;
-                padding-right: .2rem;
-            }
-        }
-
         .smart-list-column {
-            grid-template-columns: minmax(0, 1fr);
+            max-height: calc(100vh - 12rem);
+            overflow: auto;
+            padding-right: .2rem;
         }
 
-        .smart-detail-column,
-        .smart-profile-column {
-            align-content: start;
-            display: grid;
-            gap: 1rem;
+        .smart-drawer-backdrop {
+            background: rgba(15, 23, 42, .38);
+            inset: 0;
+            position: fixed;
+            z-index: 48;
+            animation: drawerBackdropIn .22s ease;
         }
 
-        .smart-command-panel {
-            background: linear-gradient(180deg, #ffffff, #f8fafc);
+        .smart-drawer-backdrop.is-closing {
+            animation: drawerBackdropOut .18s ease forwards;
+        }
+
+        .smart-drawer {
+            background: #ffffff;
+            border-left: 1px solid #e5e7eb;
+            box-shadow: -12px 0 56px -16px rgba(15, 23, 42, .32);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: min(100%, 58rem);
+            z-index: 49;
+            animation: drawerSlideIn .28s cubic-bezier(.16, 1, .3, 1);
+        }
+
+        .smart-drawer.is-closing {
+            animation: drawerSlideOut .2s ease forwards;
+        }
+
+        @keyframes drawerSlideIn {
+            from { transform: translateX(100%); opacity: .4; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes drawerSlideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        @keyframes drawerBackdropIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes drawerBackdropOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .smart-drawer-header {
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: .75rem;
+            padding: .85rem 1rem;
+            flex: 0 0 auto;
+        }
+
+        .smart-drawer-close {
+            align-items: center;
+            background: #f8fafc;
             border: 1px solid #e5e7eb;
-            border-radius: 1.1rem;
-            box-shadow: 0 18px 60px -52px rgba(15, 23, 42, .85);
-            padding: 1rem;
+            border-radius: .5rem;
+            color: #64748b;
+            cursor: pointer;
+            display: inline-flex;
+            flex: 0 0 auto;
+            font-size: 1.05rem;
+            font-weight: 850;
+            height: 1.85rem;
+            justify-content: center;
+            line-height: 1;
+            transition: .14s ease;
+            width: 1.85rem;
         }
 
-        .smart-command-panel h3 {
+        .smart-drawer-close:hover {
+            background: #eef2f7;
             color: #0f172a;
-            font-size: .98rem;
-            font-weight: 900;
-            margin: 0 0 .55rem;
         }
 
-        .smart-command-kicker {
+        .smart-drawer-title {
+            color: #0f172a;
+            font-size: .92rem;
+            font-weight: 700;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .smart-drawer-subtitle {
+            color: #64748b;
+            font-size: .74rem;
+            font-weight: 500;
+            margin-left: auto;
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .smart-drawer-body {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            padding: 1rem;
+            display: grid;
+            gap: .75rem;
+            align-content: start;
+        }
+
+        .smart-drawer-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .75rem;
+            display: grid;
+            gap: .65rem;
+            padding: .85rem;
+        }
+
+        .smart-drawer-card.is-accent {
+            border-left: 3px solid #14b8a6;
+        }
+
+        .smart-drawer-card.is-ai {
+            background: linear-gradient(180deg, #eef6ff, #ffffff);
+            border-color: #bfdbfe;
+        }
+
+        .smart-drawer-card-kicker {
             color: #0f766e;
-            font-size: .68rem;
+            font-size: .66rem;
             font-weight: 900;
             letter-spacing: .1em;
             text-transform: uppercase;
         }
 
-        .smart-command-text {
-            color: #334155;
+        .smart-drawer-card.is-ai .smart-drawer-card-kicker {
+            color: #1d4ed8;
+        }
+
+        .smart-drawer-card-title {
+            color: #0f172a;
             font-size: .88rem;
-            line-height: 1.6;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .smart-drawer-card-text {
+            color: #334155;
+            font-size: .84rem;
+            line-height: 1.55;
+            margin: 0;
             white-space: pre-line;
         }
 
-        .smart-timeline-mini {
+        .smart-drawer-muted {
+            color: #64748b !important;
+        }
+
+        .smart-drawer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+            padding-top: .35rem;
+        }
+
+        .smart-drawer-timeline {
             display: grid;
-            gap: .7rem;
-            margin-top: .6rem;
+            gap: .6rem;
+            margin-top: .3rem;
         }
 
-        .smart-timeline-item {
+        .smart-drawer-timeline-item {
             border-left: 3px solid #14b8a6;
-            padding-left: .7rem;
+            padding-left: .65rem;
         }
 
-        .smart-timeline-item strong {
+        .smart-drawer-timeline-item strong {
             color: #0f172a;
             display: block;
-            font-size: .82rem;
+            font-size: .8rem;
         }
 
-        .smart-timeline-item span {
+        .smart-drawer-timeline-item span {
             color: #64748b;
             display: block;
-            font-size: .76rem;
+            font-size: .74rem;
             margin-top: .1rem;
+        }
+
+        .smart-thermo-head {
+            align-items: center;
+            display: flex;
+            gap: .75rem;
+            justify-content: space-between;
+        }
+
+        .smart-thermo-score {
+            color: #0f172a;
+            font-size: .82rem;
+            font-weight: 600;
+        }
+
+        .smart-thermo-track {
+            background: #eef2f7;
+            border-radius: 999px;
+            height: .55rem;
+            overflow: hidden;
+        }
+
+        .smart-thermo-fill {
+            background: #2563eb;
+            border-radius: inherit;
+            display: block;
+            height: 100%;
+            transition: width .2s ease;
+        }
+
+        .smart-thermo-fill.is-warm { background: #f97316; }
+        .smart-thermo-fill.is-hot { background: #dc2626; }
+        .smart-thermo-fill.is-max { background: #b91c1c; }
+
+        .smart-thermo-state {
+            border-radius: .375rem;
+            font-size: .7rem;
+            font-weight: 500;
+            padding: .25rem .45rem;
+        }
+
+        .smart-thermo-state.is-cold { background: #eff6ff; color: #1d4ed8; }
+        .smart-thermo-state.is-warm { background: #fff7ed; color: #c2410c; }
+        .smart-thermo-state.is-hot,
+        .smart-thermo-state.is-max { background: #fef2f2; color: #b91c1c; }
+
+        .smart-milestones {
+            display: grid;
+            gap: .45rem;
+            margin: .15rem 0 0;
+            padding-left: 1rem;
+        }
+
+        .smart-milestones li {
+            color: #334155;
+            font-size: .82rem;
+            line-height: 1.45;
+        }
+
+        @media (max-width: 760px) {
+            .smart-drawer {
+                width: 100%;
+            }
+        }
+
+        .dark .smart-drawer {
+            background: #0f172a;
+            border-left-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-drawer-header {
+            border-bottom-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-drawer-close {
+            background: rgba(15, 23, 42, .86);
+            border-color: rgba(148, 163, 184, .18);
+            color: #94a3b8;
+        }
+
+        .dark .smart-drawer-close:hover {
+            background: rgba(30, 41, 59, .86);
+            color: #f1f5f9;
+        }
+
+        .dark .smart-drawer-title {
+            color: #f1f5f9;
+        }
+
+        .dark .smart-drawer-body {
+            background: #0f172a;
+        }
+
+        .dark .smart-drawer-card {
+            background: rgba(15, 23, 42, .86);
+            border-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-drawer-card-title {
+            color: #e2e8f0;
+        }
+
+        .dark .smart-drawer-card-text {
+            color: #cbd5e1;
+        }
+
+        .dark .smart-drawer-card.is-ai {
+            background: linear-gradient(180deg, rgba(29, 78, 216, .18), rgba(15, 23, 42, .86));
+            border-color: rgba(96, 165, 250, .24);
+        }
+
+        .dark .smart-drawer-timeline-item strong {
+            color: #e2e8f0;
+        }
+
+        .dark .smart-drawer-timeline-item span {
+            color: #94a3b8;
+        }
+
+        .dark .smart-thermo-score,
+        .dark .smart-milestones li {
+            color: #cbd5e1;
+        }
+
+        .dark .smart-thermo-track {
+            background: rgba(148, 163, 184, .18);
         }
 
         .smart-card {
@@ -895,8 +1135,7 @@
             @endforeach
         </div>
 
-        <div class="smart-split-view">
-        <div class="smart-grid smart-list-column">
+        <div class="smart-list-column">
             @forelse ($comments as $comment)
                 @php
                     $risk = $comment->reputation_risk?->value ?? 'low';
@@ -1059,96 +1298,156 @@
             @endforelse
         </div>
 
-        <div class="smart-detail-column">
-            @if ($selectedComment)
-                <section class="smart-command-panel">
-                    <div class="smart-command-kicker">Conversacion / Detalle</div>
-                    <h3>{{ $selectedComment->author_username ? '@' . $selectedComment->author_username : ($selectedComment->author_name ?: 'Lead seleccionado') }}</h3>
-                    <p class="smart-command-text">{{ $selectedComment->comment_text }}</p>
-
-                    <div class="smart-panels" style="margin-top: .85rem;">
-                        <section class="smart-panel">
-                            <h3>Respuesta sugerida actual</h3>
-                            <p>{{ $selectedComment->suggested_reply ?: 'Sin respuesta base. Usa la accion IA para generar una respuesta con historial.' }}</p>
-                        </section>
-                        <section class="smart-panel">
-                            <h3>Seguimiento comercial</h3>
-                            <p><strong>Estado:</strong> {{ $selectedComment->conversion_status?->label() ?? 'Sin estado' }}</p>
-                            <p class="smart-muted"><strong>Pipeline:</strong> {{ $selectedComment->pipeline_stage?->label() ?? 'Sin etapa' }}</p>
-                            <p class="smart-muted"><strong>Valor:</strong> ${{ number_format((float) $selectedComment->estimated_value, 2) }}</p>
-                        </section>
-                    </div>
-
-                    <div class="smart-actions" style="margin-top: .85rem;">
-                        <button class="smart-action success" type="button" wire:click="suggestHistoricalReply({{ $selectedComment->id }})">
-                            Sugerir respuesta basada en historial
-                        </button>
-                        <a class="smart-action muted" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Ver caso completo</a>
-                    </div>
-                </section>
-
-                @if ($historicalSuggestionCommentId === $selectedComment->id && filled($historicalReplySuggestion))
-                    <section class="smart-command-panel">
-                        <div class="smart-command-kicker">Gemini / auditoria</div>
-                        <h3>Sugerencia basada en historial</h3>
-                        <p class="smart-command-text">{{ $historicalReplySuggestion }}</p>
-                    </section>
-                @endif
-            @else
-                <section class="smart-command-panel">
-                    <h3>Selecciona un lead</h3>
-                    <p class="smart-command-text">Abre un comentario para ver conversacion, scoring, timeline y acciones comerciales.</p>
-                </section>
-            @endif
-        </div>
-
-        <aside class="smart-profile-column">
-            @if ($selectedComment)
-                <section class="smart-command-panel">
-                    <div class="smart-command-kicker">Mini CRM</div>
-                    <h3>{{ $selectedPatient?->full_name ?? 'Lead sin ficha clinica' }}</h3>
-                    <p class="smart-command-text">
-                        Score: {{ $selectedComment->interest_score ?? 0 }}
-                        @if (filled($selectedComment->hot_lead_at))
-                            \nHot lead desde {{ $selectedComment->hot_lead_at->diffForHumans() }}
-                        @endif
-                        @if (filled($selectedComment->reheated_at))
-                            \nRecalentado {{ $selectedComment->reheated_at->diffForHumans() }}
-                        @endif
-                    </p>
-                    <div class="smart-panels" style="margin-top: .85rem;">
-                        <section class="smart-panel">
-                            <h3>Procedimiento</h3>
-                            <p>{{ $selectedComment->suggestedProcedure?->name ?: 'Sin sugerencia' }}</p>
-                        </section>
-                        <section class="smart-panel">
-                            <h3>Alertas</h3>
-                            <p>{{ $selectedComment->leadAlerts?->whereNull('resolved_at')->count() ?: 0 }} abiertas</p>
-                        </section>
-                    </div>
-                </section>
-
-                <section class="smart-command-panel">
-                    <div class="smart-command-kicker">Pulso del cliente</div>
-                    <h3>Timeline reciente</h3>
-                    <div class="smart-timeline-mini">
-                        @forelse ($selectedTimeline as $event)
-                            <div class="smart-timeline-item">
-                                <strong>{{ $event['label'] }}</strong>
-                                <span>{{ $event['date'] }}{{ $event['duration'] ? ' / ' . $event['duration'] . 's' : '' }}</span>
-                            </div>
-                        @empty
-                            <p class="smart-muted">Sin eventos de Smart Link todavia.</p>
-                        @endforelse
-                    </div>
-                </section>
-            @endif
-        </aside>
-        </div>
-
         <div class="mt-5">
             {{ $comments->links() }}
         </div>
+
+        @if ($selectedComment)
+            @php
+                $drawerTimeline = $selectedTimeline;
+                $drawerPatient = $selectedPatient;
+                $engagementScore = (int) $selectedComment->recent_engagement_score;
+                $displayEngagementScore = min($engagementScore, 100);
+                $engagementState = match (true) {
+                    $engagementScore >= 100 => ['label' => 'Alta prioridad', 'class' => 'is-max'],
+                    $engagementScore >= 71 => ['label' => 'Caliente', 'class' => 'is-hot'],
+                    $engagementScore >= 31 => ['label' => 'Tibio', 'class' => 'is-warm'],
+                    default => ['label' => 'Frio', 'class' => 'is-cold'],
+                };
+            @endphp
+            <div class="smart-drawer-backdrop" wire:click="closeCommentDrawer"></div>
+
+            <aside class="smart-drawer" x-data @keydown.escape.window="$wire.closeCommentDrawer()">
+                <div class="smart-drawer-header">
+                    <button class="smart-drawer-close" type="button" wire:click="closeCommentDrawer" aria-label="Cerrar detalle">&times;</button>
+                    <div class="smart-drawer-title">
+                        {{ $selectedComment->author_username ? '@'.$selectedComment->author_username : ($selectedComment->author_name ?: 'Lead seleccionado') }}
+                    </div>
+                    <span class="smart-drawer-subtitle">
+                        {{ $selectedComment->platform->label() }} / {{ $selectedComment->conversion_status?->label() ?? 'Sin estado' }}
+                    </span>
+                </div>
+
+                <div class="smart-drawer-body">
+                    <section class="smart-drawer-card">
+                        <div class="smart-thermo-head">
+                            <div>
+                                <div class="smart-drawer-card-kicker">Termometro de Interes</div>
+                                <div class="smart-drawer-card-title">Intensidad reciente</div>
+                            </div>
+                            <span class="smart-thermo-state {{ $engagementState['class'] }}">{{ $engagementState['label'] }}</span>
+                        </div>
+
+                        <div class="smart-thermo-track" aria-label="Intensidad reciente {{ $displayEngagementScore }} de 100">
+                            <span class="smart-thermo-fill {{ $engagementState['class'] }}" style="width: {{ $displayEngagementScore }}%"></span>
+                        </div>
+
+                        <div class="smart-thermo-score">
+                            Score reciente: {{ $engagementScore }}
+                            @if ($selectedComment->engagement_priority_reason)
+                                <span class="smart-drawer-muted">/ {{ $selectedComment->engagement_priority_reason }}</span>
+                            @endif
+                        </div>
+
+                        <div class="smart-drawer-card-kicker">Hitos recientes</div>
+                        @if ($selectedMilestones !== [])
+                            <ul class="smart-milestones">
+                                @foreach ($selectedMilestones as $milestone)
+                                    <li>{{ $milestone }}</li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="smart-drawer-card-text smart-drawer-muted">Sin hitos recientes de alta intensidad.</p>
+                        @endif
+                    </section>
+
+                    {{-- Card 1: Conversacion Detalle --}}
+                    <section class="smart-drawer-card is-accent">
+                        <div class="smart-drawer-card-kicker">Conversacion / Detalle</div>
+                        <p class="smart-drawer-card-text">"{{ $selectedComment->comment_text }}"</p>
+
+                        <div class="smart-panels" style="margin-top:.5rem">
+                            <section class="smart-panel">
+                                <h3>Respuesta sugerida actual</h3>
+                                <p>{{ $selectedComment->suggested_reply ?: 'Sin respuesta base. Usa la accion IA para generar una respuesta con historial.' }}</p>
+                                @if ($selectedComment->ai_reason)
+                                    <p class="smart-muted" style="margin-top:.4rem">Motivo: {{ $selectedComment->ai_reason }}</p>
+                                @endif
+                            </section>
+                            <section class="smart-panel">
+                                <h3>Seguimiento comercial</h3>
+                                <p><strong>Estado:</strong> {{ $selectedComment->conversion_status?->label() ?? 'Sin estado' }}</p>
+                                <p class="smart-muted"><strong>Pipeline:</strong> {{ $selectedComment->pipeline_stage?->label() ?? 'Sin etapa' }}</p>
+                                <p class="smart-muted"><strong>Valor:</strong> ${{ number_format((float) $selectedComment->estimated_value, 2) }}</p>
+                            </section>
+                        </div>
+
+                        <div class="smart-drawer-actions">
+                            <button class="smart-action success" type="button" wire:click="suggestHistoricalReply({{ $selectedComment->id }})">
+                                Sugerir respuesta basada en historial
+                            </button>
+                            <a class="smart-action muted" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Ver caso completo</a>
+                        </div>
+                    </section>
+
+                    @if ($historicalSuggestionCommentId === $selectedComment->id && filled($historicalReplySuggestion))
+                        <section class="smart-drawer-card is-ai">
+                            <div class="smart-drawer-card-kicker">Gemini / auditoria</div>
+                            <div class="smart-drawer-card-title">Sugerencia basada en historial</div>
+                            <p class="smart-drawer-card-text">{{ $historicalReplySuggestion }}</p>
+                        </section>
+                    @endif
+
+                    {{-- Card 2: Mini CRM --}}
+                    <section class="smart-drawer-card">
+                        <div class="smart-drawer-card-kicker">Mini CRM</div>
+                        <div class="smart-drawer-card-title">{{ $drawerPatient?->full_name ?? 'Lead sin ficha clinica' }}</div>
+                        <p class="smart-drawer-card-text">
+                            Score: {{ $selectedComment->interest_score ?? 0 }}
+                            @if (filled($selectedComment->hot_lead_at))
+                                / Hot lead desde {{ $selectedComment->hot_lead_at->diffForHumans() }}
+                            @endif
+                            @if (filled($selectedComment->reheated_at))
+                                / Recalentado {{ $selectedComment->reheated_at->diffForHumans() }}
+                            @endif
+                        </p>
+                        <div class="smart-panels" style="margin-top:.3rem">
+                            <section class="smart-panel">
+                                <h3>Procedimiento</h3>
+                                <p>{{ $selectedComment->suggestedProcedure?->name ?: 'Sin sugerencia' }}</p>
+                            </section>
+                            <section class="smart-panel">
+                                <h3>Alertas</h3>
+                                <p>{{ $selectedComment->leadAlerts?->whereNull('resolved_at')->count() ?: 0 }} abiertas</p>
+                            </section>
+                        </div>
+                        <div class="smart-drawer-actions">
+                            @if ($drawerPatient)
+                                <a class="smart-action primary" href="{{ \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $drawerPatient]) }}">Ver ficha</a>
+                            @else
+                                <a class="smart-action primary" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Crear ficha</a>
+                            @endif
+                        </div>
+                    </section>
+
+                    {{-- Card 3: Pulso del Cliente --}}
+                    <section class="smart-drawer-card">
+                        <div class="smart-drawer-card-kicker">Pulso del cliente</div>
+                        <div class="smart-drawer-card-title">Timeline reciente</div>
+                        <div class="smart-drawer-timeline">
+                            @forelse ($drawerTimeline as $event)
+                                <div class="smart-drawer-timeline-item">
+                                    <strong>{{ $event['label'] }}</strong>
+                                    <span>{{ $event['date'] }}{{ $event['duration'] ? ' / '.$event['duration'].'s' : '' }}</span>
+                                </div>
+                            @empty
+                                <p class="smart-drawer-muted">Sin eventos de Smart Link todavia.</p>
+                            @endforelse
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        @endif
 
         @if ($whatsappModalOpen)
             <div class="smart-modal-backdrop" wire:key="whatsapp-bridge-modal">

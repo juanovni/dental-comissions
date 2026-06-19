@@ -918,8 +918,16 @@
                 });
             });
 
+            document.querySelectorAll('.sp-btn:not([data-whatsapp-link])').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const duration = Math.round((Date.now() - startedAt) / 1000);
+                    send('button_click', duration, { label: button.textContent.trim(), source: 'smart_link_button' });
+                });
+            });
+
             document.querySelectorAll('video').forEach((video) => {
                 const reached = new Set();
+                let lastVideoSecondsSent = 0;
                 const progressBar = video.closest('.sp-media, .sp-result-card')?.querySelector('[data-video-progress]');
 
                 const mark = (eventType, progress = null) => {
@@ -931,6 +939,20 @@
                     send(eventType, Math.round((Date.now() - startedAt) / 1000), {
                         source: 'video',
                         progress,
+                        duration: Number.isFinite(video.duration) ? Math.round(video.duration) : null,
+                    });
+                };
+
+                const markPlaySeconds = () => {
+                    const seconds = Math.round(video.currentTime || 0);
+
+                    if (seconds < 10 || seconds - lastVideoSecondsSent < 15) {
+                        return;
+                    }
+
+                    lastVideoSecondsSent = seconds;
+                    send('video_play_seconds', seconds, {
+                        source: 'video',
                         duration: Number.isFinite(video.duration) ? Math.round(video.duration) : null,
                     });
                 };
@@ -950,6 +972,7 @@
                     if (progress >= 25) mark('video_25', progress);
                     if (progress >= 50) mark('video_50', progress);
                     if (progress >= 75) mark('video_75', progress);
+                    markPlaySeconds();
                 });
                 video.addEventListener('ended', () => {
                     if (progressBar) {
@@ -957,6 +980,8 @@
                     }
 
                     mark('video_complete', 100);
+                    lastVideoSecondsSent = 0;
+                    markPlaySeconds();
                 });
             });
 

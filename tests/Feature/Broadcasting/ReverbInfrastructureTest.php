@@ -39,6 +39,29 @@ class ReverbInfrastructureTest extends TestCase
             ->assertJsonStructure(['auth']);
     }
 
+    public function test_user_notification_channel_only_accepts_the_same_authenticated_user(): void
+    {
+        config(['broadcasting.default' => 'reverb']);
+
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson('/broadcasting/auth', [
+                'socket_id' => '1234.5678',
+                'channel_name' => "private-App.Models.User.{$user->id}",
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['auth']);
+
+        $this->actingAs($user)
+            ->postJson('/broadcasting/auth', [
+                'socket_id' => '1234.5678',
+                'channel_name' => "private-App.Models.User.{$otherUser->id}",
+            ])
+            ->assertForbidden();
+    }
+
     public function test_lead_activity_detected_uses_private_admin_channel_and_minimal_payload(): void
     {
         $comment = new SocialComment([
@@ -62,6 +85,12 @@ class ReverbInfrastructureTest extends TestCase
             'tracking_token' => 'DNT-TEST',
             'event_type' => 'whatsapp_click',
             'interest_score' => 85,
+            'recent_engagement_score' => 0,
+            'last_engagement_at' => null,
+            'engagement_event_count_1h' => 0,
+            'engagement_event_count_24h' => 0,
+            'last_engagement_event_type' => null,
+            'engagement_priority_reason' => null,
             'hot_lead' => true,
             'created_at' => $linkEvent->created_at?->toISOString(),
         ], $event->broadcastWith());

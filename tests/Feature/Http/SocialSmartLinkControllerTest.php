@@ -115,6 +115,55 @@ class SocialSmartLinkControllerTest extends TestCase
         ]);
     }
 
+    public function test_recent_engagement_score_is_recorded_without_visual_cap(): void
+    {
+        $comment = $this->socialComment('DNT-ENG01');
+
+        foreach (range(1, 4) as $index) {
+            $this->withSession(['_token' => 'test-csrf-token'])->postJson(route('social-smart-link.track', ['trackingToken' => $comment->tracking_token]), [
+                'event_type' => 'whatsapp_click',
+                'session_id' => 'session-engagement',
+                'duration_seconds' => 20 + $index,
+            ], ['X-CSRF-TOKEN' => 'test-csrf-token'])->assertOk();
+        }
+
+        $comment->refresh();
+
+        $this->assertGreaterThan(100, $comment->recent_engagement_score);
+        $this->assertSame(4, $comment->engagement_event_count_1h);
+        $this->assertSame(4, $comment->engagement_event_count_24h);
+        $this->assertSame('whatsapp_click', $comment->last_engagement_event_type);
+        $this->assertNotNull($comment->last_engagement_at);
+    }
+
+    public function test_button_click_and_video_play_seconds_are_recorded(): void
+    {
+        $comment = $this->socialComment('DNT-ENG02');
+
+        $this->withSession(['_token' => 'test-csrf-token'])->postJson(route('social-smart-link.track', ['trackingToken' => $comment->tracking_token]), [
+            'event_type' => 'button_click',
+            'session_id' => 'session-button',
+            'duration_seconds' => 12,
+            'metadata' => ['label' => 'Ver primera visita'],
+        ], ['X-CSRF-TOKEN' => 'test-csrf-token'])->assertOk();
+
+        $this->withSession(['_token' => 'test-csrf-token'])->postJson(route('social-smart-link.track', ['trackingToken' => $comment->tracking_token]), [
+            'event_type' => 'video_play_seconds',
+            'session_id' => 'session-video',
+            'duration_seconds' => 45,
+        ], ['X-CSRF-TOKEN' => 'test-csrf-token'])->assertOk();
+
+        $this->assertDatabaseHas('social_link_events', [
+            'social_comment_id' => $comment->id,
+            'event_type' => 'button_click',
+        ]);
+        $this->assertDatabaseHas('social_link_events', [
+            'social_comment_id' => $comment->id,
+            'event_type' => 'video_play_seconds',
+        ]);
+        $this->assertGreaterThan(0, $comment->refresh()->recent_engagement_score);
+    }
+
     private function socialComment(string $token): SocialComment
     {
         $account = SocialAccount::create([

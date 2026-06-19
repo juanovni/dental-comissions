@@ -207,6 +207,30 @@ class SocialInboxTest extends TestCase
             ->assertSet('selectedCommentId', $comment->id);
     }
 
+    public function test_social_inbox_prioritizes_recent_engagement_and_shows_thermometer(): void
+    {
+        $hot = $this->socialComment([
+            'comment_text' => 'Lead con actividad intensa',
+            'recent_engagement_score' => 145,
+            'last_engagement_at' => now(),
+            'engagement_priority_reason' => 'Completo el video hace 2 minutos',
+        ]);
+        $cold = $this->socialComment([
+            'comment_text' => 'Lead nuevo sin actividad',
+            'recent_engagement_score' => 10,
+            'last_engagement_at' => now()->subHour(),
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialInbox::class)
+            ->set('filter', 'leads')
+            ->assertSeeInOrder([$hot->comment_text, $cold->comment_text])
+            ->call('selectComment', $hot->id)
+            ->assertSee('Termometro de Interes')
+            ->assertSee('Alta prioridad')
+            ->assertSee('Score reciente: 145');
+    }
+
     public function test_historical_reply_suggestion_is_audited(): void
     {
         $comment = $this->socialComment([
@@ -222,6 +246,7 @@ class SocialInboxTest extends TestCase
 
         Livewire::actingAs(User::factory()->create())
             ->test(SocialInbox::class)
+            ->call('selectComment', $comment->id)
             ->call('suggestHistoricalReply', $comment->id)
             ->assertSet('historicalSuggestionCommentId', $comment->id)
             ->assertSee('Sugerencia basada en historial');
