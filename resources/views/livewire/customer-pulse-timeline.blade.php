@@ -380,7 +380,7 @@
 
         <button
             class="pulse-btn pulse-btn-ai {{ $this->analyzing ? 'is-loading' : '' }}"
-            wire:click="analyzeBehavior"
+            wire:click="$dispatchTo('customer-pulse-timeline', 'analyze-customer-pulse')"
             wire:loading.attr="disabled"
         >
             @if ($this->analyzing)

@@ -159,6 +159,7 @@ class SocialComment extends Model
         $query = self::query()
             ->selectRaw('pipeline_stage, count(*) as total_count, coalesce(sum(estimated_value), 0) as total_value')
             ->whereNotNull('pipeline_stage')
+            ->where('is_hidden', false)
             ->groupBy('pipeline_stage');
 
         if ($stage) {

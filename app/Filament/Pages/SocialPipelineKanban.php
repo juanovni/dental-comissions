@@ -58,7 +58,7 @@ class SocialPipelineKanban extends Page
         return SocialComment::query()
             ->with(['socialIdentity.patient', 'socialAccount', 'suggestedProcedure'])
             ->where('pipeline_stage', $stage)
-            ->whereNull('is_hidden')
+            ->where('is_hidden', false)
             ->when($this->search, fn (Builder $q) => $q->where(function (Builder $q): void {
                 $q->where('comment_text', 'ilike', "%{$this->search}%")
                     ->orWhere('author_name', 'ilike', "%{$this->search}%")
@@ -86,6 +86,7 @@ class SocialPipelineKanban extends Page
         $counts = SocialComment::query()
             ->selectRaw('pipeline_stage, count(*) as cnt')
             ->whereNotNull('pipeline_stage')
+            ->where('is_hidden', false)
             ->groupBy('pipeline_stage')
             ->pluck('cnt', 'pipeline_stage')
             ->toArray();

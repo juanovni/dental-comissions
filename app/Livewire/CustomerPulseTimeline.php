@@ -6,6 +6,7 @@ use App\Models\SocialComment;
 use App\Models\SocialLinkEvent;
 use App\Services\GeminiJsonService;
 use App\Services\SocialLinkEventMapper;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class CustomerPulseTimeline extends Component
@@ -69,6 +70,7 @@ class CustomerPulseTimeline extends Component
         $this->sortOrder = $this->sortOrder === 'newest' ? 'oldest' : 'newest';
     }
 
+    #[On('analyze-customer-pulse')]
     public function analyzeBehavior(): void
     {
         $this->analyzing = true;
