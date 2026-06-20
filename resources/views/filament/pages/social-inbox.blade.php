@@ -763,8 +763,17 @@
             transition: background-color .14s ease, border-color .14s ease, color .14s ease;
         }
 
+        .smart-action svg {
+            height: .9rem;
+            width: .9rem;
+        }
+
+        .smart-action.with-icon {
+            gap: .35rem;
+        }
+
         .smart-action:hover { background: #f9fafb; border-color: #d1d5db; color: #111827; }
-        .smart-action.primary { background: #000000; border-color: #000000; color: #ffffff; }
+        /* .smart-action.primary { background: #000000; border-color: #000000; color: #ffffff; } */
         .smart-action.primary:hover { background: #1a1a1a; border-color: #1a1a1a; color: #ffffff; }
         .smart-action.success { background: #0f766e; color: white; }
         .smart-action.success:hover { background: #0d6b63; }
@@ -772,6 +781,13 @@
         .smart-action.danger { background: #ffffff; border-color: #fecaca; color: #b91c1c; }
         .smart-action.muted { background: #ffffff; border-color: #e5e7eb; color: #475569; }
         .smart-action.muted:hover { background: #f9fafb; border-color: #d1d5db; color: #374151; }
+
+        .smart-section-head {
+            align-items: flex-start;
+            display: flex;
+            gap: .75rem;
+            justify-content: space-between;
+        }
 
         .smart-trigger {
             align-items: center;
@@ -979,6 +995,13 @@
             display: grid;
             gap: 1rem;
             grid-template-columns: minmax(0, 1fr);
+        }
+
+        .smart-modal-footer {
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            padding-top: .75rem;
         }
 
         @media (min-width: 980px) {
@@ -1242,6 +1265,10 @@
 
         .dark .smart-modal-section.is-soft {
             background: rgba(15, 23, 42, .4);
+        }
+
+        .dark .smart-modal-footer {
+            border-top-color: rgba(148, 163, 184, .14);
         }
 
         .dark .smart-modal-close {
@@ -1750,9 +1777,20 @@
                             </section>
 
                             <section class="smart-modal-section">
-                                <div>
-                                    <div class="smart-preview-kicker">Texto final para copiar y responder</div>
-                                    <p class="smart-preview-copy">Mensaje listo para copiar y responder al comentario.</p>
+                                <div class="smart-section-head">
+                                    <div>
+                                        <div class="smart-preview-kicker">Texto final para copiar y responder</div>
+                                        <p class="smart-preview-copy">Mensaje listo para copiar y responder al comentario.</p>
+                                    </div>
+
+                                    @if ($whatsappGenerated)
+                                        <button class="smart-action with-icon" type="button" x-data @click="copySmartField(@js($whatsappReplyText), 'Texto copiado')">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125v-9.75c0-.621.504-1.125 1.125-1.125H8.25m7.5 7.5h3.375c.621 0 1.125-.504 1.125-1.125v-9.75c0-.621-.504-1.125-1.125-1.125h-9.75A1.125 1.125 0 0 0 8.25 6.375v3.375" />
+                                            </svg>
+                                            <span>Copiar texto</span>
+                                        </button>
+                                    @endif
                                 </div>
 
                                 @if ($whatsappGenerated)
@@ -1764,14 +1802,6 @@
                                 @endif
                             </section>
 
-                            <div class="smart-actions">
-                                <button class="smart-action primary" type="button" wire:click="confirmWhatsappRouting">
-                                    {{ $whatsappGenerated ? 'Actualizar seguimiento' : 'Generar seguimiento' }}
-                                </button>
-                                @if ($whatsappGenerated)
-                                    <button class="smart-action" type="button" x-data @click="copySmartField(@js($whatsappReplyText), 'Texto copiado')">Copiar texto</button>
-                                @endif
-                            </div>
                         </div>
 
                         <div class="smart-modal-column">
@@ -1822,6 +1852,12 @@
 
                         </div>
                     </div>
+
+                    <footer class="smart-modal-footer">
+                        <button class="smart-action primary" type="button" wire:click="confirmWhatsappRouting">
+                            {{ $whatsappGenerated ? 'Actualizar seguimiento' : 'Generar seguimiento' }}
+                        </button>
+                    </footer>
                 </section>
             </div>
         @endif
