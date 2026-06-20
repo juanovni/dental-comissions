@@ -748,19 +748,24 @@
 
         .smart-action {
             align-items: center;
-            border: 1px solid transparent;
-            border-radius: .5rem;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .45rem;
+            color: #111827;
             display: inline-flex;
-            font-size: .78rem;
+            font-size: .76rem;
             font-weight: 500;
+            justify-content: center;
             line-height: 1;
-            padding: .5rem .75rem;
-            transition: background .14s ease, border-color .14s ease, color .14s ease;
+            min-height: 2rem;
+            padding: .38rem .65rem;
+            text-decoration: none;
+            transition: background-color .14s ease, border-color .14s ease, color .14s ease;
         }
 
-        .smart-action:hover { background: #f9fafb; }
-        .smart-action.primary { background: #1d7afc; color: white; }
-        .smart-action.primary:hover { background: #1a6fd4; }
+        .smart-action:hover { background: #f9fafb; border-color: #d1d5db; color: #111827; }
+        .smart-action.primary { background: #000000; border-color: #000000; color: #ffffff; }
+        .smart-action.primary:hover { background: #1a1a1a; border-color: #1a1a1a; color: #ffffff; }
         .smart-action.success { background: #0f766e; color: white; }
         .smart-action.success:hover { background: #0d6b63; }
         .smart-action.warning { background: #ffffff; border-color: #fed7aa; color: #b45309; }
@@ -1033,7 +1038,7 @@
 
         .smart-copy-icon {
             align-items: center;
-            background: transparent;
+            background-color: #ffffff;
             border: 0;
             border-radius: .375rem;
             color: #64748b;
@@ -1760,11 +1765,11 @@
                             </section>
 
                             <div class="smart-actions">
-                                <button class="smart-action success" type="button" wire:click="confirmWhatsappRouting">
-                                    {{ $whatsappGenerated ? 'Actualizar y copiar texto' : 'Generar seguimiento' }}
+                                <button class="smart-action primary" type="button" wire:click="confirmWhatsappRouting">
+                                    {{ $whatsappGenerated ? 'Actualizar seguimiento' : 'Generar seguimiento' }}
                                 </button>
                                 @if ($whatsappGenerated)
-                                    <button class="smart-action primary" type="button" x-data @click="copySmartField(@js($whatsappReplyText), 'Texto copiado')">Copiar texto</button>
+                                    <button class="smart-action" type="button" x-data @click="copySmartField(@js($whatsappReplyText), 'Texto copiado')">Copiar texto</button>
                                 @endif
                             </div>
                         </div>
