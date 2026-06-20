@@ -7,7 +7,9 @@
     @endphp
 
     <style>
-        .pipeline-kanban {
+        .pipeline-kanban,
+        .kanban-detail-panel,
+        .kanban-modal {
             --pk-accent: #1d7afc;
             --pk-ink: #0f172a;
             --pk-muted: #64748b;
@@ -292,16 +294,18 @@
             background: #e5e7eb;
             border-radius: 999px;
             display: block;
-            height: .25rem;
+            height: .2rem;
             overflow: hidden;
             width: 100%;
         }
 
         .kanban-score-fill {
-            background: var(--pk-accent);
+            background: #1d7afc;
             border-radius: inherit;
+            display: block;
             height: 100%;
-            transition: width .25s ease;
+            min-width: 2px;
+            transition: width .14s ease;
         }
 
         .kanban-score-fill.temp-cold { background: #2563eb; }
@@ -688,7 +692,9 @@
             color: #ffffff;
         }
 
-        .dark .pipeline-kanban {
+        .dark .pipeline-kanban,
+        .dark .kanban-detail-panel,
+        .dark .kanban-modal {
             --pk-column-bg: rgba(15, 23, 42, .72);
             --pk-card-bg: rgba(15, 23, 42, .86);
             --pk-border: rgba(148, 163, 184, .16);

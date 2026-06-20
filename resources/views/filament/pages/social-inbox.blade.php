@@ -3,12 +3,12 @@
         $stats = $this->stats();
         $comments = $this->comments();
         $filters = [
-            'leads' => ['label' => 'Leads', 'icon' => '🔥', 'count' => $stats['leads']],
-            'crisis' => ['label' => 'Crisis', 'icon' => '🚨', 'count' => $stats['crisis']],
-            'vip' => ['label' => 'Pacientes VIP', 'icon' => '🏥', 'count' => $stats['vip']],
-            'medical' => ['label' => 'Atencion Medica', 'icon' => '🩺', 'count' => $stats['medical']],
-            'all' => ['label' => 'Activos', 'icon' => '🔍', 'count' => $stats['all']],
-            'archived' => ['label' => 'Archivados', 'icon' => '📦', 'count' => $stats['archived']],
+            'leads' => ['label' => 'Leads', 'icon' => 'user-plus', 'count' => $stats['leads']],
+            'crisis' => ['label' => 'Crisis', 'icon' => 'exclamation-triangle', 'count' => $stats['crisis']],
+            'vip' => ['label' => 'Pacientes VIP', 'icon' => 'star', 'count' => $stats['vip']],
+            'medical' => ['label' => 'Atencion Medica', 'icon' => 'heart', 'count' => $stats['medical']],
+            'all' => ['label' => 'Activos', 'icon' => 'magnifying-glass', 'count' => $stats['all']],
+            'archived' => ['label' => 'Archivados', 'icon' => 'archive-box', 'count' => $stats['archived']],
         ];
         $selectedComment = $this->selectedComment();
         $selectedPatient = $selectedComment?->socialIdentity?->patient ?: $selectedComment?->convertedPatient;
@@ -76,11 +76,11 @@
             border: 0;
             border-bottom: 2px solid transparent;
             border-radius: 0;
-            color: #334155;
+            color: #4b5563;
             display: inline-flex;
-            font-size: .84rem;
-            font-weight: 700;
-            gap: .4rem;
+            font-size: .82rem;
+            font-weight: 500;
+            gap: .3rem;
             margin-bottom: -1px;
             padding: .65rem .05rem .8rem;
             transition: border-color .18s ease, color .18s ease;
@@ -96,26 +96,30 @@
         }
 
         .smart-filter-icon {
-            font-size: .9rem;
-            line-height: 1;
+            color: #9ca3af;
+            display: inline-flex;
+            height: 1rem;
+            width: 1rem;
+            transition: color .18s ease;
+        }
+
+        .smart-filter-icon svg {
+            height: 1rem;
+            width: 1rem;
+        }
+
+        .smart-filter.is-active .smart-filter-icon {
+            color: var(--inbox-accent);
         }
 
         .smart-filter-count {
-            align-items: center;
-            background: #f1f5f9;
-            border-radius: 999px;
-            color: #64748b;
-            display: inline-flex;
-            font-size: .72rem;
-            font-weight: 800;
-            height: 1.25rem;
-            justify-content: center;
-            min-width: 1.25rem;
-            padding: 0 .38rem;
+            color: #9ca3af;
+            font-size: .7rem;
+            font-weight: 500;
+            transition: color .18s ease;
         }
 
         .smart-filter.is-active .smart-filter-count {
-            background: color-mix(in oklch, var(--inbox-accent) 16%, white);
             color: var(--inbox-accent);
         }
 
@@ -132,6 +136,7 @@
         }
 
         .smart-grid {
+            align-items: start;
             display: grid;
             gap: 1rem;
             grid-template-columns: minmax(0, 1fr);
@@ -237,7 +242,7 @@
             font-size: .92rem;
             font-weight: 700;
             min-width: 0;
-            overflow: hidden;
+            overflow: visible;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
@@ -470,18 +475,22 @@
             background: var(--inbox-card);
             border: 1px solid #e5e7eb;
             border-top: 4px solid #14b8a6;
-            border-radius: 1rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 18px 50px -48px rgba(15, 23, 42, .65);
+            border-radius: .75rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .06);
             display: grid;
             gap: .9rem;
-            overflow: hidden;
+            overflow: visible;
             padding: clamp(1rem, 1.5vw, 1.2rem);
             position: relative;
-            transition: border-color .18s ease, box-shadow .18s ease;
+            transition: border-color .14s ease, box-shadow .14s ease;
         }
 
         .smart-card:hover {
             box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
+        }
+
+        .smart-card:has(.smart-dropdown[open]) {
+            z-index: 30;
         }
 
         .smart-card.intent-crisis {
@@ -531,7 +540,7 @@
 
         .smart-card.is-selected {
             border-color: #0f766e;
-            box-shadow: 0 0 0 2px rgba(20, 184, 166, .18), 0 18px 60px -52px rgba(15, 23, 42, .9);
+            box-shadow: 0 0 0 2px rgba(20, 184, 166, .18), 0 2px 8px rgba(15, 23, 42, .08);
         }
 
         .smart-card.is-live {
@@ -565,7 +574,7 @@
             display: flex;
             flex: 0 0 auto;
             font-size: .9rem;
-            font-weight: 850;
+            font-weight: 700;
             height: 2.85rem;
             justify-content: center;
             text-transform: uppercase;
@@ -580,7 +589,7 @@
         .smart-user {
             color: var(--inbox-ink);
             font-size: 1rem;
-            font-weight: 800;
+            font-weight: 600;
             line-height: 1.15;
             overflow-wrap: anywhere;
         }
@@ -589,22 +598,24 @@
         .smart-time {
             color: var(--inbox-muted);
             font-size: .78rem;
-            font-weight: 700;
+            font-weight: 500;
             margin-top: .25rem;
         }
 
         .smart-badges {
+            align-items: center;
             display: flex;
             flex-wrap: wrap;
-            gap: .4rem;
+            gap: .3rem;
+            justify-content: flex-end;
         }
 
         .smart-badge {
             border-radius: 999px;
-            font-size: .68rem;
-            font-weight: 800;
-            letter-spacing: .02em;
-            padding: .34rem .52rem;
+            font-size: .625rem;
+            font-weight: 600;
+            letter-spacing: .03em;
+            padding: .175rem .4rem;
             text-transform: uppercase;
         }
 
@@ -623,116 +634,32 @@
             color: #92400e;
             display: flex;
             font-size: .8rem;
-            font-weight: 850;
+            font-weight: 700;
             gap: .45rem;
             padding: .55rem .7rem;
         }
 
-        .smart-stepper {
+        .smart-progress {
             align-items: center;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: .75rem;
-            display: grid;
-            gap: 0;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            list-style: none;
-            margin: 0;
-            overflow: hidden;
-            padding: .55rem .6rem;
-        }
-
-        .smart-step {
-            align-items: center;
-            color: #64748b;
             display: flex;
-            font-size: .73rem;
-            font-weight: 700;
-            gap: .42rem;
-            min-width: 0;
-            position: relative;
+            gap: .3rem;
         }
 
-        .smart-step:not(:last-child)::after {
-            background: #e5e7eb;
-            content: '';
-            height: 1px;
-            left: calc(1.45rem + .55rem);
-            position: absolute;
-            right: .65rem;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 0;
-        }
-
-        .smart-step-number,
-        .smart-step-label {
-            position: relative;
-            z-index: 1;
-        }
-
-        .smart-step-number {
-            align-items: center;
-            background: #f8fafc;
-            border: 1px solid #dbe3ef;
+        .smart-dot {
+            background: #d1d5db;
             border-radius: 999px;
-            color: #475569;
-            display: inline-flex;
-            flex: 0 0 auto;
-            font-size: .68rem;
-            font-weight: 800;
-            height: 1.45rem;
-            justify-content: center;
-            width: 1.45rem;
+            height: .375rem;
+            transition: background .14s ease;
+            width: .375rem;
         }
 
-        .smart-step-label {
-            background: #ffffff;
-            overflow: hidden;
-            padding-right: .25rem;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .smart-step.is-active {
-            color: #1d4ed8;
-        }
-
-        .smart-step.is-active .smart-step-number {
-            background: #eff6ff;
-            border-color: #bfdbfe;
-            color: #1d4ed8;
-        }
-
-        .smart-step.is-complete {
-            color: #000000;
-        }
-
-        .smart-step.is-complete .smart-step-number {
-            background: #ecfdf5;
-            border-color: #99f6e4;
-            color: #000000;
-        }
-
-        .smart-step.is-complete:not(:last-child)::after {
-            background: #99f6e4;
-        }
-
-        @media (max-width: 760px) {
-            .smart-stepper {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                row-gap: .55rem;
-            }
-
-            .smart-step:nth-child(2)::after {
-                display: none;
-            }
-        }
+        .smart-dot.active { background: #3b82f6; }
+        .smart-dot.done { background: #10b981; }
 
         .smart-message {
             color: #111827;
-            font-size: clamp(.98rem, 1.35vw, 1.08rem);
-            font-weight: 650;
+            font-size: clamp(.898rem, 1.35vw, 0.875rem);
+            font-weight: 500;
             letter-spacing: -.015em;
             line-height: 1.5;
             padding: .2rem 0;
@@ -740,7 +667,7 @@
 
         .smart-panels {
             display: grid;
-            gap: .75rem;
+            gap: .5rem;
             grid-template-columns: minmax(0, 1fr);
         }
 
@@ -751,29 +678,46 @@
         }
 
         .smart-panel {
-            background: #f8fafc;
             border: 1px solid #e5e7eb;
-            border-radius: .85rem;
-            padding: .85rem;
+            border-radius: .625rem;
+            overflow: hidden;
         }
 
-        .smart-ai-panel {
-            background: linear-gradient(180deg, #eef6ff, #ffffff);
-            border-color: #bfdbfe;
-            box-shadow: inset 0 0 0 1px rgba(59, 130, 246, .04);
-        }
-
-        .smart-ai-panel h3 {
-            color: #1d4ed8;
+        .smart-panel:not(details) {
+            padding: .75rem .875rem;
         }
 
         .smart-panel h3 {
-            color: #475569;
-            font-size: .68rem;
-            font-weight: 950;
-            letter-spacing: .12em;
-            margin: 0 0 .5rem;
+            color: #0f172a;
+            font-size: .78rem;
+            font-weight: 700;
+            margin: 0 0 .45rem;
+        }
+
+        .smart-panel summary {
+            cursor: pointer;
+            font-size: .6875rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            list-style: none;
+            padding: .625rem .875rem;
             text-transform: uppercase;
+            color: #6b7280;
+        }
+
+        .smart-panel summary::-webkit-details-marker { display: none; }
+        .smart-panel summary::before { content: ''; }
+
+        .smart-panel[open] summary {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .smart-ai-panel summary {
+            color: #1d4ed8;
+        }
+
+        .smart-panel-body {
+            padding: .75rem .875rem;
         }
 
         .smart-panel-kicker {
@@ -783,10 +727,12 @@
             margin: -.25rem 0 .6rem;
         }
 
-        .smart-panel p,
-        .smart-panel strong {
+        .smart-panel-body p,
+        .smart-panel-body strong,
+        .smart-panel > p,
+        .smart-panel > strong {
             color: #0f172a;
-            font-size: .86rem;
+            font-size: .8125rem;
             line-height: 1.45;
             margin: 0;
         }
@@ -797,32 +743,125 @@
             display: flex;
             flex-wrap: wrap;
             gap: .5rem;
+            align-items: center;
         }
 
         .smart-action {
             align-items: center;
             border: 1px solid transparent;
-            border-radius: .55rem;
+            border-radius: .5rem;
             display: inline-flex;
             font-size: .78rem;
             font-weight: 500;
             line-height: 1;
-            padding: .58rem .78rem;
-            transition: background-color .14s ease, border-color .14s ease, color .14s ease, filter .14s ease;
+            padding: .5rem .75rem;
+            transition: background .14s ease, border-color .14s ease, color .14s ease;
         }
 
-        .smart-action:hover { filter: brightness(.98); }
+        .smart-action:hover { background: #f9fafb; }
         .smart-action.primary { background: #1d7afc; color: white; }
+        .smart-action.primary:hover { background: #1a6fd4; }
         .smart-action.success { background: #0f766e; color: white; }
+        .smart-action.success:hover { background: #0d6b63; }
         .smart-action.warning { background: #ffffff; border-color: #fed7aa; color: #b45309; }
         .smart-action.danger { background: #ffffff; border-color: #fecaca; color: #b91c1c; }
         .smart-action.muted { background: #ffffff; border-color: #e5e7eb; color: #475569; }
         .smart-action.muted:hover { background: #f9fafb; border-color: #d1d5db; color: #374151; }
 
-        .smart-empty {
+        .smart-trigger {
             align-items: center;
+            background: transparent;
+            border: 1px solid #e5e7eb;
+            border-radius: .5rem;
+            color: #6b7280;
+            cursor: pointer;
+            display: inline-flex;
+            font-size: 1.1rem;
+            font-weight: 500;
+            height: 2rem;
+            justify-content: center;
+            letter-spacing: .05em;
+            line-height: 1;
+            transition: all .14s ease;
+            width: 2rem;
+        }
+
+        .smart-trigger:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            color: #374151;
+        }
+
+        .smart-dropdown {
+            position: relative;
+        }
+
+        .smart-dropdown summary {
+            list-style: none;
+        }
+
+        .smart-dropdown summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .smart-dropdown[open] .smart-trigger {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            color: #374151;
+        }
+
+        .smart-dropdown-menu {
             background: #ffffff;
             border: 1px solid #e5e7eb;
+            border-radius: .75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+            min-width: 12rem;
+            padding: .375rem 0;
+            position: absolute;
+            right: 0;
+            top: calc(100% + .375rem);
+            z-index: 50;
+        }
+
+        .smart-dropdown-item {
+            align-items: center;
+            color: #1f2937;
+            cursor: pointer;
+            display: flex;
+            font-size: .8125rem;
+            font-weight: 500;
+            gap: .625rem;
+            padding: .5rem .875rem;
+            text-decoration: none;
+            transition: background .12s ease;
+            width: 100%;
+        }
+
+        .smart-dropdown-item:hover {
+            background: #f3f4f6;
+        }
+
+        .smart-dropdown-item.danger {
+            color: #dc2626;
+        }
+
+        .smart-dropdown-item.danger:hover {
+            background: #fef2f2;
+        }
+
+        .smart-dropdown-item svg {
+            color: #9ca3af;
+            flex-shrink: 0;
+            height: 1rem;
+            width: 1rem;
+        }
+
+        .smart-dropdown-item.danger svg {
+            color: #f87171;
+        }
+
+        .smart-empty {
+            align-items: center;
             border-radius: 1rem;
             box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
             color: #475569;
@@ -1043,53 +1082,70 @@
             margin-top: .45rem;
         }
 
-        .dark .smart-stepper,
-        .dark .smart-copy-field {
-            background: rgba(15, 23, 42, .86);
-            border-color: rgba(148, 163, 184, .18);
-            color: #cbd5e1;
+        .dark .smart-dot {
+            background: rgba(148, 163, 184, .25);
         }
 
-        .dark .smart-step {
+        .dark .smart-dot.active { background: #60a5fa; }
+        .dark .smart-dot.done { background: #34d399; }
+
+        .dark .smart-panel {
+            border-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-panel summary {
             color: #94a3b8;
         }
 
-        .dark .smart-step:not(:last-child)::after {
-            background: rgba(148, 163, 184, .2);
+        .dark .smart-panel h3 {
+            color: #e5e7eb;
         }
 
-        .dark .smart-step-label {
-            background: rgb(15, 23, 42);
+        .dark .smart-panel[open] summary {
+            border-bottom-color: rgba(148, 163, 184, .18);
         }
 
-        .dark .smart-step-number {
-            background: rgba(15, 23, 42, .9);
-            border-color: rgba(148, 163, 184, .22);
-            color: #cbd5e1;
-        }
-
-        .dark .smart-step.is-active {
+        .dark .smart-ai-panel summary {
             color: #93c5fd;
         }
 
-        .dark .smart-step.is-active .smart-step-number {
-            background: rgba(29, 78, 216, .24);
-            border-color: rgba(96, 165, 250, .32);
-            color: #93c5fd;
+        .dark .smart-panel-body p,
+        .dark .smart-panel-body strong,
+        .dark .smart-panel > p,
+        .dark .smart-panel > strong {
+            color: #e2e8f0;
         }
 
-        .dark .smart-step.is-complete {
-            color: #5eead4;
+        .dark .smart-dropdown-menu {
+            background: rgba(15, 23, 42, .95);
+            border-color: rgba(148, 163, 184, .18);
         }
 
-        .dark .smart-step.is-complete .smart-step-number {
-            background: rgba(20, 184, 166, .16);
-            border-color: rgba(45, 212, 191, .28);
-            color: #5eead4;
+        .dark .smart-dropdown-item {
+            color: #e2e8f0;
         }
 
-        .dark .smart-step.is-complete:not(:last-child)::after {
-            background: rgba(45, 212, 191, .32);
+        .dark .smart-dropdown-item:hover {
+            background: rgba(148, 163, 184, .12);
+        }
+
+        .dark .smart-dropdown-item.danger {
+            color: #f87171;
+        }
+
+        .dark .smart-dropdown-item.danger:hover {
+            background: rgba(239, 68, 68, .12);
+        }
+
+        .dark .smart-trigger {
+            border-color: rgba(148, 163, 184, .18);
+            color: #94a3b8;
+        }
+
+        .dark .smart-trigger:hover {
+            background: rgba(148, 163, 184, .12);
+            border-color: rgba(148, 163, 184, .28);
+            color: #e2e8f0;
         }
 
         .dark .smart-modal-note {
@@ -1129,14 +1185,35 @@
                     wire:click="setFilter('{{ $key }}')"
                     @class(['smart-filter', 'is-active' => $filter === $key])
                 >
-                    <span class="smart-filter-icon">{{ $item['icon'] }}</span>
+                    <span class="smart-filter-icon">
+                        @switch($item['icon'])
+                            @case('user-plus')
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" /></svg>
+                                @break
+                            @case('exclamation-triangle')
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                                @break
+                            @case('star')
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" /></svg>
+                                @break
+                            @case('heart')
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+                                @break
+                            @case('magnifying-glass')
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                                @break
+                            @case('archive-box')
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
+                                @break
+                        @endswitch
+                    </span>
                     <span>{{ $item['label'] }}</span>
-                    <strong class="smart-filter-count">{{ $item['count'] }}</strong>
+                    <span class="smart-filter-count">{{ $item['count'] }}</span>
                 </button>
             @endforeach
         </div>
 
-        <div class="smart-list-column">
+        <div class="smart-grid smart-list-column">
             @forelse ($comments as $comment)
                 @php
                     $risk = $comment->reputation_risk?->value ?? 'low';
@@ -1208,6 +1285,50 @@
                             @if ($isReheated)
                                 <span class="smart-badge hot">Recalentado</span>
                             @endif
+
+                            <details class="smart-dropdown">
+                                <summary class="smart-trigger" aria-label="Mas opciones">⋯</summary>
+                                <div class="smart-dropdown-menu">
+                                    @if ($patientUrl)
+                                        <a class="smart-dropdown-item" href="{{ $patientUrl }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                                            Ver ficha
+                                        </a>
+                                    @else
+                                        <a class="smart-dropdown-item" href="{{ $detailUrl }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                                            Crear ficha
+                                        </a>
+                                    @endif
+
+                                    <a class="smart-dropdown-item" href="{{ $detailUrl }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                        Detalle
+                                    </a>
+
+                                    <button class="smart-dropdown-item" type="button" wire:click="markReviewed({{ $comment->id }})">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                        Revisado
+                                    </button>
+
+                                    <button class="smart-dropdown-item" type="button" wire:click="ignore({{ $comment->id }})">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                        Ignorar
+                                    </button>
+
+                                    @if ($isCrisis)
+                                        <button class="smart-dropdown-item" type="button" wire:click="escalate({{ $comment->id }})">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" /></svg>
+                                            Escalar
+                                        </button>
+                                    @endif
+
+                                    <button class="smart-dropdown-item danger" type="button" wire:click="markSpam({{ $comment->id }})">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                                        Spam
+                                    </button>
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1220,54 +1341,42 @@
                         </div>
                     @endif
 
-                    <ol class="smart-stepper" aria-label="Flujo recomendado de seguimiento">
-                        <li class="smart-step {{ $isDerived ? 'is-complete' : 'is-active' }}">
-                            <span class="smart-step-number">1</span>
-                            <span class="smart-step-label">Derivar</span>
-                        </li>
-                        <li class="smart-step {{ $isDerived ? 'is-active' : '' }}">
-                            <span class="smart-step-number">2</span>
-                            <span class="smart-step-label">Copiar texto</span>
-                        </li>
-                        <li class="smart-step">
-                            <span class="smart-step-number">3</span>
-                            <span class="smart-step-label">Responder</span>
-                        </li>
-                        <li class="smart-step">
-                            <span class="smart-step-number">4</span>
-                            <span class="smart-step-label">Seguimiento</span>
-                        </li>
-                    </ol>
+                    <div class="smart-progress" aria-label="Flujo de seguimiento">
+                        <span class="smart-dot {{ $isDerived ? 'done' : 'active' }}"></span>
+                        <span class="smart-dot {{ $isDerived ? 'active' : '' }}"></span>
+                        <span class="smart-dot"></span>
+                        <span class="smart-dot"></span>
+                    </div>
 
                     <div class="smart-panels">
-                        <section class="smart-panel">
-                            <h3>Contexto Clinico</h3>
-                            @if ($patient)
-                                <p><strong>Paciente vinculado:</strong> {{ $patient->full_name }}</p>
-                                <p class="smart-muted">{{ $lastActivity ? 'Ultima cita: ' . $lastActivity->activity_date?->format('d/m/Y') : 'Sin cita registrada' }}</p>
-                                <p class="smart-muted">{{ $lastActivity?->doctor?->name ?: 'Doctor no registrado' }}</p>
-                            @else
-                                <p><strong>Nuevo lead:</strong> Sin ficha clinica</p>
-                                <p class="smart-muted">Telefono: {{ $comment->socialIdentity?->phone ?: 'pendiente de capturar' }}</p>
-                                <p class="smart-muted">Procedimiento: {{ $comment->suggestedProcedure?->name ?: 'sin sugerencia' }}</p>
-                            @endif
-                        </section>
+                        <details class="smart-panel">
+                            <summary>Contexto Clinico</summary>
+                            <div class="smart-panel-body">
+                                @if ($patient)
+                                    <p><strong>Paciente vinculado:</strong> {{ $patient->full_name }}</p>
+                                    <p class="smart-muted">{{ $lastActivity ? 'Ultima cita: ' . $lastActivity->activity_date?->format('d/m/Y') : 'Sin cita registrada' }}</p>
+                                    <p class="smart-muted">{{ $lastActivity?->doctor?->name ?: 'Doctor no registrado' }}</p>
+                                @else
+                                    <p><strong>Nuevo lead:</strong> Sin ficha clinica</p>
+                                    <p class="smart-muted">Telefono: {{ $comment->socialIdentity?->phone ?: 'pendiente de capturar' }}</p>
+                                    <p class="smart-muted">Procedimiento: {{ $comment->suggestedProcedure?->name ?: 'sin sugerencia' }}</p>
+                                @endif
+                            </div>
+                        </details>
 
-                        <section class="smart-panel smart-ai-panel">
-                            <h3>Respuesta base IA</h3>
-                            <div class="smart-panel-kicker">Antes de derivar. No incluye token ni link de seguimiento.</div>
-                            <p>{{ $comment->suggested_reply ?: 'Sin respuesta sugerida. Revisar contexto antes de responder.' }}</p>
-                            @if ($comment->ai_reason)
-                                <p class="smart-muted" style="margin-top:.45rem">Motivo: {{ $comment->ai_reason }}</p>
-                            @endif
-                        </section>
+                        <details class="smart-panel smart-ai-panel">
+                            <summary>Respuesta base IA</summary>
+                            <div class="smart-panel-body">
+                                <div class="smart-panel-kicker">Antes de derivar. No incluye token ni link de seguimiento.</div>
+                                <p>{{ $comment->suggested_reply ?: 'Sin respuesta sugerida. Revisar contexto antes de responder.' }}</p>
+                                @if ($comment->ai_reason)
+                                    <p class="smart-muted" style="margin-top:.45rem">Motivo: {{ $comment->ai_reason }}</p>
+                                @endif
+                            </div>
+                        </details>
                     </div>
 
                     <div class="smart-actions">
-                        @if ($isCrisis)
-                            <button class="smart-action danger" type="button" wire:click="escalate({{ $comment->id }})">Escalar</button>
-                        @endif
-
                         <button class="smart-action primary" type="button" wire:click="selectComment({{ $comment->id }})">Abrir 360</button>
 
                         @if ($isLead || blank($comment->tracking_token))
@@ -1276,16 +1385,6 @@
                             </button>
                         @endif
 
-                        @if ($patientUrl)
-                            <a class="smart-action primary" href="{{ $patientUrl }}">Ver ficha</a>
-                        @else
-                            <a class="smart-action primary" href="{{ $detailUrl }}">Crear ficha</a>
-                        @endif
-
-                        <a class="smart-action muted" href="{{ $detailUrl }}">Detalle</a>
-                        <button class="smart-action muted" type="button" wire:click="markReviewed({{ $comment->id }})">Revisado</button>
-                        <button class="smart-action warning" type="button" wire:click="ignore({{ $comment->id }})">Ignorar</button>
-                        <button class="smart-action danger" type="button" wire:click="markSpam({{ $comment->id }})">Spam</button>
                     </div>
                 </article>
             @empty

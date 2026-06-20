@@ -196,7 +196,6 @@
             border-radius: .75rem;
             display: grid;
             gap: .7rem;
-            padding: .9rem;
         }
 
         .ln-alert-head {
@@ -213,9 +212,9 @@
             width: .55rem;
         }
 
-        .ln-severity-dot.danger { background: var(--ln-danger); }
-        .ln-severity-dot.warning { background: var(--ln-warning); }
-        .ln-severity-dot.info { background: var(--ln-primary); }
+        .ln-severity-dot.danger { background: #dc2626; }
+        .ln-severity-dot.warning { background: #d97706; }
+        .ln-severity-dot.info { background: #1d7afc; }
 
         .ln-alert-title {
             color: var(--ln-ink);
