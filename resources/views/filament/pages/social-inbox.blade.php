@@ -875,10 +875,10 @@
         }
 
         .smart-empty-illustration {
-            height: 8.25rem;
+            height: 12.25rem;
             margin-bottom: 1.1rem;
             object-fit: contain;
-            width: 8.8rem;
+            width: 12.8rem;
         }
 
         .smart-empty-title {
@@ -1389,7 +1389,7 @@
                 </article>
             @empty
                 <div class="smart-empty">
-                    <img class="smart-empty-illustration" src="{{ asset('images/social-empty-comments.svg') }}" alt="" aria-hidden="true">
+                    <img class="smart-empty-illustration" src="{{ asset('images/empty-social-comments_1.svg') }}" alt="" aria-hidden="true">
                     <h3 class="smart-empty-title">Sin comentarios por ahora</h3>
                     <p class="smart-empty-copy">
                         No hay comentarios disponibles para este segmento. Prueba otro filtro o espera la proxima sincronizacion social.
