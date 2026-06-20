@@ -296,7 +296,7 @@ class SocialInbox extends Page
             ?? $this->suggestProcedureId($comment);
         $this->whatsappGenerated = filled($comment->tracking_token);
         $this->whatsappToken = $comment->tracking_token ?: 'Se generara al confirmar';
-        $this->whatsappLink = '';
+        $this->whatsappLink = $comment->tracking_token ? (app(SocialConversionService::class)->whatsappLink($comment) ?? '') : '';
         $this->smartLink = $comment->tracking_token ? app(SocialConversionService::class)->smartLink($comment) : '';
         $this->whatsappReplyText = $comment->tracking_token ? app(SocialConversionService::class)->instagramReplyText($comment) : '';
         $this->refreshSmartLinkPreview();

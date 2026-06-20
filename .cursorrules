@@ -26,6 +26,21 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 - Separacion recomendada entre cards: `.75rem`.
 - Fact grids: dos columnas, label izquierda muted y valor derecha con `font-weight: 500`.
 
+## Paneles Internos y Preview Cards
+
+- Para secciones internas tipo `detail-section`, `preview-card`, paneles de modal o resumen de metadata, usar el mismo lenguaje visual base:
+  - `background: #ffffff`
+  - `border: 1px solid #e5e7eb` o variable equivalente del componente
+  - `border-radius: .75rem`
+  - `display: grid`
+  - `gap: .55rem`
+  - `padding: .85rem`
+- Titulos de estos paneles: color principal (`#0f172a` o variable equivalente), `font-size: .78rem`, `font-weight: 600`, sin uppercase forzado.
+- Texto/body dentro de estos paneles: `font-size` entre `.8rem` y `.82rem`, `font-weight: 500`, `line-height` cercano a `1.45-1.5`, color muted (`#64748b`) cuando sea descriptivo.
+- Valores destacados dentro de paneles: `font-weight: 600`; evitar `700+` salvo encabezados principales.
+- Evitar que `preview-card`, `detail-section` y cards internas tengan estilos visuales distintos si cumplen la misma funcion. Mantener padding, radio, borde, colores y pesos consistentes.
+- Usar uppercase solo para badges o kickers pequenos realmente necesarios. Si el texto funciona como titulo de seccion, preferir texto normal con `font-weight: 600`.
+
 ## Badges y Botones
 
 - Badges compactos: `font-size: .7rem`, `font-weight: 500`, `border-radius: .375rem`, padding pequeno.

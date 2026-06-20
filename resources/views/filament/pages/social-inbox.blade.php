@@ -911,16 +911,16 @@
 
         .smart-modal {
             background: #ffffff;
-            border-radius: 1.15rem;
-            box-shadow: 0 24px 80px rgba(15, 23, 42, .28);
+            border-radius: .875rem;
+            box-shadow: 0 4px 24px rgba(15, 23, 42, .12);
             display: grid;
-            gap: 1rem;
+            gap: .75rem;
             max-height: calc(100dvh - clamp(1.2rem, 3vh, 2rem));
-            max-width: 78rem;
+            max-width: 72rem;
             overflow-y: auto;
-            padding: 1.15rem;
+            padding: 1.25rem;
             position: relative;
-            width: min(100%, 78rem);
+            width: min(100%, 72rem);
         }
 
         @supports not (height: 100dvh) {
@@ -931,21 +931,21 @@
 
         .smart-modal-close {
             align-items: center;
-            background: #f8fafc;
+            background: transparent;
             border: 1px solid #e5e7eb;
             border-radius: 999px;
-            color: #64748b;
+            color: #94a3b8;
             display: inline-flex;
-            font-size: 1.05rem;
-            font-weight: 850;
-            height: 2.1rem;
+            font-size: .95rem;
+            font-weight: 600;
+            height: 1.75rem;
             justify-content: center;
             line-height: 1;
             position: absolute;
             right: .85rem;
             top: .85rem;
-            transition: .16s ease;
-            width: 2.1rem;
+            transition: .14s ease;
+            width: 1.75rem;
         }
 
         .smart-modal-close:hover {
@@ -957,9 +957,15 @@
             padding-right: 2.6rem;
         }
 
+        .smart-modal-header .smart-muted {
+            color: #64748b;
+            font-size: .76rem;
+            margin-top: .2rem;
+        }
+
         .smart-modal h2 {
             color: #0f172a;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 700;
             margin: 0;
         }
@@ -985,32 +991,30 @@
         .smart-modal-section {
             background: #ffffff;
             border: 1px solid #e5e7eb;
-            border-radius: .95rem;
+            border-radius: .75rem;
             display: grid;
-            gap: .7rem;
-            padding: .9rem;
+            gap: .6rem;
+            padding: .85rem;
         }
 
-        .smart-modal-section.is-soft {
-            background: #f8fafc;
-        }
 
         .smart-field-label {
-            color: #000000;
+            color: #334155;
             display: block;
-            font-size: .72rem;
-            font-weight: 800;
-            margin-bottom: .28rem;
+            font-size: .7rem;
+            font-weight: 600;
+            margin-bottom: .25rem;
         }
 
         .smart-copy-field {
             background: #f8fafc;
             border: 1px solid #e5e7eb;
-            border-radius: .62rem;
-            color: #0f172a;
-            font-size: .8rem;
+            border-radius: .5rem;
+            color: #334155;
+            font-size: .78rem;
+            font-weight: 500;
             line-height: 1.4;
-            padding: .52rem .64rem;
+            padding: .5rem .625rem;
             width: 100%;
             height: auto;
         }
@@ -1019,67 +1023,134 @@
             cursor: text;
         }
 
+        .smart-copy-control {
+            position: relative;
+        }
+
+        .smart-copy-control .smart-copy-field {
+            padding-right: 2.35rem;
+        }
+
+        .smart-copy-icon {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: .375rem;
+            color: #64748b;
+            display: inline-flex;
+            height: 1.75rem;
+            justify-content: center;
+            padding: 0;
+            position: absolute;
+            right: .35rem;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: background .14s ease, color .14s ease;
+            width: 1.75rem;
+        }
+
+        .smart-copy-icon:hover {
+            background: #eef2f7;
+            color: #0f172a;
+        }
+
+        .smart-copy-icon:disabled {
+            color: #cbd5e1;
+            cursor: not-allowed;
+            opacity: .65;
+        }
+
+        .smart-copy-icon:disabled:hover {
+            background: transparent;
+            color: #cbd5e1;
+        }
+
+        .smart-copy-icon svg {
+            height: .95rem;
+            width: .95rem;
+        }
+
         .smart-modal-note {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: .75rem;
-            color: #1e40af;
-            font-size: .84rem;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: .625rem;
+            color: #0369a1;
+            font-size: .78rem;
+            font-weight: 500;
             line-height: 1.5;
-            padding: .75rem .85rem;
+            padding: .65rem .75rem;
         }
 
         .smart-modal-warning {
             background: #fffbeb;
-            border: 1px solid #fed7aa;
-            border-radius: .75rem;
+            border: 1px solid #fde68a;
+            border-radius: .625rem;
             color: #92400e;
-            font-size: .84rem;
+            font-size: .78rem;
+            font-weight: 500;
             line-height: 1.5;
-            padding: .75rem .85rem;
+            padding: .65rem .75rem;
         }
 
-        .smart-preview-grid {
+        .smart-preview-stack {
             display: grid;
             gap: .75rem;
-            grid-template-columns: minmax(0, 1fr);
-        }
-
-        @media (min-width: 760px) {
-            .smart-preview-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
         }
 
         .smart-preview-card {
-            background: #f8fafc;
+            background: #ffffff;
             border: 1px solid #e5e7eb;
-            border-radius: .9rem;
-            padding: .9rem;
+            border-radius: .75rem;
+            display: grid;
+            gap: .55rem;
+            padding: .85rem;
         }
 
         .smart-preview-kicker {
-            color: #000000;
-            font-size: .68rem;
-            font-weight: 900;
-            letter-spacing: .1em;
-            text-transform: uppercase;
+            color: #0f172a;
+            font-size: .78rem;
+            font-weight: 600;
         }
 
         .smart-preview-title {
             color: #0f172a;
-            font-size: 1.08rem;
-            font-weight: 850;
-            letter-spacing: -.025em;
-            line-height: 1.15;
-            margin-top: .35rem;
+            font-size: .95rem;
+            font-weight: 600;
+            letter-spacing: -.015em;
+            line-height: 1.3;
+            margin: 0;
         }
 
         .smart-preview-copy {
-            color: #475569;
-            font-size: .82rem;
+            color: #64748b;
+            font-size: .8rem;
+            font-weight: 500;
             line-height: 1.5;
-            margin-top: .45rem;
+            margin: 0;
+        }
+
+        .smart-meta {
+            display: flex;
+            flex-direction: column;
+            gap: .15rem;
+        }
+
+        .smart-meta span {
+            color: #64748b;
+            font-size: .76rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .smart-meta strong {
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .smart-meta span.url {
+            color: #94a3b8;
+            font-size: .68rem;
+            word-break: break-all;
         }
 
         .dark .smart-dot {
@@ -1152,6 +1223,78 @@
             background: rgba(29, 78, 216, .18);
             border-color: rgba(96, 165, 250, .24);
             color: #bfdbfe;
+        }
+
+        .dark .smart-modal {
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-modal-section {
+            background: rgba(15, 23, 42, .6);
+            border-color: rgba(148, 163, 184, .14);
+        }
+
+        .dark .smart-modal-section.is-soft {
+            background: rgba(15, 23, 42, .4);
+        }
+
+        .dark .smart-modal-close {
+            border-color: rgba(148, 163, 184, .18);
+            color: #64748b;
+        }
+
+        .dark .smart-field-label {
+            color: #94a3b8;
+        }
+
+        .dark .smart-copy-field {
+            background: rgba(15, 23, 42, .5);
+            border-color: rgba(148, 163, 184, .14);
+            color: #cbd5e1;
+        }
+
+        .dark .smart-copy-icon {
+            color: #94a3b8;
+        }
+
+        .dark .smart-copy-icon:hover {
+            background: rgba(148, 163, 184, .12);
+            color: #e2e8f0;
+        }
+
+        .dark .smart-copy-icon:disabled,
+        .dark .smart-copy-icon:disabled:hover {
+            background: transparent;
+            color: #475569;
+        }
+
+        .dark .smart-preview-card {
+            background: rgba(15, 23, 42, .6);
+            border-color: rgba(148, 163, 184, .14);
+        }
+
+        .dark .smart-preview-kicker,
+        .dark .smart-preview-title {
+            color: #e5e7eb;
+        }
+
+        .dark .smart-preview-copy {
+            color: #94a3b8;
+        }
+
+        .dark .smart-meta span {
+            color: #94a3b8;
+        }
+
+        .dark .smart-meta strong {
+            color: #cbd5e1;
+        }
+
+        .dark .smart-modal-warning {
+            background: rgba(180, 83, 9, .12);
+            border-color: rgba(251, 191, 36, .22);
+            color: #fcd34d;
         }
 
         .dark .smart-empty {
@@ -1566,17 +1709,38 @@
 
                                 <label>
                                     <span class="smart-field-label">Token</span>
-                                    <input class="smart-copy-field" type="text" value="{{ $whatsappToken }}" readonly>
+                                    <div class="smart-copy-control">
+                                        <input class="smart-copy-field" type="text" value="{{ $whatsappToken }}" readonly>
+                                        <button class="smart-copy-icon" type="button" x-data @click="copySmartField(@js($whatsappToken), 'Token copiado')" aria-label="Copiar token" @disabled(! $whatsappGenerated)>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125v-9.75c0-.621.504-1.125 1.125-1.125H8.25m7.5 7.5h3.375c.621 0 1.125-.504 1.125-1.125v-9.75c0-.621-.504-1.125-1.125-1.125h-9.75A1.125 1.125 0 0 0 8.25 6.375v3.375" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </label>
 
                                 <label>
                                     <span class="smart-field-label">Link WhatsApp</span>
-                                    <input class="smart-copy-field" type="text" value="{{ $whatsappLink ?: 'Configura WHATSAPP_BUSINESS_PHONE para generar link directo' }}" readonly>
+                                    <div class="smart-copy-control">
+                                        <input class="smart-copy-field" type="text" value="{{ $whatsappLink ?: 'Configura WHATSAPP_BUSINESS_PHONE para generar link directo' }}" readonly>
+                                        <button class="smart-copy-icon" type="button" x-data @click="copySmartField(@js($whatsappLink), 'Link de WhatsApp copiado')" aria-label="Copiar link WhatsApp" @disabled(blank($whatsappLink))>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125v-9.75c0-.621.504-1.125 1.125-1.125H8.25m7.5 7.5h3.375c.621 0 1.125-.504 1.125-1.125v-9.75c0-.621-.504-1.125-1.125-1.125h-9.75A1.125 1.125 0 0 0 8.25 6.375v3.375" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </label>
 
                                 <label>
                                     <span class="smart-field-label">Smart Link rastreable</span>
-                                    <input class="smart-copy-field" type="text" value="{{ $smartLink ?: 'Se generara al confirmar' }}" readonly>
+                                    <div class="smart-copy-control">
+                                        <input class="smart-copy-field" type="text" value="{{ $smartLink ?: 'Se generara al confirmar' }}" readonly>
+                                        <button class="smart-copy-icon" type="button" x-data @click="copySmartField(@js($smartLink), 'Smart Link copiado')" aria-label="Copiar Smart Link" @disabled(blank($smartLink))>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125v-9.75c0-.621.504-1.125 1.125-1.125H8.25m7.5 7.5h3.375c.621 0 1.125-.504 1.125-1.125v-9.75c0-.621-.504-1.125-1.125-1.125h-9.75A1.125 1.125 0 0 0 8.25 6.375v3.375" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </label>
                             </section>
 
@@ -1587,7 +1751,7 @@
                                 </div>
 
                                 @if ($whatsappGenerated)
-                                    <textarea class="smart-copy-field" style="height: 200px;" rows="3" readonly>{{ $whatsappReplyText }}</textarea>
+                                    <textarea class="smart-copy-field" style="min-height: 120px; resize: vertical;" rows="4" readonly>{{ $whatsappReplyText }}</textarea>
                                 @else
                                     <div class="smart-modal-note">
                                         El texto final aparecera despues de generar el seguimiento. El token no se crea hasta confirmar.
@@ -1599,12 +1763,8 @@
                                 <button class="smart-action success" type="button" wire:click="confirmWhatsappRouting">
                                     {{ $whatsappGenerated ? 'Actualizar y copiar texto' : 'Generar seguimiento' }}
                                 </button>
-                                @if ($whatsappGenerated && $whatsappLink)
-                                    <button class="smart-action success" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappLink))">Copiar link</button>
-                                @endif
                                 @if ($whatsappGenerated)
-                                    <button class="smart-action warning" type="button" x-data @click="navigator.clipboard?.writeText(@js($smartLink))">Copiar Smart Link</button>
-                                    <button class="smart-action primary" type="button" x-data @click="navigator.clipboard?.writeText(@js($whatsappReplyText))">Copiar texto</button>
+                                    <button class="smart-action primary" type="button" x-data @click="copySmartField(@js($whatsappReplyText), 'Texto copiado')">Copiar texto</button>
                                 @endif
                             </div>
                         </div>
@@ -1628,7 +1788,7 @@
                                 @endif
                             </section>
 
-                            <div class="smart-preview-grid">
+                            <div class="smart-preview-stack">
                                 <section class="smart-preview-card">
                                     <div class="smart-preview-kicker">Preview del Smart Link</div>
                                     <div class="smart-preview-title">{{ $smartLinkPreview['title'] ?? 'Tu sonrisa merece un plan claro, humano y sin presion.' }}</div>
@@ -1637,19 +1797,21 @@
 
                                 <section class="smart-preview-card">
                                     <div class="smart-preview-kicker">Contenido seleccionado</div>
-                                    <p><strong>Procedimiento:</strong> {{ $smartLinkPreview['procedure'] ?? 'Sin definir' }}</p>
-                                    <p class="smart-muted"><strong>Clave:</strong> {{ $smartLinkPreview['category'] ?? 'unknown' }}</p>
-                                    <p class="smart-muted"><strong>Etiqueta:</strong> {{ $smartLinkPreview['eyebrow'] ?? 'Valoracion dental personalizada' }}</p>
-                                    <p class="smart-muted"><strong>Visual:</strong> {{ $smartLinkPreview['visual_label'] ?? 'Diagnostico integral' }}</p>
-                                    @if (filled($smartLinkPreview['video_url'] ?? null))
-                                        <p class="smart-muted"><strong>Video:</strong> {{ $smartLinkPreview['video_url'] }}</p>
-                                    @endif
-                                    @if (filled($smartLinkPreview['before_video_url'] ?? null))
-                                        <p class="smart-muted"><strong>Antes:</strong> {{ $smartLinkPreview['before_video_url'] }}</p>
-                                    @endif
-                                    @if (filled($smartLinkPreview['after_video_url'] ?? null))
-                                        <p class="smart-muted"><strong>Despues:</strong> {{ $smartLinkPreview['after_video_url'] }}</p>
-                                    @endif
+                                    <div class="smart-meta">
+                                        <span><strong>Procedimiento:</strong> {{ $smartLinkPreview['procedure'] ?? 'Sin definir' }}</span>
+                                        <span><strong>Clave:</strong> {{ $smartLinkPreview['category'] ?? 'unknown' }}</span>
+                                        <span><strong>Etiqueta:</strong> {{ $smartLinkPreview['eyebrow'] ?? 'Valoracion dental personalizada' }}</span>
+                                        <span><strong>Visual:</strong> {{ $smartLinkPreview['visual_label'] ?? 'Diagnostico integral' }}</span>
+                                        @if (filled($smartLinkPreview['video_url'] ?? null))
+                                            <span class="url"><strong>Video:</strong> {{ $smartLinkPreview['video_url'] }}</span>
+                                        @endif
+                                        @if (filled($smartLinkPreview['before_video_url'] ?? null))
+                                            <span class="url"><strong>Antes:</strong> {{ $smartLinkPreview['before_video_url'] }}</span>
+                                        @endif
+                                        @if (filled($smartLinkPreview['after_video_url'] ?? null))
+                                            <span class="url"><strong>Despues:</strong> {{ $smartLinkPreview['after_video_url'] }}</span>
+                                        @endif
+                                    </div>
                                 </section>
                             </div>
 
@@ -1661,6 +1823,32 @@
     </section>
 
     <script>
+        window.copySmartField = async function (text, toast = 'Copiado') {
+            if (! text || ! navigator.clipboard) {
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(text);
+
+                if (window.FilamentNotification) {
+                    new window.FilamentNotification()
+                        .title(toast)
+                        .success()
+                        .send();
+                }
+            } catch (error) {
+                console.warn('No se pudo copiar el texto.', error);
+
+                if (window.FilamentNotification) {
+                    new window.FilamentNotification()
+                        .title('No se pudo copiar')
+                        .danger()
+                        .send();
+                }
+            }
+        };
+
         window.addEventListener('social-whatsapp-link-generated', async (event) => {
             const text = event.detail?.text || '';
 
