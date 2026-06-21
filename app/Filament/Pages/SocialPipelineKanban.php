@@ -41,6 +41,11 @@ class SocialPipelineKanban extends Page
     #[Url(as: 'lead')]
     public ?int $selectedLeadId = null;
 
+    public function mount(): void
+    {
+        $this->fillMissingEstimatedValuesFromProcedures();
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -255,5 +260,25 @@ class SocialPipelineKanban extends Page
                 ]),
                 fn (Builder $query): Builder => $query->where('pipeline_stage', $stage),
             );
+    }
+
+    private function fillMissingEstimatedValuesFromProcedures(): void
+    {
+        SocialComment::query()
+            ->with('suggestedProcedure:id,internal_rate')
+            ->whereNull('estimated_value')
+            ->whereNotNull('suggested_procedure_id')
+            ->whereHas('suggestedProcedure', fn (Builder $query): Builder => $query->whereNotNull('internal_rate'))
+            ->chunkById(100, function (Collection $comments): void {
+                $comments->each(function (SocialComment $comment): void {
+                    $rate = $comment->suggestedProcedure?->internal_rate;
+
+                    if ($rate === null) {
+                        return;
+                    }
+
+                    $comment->forceFill(['estimated_value' => $rate])->saveQuietly();
+                });
+            });
     }
 }

@@ -788,7 +788,7 @@
         }
     </style>
 
-    <section class="pipeline-kanban">
+    <section class="pipeline-kanban" wire:poll.visible.10s>
         <div class="kanban-toolbar">
             <input
                 class="kanban-search"
@@ -841,6 +841,7 @@
                                     $isLive = $lastEngagementMinutes !== null && $lastEngagementMinutes <= 2;
                                     $isRecent = $lastEngagementMinutes !== null && $lastEngagementMinutes > 2 && $lastEngagementMinutes <= 10;
                                     $isFollowUpToday = filled($comment->follow_up_at) && $comment->follow_up_at->isToday();
+                                    $estimatedValue = $comment->estimated_value ?? $comment->suggestedProcedure?->internal_rate;
                                 @endphp
 
                                 <div
@@ -904,7 +905,7 @@
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
-                                                value="{{ $comment->estimated_value ? number_format((float) $comment->estimated_value, 2, '.', '') : '' }}"
+                                                value="{{ $estimatedValue !== null ? number_format((float) $estimatedValue, 2, '.', '') : '' }}"
                                                 placeholder="0.00"
                                                 wire:change="updateEstimatedValue({{ $comment->id }}, $event.target.value ? parseFloat($event.target.value) : null)"
                                             />

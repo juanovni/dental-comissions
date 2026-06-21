@@ -327,7 +327,17 @@ class SocialInbox extends Page
 
         $procedureId = filled($this->whatsappProcedureId) ? (int) $this->whatsappProcedureId : null;
 
-        $comment->update(['suggested_procedure_id' => $procedureId]);
+        $data = ['suggested_procedure_id' => $procedureId];
+
+        if ($comment->estimated_value === null && $procedureId) {
+            $procedure = Procedure::find($procedureId);
+
+            if ($procedure?->internal_rate !== null) {
+                $data['estimated_value'] = $procedure->internal_rate;
+            }
+        }
+
+        $comment->update($data);
 
         $conversionService = app(SocialConversionService::class);
         $token = $conversionService->markRedirectedToWhatsapp($comment->refresh());

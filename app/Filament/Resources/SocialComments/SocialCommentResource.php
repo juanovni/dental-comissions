@@ -318,11 +318,20 @@ class SocialCommentResource extends Resource
                         ->readOnly(),
                 ])
                 ->action(function (SocialComment $record, array $data): void {
-                    $record->update([
-                        'suggested_procedure_id' => filled($data['suggested_procedure_id'] ?? null)
-                            ? (int) $data['suggested_procedure_id']
-                            : null,
-                    ]);
+                    $procedureId = filled($data['suggested_procedure_id'] ?? null)
+                        ? (int) $data['suggested_procedure_id']
+                        : null;
+                    $update = ['suggested_procedure_id' => $procedureId];
+
+                    if ($record->estimated_value === null && $procedureId) {
+                        $procedure = Procedure::find($procedureId);
+
+                        if ($procedure?->internal_rate !== null) {
+                            $update['estimated_value'] = $procedure->internal_rate;
+                        }
+                    }
+
+                    $record->update($update);
 
                     $token = app(SocialConversionService::class)->markRedirectedToWhatsapp($record);
 
