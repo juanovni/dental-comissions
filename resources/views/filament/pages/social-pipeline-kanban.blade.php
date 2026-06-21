@@ -294,7 +294,7 @@
             background: #e5e7eb;
             border-radius: 999px;
             display: block;
-            height: .2rem;
+            height: .45rem;
             overflow: hidden;
             width: 100%;
         }

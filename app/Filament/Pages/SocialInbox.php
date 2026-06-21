@@ -152,6 +152,10 @@ class SocialInbox extends Page
             ->map(fn ($event): array => [
                 'label' => SocialLinkEventMapper::label($event->event_type),
                 'type' => $event->event_type,
+                'icon' => SocialLinkEventMapper::icon($event->event_type),
+                'color' => SocialLinkEventMapper::color($event->event_type),
+                'group' => SocialLinkEventMapper::group($event->event_type),
+                'progress' => SocialLinkEventMapper::progress($event->event_type),
                 'date' => $event->created_at?->diffForHumans(),
                 'duration' => $event->duration_seconds,
             ])

@@ -89,26 +89,26 @@
 
 <header>
     <h1>Reporte QA - OdonCRM</h1>
-    <p>Análisis completo de navegación, integridad y flujo de usuario</p>
-    <div class="date">Generado: 19 de junio de 2026</div>
+    <p>Análisis actualizado de navegación, UI social, integridad y flujo de usuario</p>
+    <div class="date">Actualizado: 21 de junio de 2026</div>
 </header>
 
 <div class="summary-cards">
     <div class="summary-card total">
-        <div class="number">23</div>
-        <div class="label">Rutas Verificadas</div>
+        <div class="number">6</div>
+        <div class="label">Fases UI Revisadas</div>
     </div>
     <div class="summary-card pass">
-        <div class="number">15</div>
-        <div class="label">Widgets Activos OK</div>
+        <div class="number">5</div>
+        <div class="label">Fases Completadas</div>
     </div>
     <div class="summary-card warn">
-        <div class="number">9</div>
-        <div class="label">Issues Encontrados</div>
+        <div class="number">1</div>
+        <div class="label">QA Parcial</div>
     </div>
     <div class="summary-card fail">
-        <div class="number">4</div>
-        <div class="label">Páginas Huérfanas</div>
+        <div class="number">1</div>
+        <div class="label">Bloqueo Entorno</div>
     </div>
 </div>
 
@@ -144,14 +144,12 @@
   <span class="item">├── Procedimientos</span> <span class="badge badge-pass">OK</span>
   <span class="item">└── Configuración CRM</span> <span class="badge badge-pass">OK</span>
 
-<span class="group">📁 WhatsApp</span>
-  <span class="hidden">└── (vacío - sin items visibles)</span> <span class="badge badge-fail">PROBLEMA</span>
-
-<span class="group" style="color: var(--danger);">Páginas Huérfanas (sin enlace de entrada)</span>
-  <span class="orphan">├── /admin/commission-rules</span> <span class="badge badge-fail">HUÉRFANO</span>
-  <span class="orphan">├── /admin/whatsapp-inbox</span> <span class="badge badge-fail">HUÉRFANO</span>
-  <span class="orphan">├── /admin/social-hot-leads</span> <span class="badge badge-fail">HUÉRFANO</span>
-  <span class="orphan">└── /admin/social-lead-alerts</span> <span class="badge badge-fail">HUÉRFANO</span>
+<span class="group" style="color: var(--success);">Limpieza aplicada</span>
+  <span class="item">├── Grupo WhatsApp vacío eliminado</span> <span class="badge badge-pass">OK</span>
+  <span class="item">├── CommissionRule removido del sistema</span> <span class="badge badge-pass">OK</span>
+  <span class="item">├── BandejaWhatsApp eliminada</span> <span class="badge badge-pass">OK</span>
+  <span class="item">├── SocialLeadAlerts duplicado eliminado</span> <span class="badge badge-pass">OK</span>
+  <span class="item">└── SocialHotLeads reservado para futura integración</span> <span class="badge badge-info">PENDIENTE</span>
         </div>
     </div>
 
@@ -159,28 +157,28 @@
     <div class="section">
         <h2>Problemas Críticos de Navegación</h2>
 
-        <div class="issue issue-critical">
-            <strong>CommissionRuleResource completamente huérfano</strong>
-            El recurso "Reglas de comisión" tiene <code>shouldRegisterNavigation = false</code> y ningún enlace lo referencia. Es inaccesible desde la UI.
-            <div class="file">app/Filament/Resources/CommissionRules/CommissionRuleResource.php:44</div>
+        <div class="issue issue-success">
+            <strong>CommissionRuleResource eliminado</strong>
+            La funcionalidad anterior de reglas de comisión fue retirada. El cálculo vigente usa <code>PaymentMethodCommissionRate</code>, evitando código muerto y rutas inaccesibles.
+            <div class="file">app/Filament/Resources/CommissionRules/ eliminado</div>
         </div>
 
-        <div class="issue issue-critical">
-            <strong>BandejaWhatsApp huérfana</strong>
-            La página de WhatsApp está oculta (<code>shouldRegisterNavigation = false</code>) y ningún widget o página la referencia.
-            <div class="file">app/Filament/Pages/BandejaWhatsApp.php:29</div>
+        <div class="issue issue-success">
+            <strong>BandejaWhatsApp huérfana eliminada</strong>
+            La página legacy fue removida junto con su vista, por lo que ya no existe entrada rota para el usuario.
+            <div class="file">app/Filament/Pages/BandejaWhatsApp.php eliminado</div>
         </div>
 
-        <div class="issue issue-critical">
-            <strong>SocialHotLeads huérfano</strong>
-            La página "Leads calientes" está oculta sin enlaces de entrada. El widget SocialLeadNotificationCenter solo enlaza a PipelineKanban.
+        <div class="issue issue-info">
+            <strong>SocialHotLeads reservado</strong>
+            La página "Leads calientes" se mantiene oculta para futura integración. El flujo actual usa Pipeline Kanban y el centro de notificaciones.
             <div class="file">app/Filament/Pages/SocialHotLeads.php:18</div>
         </div>
 
-        <div class="issue issue-critical">
-            <strong>SocialLeadAlerts huérfano</strong>
-            La página "Alertas de leads" está oculta sin enlaces de entrada.
-            <div class="file">app/Filament/Pages/SocialLeadAlerts.php:17</div>
+        <div class="issue issue-success">
+            <strong>SocialLeadAlerts duplicado eliminado</strong>
+            Se removió la página duplicada; el centro activo de alertas/notificaciones sigue siendo <code>SocialLeadNotificationCenter</code>.
+            <div class="file">app/Filament/Pages/SocialLeadAlerts.php eliminado</div>
         </div>
     </div>
 
@@ -188,20 +186,20 @@
     <div class="section">
         <h2>Problemas de Organización</h2>
 
-        <div class="issue issue-warning">
-            <strong>Grupo WhatsApp vacío en sidebar</strong>
-            El grupo "WhatsApp" aparece en el sidebar pero no tiene items visibles. Crea confusión en el usuario.
-            <div class="file">app/Providers/Filament/AdminPanelProvider.php:52</div>
+        <div class="issue issue-success">
+            <strong>Grupo WhatsApp vacío resuelto</strong>
+            El grupo sin items visibles fue retirado del sidebar.
+            <div class="file">app/Providers/Filament/AdminPanelProvider.php</div>
+        </div>
+
+        <div class="issue issue-info">
+            <strong>Flujo social consolidado</strong>
+            Bandeja social, Pipeline Kanban, SocialCommentResource y SocialLeadNotificationCenter cubren el flujo activo. SocialHotLeads queda pendiente como mejora futura.
         </div>
 
         <div class="issue issue-warning">
-            <strong>Cero cross-linking entre páginas sociales</strong>
-            SocialInbox, SocialPipelineKanban, SocialHotLeads y SocialLeadAlerts no tienen enlaces entre sí. Cada página es una isla independiente.
-        </div>
-
-        <div class="issue issue-warning">
-            <strong>Sort duplicado en páginas sociales</strong>
-            SocialInbox y SocialPipelineKanban ambos usan <code>sort: 17</code>, lo que puede causar orden impredecible en el sidebar.
+            <strong>QA visual pendiente en navegador</strong>
+            Falta validar manualmente el drawer 360 en navegador con estados reales: sin paciente, con paciente, sin procedimiento, sin timeline, alertas abiertas y sugerencia histórica generada.
         </div>
     </div>
 
@@ -230,10 +228,10 @@
                 <tr><td>/admin/integrations</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.pages.integrations</td></tr>
                 <tr><td>/admin/procedures</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.procedures.index</td></tr>
                 <tr><td>/admin/social-crm-settings</td><td><span class="badge badge-pass">OK</span></td><td>filament.admin.resources.social-crm-settings.index</td></tr>
-                <tr><td>/admin/commission-rules</td><td><span class="badge badge-hidden">OCULTA</span></td><td>filament.admin.resources.commission-rules.index</td></tr>
-                <tr><td>/admin/whatsapp-inbox</td><td><span class="badge badge-hidden">OCULTA</span></td><td>filament.admin.pages.whatsapp-inbox</td></tr>
-                <tr><td>/admin/social-hot-leads</td><td><span class="badge badge-hidden">OCULTA</span></td><td>filament.admin.pages.social-hot-leads</td></tr>
-                <tr><td>/admin/social-lead-alerts</td><td><span class="badge badge-hidden">OCULTA</span></td><td>filament.admin.pages.social-lead-alerts</td></tr>
+                <tr><td>/admin/commission-rules</td><td><span class="badge badge-pass">ELIMINADA</span></td><td>Reemplazada por comisiones por pago</td></tr>
+                <tr><td>/admin/whatsapp-inbox</td><td><span class="badge badge-pass">ELIMINADA</span></td><td>Página legacy retirada</td></tr>
+                <tr><td>/admin/social-hot-leads</td><td><span class="badge badge-info">RESERVADA</span></td><td>Futura integración</td></tr>
+                <tr><td>/admin/social-lead-alerts</td><td><span class="badge badge-pass">ELIMINADA</span></td><td>Duplicado retirado</td></tr>
                 <tr><td>/admin/social-comments</td><td><span class="badge badge-info">ACCESIBLE</span></td><td>filament.admin.resources.social-comments.index</td></tr>
                 <tr><td>/webhook/whatsapp</td><td><span class="badge badge-pass">OK</span></td><td>GET verify + POST receive</td></tr>
                 <tr><td>/webhook/meta/social</td><td><span class="badge badge-pass">OK</span></td><td>GET verify + POST receive</td></tr>
@@ -273,16 +271,16 @@
             </tbody>
         </table>
 
-        <h3>Widgets Legacy sin usar (6 widgets) - Código muerto</h3>
+        <h3>Widgets Legacy sin usar (6 widgets) - Eliminados</h3>
         <table>
             <thead><tr><th>Widget</th><th>Reemplazado por</th><th>Acción</th></tr></thead>
             <tbody>
-                <tr><td>TopProceduresChart</td><td>ApexTopProceduresChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
-                <tr><td>ActivityStatusChart</td><td>ApexActivityStatusChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
-                <tr><td>PaymentMethodCommissionsChart</td><td>ApexPaymentMethodCommissionsChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
-                <tr><td>TopDoctorsChart</td><td>ApexTopDoctorsChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
-                <tr><td>SocialTopPostsChart</td><td>ApexSocialTopPostsChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
-                <tr><td>SocialConversionFunnelChart</td><td>ApexSocialConversionFunnelChart</td><td><span class="badge badge-warn">Eliminar</span></td></tr>
+                <tr><td>TopProceduresChart</td><td>ApexTopProceduresChart</td><td><span class="badge badge-pass">Eliminado</span></td></tr>
+                <tr><td>ActivityStatusChart</td><td>ApexActivityStatusChart</td><td><span class="badge badge-pass">Eliminado</span></td></tr>
+                <tr><td>PaymentMethodCommissionsChart</td><td>ApexPaymentMethodCommissionsChart</td><td><span class="badge badge-pass">Eliminado</span></td></tr>
+                <tr><td>TopDoctorsChart</td><td>ApexTopDoctorsChart</td><td><span class="badge badge-pass">Eliminado</span></td></tr>
+                <tr><td>SocialTopPostsChart</td><td>ApexSocialTopPostsChart</td><td><span class="badge badge-pass">Eliminado</span></td></tr>
+                <tr><td>SocialConversionFunnelChart</td><td>ApexSocialConversionFunnelChart</td><td><span class="badge badge-pass">Eliminado</span></td></tr>
             </tbody>
         </table>
     </div>
@@ -296,7 +294,6 @@
                 <tr><td>ProfessionalResource</td><td>7 campos ✓</td><td>6 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>PatientResource</td><td>5 campos ✓</td><td>4 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>ProcedureResource</td><td>6 campos ✓</td><td>5 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
-                <tr><td>CommissionRuleResource</td><td>12 campos ✓</td><td>9 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>DoctorAssistantAssignmentResource</td><td>4 campos ✓</td><td>5 columnas ✓</td><td>Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>ActivityRecordResource</td><td>9 campos ✓</td><td>8 columnas ✓</td><td>Approve, Correct, Pay, Edit</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>WeeklyReportResource</td><td>4 campos ✓</td><td>8 columnas ✓</td><td>View, Edit, Delete</td><td><span class="badge badge-pass">OK</span></td></tr>
@@ -317,7 +314,7 @@
             <li>ActivityRecord → belongsTo(Professional, Patient, Procedure) ✓</li>
             <li>Patient → hasMany(ActivityRecord) ✓</li>
             <li>WeeklyReport → belongsTo(Professional), hasMany(WeeklyReportItem) ✓</li>
-            <li>CommissionRule → belongsTo(Professional), belongsTo(Procedure) ✓</li>
+            <li>PaymentMethodCommissionRate → parametriza comisiones vigentes ✓</li>
             <li>DoctorAssistantAssignment → belongsTo(Professional) × 2 ✓</li>
             <li class="warn">Professional → Falta relación hasMany(ActivityRecord) como "doctor"</li>
             <li class="warn">Procedure → Falta relación hasMany(ActivityRecord)</li>
@@ -333,7 +330,6 @@
                 <tr><td>ActivityStatus</td><td>5</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>WeeklyReportStatus</td><td>3</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>ProfessionalRole</td><td>2</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
-                <tr><td>CommissionType</td><td>4</td><td style="color:var(--danger)">✗</td><td>-</td><td><span class="badge badge-warn">Falta label()</span></td></tr>
                 <tr><td>WhatsappMessageStatus</td><td>7</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>SocialPlatform</td><td>2</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>SocialCommentStatus</td><td>9</td><td>✓</td><td>✓</td><td><span class="badge badge-pass">OK</span></td></tr>
@@ -345,6 +341,47 @@
                 <tr><td>SocialSuggestedAction</td><td>8</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>SocialResponseChannel</td><td>4</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
                 <tr><td>SocialCommentActionType</td><td>21</td><td>✓</td><td>-</td><td><span class="badge badge-pass">OK</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- QA SOCIAL INBOX / PIPELINE -->
+    <div class="section">
+        <h2>QA Social Inbox y Pipeline</h2>
+
+        <h3>Fases del drawer 360</h3>
+        <table>
+            <thead><tr><th>Fase</th><th>Resultado</th><th>Notas</th></tr></thead>
+            <tbody>
+                <tr><td>Fase 1 - Timeline</td><td><span class="badge badge-pass">OK</span></td><td>Timeline enriquecido con iconos, colores, grupos y progreso.</td></tr>
+                <tr><td>Fase 2 - Compactación</td><td><span class="badge badge-pass">OK</span></td><td>Drawer reducido, borde sutil, sombra ligera y layout tipo panel Kanban.</td></tr>
+                <tr><td>Fase 3 - Tabs</td><td><span class="badge badge-pass">OK</span></td><td>Resumen, Conversación, CRM y Actividad con Alpine local.</td></tr>
+                <tr><td>Fase 4 - Paneles internos</td><td><span class="badge badge-pass">OK</span></td><td>Cards normalizadas a fondo blanco, borde #e5e7eb, radio .75rem y pesos 500-600.</td></tr>
+                <tr><td>Fase 5 - Footer</td><td><span class="badge badge-pass">OK</span></td><td>Acciones consolidadas: Ver caso completo, Ver ficha/Crear ficha y Cerrar.</td></tr>
+                <tr><td>Fase 6 - QA estados</td><td><span class="badge badge-warn">Parcial</span></td><td>Revisión estática aplicada. Falta validación visual en navegador por estados reales.</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Correcciones funcionales recientes</h3>
+        <ul class="checklist">
+            <li>Botones primarios restaurados a negro en <code>.smart-action.primary</code></li>
+            <li>Header del drawer tolera leads sin <code>platform</code></li>
+            <li>Timeline muestra fallback cuando un evento no tiene fecha</li>
+            <li>Modal WhatsApp conserva links existentes si el lead ya tiene token</li>
+            <li>Valor estimado se inicializa desde <code>procedures.internal_rate</code> cuando aplica</li>
+            <li>Kanban refresca con <code>wire:poll.visible.10s</code></li>
+            <li>Barra de score Kanban renderiza correctamente el fill</li>
+        </ul>
+
+        <h3>Verificación técnica</h3>
+        <table>
+            <thead><tr><th>Comando</th><th>Estado</th><th>Resultado</th></tr></thead>
+            <tbody>
+                <tr><td><code>php -l app/Filament/Pages/SocialInbox.php</code></td><td><span class="badge badge-pass">OK</span></td><td>Sin errores de sintaxis.</td></tr>
+                <tr><td><code>php -l app/Filament/Pages/SocialPipelineKanban.php</code></td><td><span class="badge badge-pass">OK</span></td><td>Sin errores de sintaxis.</td></tr>
+                <tr><td><code>php -l app/Filament/Resources/SocialComments/SocialCommentResource.php</code></td><td><span class="badge badge-pass">OK</span></td><td>Sin errores de sintaxis.</td></tr>
+                <tr><td><code>git diff --check</code></td><td><span class="badge badge-pass">OK</span></td><td>Sin errores de whitespace.</td></tr>
+                <tr><td><code>php artisan test tests/Feature/Filament/SocialInboxTest.php</code></td><td><span class="badge badge-warn">Bloqueado</span></td><td>El entorno local no tiene <code>mbstring</code>: <code>Call to undefined function Illuminate\Support\mb_split()</code>.</td></tr>
             </tbody>
         </table>
     </div>
@@ -368,7 +405,7 @@
         </div>
         <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--gray-500)">✅ Este flujo funciona correctamente. Todas las páginas están conectadas en el sidebar.</p>
 
-        <h3>Flujo Social/CRM (parcialmente roto)</h3>
+        <h3>Flujo Social/CRM (activo)</h3>
         <div class="flow-diagram">
             <span class="flow-step active">Bandeja social</span>
             <span class="flow-arrow">→</span>
@@ -382,13 +419,13 @@
             <span class="flow-step active">SocialCommentResource (view)</span>
         </div>
         <div class="flow-diagram" style="margin-top:0.5rem;">
-            <span class="flow-step" style="border-color:var(--danger);background:var(--danger-light);color:var(--danger)">⚠ Leads Calientes</span>
+            <span class="flow-step" style="border-color:var(--info);background:var(--info-light);color:var(--info)">Leads Calientes futuro</span>
             <span class="flow-arrow">→</span>
             <span class="flow-step active">SocialCommentResource (view)</span>
         </div>
-        <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--danger)">❌ Leads Calientes y Alertas están huérfanos. No hay cross-linking entre Bandeja social ↔ Pipeline Kanban.</p>
+        <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--gray-500)">El flujo operativo actual queda cubierto por Bandeja social, Pipeline Kanban, SocialCommentResource y SocialLeadNotificationCenter. SocialHotLeads queda como mejora futura.</p>
 
-        <h3>Flujo Comisiones (parcialmente roto)</h3>
+        <h3>Flujo Comisiones (funcional)</h3>
         <div class="flow-diagram">
             <span class="flow-step active">Reportes semanales</span>
             <span class="flow-arrow">→</span>
@@ -396,11 +433,7 @@
             <span class="flow-arrow">→</span>
             <span class="flow-step active">Comisiones por pago</span>
         </div>
-        <div class="flow-diagram" style="margin-top:0.5rem;">
-            <span class="flow-step" style="border-color:var(--danger);background:var(--danger-light);color:var(--danger)">⚠ Reglas de comisión</span>
-            <span style="font-size:0.85rem;color:var(--danger);margin-left:0.5rem;">← inaccesible</span>
-        </div>
-        <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--danger)">❌ Reglas de comisión es huérfano. No hay forma de llegar a él desde la UI.</p>
+        <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--gray-500)">Las reglas legacy fueron eliminadas. La parametrización vigente queda en métodos de pago y comisiones por pago.</p>
     </div>
 
     <!-- RECOMENDACIONES -->
@@ -411,45 +444,45 @@
             <tbody>
                 <tr>
                     <td>1</td>
-                    <td>Mostrar CommissionRuleResource en el sidebar bajo "Comisiones y Pagos" o enlazarlo desde WeeklyReportResource</td>
+                    <td>Validar visualmente el drawer 360 en navegador con datos reales</td>
                     <td><span class="badge badge-fail">Alta</span></td>
-                    <td>Recuperar acceso a funcionalidad completa</td>
+                    <td>Cerrar Fase 6 QA</td>
                 </tr>
                 <tr>
                     <td>2</td>
-                    <td>Ocultar grupo "WhatsApp" del sidebar si no tiene items visibles, o mostrar BandejaWhatsApp</td>
+                    <td>Ejecutar pruebas de SocialInbox en Docker o entorno con <code>mbstring</code></td>
                     <td><span class="badge badge-warn">Media</span></td>
-                    <td>Eliminar confusión en el usuario</td>
+                    <td>Confirmar regresiones automatizadas</td>
                 </tr>
                 <tr>
                     <td>3</td>
-                    <td>Agregar links cruzados: Bandeja social ↔ Pipeline Kanban ↔ Leads Calientes ↔ Alertas</td>
+                    <td>Definir si SocialHotLeads se integra al flujo actual o se elimina</td>
                     <td><span class="badge badge-warn">Media</span></td>
-                    <td>Mejorar flujo de trabajo social</td>
+                    <td>Evitar una página reservada indefinidamente</td>
                 </tr>
                 <tr>
                     <td>4</td>
-                    <td>Enlazar BandejaWhatsApp desde Mensajes WhatsApp o desde el widget de notificaciones</td>
+                    <td>Revisar comportamiento de links a leads ocultos tras derivación WhatsApp</td>
                     <td><span class="badge badge-warn">Media</span></td>
-                    <td>Hacer accesible la bandeja de WhatsApp</td>
+                    <td>Evitar navegación confusa desde notificaciones</td>
                 </tr>
                 <tr>
                     <td>5</td>
-                    <td>Corregir sort duplicado: SocialInbox=17, PipelineKanban=18</td>
+                    <td>Completar QA responsive en móvil y desktop para Social Inbox y Kanban</td>
                     <td><span class="badge badge-info">Baja</span></td>
-                    <td>Orden predecible en sidebar</td>
+                    <td>Confirmar usabilidad del rediseño</td>
                 </tr>
                 <tr>
                     <td>6</td>
-                    <td>Agregar método label() al enum CommissionType</td>
+                    <td>Actualizar o ampliar tests de estados vacíos del drawer</td>
                     <td><span class="badge badge-info">Baja</span></td>
-                    <td>Consistencia en UI</td>
+                    <td>Cubrir null patient, null procedure, no timeline y alertas</td>
                 </tr>
                 <tr>
                     <td>7</td>
-                    <td>Eliminar 6 widgets legacy de Chart.js (código muerto)</td>
+                    <td>Verificar suite completa después de instalar extensiones PHP faltantes</td>
                     <td><span class="badge badge-info">Baja</span></td>
-                    <td>Reducir complejidad del proyecto</td>
+                    <td>Confirmar que limpiezas no afectaron otros módulos</td>
                 </tr>
                 <tr>
                     <td>8</td>
@@ -468,28 +501,30 @@
             <div>
                 <h3 style="color:var(--success);margin-bottom:0.5rem;">✅ Lo que funciona</h3>
                 <ul style="list-style:none;font-size:0.9rem;">
-                    <li>23 rutas accesibles y funcionales</li>
+                    <li>Navegación principal limpia, sin grupo WhatsApp vacío</li>
                     <li>15 widgets activos sin errores</li>
-                    <li>13 resources con CRUD completo</li>
+                    <li>Widgets legacy Chart.js eliminados</li>
+                    <li>CommissionRule legacy eliminado</li>
+                    <li>Social Inbox rediseñado en fases 1-5</li>
+                    <li>Pipeline Kanban con score, valor estimado y polling corregidos</li>
                     <li>18 enums funcionales</li>
                     <li>2 servicios de webhook operativos</li>
                     <li>Flujo clínico completo</li>
                 </ul>
             </div>
             <div>
-                <h3 style="color:var(--danger);margin-bottom:0.5rem;">❌ Lo que necesita修复</h3>
+                <h3 style="color:var(--warning);margin-bottom:0.5rem;">⚠ Pendiente</h3>
                 <ul style="list-style:none;font-size:0.9rem;">
-                    <li>4 páginas huérfanas sin acceso</li>
-                    <li>1 grupo WhatsApp vacío</li>
-                    <li>0 cross-linking en páginas sociales</li>
-                    <li>6 widgets legacy sin usar</li>
-                    <li>2 relaciones de modelo faltantes</li>
-                    <li>1 enum sin método label()</li>
+                    <li>Fase 6 QA visual en navegador</li>
+                    <li>Tests bloqueados por falta de mbstring en el entorno local</li>
+                    <li>Decidir futuro de SocialHotLeads</li>
+                    <li>Revisar enlaces hacia leads ocultos tras WhatsApp</li>
+                    <li>2 relaciones de modelo opcionales por completar</li>
                 </ul>
             </div>
         </div>
         <p style="margin-top:1.5rem;font-size:0.95rem;opacity:0.8;text-align:center;">
-            El sistema es sólido en su capa de datos y formularios. Los issues principales son de navegación y organización de la UI.
+            El sistema queda más consistente en navegación y UI social. El cierre completo depende de QA visual y de ejecutar la suite en un entorno con las extensiones PHP requeridas.
         </p>
     </div>
 

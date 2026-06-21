@@ -155,11 +155,11 @@
         }
 
         .smart-drawer-backdrop {
-            background: rgba(15, 23, 42, .38);
+            background: rgba(15, 23, 42, .22);
             inset: 0;
             position: fixed;
             z-index: 48;
-            animation: drawerBackdropIn .22s ease;
+            animation: drawerBackdropIn .14s ease;
         }
 
         .smart-drawer-backdrop.is-closing {
@@ -168,17 +168,20 @@
 
         .smart-drawer {
             background: #ffffff;
-            border-left: 1px solid #e5e7eb;
-            box-shadow: -12px 0 56px -16px rgba(15, 23, 42, .32);
+            border: 1px solid #e5e7eb;
+            border-radius: .875rem;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+            color: #0f172a;
             display: flex;
             flex-direction: column;
+            max-height: calc(100vh - 2rem);
+            overflow: hidden;
             position: fixed;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: min(100%, 58rem);
+            right: 1rem;
+            top: 1rem;
+            width: min(38rem, calc(100vw - 2rem));
             z-index: 49;
-            animation: drawerSlideIn .28s cubic-bezier(.16, 1, .3, 1);
+            animation: drawerSlideIn .14s ease;
         }
 
         .smart-drawer.is-closing {
@@ -186,13 +189,13 @@
         }
 
         @keyframes drawerSlideIn {
-            from { transform: translateX(100%); opacity: .4; }
+            from { transform: translateX(.75rem); opacity: .4; }
             to { transform: translateX(0); opacity: 1; }
         }
 
         @keyframes drawerSlideOut {
             from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(.75rem); opacity: 0; }
         }
 
         @keyframes drawerBackdropIn {
@@ -206,41 +209,44 @@
         }
 
         .smart-drawer-header {
-            align-items: center;
+            align-items: flex-start;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
             gap: .75rem;
-            padding: .85rem 1rem;
+            justify-content: space-between;
+            padding: 1rem;
             flex: 0 0 auto;
         }
 
         .smart-drawer-close {
             align-items: center;
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: .5rem;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: .45rem;
             color: #64748b;
             cursor: pointer;
             display: inline-flex;
             flex: 0 0 auto;
-            font-size: 1.05rem;
-            font-weight: 850;
-            height: 1.85rem;
+            font-size: 1rem;
+            font-weight: 500;
+            height: 2rem;
             justify-content: center;
             line-height: 1;
             transition: .14s ease;
-            width: 1.85rem;
+            width: 2rem;
         }
 
         .smart-drawer-close:hover {
-            background: #eef2f7;
+            background: #f9fafb;
+            border-color: #e5e7eb;
             color: #0f172a;
         }
 
         .smart-drawer-title {
             color: #0f172a;
-            font-size: .92rem;
-            font-weight: 700;
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.2;
             min-width: 0;
             overflow: visible;
             text-overflow: ellipsis;
@@ -249,10 +255,9 @@
 
         .smart-drawer-subtitle {
             color: #64748b;
-            font-size: .74rem;
+            font-size: .76rem;
             font-weight: 500;
-            margin-left: auto;
-            flex: 0 0 auto;
+            margin-top: .2rem;
             white-space: nowrap;
         }
 
@@ -261,51 +266,87 @@
             overflow-y: auto;
             padding: 1rem;
             display: grid;
-            gap: .75rem;
+            gap: .8rem;
             align-content: start;
         }
+
+        .smart-drawer-footer {
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+            padding: .9rem 1rem;
+        }
+
+        .smart-drawer-tabs {
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: .85rem;
+            overflow-x: auto;
+            padding: 0 1rem;
+        }
+
+        .smart-drawer-tab {
+            background: transparent;
+            border: 0;
+            border-bottom: 2px solid transparent;
+            color: #64748b;
+            cursor: pointer;
+            flex: 0 0 auto;
+            font-size: .76rem;
+            font-weight: 500;
+            padding: .7rem 0 .75rem;
+            transition: border-color .14s ease, color .14s ease;
+        }
+
+        .smart-drawer-tab:hover,
+        .smart-drawer-tab.is-active {
+            border-bottom-color: #000000;
+            color: #0f172a;
+        }
+
+        [x-cloak] { display: none !important; }
 
         .smart-drawer-card {
             background: #ffffff;
             border: 1px solid #e5e7eb;
             border-radius: .75rem;
             display: grid;
-            gap: .65rem;
+            gap: .55rem;
             padding: .85rem;
         }
 
         .smart-drawer-card.is-accent {
-            border-left: 3px solid #14b8a6;
+            border-color: #e5e7eb;
         }
 
         .smart-drawer-card.is-ai {
-            background: linear-gradient(180deg, #eef6ff, #ffffff);
-            border-color: #bfdbfe;
+            background: #ffffff;
+            border-color: #e5e7eb;
         }
 
         .smart-drawer-card-kicker {
-            color: #000000;
-            font-size: .66rem;
-            font-weight: 900;
-            letter-spacing: .1em;
-            text-transform: uppercase;
+            color: #0f172a;
+            font-size: .78rem;
+            font-weight: 600;
         }
 
         .smart-drawer-card.is-ai .smart-drawer-card-kicker {
-            color: #1d4ed8;
+            color: #0f172a;
         }
 
         .smart-drawer-card-title {
             color: #0f172a;
-            font-size: .88rem;
-            font-weight: 700;
+            font-size: .82rem;
+            font-weight: 500;
             margin: 0;
         }
 
         .smart-drawer-card-text {
-            color: #334155;
-            font-size: .84rem;
-            line-height: 1.55;
+            color: #64748b;
+            font-size: .82rem;
+            font-weight: 500;
+            line-height: 1.45;
             margin: 0;
             white-space: pre-line;
         }
@@ -323,26 +364,110 @@
 
         .smart-drawer-timeline {
             display: grid;
-            gap: .6rem;
-            margin-top: .3rem;
+            gap: 0;
         }
 
         .smart-drawer-timeline-item {
-            border-left: 3px solid #14b8a6;
-            padding-left: .65rem;
+            display: grid;
+            gap: .75rem;
+            grid-template-columns: 2rem minmax(0, 1fr);
+            padding-bottom: 1rem;
+            position: relative;
         }
 
-        .smart-drawer-timeline-item strong {
-            color: #0f172a;
-            display: block;
-            font-size: .8rem;
+        .smart-drawer-timeline-item:not(:last-child)::before {
+            background: #e5e7eb;
+            bottom: 0;
+            content: '';
+            left: .95rem;
+            position: absolute;
+            top: 2rem;
+            width: 1px;
         }
 
-        .smart-drawer-timeline-item span {
+        .smart-drawer-timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .smart-activity-icon {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
             color: #64748b;
-            display: block;
+            display: inline-flex;
+            height: 2rem;
+            justify-content: center;
+            position: relative;
+            width: 2rem;
+            z-index: 1;
+        }
+
+        .smart-activity-icon svg {
+            height: .95rem;
+            width: .95rem;
+        }
+
+        .smart-activity-icon.blue,
+        .smart-activity-icon.indigo,
+        .smart-activity-icon.cyan { color: #2563eb; }
+
+        .smart-activity-icon.orange { color: #f97316; }
+        .smart-activity-icon.green,
+        .smart-activity-icon.teal,
+        .smart-activity-icon.emerald { color: #0f766e; }
+
+        .smart-activity-title {
+            color: #0f172a;
+            font-size: .84rem;
+            font-weight: 500;
+            line-height: 1.35;
+        }
+
+        .smart-activity-meta {
+            color: #64748b;
             font-size: .74rem;
-            margin-top: .1rem;
+            margin-top: .15rem;
+        }
+
+        .smart-activity-note {
+            color: #64748b;
+            font-size: .8rem;
+            line-height: 1.45;
+            margin: .35rem 0 0;
+        }
+
+        .smart-activity-progress {
+            align-items: center;
+            display: flex;
+            gap: .5rem;
+            margin-top: .45rem;
+        }
+
+        .smart-activity-progress-track {
+            background: #eef2f7;
+            border-radius: 999px;
+            flex: 1;
+            height: .25rem;
+            overflow: hidden;
+        }
+
+        .smart-activity-progress-fill {
+            background: #0f766e;
+            display: block;
+            height: 100%;
+        }
+
+        .smart-activity-progress span:last-child {
+            color: #64748b;
+            font-size: .7rem;
+            font-weight: 500;
+        }
+
+        .smart-activity-empty {
+            color: #64748b;
+            font-size: .82rem;
+            margin: 0;
         }
 
         .smart-thermo-head {
@@ -404,27 +529,50 @@
 
         @media (max-width: 760px) {
             .smart-drawer {
+                border-radius: 0;
+                max-height: 100vh;
+                right: 0;
+                top: 0;
                 width: 100%;
             }
         }
 
         .dark .smart-drawer {
             background: #0f172a;
-            border-left-color: rgba(148, 163, 184, .18);
+            border-color: rgba(148, 163, 184, .18);
         }
 
         .dark .smart-drawer-header {
             border-bottom-color: rgba(148, 163, 184, .18);
         }
 
+        .dark .smart-drawer-tabs {
+            border-bottom-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-drawer-footer {
+            border-top-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-drawer-tab {
+            color: #94a3b8;
+        }
+
+        .dark .smart-drawer-tab:hover,
+        .dark .smart-drawer-tab.is-active {
+            border-bottom-color: #e5e7eb;
+            color: #e5e7eb;
+        }
+
         .dark .smart-drawer-close {
-            background: rgba(15, 23, 42, .86);
-            border-color: rgba(148, 163, 184, .18);
+            background: transparent;
+            border-color: transparent;
             color: #94a3b8;
         }
 
         .dark .smart-drawer-close:hover {
             background: rgba(30, 41, 59, .86);
+            border-color: rgba(148, 163, 184, .18);
             color: #f1f5f9;
         }
 
@@ -441,6 +589,7 @@
             border-color: rgba(148, 163, 184, .18);
         }
 
+        .dark .smart-drawer-card-kicker,
         .dark .smart-drawer-card-title {
             color: #e2e8f0;
         }
@@ -450,16 +599,32 @@
         }
 
         .dark .smart-drawer-card.is-ai {
-            background: linear-gradient(180deg, rgba(29, 78, 216, .18), rgba(15, 23, 42, .86));
-            border-color: rgba(96, 165, 250, .24);
+            background: rgba(15, 23, 42, .86);
+            border-color: rgba(148, 163, 184, .18);
         }
 
-        .dark .smart-drawer-timeline-item strong {
+        .dark .smart-drawer-timeline-item:not(:last-child)::before {
+            background: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-activity-icon {
+            background: rgba(15, 23, 42, .86);
+            border-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-activity-title {
             color: #e2e8f0;
         }
 
-        .dark .smart-drawer-timeline-item span {
+        .dark .smart-activity-meta,
+        .dark .smart-activity-note,
+        .dark .smart-activity-empty,
+        .dark .smart-activity-progress span:last-child {
             color: #94a3b8;
+        }
+
+        .dark .smart-activity-progress-track {
+            background: rgba(148, 163, 184, .18);
         }
 
         .dark .smart-thermo-score,
@@ -679,30 +844,30 @@
 
         .smart-panel {
             border: 1px solid #e5e7eb;
-            border-radius: .625rem;
+            border-radius: .75rem;
             overflow: hidden;
         }
 
         .smart-panel:not(details) {
+            display: grid;
+            gap: .35rem;
             padding: .75rem .875rem;
         }
 
         .smart-panel h3 {
             color: #0f172a;
             font-size: .78rem;
-            font-weight: 700;
+            font-weight: 600;
             margin: 0 0 .45rem;
         }
 
         .smart-panel summary {
             cursor: pointer;
-            font-size: .6875rem;
-            font-weight: 700;
-            letter-spacing: .1em;
+            color: #0f172a;
+            font-size: .78rem;
+            font-weight: 600;
             list-style: none;
             padding: .625rem .875rem;
-            text-transform: uppercase;
-            color: #6b7280;
         }
 
         .smart-panel summary::-webkit-details-marker { display: none; }
@@ -713,7 +878,7 @@
         }
 
         .smart-ai-panel summary {
-            color: #1d4ed8;
+            color: #0f172a;
         }
 
         .smart-panel-body {
@@ -733,8 +898,15 @@
         .smart-panel > strong {
             color: #0f172a;
             font-size: .8125rem;
+            font-weight: 500;
             line-height: 1.45;
             margin: 0;
+        }
+
+        .smart-panel-body strong,
+        .smart-panel > strong,
+        .smart-panel p strong {
+            font-weight: 600;
         }
 
         .smart-muted { color: #64748b !important; }
@@ -773,7 +945,7 @@
         }
 
         .smart-action:hover { background: #f9fafb; border-color: #d1d5db; color: #111827; }
-        /* .smart-action.primary { background: #000000; border-color: #000000; color: #ffffff; } */
+        .smart-action.primary { background: #000000; border-color: #000000; color: #ffffff; }
         .smart-action.primary:hover { background: #1a1a1a; border-color: #1a1a1a; color: #ffffff; }
         .smart-action.success { background: #0f766e; color: white; }
         .smart-action.success:hover { background: #0d6b63; }
@@ -1193,7 +1365,7 @@
         }
 
         .dark .smart-panel summary {
-            color: #94a3b8;
+            color: #e5e7eb;
         }
 
         .dark .smart-panel h3 {
@@ -1205,13 +1377,14 @@
         }
 
         .dark .smart-ai-panel summary {
-            color: #93c5fd;
+            color: #e5e7eb;
         }
 
         .dark .smart-panel-body p,
         .dark .smart-panel-body strong,
         .dark .smart-panel > p,
-        .dark .smart-panel > strong {
+        .dark .smart-panel > strong,
+        .dark .smart-panel p strong {
             color: #e2e8f0;
         }
 
@@ -1581,6 +1754,7 @@
             @php
                 $drawerTimeline = $selectedTimeline;
                 $drawerPatient = $selectedPatient;
+                $drawerPlatformLabel = $selectedComment->platform?->label() ?? 'Red social';
                 $engagementScore = (int) $selectedComment->recent_engagement_score;
                 $displayEngagementScore = min($engagementScore, 100);
                 $engagementState = match (true) {
@@ -1592,19 +1766,29 @@
             @endphp
             <div class="smart-drawer-backdrop" wire:click="closeCommentDrawer"></div>
 
-            <aside class="smart-drawer" x-data @keydown.escape.window="$wire.closeCommentDrawer()">
+            <aside class="smart-drawer" x-data="{ tab: 'summary' }" @keydown.escape.window="$wire.closeCommentDrawer()">
                 <div class="smart-drawer-header">
-                    <button class="smart-drawer-close" type="button" wire:click="closeCommentDrawer" aria-label="Cerrar detalle">&times;</button>
-                    <div class="smart-drawer-title">
-                        {{ $selectedComment->author_username ? '@'.$selectedComment->author_username : ($selectedComment->author_name ?: 'Lead seleccionado') }}
+                    <div style="min-width:0">
+                        <div class="smart-drawer-title">
+                            {{ $selectedComment->author_username ? '@'.$selectedComment->author_username : ($selectedComment->author_name ?: 'Lead seleccionado') }}
+                        </div>
+                        <div class="smart-drawer-subtitle">
+                            {{ $drawerPlatformLabel }} · {{ $selectedComment->conversion_status?->label() ?? 'Sin estado' }}
+                        </div>
                     </div>
-                    <span class="smart-drawer-subtitle">
-                        {{ $selectedComment->platform->label() }} / {{ $selectedComment->conversion_status?->label() ?? 'Sin estado' }}
-                    </span>
+
+                    <button class="smart-drawer-close" type="button" wire:click="closeCommentDrawer" aria-label="Cerrar detalle">&times;</button>
                 </div>
 
+                <nav class="smart-drawer-tabs" aria-label="Secciones del lead">
+                    <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'summary' }" @click="tab = 'summary'">Resumen</button>
+                    <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'conversation' }" @click="tab = 'conversation'">Conversacion</button>
+                    <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'crm' }" @click="tab = 'crm'">CRM</button>
+                    <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'activity' }" @click="tab = 'activity'">Actividad</button>
+                </nav>
+
                 <div class="smart-drawer-body">
-                    <section class="smart-drawer-card">
+                    <section class="smart-drawer-card" x-show="tab === 'summary'" x-cloak>
                         <div class="smart-thermo-head">
                             <div>
                                 <div class="smart-drawer-card-kicker">Termometro de Interes</div>
@@ -1637,16 +1821,16 @@
                     </section>
 
                     {{-- Card 1: Conversacion Detalle --}}
-                    <section class="smart-drawer-card is-accent">
+                    <section class="smart-drawer-card is-accent" x-show="tab === 'conversation'" x-cloak>
                         <div class="smart-drawer-card-kicker">Conversacion / Detalle</div>
                         <p class="smart-drawer-card-text">"{{ $selectedComment->comment_text }}"</p>
 
-                        <div class="smart-panels" style="margin-top:.5rem">
+                        <div class="smart-panels">
                             <section class="smart-panel">
                                 <h3>Respuesta sugerida actual</h3>
                                 <p>{{ $selectedComment->suggested_reply ?: 'Sin respuesta base. Usa la accion IA para generar una respuesta con historial.' }}</p>
                                 @if ($selectedComment->ai_reason)
-                                    <p class="smart-muted" style="margin-top:.4rem">Motivo: {{ $selectedComment->ai_reason }}</p>
+                                    <p class="smart-muted">Motivo: {{ $selectedComment->ai_reason }}</p>
                                 @endif
                             </section>
                             <section class="smart-panel">
@@ -1661,12 +1845,11 @@
                             <button class="smart-action success" type="button" wire:click="suggestHistoricalReply({{ $selectedComment->id }})">
                                 Sugerir respuesta basada en historial
                             </button>
-                            <a class="smart-action muted" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Ver caso completo</a>
                         </div>
                     </section>
 
                     @if ($historicalSuggestionCommentId === $selectedComment->id && filled($historicalReplySuggestion))
-                        <section class="smart-drawer-card is-ai">
+                        <section class="smart-drawer-card is-ai" x-show="tab === 'conversation'" x-cloak>
                             <div class="smart-drawer-card-kicker">Gemini / auditoria</div>
                             <div class="smart-drawer-card-title">Sugerencia basada en historial</div>
                             <p class="smart-drawer-card-text">{{ $historicalReplySuggestion }}</p>
@@ -1674,7 +1857,7 @@
                     @endif
 
                     {{-- Card 2: Mini CRM --}}
-                    <section class="smart-drawer-card">
+                    <section class="smart-drawer-card" x-show="tab === 'crm'" x-cloak>
                         <div class="smart-drawer-card-kicker">Mini CRM</div>
                         <div class="smart-drawer-card-title">{{ $drawerPatient?->full_name ?? 'Lead sin ficha clinica' }}</div>
                         <p class="smart-drawer-card-text">
@@ -1686,7 +1869,7 @@
                                 / Recalentado {{ $selectedComment->reheated_at->diffForHumans() }}
                             @endif
                         </p>
-                        <div class="smart-panels" style="margin-top:.3rem">
+                        <div class="smart-panels">
                             <section class="smart-panel">
                                 <h3>Procedimiento</h3>
                                 <p>{{ $selectedComment->suggestedProcedure?->name ?: 'Sin sugerencia' }}</p>
@@ -1696,31 +1879,95 @@
                                 <p>{{ $selectedComment->leadAlerts?->whereNull('resolved_at')->count() ?: 0 }} abiertas</p>
                             </section>
                         </div>
-                        <div class="smart-drawer-actions">
-                            @if ($drawerPatient)
-                                <a class="smart-action primary" href="{{ \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $drawerPatient]) }}">Ver ficha</a>
-                            @else
-                                <a class="smart-action primary" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Crear ficha</a>
-                            @endif
-                        </div>
                     </section>
 
                     {{-- Card 3: Pulso del Cliente --}}
-                    <section class="smart-drawer-card">
-                        <div class="smart-drawer-card-kicker">Pulso del cliente</div>
-                        <div class="smart-drawer-card-title">Timeline reciente</div>
+                    <section class="smart-drawer-card" x-show="tab === 'activity'" x-cloak>
+                        <div class="smart-drawer-card-kicker">Actividad</div>
                         <div class="smart-drawer-timeline">
                             @forelse ($drawerTimeline as $event)
                                 <div class="smart-drawer-timeline-item">
-                                    <strong>{{ $event['label'] }}</strong>
-                                    <span>{{ $event['date'] }}{{ $event['duration'] ? ' / '.$event['duration'].'s' : '' }}</span>
+                                    <span class="smart-activity-icon {{ $event['color'] }}" aria-hidden="true">
+                                        @switch($event['icon'])
+                                            @case('eye')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                                @break
+                                            @case('arrow-path')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M21.015 4.356v4.992m0 0h-4.992m4.992 0-3.181-3.183a8.25 8.25 0 0 0-13.803 3.7" /></svg>
+                                                @break
+                                            @case('clock')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                                @break
+                                            @case('fire')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 0 0 2.648-6.402 4.5 4.5 0 0 1-2.647-1.359 4.5 4.5 0 0 0-2.648 1.359A3.75 3.75 0 0 0 12 18Z" /></svg>
+                                                @break
+                                            @case('cursor-arrow-rays')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m15.042 21.672-3.684-7.377m0 0-3.684 7.377m3.684-7.377L21 3 3 10.671l8.358 3.624Z" /></svg>
+                                                @break
+                                            @case('play')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" /></svg>
+                                                @break
+                                            @case('check-circle')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                                @break
+                                            @case('chat-bubble-left')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" /></svg>
+                                                @break
+                                            @default
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
+                                        @endswitch
+                                    </span>
+
+                                    <div>
+                                        <div class="smart-activity-title">{{ $event['label'] }}</div>
+                                        <div class="smart-activity-meta">
+                                            {{ $event['date'] ?: 'Fecha no registrada' }}{{ $event['duration'] ? ' / '.$event['duration'].'s de actividad' : '' }}
+                                        </div>
+                                        <p class="smart-activity-note">
+                                            @switch($event['group'])
+                                                @case('conversion')
+                                                    El lead avanzo hacia WhatsApp desde el Smart Link.
+                                                    @break
+                                                @case('video')
+                                                    Interaccion con el contenido visual del tratamiento.
+                                                    @break
+                                                @case('engagement')
+                                                    Senal de interes durante la visita a la landing.
+                                                    @break
+                                                @case('navigation')
+                                                    Visita registrada en el Smart Link rastreable.
+                                                    @break
+                                                @default
+                                                    Evento registrado en el flujo digital del lead.
+                                            @endswitch
+                                        </p>
+
+                                        @if ($event['progress'])
+                                            <div class="smart-activity-progress" aria-label="Progreso {{ $event['progress'] }}%">
+                                                <span class="smart-activity-progress-track">
+                                                    <span class="smart-activity-progress-fill" style="width: {{ $event['progress'] }}%"></span>
+                                                </span>
+                                                <span>{{ $event['progress'] }}%</span>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             @empty
-                                <p class="smart-drawer-muted">Sin eventos de Smart Link todavia.</p>
+                                <p class="smart-activity-empty">Sin eventos de Smart Link todavia.</p>
                             @endforelse
                         </div>
                     </section>
                 </div>
+
+                <footer class="smart-drawer-footer">
+                    <a class="smart-action primary" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Ver caso completo</a>
+                    @if ($drawerPatient)
+                        <a class="smart-action" href="{{ \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $drawerPatient]) }}">Ver ficha</a>
+                    @else
+                        <a class="smart-action" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Crear ficha</a>
+                    @endif
+                    <button class="smart-action" type="button" wire:click="closeCommentDrawer">Cerrar</button>
+                </footer>
             </aside>
         @endif
 
