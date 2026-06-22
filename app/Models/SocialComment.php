@@ -73,6 +73,11 @@ class SocialComment extends Model
         'raw_payload',
         'published_at',
         'processed_at',
+        'auto_replied_at',
+        'auto_reply_external_id',
+        'auto_reply_error',
+        'auto_reply_attempts',
+        'auto_reply_message',
     ];
 
     protected function casts(): array
@@ -109,6 +114,8 @@ class SocialComment extends Model
             'raw_payload' => 'array',
             'published_at' => 'datetime',
             'processed_at' => 'datetime',
+            'auto_replied_at' => 'datetime',
+            'auto_reply_attempts' => 'integer',
         ];
     }
 

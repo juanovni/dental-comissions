@@ -28,6 +28,10 @@ enum SocialCommentActionType: string
     case MarkAsLost = 'mark_as_lost';
     case PipelineStageChanged = 'pipeline_stage_changed';
     case Error = 'error';
+    case AutoReplyGenerated = 'auto_reply_generated';
+    case AutoReplySent = 'auto_reply_sent';
+    case AutoReplyFailed = 'auto_reply_failed';
+    case AutoReplySkipped = 'auto_reply_skipped';
 
     public function label(): string
     {
@@ -56,6 +60,10 @@ enum SocialCommentActionType: string
             self::MarkAsLost => 'Marcar como perdido',
             self::PipelineStageChanged => 'Cambiar etapa del pipeline',
             self::Error => 'Error',
+            self::AutoReplyGenerated => 'Respuesta automática generada',
+            self::AutoReplySent => 'Respuesta automática enviada',
+            self::AutoReplyFailed => 'Respuesta automática fallida',
+            self::AutoReplySkipped => 'Respuesta automática omitida',
         };
     }
 }
