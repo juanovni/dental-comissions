@@ -35,6 +35,10 @@ class SocialCommentClassificationService
             ? SocialCommentStatus::ReviewRequired
             : SocialCommentStatus::Classified;
 
+        $procedureId = in_array($validated['classification'], ['sales_lead', 'commercial_question'])
+            ? $this->resolveProcedureId($validated['suggested_procedure_code'] ?? null)
+            : null;
+
         $comment->update([
             'classification' => $validated['classification'],
             'sentiment' => $validated['sentiment'],
@@ -44,6 +48,7 @@ class SocialCommentClassificationService
             'suggested_action' => $validated['suggested_action'],
             'response_channel' => $validated['response_channel'],
             'suggested_reply' => $validated['suggested_reply'],
+            'suggested_procedure_id' => $procedureId,
             'requires_human_review' => $validated['requires_human_review'],
             'ai_reason' => $validated['reason'],
             'ai_response' => $validated,
@@ -203,6 +208,10 @@ class SocialCommentClassificationService
             $requiresReview = true;
         }
 
+        $procedureCode = is_string($data['suggested_procedure_code'] ?? null)
+            ? $data['suggested_procedure_code']
+            : null;
+
         return [
             'classification' => $classification->value,
             'sentiment' => $sentiment->value,
@@ -213,6 +222,7 @@ class SocialCommentClassificationService
             'suggested_reply' => (string) ($data['suggested_reply'] ?? ''),
             'requires_human_review' => $requiresReview,
             'reason' => (string) ($data['reason'] ?? 'Clasificacion sin motivo especificado.'),
+            'suggested_procedure_code' => $procedureCode,
         ];
     }
 
@@ -230,6 +240,19 @@ class SocialCommentClassificationService
         }
 
         return $enum::tryFrom($value) ?? $fallback;
+    }
+
+    private function resolveProcedureId(?string $code): ?int
+    {
+        if (! $code || $code === 'null') {
+            return null;
+        }
+
+        $procedure = \App\Models\Procedure::where('code', $code)
+            ->where('is_active', true)
+            ->first();
+
+        return $procedure?->id;
     }
 
     private function result(
@@ -253,6 +276,7 @@ class SocialCommentClassificationService
             'suggested_reply' => $reply,
             'requires_human_review' => $requiresReview,
             'reason' => $reason,
+            'suggested_procedure_code' => null,
         ];
     }
 
@@ -260,13 +284,32 @@ class SocialCommentClassificationService
     {
         $postCaption = $comment->socialPost?->caption ?: 'Sin texto de publicacion';
         $platform = $comment->platform->value;
+        $proceduresContext = $this->buildProceduresContext();
 
         return <<<PROMPT
 Plataforma: {$platform}
 Publicacion: {$postCaption}
 Autor: {$comment->author_name} / {$comment->author_username}
 Comentario: {$comment->comment_text}
+
+Procedimientos disponibles en la clinica:
+{$proceduresContext}
 PROMPT;
+    }
+
+    private function buildProceduresContext(): string
+    {
+        $procedures = \App\Models\Procedure::where('is_active', true)
+            ->select('id', 'name', 'code', 'category')
+            ->get();
+
+        if ($procedures->isEmpty()) {
+            return '(No hay procedimientos configurados)';
+        }
+
+        return $procedures
+            ->map(fn ($p) => "- code: {$p->code} | nombre: {$p->name} | categoria: {$p->category}")
+            ->implode("\n");
     }
 
     private function systemPrompt(): string
@@ -286,7 +329,8 @@ Retorna SOLO JSON valido con esta estructura exacta:
   "response_channel": "public",
   "suggested_reply": "respuesta breve y editable",
   "requires_human_review": false,
-  "reason": "motivo breve"
+  "reason": "motivo breve",
+  "suggested_procedure_code": "ORT002"
 }
 
 Valores permitidos:
@@ -296,6 +340,7 @@ Valores permitidos:
 - reputation_risk: low, medium, high, critical
 - suggested_action: reply, reply_and_route_to_whatsapp, hide, review, ignore, mark_as_spam, escalate, thank_user
 - response_channel: public, private, both, no_response
+- suggested_procedure_code: usa el code exacto de la lista de procedimientos disponibles si el comentario menciona o consulta sobre un procedimiento especifico. Si no esta claro o es una pregunta general, usa null.
 
 Reglas:
 - Quejas, insultos, temas medicos sensibles, amenazas, asuntos legales o riesgo reputacional high/critical siempre requieren revision humana.
@@ -304,6 +349,7 @@ Reglas:
 - No ocultes quejas legitimas por defecto; escala y sugiere respuesta cuidadosa.
 - Los leads comerciales o preguntas de precio/cita/ubicacion deben derivarse a WhatsApp cuando convenga.
 - Las respuestas sugeridas deben ser profesionales, amables y breves.
+- Si el comentario menciona un procedimiento dental (ej: "ortodoncia", "blanqueamiento", "implante"), asigna el suggested_procedure_code correspondiente.
 PROMPT;
     }
 }
