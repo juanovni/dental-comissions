@@ -51,6 +51,17 @@ class SocialLeadNotificationCenterTest extends TestCase
             ->assertSet('urgentPulse', true);
     }
 
+    public function test_notification_center_marks_urgent_on_closing_opportunity_payload(): void
+    {
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialLeadNotificationCenter::class)
+            ->call('handleClosingOpportunityDetected', [
+                'intent' => 'ready_to_book',
+                'closing_opportunity_score' => 85,
+            ])
+            ->assertSet('urgentPulse', true);
+    }
+
     private function socialComment(): SocialComment
     {
         $account = SocialAccount::create([

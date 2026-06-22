@@ -40,6 +40,14 @@ class SocialLeadNotificationCenter extends Component
         unset($this->alerts, $this->stats);
     }
 
+    #[On('echo-private:admin-notifications,ClosingOpportunityDetected')]
+    public function handleClosingOpportunityDetected(array $payload): void
+    {
+        $this->urgentPulse = true;
+
+        unset($this->alerts, $this->stats);
+    }
+
     public function resolveAlert(int $alertId): void
     {
         $alert = SocialLeadAlert::whereNull('resolved_at')->find($alertId);

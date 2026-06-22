@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\SocialCommentActionType;
+use App\Events\ClosingOpportunityDetected;
 use App\Models\SocialComment;
 use App\Models\WhatsappMessage;
 use Illuminate\Support\Facades\Log;
@@ -48,13 +49,15 @@ class WhatsappSalesAgentService
         ]);
 
         if ($response['requires_human_handoff']) {
-            app(SocialLeadAlertService::class)->createAlert($comment->refresh(), 'closing_opportunity', 'danger', [
+            $alert = app(SocialLeadAlertService::class)->createAlert($comment->refresh(), 'closing_opportunity', 'danger', [
                 'intent' => $response['intent'],
                 'closing_opportunity_score' => $response['closing_opportunity_score'],
                 'handoff_reason' => $response['handoff_reason'],
                 'whatsapp_message_id' => $message->id,
                 'tracking_token' => $comment->tracking_token,
             ]);
+
+            ClosingOpportunityDetected::dispatch($comment->refresh(), $response, $alert);
         }
 
         return $response;

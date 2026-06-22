@@ -7,6 +7,7 @@ use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
+use App\Events\ClosingOpportunityDetected;
 use App\Models\Procedure;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
@@ -15,6 +16,7 @@ use App\Models\SocialPost;
 use App\Models\WhatsappMessage;
 use App\Services\WhatsappSalesAgentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -47,6 +49,7 @@ class WhatsappSalesAgentServiceTest extends TestCase
     public function test_ready_to_book_message_creates_closing_opportunity_alert(): void
     {
         config(['services.ai.provider' => 'local']);
+        Event::fake([ClosingOpportunityDetected::class]);
 
         $comment = $this->socialComment(Procedure::factory()->create(['name' => 'Ortodoncia']));
         $message = $this->whatsappMessage('Quiero agendar una cita manana en la tarde. Mi codigo es DNT-ABCDE');
@@ -61,6 +64,8 @@ class WhatsappSalesAgentServiceTest extends TestCase
             'alert_type' => 'closing_opportunity',
             'severity' => 'danger',
         ]);
+        Event::assertDispatched(ClosingOpportunityDetected::class, fn (ClosingOpportunityDetected $event): bool => $event->comment->is($comment)
+            && $event->agentResponse['intent'] === 'ready_to_book');
     }
 
     public function test_ai_response_is_validated_and_persisted(): void
