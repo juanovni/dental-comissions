@@ -146,6 +146,83 @@ class SocialAutoReplyMessageServiceTest extends TestCase
         $this->assertStringNotContainsString('https://odon.test/v/', $response['message']);
     }
 
+    public function test_uses_fallback_when_ai_message_mentions_price(): void
+    {
+        $comment = $this->socialComment(['tracking_token' => 'DNT-PRICE']);
+
+        Http::fake([
+            'https://api.openai.com/v1/chat/completions' => Http::response([
+                'choices' => [
+                    [
+                        'message' => [
+                            'content' => json_encode([
+                                'message' => "👋 Te saluda Clínica Dental\n\nEl tratamiento cuesta \$500. Más info aquí: https://odon.test/v/DNT-PRICE",
+                                'requires_human_review' => false,
+                            ], JSON_UNESCAPED_UNICODE),
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $response = app(SocialAutoReplyMessageService::class)->generate($comment);
+
+        $this->assertSame('fallback', $response['source']);
+        $this->assertStringNotContainsString('$500', $response['message']);
+        $this->assertStringContainsString('https://odon.test/v/DNT-PRICE', $response['message']);
+    }
+
+    public function test_uses_fallback_when_ai_message_promises_clinical_result(): void
+    {
+        $comment = $this->socialComment(['tracking_token' => 'DNT-DIAG1']);
+
+        Http::fake([
+            'https://api.openai.com/v1/chat/completions' => Http::response([
+                'choices' => [
+                    [
+                        'message' => [
+                            'content' => json_encode([
+                                'message' => "👋 Te saluda Clínica Dental\n\nTe recomendamos hacer implantes y garantizamos el resultado. Mira aquí: https://odon.test/v/DNT-DIAG1",
+                                'requires_human_review' => false,
+                            ], JSON_UNESCAPED_UNICODE),
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $response = app(SocialAutoReplyMessageService::class)->generate($comment);
+
+        $this->assertSame('fallback', $response['source']);
+        $this->assertStringNotContainsString('garantizamos', $response['message']);
+        $this->assertStringContainsString('https://odon.test/v/DNT-DIAG1', $response['message']);
+    }
+
+    public function test_uses_fallback_when_ai_message_omits_required_header(): void
+    {
+        $comment = $this->socialComment(['tracking_token' => 'DNT-HEAD1']);
+
+        Http::fake([
+            'https://api.openai.com/v1/chat/completions' => Http::response([
+                'choices' => [
+                    [
+                        'message' => [
+                            'content' => json_encode([
+                                'message' => "Hola desde la clínica\n\nTe compartimos información aquí: https://odon.test/v/DNT-HEAD1",
+                                'requires_human_review' => false,
+                            ], JSON_UNESCAPED_UNICODE),
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $response = app(SocialAutoReplyMessageService::class)->generate($comment);
+
+        $this->assertSame('fallback', $response['source']);
+        $this->assertStringContainsString('👋 Te saluda Clínica Dental', $response['message']);
+    }
+
     private function setting(string $key, mixed $value, string $type = 'string'): void
     {
         SocialCrmSetting::updateOrCreate(

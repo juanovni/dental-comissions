@@ -182,6 +182,45 @@ class SocialAutoReplyServiceTest extends TestCase
         $this->assertSame('sensitive_text', $result['reason']);
     }
 
+    public function test_skips_when_max_attempts_reached(): void
+    {
+        $this->enablePublishing();
+        $this->setting('social_auto_reply_max_attempts', 2, 'integer');
+        $comment = $this->socialComment(['auto_reply_attempts' => 2]);
+
+        $result = app(SocialAutoReplyService::class)->handle($comment);
+
+        $this->assertSame('skipped', $result['status']);
+        $this->assertSame('max_attempts_reached', $result['reason']);
+        $this->assertSame(2, $comment->fresh()->auto_reply_attempts);
+    }
+
+    public function test_skips_disallowed_comment_status(): void
+    {
+        $this->enableDryRun();
+        $comment = $this->socialComment(['status' => SocialCommentStatus::Ignored]);
+
+        $result = app(SocialAutoReplyService::class)->handle($comment);
+
+        $this->assertSame('skipped', $result['status']);
+        $this->assertSame('status_not_allowed', $result['reason']);
+    }
+
+    public function test_skips_when_auto_reply_sent_action_exists(): void
+    {
+        $this->enableDryRun();
+        $comment = $this->socialComment();
+        $comment->actions()->create([
+            'action' => SocialCommentActionType::AutoReplySent,
+            'notes' => 'Respuesta previa.',
+        ]);
+
+        $result = app(SocialAutoReplyService::class)->handle($comment);
+
+        $this->assertSame('skipped', $result['status']);
+        $this->assertSame('already_replied', $result['reason']);
+    }
+
     private function enableDryRun(): void
     {
         $this->setting('social_auto_reply_enabled', true, 'boolean');

@@ -203,6 +203,46 @@ class MetaSocialServiceTest extends TestCase
         Queue::assertNotPushed(SendSocialCommentAutoReply::class);
     }
 
+    public function test_process_webhook_payload_does_not_dispatch_auto_reply_job_for_sensitive_comment(): void
+    {
+        $this->setting('social_auto_reply_enabled', true, 'boolean');
+        Queue::fake();
+
+        SocialAccount::create([
+            'platform' => SocialPlatform::Facebook,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => 'page_1',
+            'page_id' => 'page_1',
+            'is_active' => true,
+        ]);
+
+        app(MetaSocialService::class)->processWebhookPayload([
+            'object' => 'page',
+            'entry' => [
+                [
+                    'id' => 'page_1',
+                    'changes' => [
+                        [
+                            'field' => 'feed',
+                            'value' => [
+                                'item' => 'comment',
+                                'verb' => 'add',
+                                'post_id' => 'post_1',
+                                'comment_id' => 'comment_auto_reply_sensitive_1',
+                                'message' => 'Tengo dolor fuerte y sangrado',
+                                'sender_id' => 'facebook_user_1',
+                                'sender_name' => 'Carlos Cliente',
+                                'created_time' => now()->timestamp,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        Queue::assertNotPushed(SendSocialCommentAutoReply::class);
+    }
+
     public function test_process_webhook_payload_stores_instagram_comment(): void
     {
         SocialAccount::create([
