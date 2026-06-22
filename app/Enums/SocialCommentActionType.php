@@ -17,6 +17,7 @@ enum SocialCommentActionType: string
     case WhatsappHandshake = 'whatsapp_handshake';
     case LinkIdentity = 'link_identity';
     case CreatePatientFromLead = 'create_patient_from_lead';
+    case AppointmentCreated = 'appointment_created';
     case LeadScoreUpdated = 'lead_score_updated';
     case SmartLinkVisited = 'smart_link_visited';
     case SmartLinkRevisited = 'smart_link_revisited';
@@ -43,6 +44,7 @@ enum SocialCommentActionType: string
             self::WhatsappHandshake => 'Handshake WhatsApp',
             self::LinkIdentity => 'Vincular identidad',
             self::CreatePatientFromLead => 'Crear paciente desde lead',
+            self::AppointmentCreated => 'Crear cita',
             self::LeadScoreUpdated => 'Actualizar puntaje de lead',
             self::SmartLinkVisited => 'Visita Smart Link',
             self::SmartLinkRevisited => 'Reingreso Smart Link',
