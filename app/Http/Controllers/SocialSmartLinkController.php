@@ -12,6 +12,7 @@ use App\Services\SocialCrmSettingsService;
 use App\Services\SocialLeadEngagementPriorityService;
 use App\Services\SocialLeadAlertService;
 use App\Services\SocialLeadScoringService;
+use App\Services\SocialPipelineAutomationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -62,7 +63,8 @@ class SocialSmartLinkController extends Controller
         ]);
 
         $this->applyTrackingEffects($comment->refresh(), $event);
-        app(SocialLeadEngagementPriorityService::class)->refresh($comment->refresh());
+        $comment = app(SocialLeadEngagementPriorityService::class)->refresh($comment->refresh());
+        $comment = app(SocialPipelineAutomationService::class)->applyEngagement($comment, $event);
         LeadActivityDetected::dispatch($comment->refresh(), $event);
 
         return response()->json([

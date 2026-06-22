@@ -60,6 +60,8 @@ class WhatsappSalesAgentService
             ClosingOpportunityDetected::dispatch($comment->refresh(), $response, $alert);
         }
 
+        app(SocialPipelineAutomationService::class)->applyAgentResponse($comment->refresh(), $response);
+
         return $response;
     }
 
