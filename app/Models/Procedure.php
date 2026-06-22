@@ -36,4 +36,9 @@ class Procedure extends Model
     {
         return $this->hasMany(SocialComment::class, 'suggested_procedure_id');
     }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
 }

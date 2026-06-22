@@ -62,4 +62,9 @@ class SocialPost extends Model
     {
         return $this->hasMany(ActivityRecord::class);
     }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
 }

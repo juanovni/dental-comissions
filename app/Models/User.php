@@ -59,4 +59,14 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(SocialCommentAction::class, 'performed_by');
     }
+
+    public function assignedAppointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'assigned_user_id');
+    }
+
+    public function createdAppointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'created_by');
+    }
 }
