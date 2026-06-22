@@ -29,8 +29,10 @@ class MetaAuthController extends Controller
                 'pages_show_list',
                 'pages_manage_metadata',
                 'pages_read_engagement',
+                'pages_manage_engagement',
                 'pages_read_user_content',
                 'instagram_basic',
+                'instagram_manage_comments',
             ]),
         ]);
 

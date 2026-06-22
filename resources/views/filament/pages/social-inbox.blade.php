@@ -112,9 +112,17 @@
         }
 
         .smart-filter-count {
-            color: #9ca3af;
+            align-items: center;
+            background: #f3f4f6;
+            border-radius: .4rem;
+            color: #475569;
+            display: inline-flex;
             font-size: .7rem;
             font-weight: 500;
+            height: 1.35rem;
+            justify-content: center;
+            min-width: 1.3rem;
+            padding: 0 .35rem;
             transition: color .18s ease;
         }
 
