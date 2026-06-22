@@ -10,6 +10,7 @@ use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Models\Procedure;
 use App\Models\SocialComment;
 use App\Services\GeminiJsonService;
+use App\Services\SocialAutoReplyService;
 use App\Services\SocialConversionService;
 use App\Services\SocialCrmSettingsService;
 use App\Services\SocialLinkEventMapper;
@@ -212,6 +213,61 @@ class SocialInbox extends Page
             ->body('La respuesta basada en historial fue auditada en el lead.')
             ->success()
             ->send();
+    }
+
+    public function runAutoReply(int $commentId): void
+    {
+        $comment = SocialComment::find($commentId);
+
+        if (! $comment) {
+            Notification::make()->title('Lead no encontrado')->danger()->send();
+
+            return;
+        }
+
+        $result = app(SocialAutoReplyService::class)->handle($comment);
+
+        match ($result['status'] ?? 'unknown') {
+            'sent' => Notification::make()
+                ->title('Auto-respuesta publicada')
+                ->body('La respuesta fue enviada a Meta y auditada en el lead.')
+                ->success()
+                ->send(),
+            'generated' => Notification::make()
+                ->title('Auto-respuesta generada')
+                ->body('Modo dry-run activo: se genero el mensaje sin publicarlo en Meta.')
+                ->success()
+                ->send(),
+            'failed' => Notification::make()
+                ->title('No se pudo publicar')
+                ->body((string) ($result['error'] ?? 'Meta rechazo la publicacion. Revisa el historial del lead.'))
+                ->danger()
+                ->send(),
+            default => Notification::make()
+                ->title('Auto-respuesta omitida')
+                ->body('Motivo: '.str((string) ($result['reason'] ?? 'no_aplica'))->replace('_', ' ')->toString())
+                ->warning()
+                ->send(),
+        };
+
+        $this->selectedCommentId = $comment->id;
+    }
+
+    public function autoReplyStatus(SocialComment $comment): array
+    {
+        if (filled($comment->auto_replied_at)) {
+            return ['label' => 'Auto-respondido', 'class' => 'success'];
+        }
+
+        if (filled($comment->auto_reply_error)) {
+            return ['label' => 'Error auto-reply', 'class' => 'danger'];
+        }
+
+        if (filled($comment->auto_reply_message)) {
+            return ['label' => 'Generado dry-run', 'class' => 'warning'];
+        }
+
+        return ['label' => 'Sin auto-reply', 'class' => 'neutral'];
     }
 
     public function comments(): LengthAwarePaginator

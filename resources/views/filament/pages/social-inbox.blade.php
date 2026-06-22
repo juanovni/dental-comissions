@@ -1568,6 +1568,7 @@
                     $isDerived = $comment->conversion_status === \App\Enums\SocialConversionStatus::TokenGenerated;
                     $isHotLead = filled($comment->hot_lead_at);
                     $isReheated = filled($comment->reheated_at);
+                    $autoReply = $this->autoReplyStatus($comment);
                     $intent = $isCrisis ? 'crisis' : ($isLead ? 'lead' : ($isVip ? 'vip' : ($isMedical ? 'medical' : 'normal')));
                     $intentTitle = match ($intent) {
                         'crisis' => 'RIESGO CRITICO',
@@ -1619,6 +1620,7 @@
                             @if ($isReheated)
                                 <span class="smart-badge hot">Recalentado</span>
                             @endif
+                            <span @class(['smart-badge', $autoReply['class']])>{{ $autoReply['label'] }}</span>
 
                             <details class="smart-dropdown">
                                 <summary class="smart-trigger" aria-label="Mas opciones">⋯</summary>
@@ -1643,6 +1645,11 @@
                                     <button class="smart-dropdown-item" type="button" wire:click="markReviewed({{ $comment->id }})">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                                         Revisado
+                                    </button>
+
+                                    <button class="smart-dropdown-item" type="button" wire:click="runAutoReply({{ $comment->id }})">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" /></svg>
+                                        Auto-responder
                                     </button>
 
                                     <button class="smart-dropdown-item" type="button" wire:click="ignore({{ $comment->id }})">
@@ -1719,6 +1726,10 @@
                             </button>
                         @endif
 
+                        <button class="smart-action warning" type="button" wire:click="runAutoReply({{ $comment->id }})">
+                            {{ filled($comment->auto_reply_message) || filled($comment->auto_reply_error) ? 'Reintentar auto-reply' : 'Generar auto-reply' }}
+                        </button>
+
                     </div>
                 </article>
             @empty
@@ -1749,6 +1760,7 @@
                     $engagementScore >= 31 => ['label' => 'Tibio', 'class' => 'is-warm'],
                     default => ['label' => 'Frio', 'class' => 'is-cold'],
                 };
+                $drawerAutoReply = $this->autoReplyStatus($selectedComment);
             @endphp
             <div class="smart-drawer-backdrop" wire:click="closeCommentDrawer"></div>
 
@@ -1814,11 +1826,30 @@
                                 <p class="smart-muted"><strong>Pipeline:</strong> {{ $selectedComment->pipeline_stage?->label() ?? 'Sin etapa' }}</p>
                                 <p class="smart-muted"><strong>Valor:</strong> ${{ number_format((float) $selectedComment->estimated_value, 2) }}</p>
                             </section>
+                            <section class="smart-panel">
+                                <h3>Auto-respuesta Meta</h3>
+                                <p><strong>Estado:</strong> {{ $drawerAutoReply['label'] }}</p>
+                                @if ($selectedComment->auto_replied_at)
+                                    <p class="smart-muted">Publicada {{ $selectedComment->auto_replied_at->diffForHumans() }}</p>
+                                @endif
+                                @if ($selectedComment->auto_reply_external_id)
+                                    <p class="smart-muted">ID Meta: {{ $selectedComment->auto_reply_external_id }}</p>
+                                @endif
+                                @if ($selectedComment->auto_reply_error)
+                                    <p class="smart-muted">Error: {{ $selectedComment->auto_reply_error }}</p>
+                                @endif
+                                @if ($selectedComment->auto_reply_message)
+                                    <p style="margin-top:.45rem; white-space:pre-line">{{ $selectedComment->auto_reply_message }}</p>
+                                @endif
+                            </section>
                         </div>
 
                         <div class="smart-drawer-actions">
                             <button class="smart-action success" type="button" wire:click="suggestHistoricalReply({{ $selectedComment->id }})">
                                 Sugerir respuesta basada en historial
+                            </button>
+                            <button class="smart-action warning" type="button" wire:click="runAutoReply({{ $selectedComment->id }})">
+                                {{ filled($selectedComment->auto_reply_message) || filled($selectedComment->auto_reply_error) ? 'Reintentar auto-respuesta' : 'Generar auto-respuesta' }}
                             </button>
                         </div>
                     </section>

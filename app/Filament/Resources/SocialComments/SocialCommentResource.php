@@ -23,6 +23,7 @@ use App\Models\Procedure;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Services\AppointmentCreationService;
+use App\Services\SocialAutoReplyService;
 use App\Services\SocialConversionService;
 use App\Services\SocialCrmSettingsService;
 use Filament\Actions\Action;
@@ -166,6 +167,11 @@ class SocialCommentResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (SocialCommentStatus $state): string => $state->label())
                     ->color(fn (SocialCommentStatus $state): string => $state->color()),
+                TextColumn::make('auto_reply_status')
+                    ->label('Auto-reply')
+                    ->state(fn (SocialComment $record): string => self::autoReplyStatusLabel($record))
+                    ->badge()
+                    ->color(fn (SocialComment $record): string => self::autoReplyStatusColor($record)),
                 TextColumn::make('conversion_status')
                     ->label('CRM')
                     ->badge()
@@ -344,6 +350,23 @@ class SocialCommentResource extends Resource
                         ->success()
                         ->send();
                 }),
+            Action::make('auto_reply')
+                ->label(fn (SocialComment $record): string => filled($record->auto_reply_message) || filled($record->auto_reply_error) ? 'Reintentar auto-reply' : 'Auto-responder')
+                ->icon('heroicon-o-chat-bubble-bottom-center-text')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Ejecutar auto-respuesta')
+                ->modalDescription('El sistema respetara la configuracion actual. Si dry-run esta activo, solo generara el mensaje sin publicarlo en Meta.')
+                ->action(function (SocialComment $record): void {
+                    $result = app(SocialAutoReplyService::class)->handle($record);
+
+                    match ($result['status'] ?? 'unknown') {
+                        'sent' => Notification::make()->title('Auto-respuesta publicada')->success()->send(),
+                        'generated' => Notification::make()->title('Auto-respuesta generada')->body('Dry-run activo: no se publico en Meta.')->success()->send(),
+                        'failed' => Notification::make()->title('No se pudo publicar')->body((string) ($result['error'] ?? 'Error publicando en Meta.'))->danger()->send(),
+                        default => Notification::make()->title('Auto-respuesta omitida')->body('Motivo: '.str((string) ($result['reason'] ?? 'no_aplica'))->replace('_', ' ')->toString())->warning()->send(),
+                    };
+                }),
             Action::make('link_existing_patient')
                 ->label('Vincular paciente')
                 ->icon('heroicon-o-link')
@@ -521,6 +544,40 @@ class SocialCommentResource extends Resource
         return collect($cases)
             ->mapWithKeys(fn ($case) => [$case->value => $case->label()])
             ->all();
+    }
+
+    private static function autoReplyStatusLabel(SocialComment $record): string
+    {
+        if (filled($record->auto_replied_at)) {
+            return 'Auto-respondido';
+        }
+
+        if (filled($record->auto_reply_error)) {
+            return 'Error';
+        }
+
+        if (filled($record->auto_reply_message)) {
+            return 'Dry-run';
+        }
+
+        return 'Pendiente';
+    }
+
+    private static function autoReplyStatusColor(SocialComment $record): string
+    {
+        if (filled($record->auto_replied_at)) {
+            return 'success';
+        }
+
+        if (filled($record->auto_reply_error)) {
+            return 'danger';
+        }
+
+        if (filled($record->auto_reply_message)) {
+            return 'warning';
+        }
+
+        return 'gray';
     }
 
     private static function linkPatientToComment(

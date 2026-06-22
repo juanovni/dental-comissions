@@ -17,13 +17,28 @@ use App\Models\SocialIdentity;
 use App\Models\SocialLinkEvent;
 use App\Models\SocialPost;
 use App\Models\User;
+use App\Services\SocialCrmSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class SocialInboxTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'app.url' => 'https://odon.test',
+            'services.whatsapp.business_phone' => '593991112233',
+        ]);
+
+        URL::forceRootUrl('https://odon.test');
+    }
 
     public function test_social_inbox_hides_archived_leads_from_main_filter(): void
     {
@@ -256,6 +271,65 @@ class SocialInboxTest extends TestCase
             'action' => SocialCommentActionType::Reply->value,
             'notes' => 'Sugerencia IA basada en historial generada desde bandeja split-view.',
         ]);
+    }
+
+    public function test_social_inbox_generates_auto_reply_in_dry_run(): void
+    {
+        $this->setting('social_auto_reply_enabled', true, 'boolean');
+        $this->setting('social_auto_reply_dry_run', true, 'boolean');
+        $this->setting('social_auto_reply_use_ai', false, 'boolean');
+        Http::fake();
+
+        $comment = $this->socialComment([
+            'classification' => SocialCommentClassification::SalesLead,
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialInbox::class)
+            ->set('filter', 'leads')
+            ->call('runAutoReply', $comment->id)
+            ->assertSet('selectedCommentId', $comment->id)
+            ->assertSee('Generado dry-run')
+            ->assertSee('Auto-respuesta Meta')
+            ->assertSee('https://odon.test/v/');
+
+        $this->assertDatabaseHas('social_comment_actions', [
+            'social_comment_id' => $comment->id,
+            'action' => SocialCommentActionType::AutoReplyGenerated->value,
+        ]);
+        $this->assertNotNull($comment->refresh()->auto_reply_message);
+        Http::assertNothingSent();
+    }
+
+    public function test_social_inbox_shows_auto_reply_error_status(): void
+    {
+        $comment = $this->socialComment([
+            'classification' => SocialCommentClassification::SalesLead,
+            'auto_reply_error' => 'Invalid token',
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialInbox::class)
+            ->set('filter', 'leads')
+            ->call('selectComment', $comment->id)
+            ->assertSee('Error auto-reply')
+            ->assertSee('Invalid token');
+    }
+
+    private function setting(string $key, mixed $value, string $type = 'string'): void
+    {
+        SocialCrmSetting::updateOrCreate(
+            ['key' => $key],
+            [
+                'setting_group' => 'auto_reply',
+                'label' => $key,
+                'value_type' => $type,
+                'value' => $value,
+                'is_active' => true,
+            ],
+        );
+
+        app(SocialCrmSettingsService::class)->clearCache();
     }
 
     private function socialComment(array $overrides = []): SocialComment
