@@ -90,8 +90,8 @@
         }
 
         .smart-filter.is-active {
-            border-bottom-color: var(--inbox-accent);
-            color: var(--inbox-accent);
+            border-bottom-color: #111827;
+            color: #111827;
         }
 
         .smart-filter-icon {
@@ -108,7 +108,7 @@
         }
 
         .smart-filter.is-active .smart-filter-icon {
-            color: var(--inbox-accent);
+            color: #111827;
         }
 
         .smart-filter-count {
@@ -127,7 +127,7 @@
         }
 
         .smart-filter.is-active .smart-filter-count {
-            color: var(--inbox-accent);
+            color: #111827;
         }
 
         @media (max-width: 760px) {
