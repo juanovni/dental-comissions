@@ -37,7 +37,15 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('OdonCRM')
+            ->brandLogo(function () {
+                if (request()->routeIs('filament.admin.auth.login')) {
+                    return '/images/logo-odon-crm_2.png';
+                }
+                return '/images/logo-odon-crm_2.png';
+            })
+            ->brandLogoHeight(function () {
+                return request()->routeIs('filament.admin.auth.login') ? '3rem' : '1.75rem';
+            })
             ->colors([
                 'primary' => Color::Teal,
             ])

@@ -241,6 +241,17 @@
 }
 
 @layer components {
+    .fi-logo img {
+        width: auto;
+        object-fit: contain;
+    }
+
+    .fi-simple-header-heading {
+        font-size: 1.2rem;
+    }
+}
+
+@layer components {
     .fi-width-9xl {
         max-width: 96rem;
     }
