@@ -181,7 +181,6 @@ class SocialConversionService
 
             $comment->update([
                 'conversion_status' => SocialConversionStatus::PendingPatientCreation,
-                'is_hidden' => true,
             ]);
 
             app(SocialLeadAlertService::class)->createAlert($comment->refresh(), 'pending_patient_creation', 'warning', [

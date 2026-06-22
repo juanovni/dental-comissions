@@ -64,7 +64,7 @@ class SocialConversionServiceTest extends TestCase
             'id' => $comment->id,
             'conversion_status' => SocialConversionStatus::PendingPatientCreation->value,
             'converted_patient_id' => null,
-            'is_hidden' => true,
+            'is_hidden' => false,
         ]);
     }
 

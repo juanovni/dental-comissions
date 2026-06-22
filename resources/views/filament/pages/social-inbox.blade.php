@@ -798,6 +798,42 @@
             padding: .55rem .7rem;
         }
 
+        .smart-action-banner {
+            align-items: center;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            border-radius: .5rem;
+            display: flex;
+            gap: .5rem;
+            margin: .5rem 0;
+            padding: .55rem .75rem;
+            font-size: .78rem;
+            color: #92400e;
+            font-weight: 600;
+        }
+
+        .smart-action-banner svg {
+            flex-shrink: 0;
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .smart-action-banner .smart-action-link {
+            margin-left: auto;
+            background: #f59e0b;
+            color: #fff;
+            padding: .25rem .6rem;
+            border-radius: .35rem;
+            text-decoration: none;
+            font-size: .72rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .smart-action-banner .smart-action-link:hover {
+            background: #d97706;
+        }
+
         .smart-progress {
             align-items: center;
             display: flex;
@@ -1683,6 +1719,14 @@
 
                     <div class="smart-message">"{{ $comment->comment_text }}"</div>
 
+                    @if ($comment->conversion_status === \App\Enums\SocialConversionStatus::PendingPatientCreation)
+                        <div class="smart-action-banner">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
+                            <span>El cliente hizo clic en WhatsApp. Crea su ficha y agenda la cita.</span>
+                            <a class="smart-action-link" href="{{ $detailUrl }}">Crear ficha</a>
+                        </div>
+                    @endif
+
                     @if ($isDerived && filled($comment->tracking_token))
                         <div class="smart-token">
                             <span>Token WhatsApp:</span>
@@ -1794,6 +1838,14 @@
                 </nav>
 
                 <div class="smart-drawer-body">
+                    @if ($selectedComment->conversion_status === \App\Enums\SocialConversionStatus::PendingPatientCreation)
+                        <div class="smart-action-banner" style="margin-bottom:.75rem">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
+                            <span>El cliente hizo clic en WhatsApp. Crea su ficha y agenda la cita.</span>
+                            <a class="smart-action-link" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Crear ficha</a>
+                        </div>
+                    @endif
+
                     <section class="smart-drawer-card" x-show="tab === 'summary'" x-cloak>
                         <div class="smart-thermo-head">
                             <div>
