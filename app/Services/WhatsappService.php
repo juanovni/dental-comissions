@@ -69,13 +69,10 @@ class WhatsappService
             $socialComment = $socialConversionService->processIncomingMessage($whatsappMessage);
 
             if ($socialComment) {
-                $whatsappMessage->markAsProcessed();
+                $agentResponse = app(WhatsappSalesAgentService::class)->respond($socialComment, $whatsappMessage);
 
-                if ($socialComment->converted_patient_id) {
-                    $this->sendMessage($fromPhone, 'Gracias. Identificamos tu ficha y daremos seguimiento a tu solicitud.');
-                } else {
-                    $this->sendMessage($fromPhone, 'Gracias. Recibimos tu codigo y el equipo creara o validara tu ficha para continuar.');
-                }
+                $whatsappMessage->markAsProcessed();
+                $this->sendMessage($fromPhone, $agentResponse['reply']);
 
                 return $whatsappMessage;
             }

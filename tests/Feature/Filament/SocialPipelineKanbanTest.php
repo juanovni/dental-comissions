@@ -7,6 +7,8 @@ use App\Enums\SocialConversionStatus;
 use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
 use App\Filament\Pages\SocialPipelineKanban;
+use App\Filament\Resources\SocialComments\Pages\ListSocialComments;
+use App\Models\Procedure;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\User;
@@ -121,6 +123,19 @@ class SocialPipelineKanbanTest extends TestCase
             ->assertSet('selectedLeadId', $comment->id)
             ->assertSee('Pulso comercial')
             ->assertSee('Lead abierto desde campana');
+    }
+
+    public function test_social_comments_table_exposes_create_appointment_action(): void
+    {
+        $user = User::factory()->create();
+        $procedure = Procedure::factory()->create(['name' => 'Implantes dentales']);
+        $comment = $this->socialComment([
+            'suggested_procedure_id' => $procedure->id,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ListSocialComments::class)
+            ->assertTableActionExists('create_appointment', record: $comment->getKey());
     }
 
     private function socialComment(array $overrides = []): SocialComment

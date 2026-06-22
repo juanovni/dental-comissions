@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\SocialComments;
 
+use App\Enums\AppointmentSource;
+use App\Enums\AppointmentStatus;
 use App\Enums\SocialCommentActionType;
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
@@ -20,6 +22,7 @@ use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
+use App\Services\AppointmentCreationService;
 use App\Services\SocialConversionService;
 use App\Services\SocialCrmSettingsService;
 use Filament\Actions\Action;
@@ -404,6 +407,70 @@ class SocialCommentResource extends Resource
                         'Ficha de paciente creada desde lead social.',
                         SocialCommentActionType::CreatePatientFromLead,
                     );
+                }),
+            Action::make('create_appointment')
+                ->label('Crear cita')
+                ->icon('heroicon-o-calendar-days')
+                ->color('primary')
+                ->modalHeading('Crear cita desde lead social')
+                ->modalSubmitActionLabel('Crear cita')
+                ->form(fn (SocialComment $record): array => [
+                    Select::make('patient_id')
+                        ->label('Paciente')
+                        ->default($record->socialIdentity?->patient_id ?? $record->converted_patient_id)
+                        ->options(fn (): array => Patient::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
+                        ->searchable()
+                        ->nullable()
+                        ->helperText('Opcional si la ficha aun no existe.'),
+                    Select::make('procedure_id')
+                        ->label('Procedimiento de interes')
+                        ->default($record->suggested_procedure_id ?? $record->socialPost?->procedure_id)
+                        ->options(fn (): array => Procedure::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                        ->searchable()
+                        ->preload()
+                        ->nullable(),
+                    TextInput::make('scheduled_at')
+                        ->label('Fecha y hora')
+                        ->placeholder('YYYY-MM-DD HH:MM')
+                        ->helperText('Ejemplo: '.now()->addDay()->format('Y-m-d H:i'))
+                        ->required(),
+                    TextInput::make('duration_minutes')
+                        ->label('Duracion en minutos')
+                        ->numeric()
+                        ->minValue(1)
+                        ->default(45),
+                    Select::make('status')
+                        ->label('Estado')
+                        ->options(self::enumOptions(AppointmentStatus::cases()))
+                        ->default(AppointmentStatus::Scheduled->value)
+                        ->required(),
+                    Select::make('source')
+                        ->label('Origen')
+                        ->options(self::enumOptions(AppointmentSource::cases()))
+                        ->default(AppointmentSource::AdminManual->value)
+                        ->required(),
+                    Textarea::make('notes')
+                        ->label('Notas')
+                        ->rows(3)
+                        ->columnSpanFull(),
+                ])
+                ->action(function (SocialComment $record, array $data): void {
+                    app(AppointmentCreationService::class)->createFromSocialLead($record, [
+                        'patient_id' => filled($data['patient_id'] ?? null) ? (int) $data['patient_id'] : null,
+                        'procedure_id' => filled($data['procedure_id'] ?? null) ? (int) $data['procedure_id'] : null,
+                        'scheduled_at' => $data['scheduled_at'],
+                        'duration_minutes' => filled($data['duration_minutes'] ?? null) ? (int) $data['duration_minutes'] : null,
+                        'status' => AppointmentStatus::from($data['status']),
+                        'source' => AppointmentSource::from($data['source']),
+                        'notes' => $data['notes'] ?? null,
+                        'created_by' => auth()->id(),
+                    ]);
+
+                    Notification::make()
+                        ->title('Cita creada')
+                        ->body('La cita quedo asociada al lead social y registrada en el pipeline.')
+                        ->success()
+                        ->send();
                 }),
         ];
     }

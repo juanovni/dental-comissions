@@ -15,6 +15,7 @@ enum SocialCommentActionType: string
     case GenerateWhatsappToken = 'generate_whatsapp_token';
     case RedirectToWhatsapp = 'redirect_to_whatsapp';
     case WhatsappHandshake = 'whatsapp_handshake';
+    case WhatsappSalesAgent = 'whatsapp_sales_agent';
     case LinkIdentity = 'link_identity';
     case CreatePatientFromLead = 'create_patient_from_lead';
     case AppointmentCreated = 'appointment_created';
@@ -42,6 +43,7 @@ enum SocialCommentActionType: string
             self::GenerateWhatsappToken => 'Generar token WhatsApp',
             self::RedirectToWhatsapp => 'Derivar a WhatsApp',
             self::WhatsappHandshake => 'Handshake WhatsApp',
+            self::WhatsappSalesAgent => 'Agente comercial WhatsApp',
             self::LinkIdentity => 'Vincular identidad',
             self::CreatePatientFromLead => 'Crear paciente desde lead',
             self::AppointmentCreated => 'Crear cita',
