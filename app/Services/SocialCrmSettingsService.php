@@ -142,6 +142,69 @@ class SocialCrmSettingsService
             ->all();
     }
 
+    // ── Auto Reply Settings ──────────────────────────────────────
+
+    public function autoReplyEnabled(): bool
+    {
+        return (bool) $this->get('social_auto_reply_enabled', false);
+    }
+
+    public function autoReplyDryRun(): bool
+    {
+        return (bool) $this->get('social_auto_reply_dry_run', true);
+    }
+
+    public function autoReplyUseAi(): bool
+    {
+        return (bool) $this->get('social_auto_reply_use_ai', true);
+    }
+
+    public function autoReplyCompanyName(): string
+    {
+        return (string) $this->get('social_auto_reply_company_name', 'Clínica Dental');
+    }
+
+    public function autoReplyHeaderTemplate(): string
+    {
+        return (string) $this->get(
+            'social_auto_reply_header_template',
+            '👋 Te saluda {empresa}',
+        );
+    }
+
+    public function autoReplyTemplate(): string
+    {
+        return (string) $this->get(
+            'social_auto_reply_template',
+            'Hola, con gusto te ayudamos. Te dejamos la información inicial y el acceso para continuar por WhatsApp aquí: {smart_link}',
+        );
+    }
+
+    public function autoReplyMaxAttempts(): int
+    {
+        return max(1, (int) $this->get('social_auto_reply_max_attempts', 2));
+    }
+
+    public function autoReplyUseSmartLink(): bool
+    {
+        return (bool) $this->get('social_auto_reply_use_smart_link', true);
+    }
+
+    public function autoReplyAllowedClassifications(): array
+    {
+        $classifications = $this->get('social_auto_reply_allowed_classifications', [
+            'sales_lead',
+            'commercial_question',
+        ]);
+
+        return collect(is_array($classifications) ? $classifications : ['sales_lead', 'commercial_question'])
+            ->filter(fn (mixed $c): bool => is_string($c) && $c !== '')
+            ->values()
+            ->all();
+    }
+
+    // ── Alert Settings ───────────────────────────────────────────
+
     public function alertsEnabled(): bool
     {
         return (bool) $this->get('social_alerts_enabled', true);
