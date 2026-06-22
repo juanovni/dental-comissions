@@ -54,6 +54,14 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 - Evitar `font-weight` mayor a `600` en botones; no usar uppercase forzado salvo badges pequenos.
 - Usar colores de estado sobrios: verde para exito, amarillo para alerta, rojo para peligro, gris para neutro.
 
+## Modales y Drawers
+
+- Todo modal, drawer o panel flotante debe tener un boton de cierre visible en el header, normalmente en la esquina superior derecha.
+- El boton de cierre debe ser compacto, accesible y consistente: `type="button"`, `aria-label="Cerrar"` o equivalente, icono `×` o Heroicon, `width/height` cerca de `2rem`, borde sutil o transparente.
+- No depender solo de backdrop, tecla Escape o boton de footer para cerrar un modal; esos comportamientos pueden existir, pero no reemplazan el boton visible del header.
+- Si el modal tiene acciones en footer, no duplicar un boton `Cerrar` si ya existe cierre visible en el header; usar `Cancelar` solo cuando sea parte semantica del flujo (por ejemplo, descartar una accion destructiva).
+- Mantener el header con titulo claro, subtitulo opcional y boton de cierre alineado; evitar headers sin cierre visible.
+
 ## Colores
 
 - Preferir paleta slate/gray con acento azul o el primary del panel.

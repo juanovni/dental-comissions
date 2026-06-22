@@ -162,24 +162,6 @@ class SocialInbox extends Page
             ->all() ?? [];
     }
 
-    public function recentMilestones(int $commentId): array
-    {
-        return SocialComment::find($commentId)?->linkEvents()
-            ->whereIn('event_type', [
-                'whatsapp_click',
-                'button_click',
-                'video_complete',
-                'video_play_seconds',
-                'duration_threshold',
-                'revisit',
-            ])
-            ->latest('created_at')
-            ->limit(5)
-            ->get()
-            ->map(fn ($event): string => $this->milestoneText($event->event_type, $event->duration_seconds, $event->metadata ?? [], $event->created_at?->diffForHumans()))
-            ->all() ?? [];
-    }
-
     public function suggestHistoricalReply(int $commentId): void
     {
         $comment = SocialComment::query()
@@ -516,21 +498,6 @@ class SocialInbox extends Page
             ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
             ->where('is_hidden', false)
             ->when($archivedStatuses !== [], fn (Builder $query): Builder => $query->whereNotIn('conversion_status', $archivedStatuses));
-    }
-
-    private function milestoneText(string $eventType, ?int $durationSeconds, array $metadata, ?string $date): string
-    {
-        $label = match ($eventType) {
-            'whatsapp_click' => 'Hizo clic en WhatsApp',
-            'button_click' => 'Hizo clic en '.($metadata['label'] ?? 'un boton'),
-            'video_complete' => 'Vio video completo',
-            'video_play_seconds' => 'Vio video por '.($durationSeconds ?? 0).'s',
-            'duration_threshold' => 'Permanecio interesado en la landing',
-            'revisit' => 'Revisito el Smart Link',
-            default => SocialLinkEventMapper::label($eventType),
-        };
-
-        return trim($label.' '.($date ?: ''));
     }
 
     private function applyArchivedQuery(Builder $query): Builder

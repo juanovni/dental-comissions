@@ -458,13 +458,44 @@
 
         .kanban-modal {
             background: #ffffff;
-            border-radius: 1.15rem;
-            box-shadow: 0 24px 80px rgba(15, 23, 42, .28);
+            border: 1px solid var(--pk-border);
+            border-radius: .875rem;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
             display: grid;
-            gap: 1rem;
+            gap: .85rem;
             max-width: 28rem;
             padding: 1.25rem;
             width: min(100%, 28rem);
+        }
+
+        .kanban-modal-header {
+            align-items: flex-start;
+            display: flex;
+            gap: .75rem;
+            justify-content: space-between;
+        }
+
+        .kanban-modal-close {
+            align-items: center;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: .45rem;
+            color: var(--pk-muted);
+            display: inline-flex;
+            flex: 0 0 auto;
+            font-size: 1rem;
+            font-weight: 500;
+            height: 2rem;
+            justify-content: center;
+            line-height: 1;
+            transition: .14s ease;
+            width: 2rem;
+        }
+
+        .kanban-modal-close:hover {
+            background: #f9fafb;
+            border-color: var(--pk-border);
+            color: var(--pk-ink);
         }
 
         .kanban-modal h3 {
@@ -754,6 +785,12 @@
             color: #cbd5e1;
         }
 
+        .dark .kanban-modal-close:hover {
+            background: rgba(30, 41, 59, .86);
+            border-color: var(--pk-border);
+            color: #f1f5f9;
+        }
+
         .dark .kanban-detail-panel,
         .dark .kanban-detail-section,
         .dark .kanban-detail-btn {
@@ -1036,8 +1073,11 @@
 
     @if ($lostModalCommentId)
         <div class="kanban-modal-backdrop" wire:key="lost-reason-modal">
-            <section class="kanban-modal" role="dialog" aria-modal="true" aria-labelledby="lost-modal-title">
-                <h3 id="lost-modal-title">Marcar lead como perdido</h3>
+            <section class="kanban-modal" role="dialog" aria-modal="true" aria-labelledby="lost-modal-title" @keydown.escape.window="$wire.closeLostModal()">
+                <header class="kanban-modal-header">
+                    <h3 id="lost-modal-title">Marcar lead como perdido</h3>
+                    <button class="kanban-modal-close" type="button" wire:click="closeLostModal" aria-label="Cerrar modal">&times;</button>
+                </header>
                 <p>Registra el motivo por el cual este lead se pierde. Esto ayuda a medir fuga de oportunidades.</p>
 
                 <label style="display:grid;gap:.35rem">

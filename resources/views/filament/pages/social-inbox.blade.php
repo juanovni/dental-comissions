@@ -13,7 +13,6 @@
         $selectedComment = $this->selectedComment();
         $selectedPatient = $selectedComment?->socialIdentity?->patient ?: $selectedComment?->convertedPatient;
         $selectedTimeline = $selectedComment ? $this->timelineEvents($selectedComment->id) : [];
-        $selectedMilestones = $selectedComment ? $this->recentMilestones($selectedComment->id) : [];
     @endphp
 
     <style>
@@ -514,19 +513,6 @@
         .smart-thermo-state.is-hot,
         .smart-thermo-state.is-max { background: #fef2f2; color: #b91c1c; }
 
-        .smart-milestones {
-            display: grid;
-            gap: .45rem;
-            margin: .15rem 0 0;
-            padding-left: 1rem;
-        }
-
-        .smart-milestones li {
-            color: #334155;
-            font-size: .82rem;
-            line-height: 1.45;
-        }
-
         @media (max-width: 760px) {
             .smart-drawer {
                 border-radius: 0;
@@ -627,8 +613,7 @@
             background: rgba(148, 163, 184, .18);
         }
 
-        .dark .smart-thermo-score,
-        .dark .smart-milestones li {
+        .dark .smart-thermo-score {
             color: #cbd5e1;
         }
 
@@ -1807,17 +1792,6 @@
                                 <span class="smart-drawer-muted">/ {{ $selectedComment->engagement_priority_reason }}</span>
                             @endif
                         </div>
-
-                        <div class="smart-drawer-card-kicker">Hitos recientes</div>
-                        @if ($selectedMilestones !== [])
-                            <ul class="smart-milestones">
-                                @foreach ($selectedMilestones as $milestone)
-                                    <li>{{ $milestone }}</li>
-                                @endforeach
-                            </ul>
-                        @else
-                            <p class="smart-drawer-card-text smart-drawer-muted">Sin hitos recientes de alta intensidad.</p>
-                        @endif
                     </section>
 
                     {{-- Card 1: Conversacion Detalle --}}
@@ -1966,7 +1940,6 @@
                     @else
                         <a class="smart-action" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Crear ficha</a>
                     @endif
-                    <button class="smart-action" type="button" wire:click="closeCommentDrawer">Cerrar</button>
                 </footer>
             </aside>
         @endif
