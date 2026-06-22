@@ -405,6 +405,7 @@
         .smart-activity-icon svg {
             height: .95rem;
             width: .95rem;
+            color: black
         }
 
         .smart-activity-icon.blue,
@@ -452,7 +453,7 @@
         }
 
         .smart-activity-progress-fill {
-            background: #0f766e;
+            background: #28a79d;
             display: block;
             height: 100%;
         }
