@@ -203,6 +203,18 @@ class SocialCrmSettingsService
             ->all();
     }
 
+    public function autoReplyAllowedSocialAccountIds(): array
+    {
+        $ids = $this->get('social_auto_reply_allowed_social_account_ids', []);
+
+        return collect(is_array($ids) ? $ids : [])
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     // ── Alert Settings ───────────────────────────────────────────
 
     public function alertsEnabled(): bool

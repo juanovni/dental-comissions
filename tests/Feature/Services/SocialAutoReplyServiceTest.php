@@ -221,6 +221,31 @@ class SocialAutoReplyServiceTest extends TestCase
         $this->assertSame('already_replied', $result['reason']);
     }
 
+    public function test_skips_when_social_account_is_not_in_rollout_allowlist(): void
+    {
+        $this->enableDryRun();
+        $comment = $this->socialComment();
+        $this->setting('social_auto_reply_allowed_social_account_ids', [$comment->social_account_id + 1000], 'array');
+
+        $result = app(SocialAutoReplyService::class)->handle($comment);
+
+        $this->assertSame('skipped', $result['status']);
+        $this->assertSame('social_account_not_allowed', $result['reason']);
+        $this->assertNull($comment->fresh()->auto_reply_message);
+    }
+
+    public function test_generates_when_social_account_is_in_rollout_allowlist(): void
+    {
+        $this->enableDryRun();
+        $comment = $this->socialComment();
+        $this->setting('social_auto_reply_allowed_social_account_ids', [$comment->social_account_id], 'array');
+
+        $result = app(SocialAutoReplyService::class)->handle($comment);
+
+        $this->assertSame('generated', $result['status']);
+        $this->assertNotNull($comment->fresh()->auto_reply_message);
+    }
+
     private function enableDryRun(): void
     {
         $this->setting('social_auto_reply_enabled', true, 'boolean');

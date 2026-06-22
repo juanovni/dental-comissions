@@ -146,6 +146,12 @@ class SocialAutoReplyService
             return ['reason' => 'classification_not_allowed', 'notes' => 'La clasificación no activa auto-respuesta.'];
         }
 
+        $allowedAccountIds = $settings->autoReplyAllowedSocialAccountIds();
+
+        if ($allowedAccountIds !== [] && ! in_array((int) $comment->social_account_id, $allowedAccountIds, true)) {
+            return ['reason' => 'social_account_not_allowed', 'notes' => 'La cuenta social no esta habilitada para auto-respuesta durante el rollout.'];
+        }
+
         if ($comment->requires_human_review) {
             return ['reason' => 'human_review_required', 'notes' => 'El comentario requiere revisión humana.'];
         }

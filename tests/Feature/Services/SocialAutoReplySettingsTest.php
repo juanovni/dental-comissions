@@ -70,6 +70,11 @@ class SocialAutoReplySettingsTest extends TestCase
         $this->assertContains('commercial_question', $classifications);
     }
 
+    public function test_auto_reply_allowed_social_account_ids_default(): void
+    {
+        $this->assertSame([], $this->service->autoReplyAllowedSocialAccountIds());
+    }
+
     public function test_auto_reply_can_be_enabled(): void
     {
         SocialCrmSetting::updateOrCreate(
@@ -161,6 +166,24 @@ class SocialAutoReplySettingsTest extends TestCase
 
         $this->assertContains('sales_lead', $classifications);
         $this->assertNotContains('commercial_question', $classifications);
+    }
+
+    public function test_auto_reply_allowed_social_account_ids_is_configurable(): void
+    {
+        SocialCrmSetting::updateOrCreate(
+            ['key' => 'social_auto_reply_allowed_social_account_ids'],
+            [
+                'setting_group' => 'auto_reply',
+                'label' => 'Cuentas habilitadas',
+                'value_type' => 'array',
+                'value' => ['2', 4, null, 0, 'abc', 4],
+                'is_active' => true,
+            ],
+        );
+
+        $this->service->clearCache();
+
+        $this->assertSame([2, 4], $this->service->autoReplyAllowedSocialAccountIds());
     }
 
     public function test_auto_reply_max_attempts_is_configurable(): void
