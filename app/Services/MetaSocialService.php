@@ -253,6 +253,27 @@ class MetaSocialService
         ], $account);
     }
 
+    public function replyToComment(SocialComment $comment, string $message): array
+    {
+        $comment->loadMissing('socialAccount');
+
+        if (blank($comment->external_comment_id)) {
+            throw new \InvalidArgumentException('El comentario no tiene external_comment_id para responder en Meta.');
+        }
+
+        if (! $comment->socialAccount) {
+            throw new \InvalidArgumentException('El comentario no tiene cuenta social asociada para responder en Meta.');
+        }
+
+        $path = $comment->platform === SocialPlatform::Instagram
+            ? "/{$comment->external_comment_id}/replies"
+            : "/{$comment->external_comment_id}/comments";
+
+        return $this->post($path, [
+            'message' => $message,
+        ], $comment->socialAccount);
+    }
+
     public function storePost(SocialAccount $account, array $postData): SocialPost
     {
         $publishedAt = $postData['created_time'] ?? $postData['timestamp'] ?? null;
@@ -588,6 +609,33 @@ class MetaSocialService
     private function get(string $path, array $params = [], ?SocialAccount $account = null): array
     {
         return $this->getAbsolute($this->url($path), $params, $account);
+    }
+
+    private function post(string $path, array $params = [], ?SocialAccount $account = null): array
+    {
+        $token = $account?->access_token ?: $this->config()['access_token'];
+
+        if (blank($token)) {
+            throw new \RuntimeException('META_ACCESS_TOKEN no configurado.');
+        }
+
+        $url = $this->url($path);
+        $response = Http::withToken($token)
+            ->acceptJson()
+            ->withOptions($this->httpOptions())
+            ->post($url, $params);
+
+        if ($response->failed()) {
+            Log::error('Error publicando en Meta Graph API', [
+                'url' => $url,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            $response->throw();
+        }
+
+        return $response->json() ?? [];
     }
 
     private function getAbsolute(string $url, array $params = [], ?SocialAccount $account = null): array

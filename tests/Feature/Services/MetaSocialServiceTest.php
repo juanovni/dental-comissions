@@ -7,6 +7,7 @@ use App\Enums\SocialCommentStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
 use App\Models\SocialAccount;
+use App\Models\SocialComment;
 use App\Models\SocialPost;
 use App\Services\MetaSocialService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -370,6 +371,113 @@ class MetaSocialServiceTest extends TestCase
             'external_comment_id' => 'comment_sync_1',
             'classification' => SocialCommentClassification::SalesLead->value,
             'status' => SocialCommentStatus::Classified->value,
+        ]);
+    }
+
+    public function test_reply_to_comment_posts_facebook_comment_reply(): void
+    {
+        config(['services.meta.api_url' => 'https://graph.facebook.com/v25.0']);
+
+        $comment = $this->socialComment(SocialPlatform::Facebook, 'fb_comment_1');
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/fb_comment_1/comments' => Http::response([
+                'id' => 'fb_reply_1',
+            ]),
+        ]);
+
+        $response = app(MetaSocialService::class)->replyToComment($comment, 'Hola, te dejamos información: https://example.test/v/DNT-123');
+
+        $this->assertSame(['id' => 'fb_reply_1'], $response);
+        Http::assertSent(fn ($request): bool => $request->method() === 'POST'
+            && $request->url() === 'https://graph.facebook.com/v25.0/fb_comment_1/comments'
+            && $request['message'] === 'Hola, te dejamos información: https://example.test/v/DNT-123'
+            && $request->hasHeader('Authorization', 'Bearer page-token'));
+    }
+
+    public function test_reply_to_comment_posts_instagram_comment_reply(): void
+    {
+        config(['services.meta.api_url' => 'https://graph.facebook.com/v25.0']);
+
+        $comment = $this->socialComment(SocialPlatform::Instagram, 'ig_comment_1');
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/ig_comment_1/replies' => Http::response([
+                'id' => 'ig_reply_1',
+            ]),
+        ]);
+
+        $response = app(MetaSocialService::class)->replyToComment($comment, '👋 Te saluda Clínica Dental');
+
+        $this->assertSame(['id' => 'ig_reply_1'], $response);
+        Http::assertSent(fn ($request): bool => $request->method() === 'POST'
+            && $request->url() === 'https://graph.facebook.com/v25.0/ig_comment_1/replies'
+            && $request['message'] === '👋 Te saluda Clínica Dental'
+            && $request->hasHeader('Authorization', 'Bearer page-token'));
+    }
+
+    public function test_reply_to_comment_throws_when_comment_has_no_external_id(): void
+    {
+        $comment = new SocialComment([
+            'platform' => SocialPlatform::Instagram,
+            'comment_text' => 'Info por favor',
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('external_comment_id');
+
+        app(MetaSocialService::class)->replyToComment($comment, 'Mensaje');
+    }
+
+    public function test_reply_to_comment_throws_meta_http_errors(): void
+    {
+        config(['services.meta.api_url' => 'https://graph.facebook.com/v25.0']);
+
+        $comment = $this->socialComment(SocialPlatform::Facebook, 'fb_comment_1');
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/fb_comment_1/comments' => Http::response([
+                'error' => [
+                    'message' => 'Invalid OAuth access token.',
+                    'type' => 'OAuthException',
+                    'code' => 190,
+                ],
+            ], 400),
+        ]);
+
+        $this->expectException(\Illuminate\Http\Client\RequestException::class);
+
+        app(MetaSocialService::class)->replyToComment($comment, 'Mensaje');
+    }
+
+    private function socialComment(SocialPlatform $platform, ?string $externalCommentId): SocialComment
+    {
+        $account = SocialAccount::create([
+            'platform' => $platform,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => $platform === SocialPlatform::Instagram ? 'ig_1' : 'page_1',
+            'page_id' => $platform === SocialPlatform::Facebook ? 'page_1' : null,
+            'instagram_business_account_id' => $platform === SocialPlatform::Instagram ? 'ig_1' : null,
+            'access_token' => 'page-token',
+            'is_active' => true,
+        ]);
+
+        $post = SocialPost::create([
+            'social_account_id' => $account->id,
+            'platform' => $platform,
+            'external_post_id' => 'post_'.uniqid(),
+            'caption' => 'Post de prueba',
+        ]);
+
+        return SocialComment::create([
+            'social_account_id' => $account->id,
+            'social_post_id' => $post->id,
+            'platform' => $platform,
+            'external_comment_id' => $externalCommentId,
+            'author_name' => 'Paciente Test',
+            'author_username' => 'paciente_test',
+            'author_external_id' => 'user_'.uniqid(),
+            'comment_text' => 'Info por favor',
         ]);
     }
 }
