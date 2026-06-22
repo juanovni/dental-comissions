@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
+use App\Jobs\SendSocialCommentAutoReply;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
@@ -94,6 +95,7 @@ class MetaSocialService
                 $post = $this->storeWebhookPost($account, $this->enrichWebhookPost($account, $webhookComment['post']));
                 $comment = $this->storeComment($account, $post, $webhookComment['comment']);
                 app(SocialCommentClassificationService::class)->classify($comment);
+                $this->dispatchAutoReplyIfEligible($comment->refresh());
 
                 $summary['comments']++;
             }
@@ -212,6 +214,8 @@ class MetaSocialService
                 if (! $comment->classification) {
                     app(SocialCommentClassificationService::class)->classify($comment);
                 }
+
+                $this->dispatchAutoReplyIfEligible($comment->refresh());
 
                 $summary['comments']++;
             }
@@ -574,6 +578,15 @@ class MetaSocialService
 
         return $this->normalizeAccountHandle($authorUsername) === $accountName
             || $this->normalizeAccountHandle($authorName) === $accountName;
+    }
+
+    private function dispatchAutoReplyIfEligible(SocialComment $comment): void
+    {
+        if (! app(SocialAutoReplyService::class)->shouldQueue($comment)) {
+            return;
+        }
+
+        SendSocialCommentAutoReply::dispatch($comment->id);
     }
 
     private function normalizeAccountHandle(string $value): string

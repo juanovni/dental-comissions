@@ -6,12 +6,16 @@ use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
+use App\Jobs\SendSocialCommentAutoReply;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
+use App\Models\SocialCrmSetting;
 use App\Models\SocialPost;
 use App\Services\MetaSocialService;
+use App\Services\SocialCrmSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class MetaSocialServiceTest extends TestCase
@@ -112,6 +116,91 @@ class MetaSocialServiceTest extends TestCase
             'classification' => SocialCommentClassification::SalesLead->value,
             'status' => SocialCommentStatus::Classified->value,
         ]);
+    }
+
+    public function test_process_webhook_payload_dispatches_auto_reply_job_for_sales_lead_when_enabled(): void
+    {
+        $this->setting('social_auto_reply_enabled', true, 'boolean');
+        Queue::fake();
+
+        SocialAccount::create([
+            'platform' => SocialPlatform::Facebook,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => 'page_1',
+            'page_id' => 'page_1',
+            'is_active' => true,
+        ]);
+
+        app(MetaSocialService::class)->processWebhookPayload([
+            'object' => 'page',
+            'entry' => [
+                [
+                    'id' => 'page_1',
+                    'changes' => [
+                        [
+                            'field' => 'feed',
+                            'value' => [
+                                'item' => 'comment',
+                                'verb' => 'add',
+                                'post_id' => 'post_1',
+                                'comment_id' => 'comment_auto_reply_1',
+                                'message' => 'Info por favor',
+                                'sender_id' => 'facebook_user_1',
+                                'sender_name' => 'Carlos Cliente',
+                                'created_time' => now()->timestamp,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $comment = SocialComment::where('external_comment_id', 'comment_auto_reply_1')->firstOrFail();
+
+        Queue::assertPushed(
+            SendSocialCommentAutoReply::class,
+            fn (SendSocialCommentAutoReply $job): bool => $job->socialCommentId === $comment->id,
+        );
+    }
+
+    public function test_process_webhook_payload_does_not_dispatch_auto_reply_job_when_disabled(): void
+    {
+        $this->setting('social_auto_reply_enabled', false, 'boolean');
+        Queue::fake();
+
+        SocialAccount::create([
+            'platform' => SocialPlatform::Facebook,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => 'page_1',
+            'page_id' => 'page_1',
+            'is_active' => true,
+        ]);
+
+        app(MetaSocialService::class)->processWebhookPayload([
+            'object' => 'page',
+            'entry' => [
+                [
+                    'id' => 'page_1',
+                    'changes' => [
+                        [
+                            'field' => 'feed',
+                            'value' => [
+                                'item' => 'comment',
+                                'verb' => 'add',
+                                'post_id' => 'post_1',
+                                'comment_id' => 'comment_auto_reply_disabled_1',
+                                'message' => 'Info por favor',
+                                'sender_id' => 'facebook_user_1',
+                                'sender_name' => 'Carlos Cliente',
+                                'created_time' => now()->timestamp,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        Queue::assertNotPushed(SendSocialCommentAutoReply::class);
     }
 
     public function test_process_webhook_payload_stores_instagram_comment(): void
@@ -374,6 +463,59 @@ class MetaSocialServiceTest extends TestCase
         ]);
     }
 
+    public function test_sync_account_dispatches_auto_reply_job_for_synced_sales_lead_when_enabled(): void
+    {
+        $this->setting('social_auto_reply_enabled', true, 'boolean');
+        Queue::fake();
+
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.meta.access_token' => 'test-token',
+            'services.meta.api_url' => 'https://graph.facebook.com/v25.0',
+            'services.gemini.api_key' => null,
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => SocialPlatform::Facebook,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => 'page_1',
+            'page_id' => 'page_1',
+            'access_token' => 'page-token',
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/page_1/posts*' => Http::response([
+                'data' => [
+                    [
+                        'id' => 'post_sync_auto_reply_1',
+                        'message' => 'Promo limpieza dental',
+                        'created_time' => now()->toIso8601String(),
+                    ],
+                ],
+            ]),
+            'https://graph.facebook.com/v25.0/post_sync_auto_reply_1/comments*' => Http::response([
+                'data' => [
+                    [
+                        'id' => 'comment_sync_auto_reply_1',
+                        'message' => 'Precio de una limpieza dental',
+                        'from' => ['id' => 'fb_user_1', 'name' => 'Cliente Facebook'],
+                        'created_time' => now()->toIso8601String(),
+                    ],
+                ],
+            ]),
+        ]);
+
+        app(MetaSocialService::class)->syncAccount($account);
+
+        $comment = SocialComment::where('external_comment_id', 'comment_sync_auto_reply_1')->firstOrFail();
+
+        Queue::assertPushed(
+            SendSocialCommentAutoReply::class,
+            fn (SendSocialCommentAutoReply $job): bool => $job->socialCommentId === $comment->id,
+        );
+    }
+
     public function test_reply_to_comment_posts_facebook_comment_reply(): void
     {
         config(['services.meta.api_url' => 'https://graph.facebook.com/v25.0']);
@@ -479,5 +621,21 @@ class MetaSocialServiceTest extends TestCase
             'author_external_id' => 'user_'.uniqid(),
             'comment_text' => 'Info por favor',
         ]);
+    }
+
+    private function setting(string $key, mixed $value, string $type = 'string'): void
+    {
+        SocialCrmSetting::updateOrCreate(
+            ['key' => $key],
+            [
+                'setting_group' => 'auto_reply',
+                'label' => $key,
+                'value_type' => $type,
+                'value' => $value,
+                'is_active' => true,
+            ],
+        );
+
+        app(SocialCrmSettingsService::class)->clearCache();
     }
 }

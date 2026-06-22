@@ -11,6 +11,17 @@ use Illuminate\Support\Str;
 
 class SocialAutoReplyService
 {
+    public function shouldQueue(SocialComment $comment): bool
+    {
+        $settings = app(SocialCrmSettingsService::class);
+
+        if (! $settings->autoReplyEnabled()) {
+            return false;
+        }
+
+        return $this->skipReason($comment->refresh(), $settings) === null;
+    }
+
     public function handle(SocialComment $comment): array
     {
         $comment = $comment->refresh();
