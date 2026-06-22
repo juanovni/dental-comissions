@@ -5,11 +5,11 @@ namespace App\Events;
 use App\Models\SocialComment;
 use App\Models\SocialLinkEvent;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class LeadActivityDetected implements ShouldBroadcastNow
+class LeadActivityDetected implements ShouldBroadcast
 {
     use Dispatchable;
     use SerializesModels;

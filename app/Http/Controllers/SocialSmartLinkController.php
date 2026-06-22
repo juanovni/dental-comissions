@@ -46,7 +46,7 @@ class SocialSmartLinkController extends Controller
     {
         $comment = $this->findComment($trackingToken);
         $data = $request->validate([
-            'event_type' => ['required', 'string', 'in:view,revisit,engagement_ping,duration_threshold,video_start,video_25,video_50,video_75,video_complete,whatsapp_click,button_click,video_play_seconds'],
+            'event_type' => ['required', 'string', 'in:view,revisit,duration_threshold,video_start,video_25,video_50,video_75,video_complete,whatsapp_click,button_click,video_play_seconds'],
             'session_id' => ['nullable', 'string', 'max:80'],
             'duration_seconds' => ['nullable', 'integer', 'min:0', 'max:86400'],
             'metadata' => ['nullable', 'array'],

@@ -5,11 +5,11 @@ namespace App\Events;
 use App\Models\SocialComment;
 use App\Models\SocialLeadAlert;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ClosingOpportunityDetected implements ShouldBroadcastNow
+class ClosingOpportunityDetected implements ShouldBroadcast
 {
     use Dispatchable;
     use SerializesModels;

@@ -33,7 +33,7 @@ services:
             REVERB_APP_ID: '${REVERB_APP_ID:-odoncrm}'
             REVERB_APP_KEY: '${REVERB_APP_KEY:-local-key}'
             REVERB_APP_SECRET: '${REVERB_APP_SECRET:-local-secret}'
-            REVERB_HOST: '${REVERB_INTERNAL_HOST:-dental.reverb}'
+            REVERB_HOST: '${REVERB_INTERNAL_HOST:-dental-reverb}'
             REVERB_PORT: '${REVERB_PORT:-8081}'
             REVERB_SCHEME: '${REVERB_SCHEME:-http}'
         volumes:

@@ -993,7 +993,6 @@
 
             setInterval(() => {
                 const duration = Math.round((Date.now() - startedAt) / 1000);
-                send('engagement_ping', duration, { visibility: document.visibilityState });
 
                 if (duration >= threshold && localStorage.getItem(thresholdKey) !== '1') {
                     localStorage.setItem(thresholdKey, '1');

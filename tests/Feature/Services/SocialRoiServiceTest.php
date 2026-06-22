@@ -3,12 +3,14 @@
 namespace Tests\Feature\Services;
 
 use App\Enums\ActivityStatus;
+use App\Enums\AppointmentStatus;
 use App\Enums\ProfessionalRole;
 use App\Enums\SocialConversionStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
 use App\Models\ActivityRecord;
+use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Professional;
@@ -179,6 +181,135 @@ class SocialRoiServiceTest extends TestCase
         Storage::disk('local')->assertExists('testing/fuga.pdf');
     }
 
+    public function test_summary_includes_social_appointment_metrics(): void
+    {
+        $patient = Patient::factory()->create();
+        $doctor = Professional::factory()->create(['role' => ProfessionalRole::Doctor]);
+        $procedure = Procedure::factory()->create(['internal_rate' => 1200]);
+        [$comment, $identity, $post] = $this->socialLeadWithPost('appointment_metrics', $patient, $procedure);
+
+        Appointment::create([
+            'patient_id' => $patient->id,
+            'social_comment_id' => $comment->id,
+            'social_identity_id' => $identity->id,
+            'social_post_id' => $post->id,
+            'procedure_id' => $procedure->id,
+            'scheduled_at' => now()->addDay(),
+            'status' => AppointmentStatus::Confirmed,
+            'source' => 'whatsapp_ai',
+        ]);
+
+        ActivityRecord::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'procedure_id' => $procedure->id,
+            'social_comment_id' => $comment->id,
+            'social_identity_id' => $identity->id,
+            'social_post_id' => $post->id,
+            'activity_date' => now()->toDateString(),
+            'status' => ActivityStatus::Approved,
+            'internal_rate_snapshot' => 1200,
+        ]);
+
+        $summary = app(SocialRoiService::class)->summary();
+        $funnel = app(SocialRoiService::class)->funnelData();
+
+        $this->assertSame(1, $summary['appointment_count']);
+        $this->assertSame(1, $summary['appointment_confirmed_count']);
+        $this->assertSame(0, $summary['appointment_leakage_count']);
+        $this->assertSame(100.0, $summary['lead_to_appointment_rate']);
+        $this->assertSame(100.0, $summary['whatsapp_to_appointment_rate']);
+        $this->assertSame(100.0, $summary['appointment_to_activity_rate']);
+        $this->assertSame(['Comentarios', 'WhatsApp', 'Ficha', 'Citas', 'Actividad'], $funnel['labels']);
+        $this->assertSame([1, 1, 1, 1, 1], $funnel['values']);
+    }
+
+    public function test_appointment_leakage_query_detects_overdue_social_appointments_without_activity(): void
+    {
+        $patient = Patient::factory()->create();
+        $doctor = Professional::factory()->create(['role' => ProfessionalRole::Doctor]);
+        $procedure = Procedure::factory()->create();
+        [$leakingComment, $leakingIdentity, $leakingPost] = $this->socialLeadWithPost('leaking_appointment', $patient, $procedure);
+        [$resolvedComment, $resolvedIdentity, $resolvedPost] = $this->socialLeadWithPost('resolved_appointment', $patient, $procedure);
+
+        $leaking = Appointment::create([
+            'patient_id' => $patient->id,
+            'social_comment_id' => $leakingComment->id,
+            'social_identity_id' => $leakingIdentity->id,
+            'social_post_id' => $leakingPost->id,
+            'procedure_id' => $procedure->id,
+            'scheduled_at' => now()->subDays(2),
+            'status' => AppointmentStatus::Scheduled,
+            'source' => 'whatsapp_ai',
+        ]);
+
+        Appointment::create([
+            'patient_id' => $patient->id,
+            'social_comment_id' => $resolvedComment->id,
+            'social_identity_id' => $resolvedIdentity->id,
+            'social_post_id' => $resolvedPost->id,
+            'procedure_id' => $procedure->id,
+            'scheduled_at' => now()->subDays(2),
+            'status' => AppointmentStatus::Scheduled,
+            'source' => 'whatsapp_ai',
+        ]);
+
+        ActivityRecord::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'procedure_id' => $procedure->id,
+            'social_comment_id' => $resolvedComment->id,
+            'social_identity_id' => $resolvedIdentity->id,
+            'social_post_id' => $resolvedPost->id,
+            'activity_date' => now()->toDateString(),
+            'status' => ActivityStatus::Approved,
+            'internal_rate_snapshot' => 100,
+        ]);
+
+        $leakage = app(SocialRoiService::class)->appointmentLeakageQuery()->get();
+
+        $this->assertCount(1, $leakage);
+        $this->assertTrue($leakage->first()->is($leaking));
+        $this->assertSame(1, app(SocialRoiService::class)->summary()['appointment_leakage_count']);
+    }
+
+    public function test_appointment_performance_by_post_orders_by_appointment_count(): void
+    {
+        $patient = Patient::factory()->create();
+        $procedure = Procedure::factory()->create();
+        [$firstComment, $firstIdentity, $firstPost] = $this->socialLeadWithPost('post_top', $patient, $procedure);
+        [$secondComment, $secondIdentity, $secondPost] = $this->socialLeadWithPost('post_low', $patient, $procedure);
+
+        foreach (range(1, 2) as $index) {
+            Appointment::create([
+                'patient_id' => $patient->id,
+                'social_comment_id' => $firstComment->id,
+                'social_identity_id' => $firstIdentity->id,
+                'social_post_id' => $firstPost->id,
+                'procedure_id' => $procedure->id,
+                'scheduled_at' => now()->addDays($index),
+                'status' => AppointmentStatus::Scheduled,
+                'source' => 'smart_link',
+            ]);
+        }
+
+        Appointment::create([
+            'patient_id' => $patient->id,
+            'social_comment_id' => $secondComment->id,
+            'social_identity_id' => $secondIdentity->id,
+            'social_post_id' => $secondPost->id,
+            'procedure_id' => $procedure->id,
+            'scheduled_at' => now()->addDay(),
+            'status' => AppointmentStatus::Scheduled,
+            'source' => 'smart_link',
+        ]);
+
+        $rows = app(SocialRoiService::class)->appointmentPerformanceByPost();
+
+        $this->assertSame($firstPost->id, $rows->first()->id);
+        $this->assertSame(2, (int) $rows->first()->appointment_count);
+    }
+
     private function socialAccount(string $externalAccountId): SocialAccount
     {
         return SocialAccount::create([
@@ -187,5 +318,45 @@ class SocialRoiServiceTest extends TestCase
             'external_account_id' => $externalAccountId,
             'is_active' => true,
         ]);
+    }
+
+    private function socialLeadWithPost(string $suffix, Patient $patient, Procedure $procedure): array
+    {
+        $account = $this->socialAccount('ig_account_'.$suffix);
+        $post = SocialPost::create([
+            'social_account_id' => $account->id,
+            'procedure_id' => $procedure->id,
+            'platform' => SocialPlatform::Instagram,
+            'external_post_id' => 'post_'.$suffix,
+            'caption' => 'Campana '.$suffix,
+        ]);
+        $identity = SocialIdentity::create([
+            'patient_id' => $patient->id,
+            'platform' => SocialPlatform::Instagram,
+            'platform_user_id' => 'ig_user_'.$suffix,
+            'username' => 'user_'.$suffix,
+            'display_name' => $patient->full_name,
+            'status' => SocialIdentityStatus::LinkedPatient,
+            'linked_at' => now(),
+            'first_seen_at' => now(),
+            'last_seen_at' => now(),
+        ]);
+        $comment = SocialComment::create([
+            'social_account_id' => $account->id,
+            'social_identity_id' => $identity->id,
+            'social_post_id' => $post->id,
+            'suggested_procedure_id' => $procedure->id,
+            'platform' => SocialPlatform::Instagram,
+            'external_comment_id' => 'comment_'.$suffix,
+            'author_name' => $patient->full_name,
+            'comment_text' => 'Quiero informacion',
+            'tracking_token' => 'DNT-'.strtoupper(substr(md5($suffix), 0, 5)),
+            'whatsapp_redirected_at' => now(),
+            'conversion_status' => SocialConversionStatus::IdentityLinked,
+            'converted_patient_id' => $patient->id,
+            'converted_at' => now(),
+        ]);
+
+        return [$comment, $identity, $post];
     }
 }

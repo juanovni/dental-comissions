@@ -8,7 +8,9 @@ use App\Enums\SocialConversionStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
+use App\Enums\AppointmentStatus;
 use App\Models\ActivityRecord;
+use App\Models\Appointment;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Models\SocialLinkEvent;
@@ -96,6 +98,7 @@ class SocialRoiService
         $socialActivities = $this->socialActivitiesQuery($period);
         $comments = $this->commentsQuery($period);
         $commercial = $this->commercialSummary($filters);
+        $appointments = $this->appointmentSummary($filters);
 
         $leadCount = (clone $comments)->whereNotNull('social_identity_id')->count();
         $whatsappCount = (clone $comments)->whereNotNull('whatsapp_redirected_at')->count();
@@ -116,7 +119,57 @@ class SocialRoiService
             'orphan_attribution_count' => $this->orphanAttributionCount($filters),
             'lead_to_activity_rate' => $leadCount > 0 ? round(($activityCount / $leadCount) * 100, 1) : 0,
             ...$commercial,
+            ...$appointments,
         ];
+    }
+
+    public function appointmentSummary(?array $filters = null): array
+    {
+        $period = SocialRoiPeriod::resolve($filters);
+        $comments = $this->commentsQuery($period);
+        $appointments = $this->appointmentsQuery($period);
+
+        $leadCount = (clone $comments)->whereNotNull('social_identity_id')->count();
+        $whatsappCount = (clone $comments)->whereNotNull('whatsapp_redirected_at')->count();
+        $appointmentCount = (clone $appointments)->count();
+        $confirmedCount = (clone $appointments)->whereIn('status', [
+            AppointmentStatus::Confirmed->value,
+            AppointmentStatus::Completed->value,
+        ])->count();
+        $completedCount = (clone $appointments)->where('status', AppointmentStatus::Completed->value)->count();
+        $noShowCount = (clone $appointments)->where('status', AppointmentStatus::NoShow->value)->count();
+        $appointmentLeakageCount = $this->appointmentLeakageQuery($filters)->count();
+
+        return [
+            'appointment_count' => $appointmentCount,
+            'appointment_confirmed_count' => $confirmedCount,
+            'appointment_completed_count' => $completedCount,
+            'appointment_no_show_count' => $noShowCount,
+            'appointment_leakage_count' => $appointmentLeakageCount,
+            'lead_to_appointment_rate' => $leadCount > 0 ? round(($appointmentCount / $leadCount) * 100, 1) : 0,
+            'whatsapp_to_appointment_rate' => $whatsappCount > 0 ? round(($appointmentCount / $whatsappCount) * 100, 1) : 0,
+            'appointment_to_activity_rate' => $appointmentCount > 0 ? round(((clone $this->socialActivitiesQuery($period))->count() / $appointmentCount) * 100, 1) : 0,
+        ];
+    }
+
+    public function appointmentPerformanceByPost(int $limit = 8, ?array $filters = null): Collection
+    {
+        $period = SocialRoiPeriod::resolve($filters);
+
+        return SocialPost::query()
+            ->with('socialAccount')
+            ->join('appointments', 'appointments.social_post_id', '=', 'social_posts.id')
+            ->leftJoin('activity_records', 'activity_records.social_post_id', '=', 'social_posts.id')
+            ->whereBetween('appointments.created_at', [$period['from'], $period['until']])
+            ->select('social_posts.*')
+            ->selectRaw('COUNT(DISTINCT appointments.id) as appointment_count')
+            ->selectRaw('COUNT(DISTINCT activity_records.id) as conversion_count')
+            ->selectRaw('COALESCE(SUM(DISTINCT activity_records.internal_rate_snapshot), 0) as revenue_generated')
+            ->groupBy('social_posts.id')
+            ->orderByDesc(DB::raw('COUNT(DISTINCT appointments.id)'))
+            ->orderByDesc(DB::raw('COALESCE(SUM(DISTINCT activity_records.internal_rate_snapshot), 0)'))
+            ->limit($limit)
+            ->get();
     }
 
     public function commercialSummary(?array $filters = null): array
@@ -462,16 +515,37 @@ class SocialRoiService
             });
     }
 
+    public function appointmentLeakageQuery(?array $filters = null): Builder
+    {
+        $period = SocialRoiPeriod::resolve($filters);
+
+        return $this->appointmentsQuery($period)
+            ->whereNotNull('appointments.social_comment_id')
+            ->whereNotNull('appointments.scheduled_at')
+            ->where('appointments.scheduled_at', '<=', now()->subDay())
+            ->whereIn('appointments.status', [
+                AppointmentStatus::PendingConfirmation->value,
+                AppointmentStatus::Scheduled->value,
+                AppointmentStatus::Confirmed->value,
+            ])
+            ->whereNotExists(function ($query): void {
+                $query->selectRaw('1')
+                    ->from('activity_records')
+                    ->whereColumn('activity_records.social_comment_id', 'appointments.social_comment_id');
+            });
+    }
+
     public function funnelData(?array $filters = null): array
     {
         $summary = $this->summary($filters);
 
         return [
-            'labels' => ['Comentarios', 'WhatsApp', 'Ficha', 'Actividad'],
+            'labels' => ['Comentarios', 'WhatsApp', 'Ficha', 'Citas', 'Actividad'],
             'values' => [
                 $summary['lead_count'],
                 $summary['whatsapp_count'],
                 $summary['linked_count'],
+                $summary['appointment_count'],
                 $summary['activity_count'],
             ],
         ];
@@ -488,6 +562,17 @@ class SocialRoiService
         return ActivityRecord::query()
             ->whereNotNull('social_post_id')
             ->whereBetween('activity_date', [$period['from_date'], $period['until_date']]);
+    }
+
+    private function appointmentsQuery(array $period): Builder
+    {
+        return Appointment::query()
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('social_post_id')
+                    ->orWhereNotNull('social_comment_id')
+                    ->orWhereNotNull('social_identity_id');
+            })
+            ->whereBetween('created_at', [$period['from'], $period['until']]);
     }
 
     private function lastLeadActivityAt(SocialComment $comment): ?CarbonInterface
