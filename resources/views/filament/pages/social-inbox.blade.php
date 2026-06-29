@@ -893,9 +893,11 @@
         }
 
         .smart-panel {
-            border: 1px solid #e5e7eb;
-            border-radius: .75rem;
             overflow: hidden;
+            background: #f8fafc;
+            border: 1px solid #eef2f7;
+            border-radius: .625rem;
+            padding: .65rem;
         }
 
         .smart-panel:not(details) {
@@ -1853,7 +1855,6 @@
                 <nav class="smart-drawer-tabs" aria-label="Secciones del lead">
                     <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'summary' }" @click="tab = 'summary'">Resumen</button>
                     <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'conversation' }" @click="tab = 'conversation'">Conversacion</button>
-                    <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'crm' }" @click="tab = 'crm'">CRM</button>
                     <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'activity' }" @click="tab = 'activity'">Actividad</button>
                 </nav>
 
@@ -1884,6 +1885,39 @@
                             @if ($selectedComment->engagement_priority_reason)
                                 <span class="smart-drawer-muted">/ {{ $selectedComment->engagement_priority_reason }}</span>
                             @endif
+                        </div>
+
+                        <hr style="border:0;border-top:1px solid #e5e7eb;margin:1rem 0">
+
+                        {{-- Mini CRM --}}
+                        <div class="smart-drawer-card-kicker">Mini CRM</div>
+                        <div class="smart-drawer-card-title" style="display:flex;align-items:center;flex-wrap:wrap">
+                            @if ($drawerPatient)
+                                {{ $drawerPatient->full_name }}
+                                <a class="smart-action" href="{{ \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $drawerPatient]) }}" style="display:inline-flex;margin-left:.5rem;padding:.15rem .5rem;font-size:.7rem">Ver ficha</a>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1rem;height:1rem;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                                <span style="margin-left:.3rem">Lead sin ficha clinica</span>
+                            @endif
+                        </div>
+                        <p class="smart-drawer-card-text">
+                            Score: {{ $selectedComment->interest_score ?? 0 }}
+                            @if (filled($selectedComment->hot_lead_at))
+                                / Hot lead desde {{ $selectedComment->hot_lead_at->diffForHumans() }}
+                            @endif
+                            @if (filled($selectedComment->reheated_at))
+                                / Recalentado {{ $selectedComment->reheated_at->diffForHumans() }}
+                            @endif
+                        </p>
+                        <div class="smart-panels">
+                            <section class="smart-panel">
+                                <h3>Procedimiento</h3>
+                                <p>{{ $selectedComment->suggestedProcedure?->name ?: 'Sin sugerencia' }}</p>
+                            </section>
+                            <section class="smart-panel">
+                                <h3>Alertas</h3>
+                                <p>{{ $selectedComment->leadAlerts?->whereNull('resolved_at')->count() ?: 0 }} abiertas</p>
+                            </section>
                         </div>
                     </section>
 
@@ -1942,32 +1976,7 @@
                         </section>
                     @endif
 
-                    {{-- Card 2: Mini CRM --}}
-                    <section class="smart-drawer-card" x-show="tab === 'crm'" x-cloak>
-                        <div class="smart-drawer-card-kicker">Mini CRM</div>
-                        <div class="smart-drawer-card-title">{{ $drawerPatient?->full_name ?? 'Lead sin ficha clinica' }}</div>
-                        <p class="smart-drawer-card-text">
-                            Score: {{ $selectedComment->interest_score ?? 0 }}
-                            @if (filled($selectedComment->hot_lead_at))
-                                / Hot lead desde {{ $selectedComment->hot_lead_at->diffForHumans() }}
-                            @endif
-                            @if (filled($selectedComment->reheated_at))
-                                / Recalentado {{ $selectedComment->reheated_at->diffForHumans() }}
-                            @endif
-                        </p>
-                        <div class="smart-panels">
-                            <section class="smart-panel">
-                                <h3>Procedimiento</h3>
-                                <p>{{ $selectedComment->suggestedProcedure?->name ?: 'Sin sugerencia' }}</p>
-                            </section>
-                            <section class="smart-panel">
-                                <h3>Alertas</h3>
-                                <p>{{ $selectedComment->leadAlerts?->whereNull('resolved_at')->count() ?: 0 }} abiertas</p>
-                            </section>
-                        </div>
-                    </section>
-
-                    {{-- Card 3: Pulso del Cliente --}}
+                    {{-- Card 2: Pulso del Cliente --}}
                     <section class="smart-drawer-card" x-show="tab === 'activity'" x-cloak>
                         <div class="smart-drawer-card-kicker">Actividad</div>
                         <div class="smart-drawer-timeline">
