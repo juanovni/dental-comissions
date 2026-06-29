@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\SocialCommentActionType;
 use App\Enums\SocialConversionStatus;
 use App\Models\SocialComment;
 use App\Models\SocialLeadAlert;
@@ -60,13 +61,15 @@ class SocialLeadAlertService
             'no_contact_overdue' => 0,
             'follow_up_due' => 0,
             'pending_patient_creation' => 0,
+            'whatsapp_click_no_message' => 0,
         ];
 
         $operations = app(SocialLeadOperationsService::class);
+        $settings = app(SocialCrmSettingsService::class);
 
         $operations->queryActionableLeads()
             ->get()
-            ->each(function (SocialComment $comment) use (&$summary, $operations): void {
+            ->each(function (SocialComment $comment) use (&$summary, $operations, $settings): void {
                 if ($operations->isOverdue($comment)) {
                     $alert = $this->createAlert($comment, 'no_contact_overdue', 'danger', [
                         'interest_score' => $comment->interest_score,
@@ -95,6 +98,30 @@ class SocialLeadAlertService
 
                     if ($alert?->wasRecentlyCreated) {
                         $summary['pending_patient_creation']++;
+                    }
+                }
+
+                $clickWithoutMessage = $comment->linkEvents()
+                    ->where('event_type', 'whatsapp_click')
+                    ->latest()
+                    ->first();
+
+                if ($clickWithoutMessage && ! $comment->actions()->where('action', SocialCommentActionType::WhatsappHandshake)->exists()) {
+                    $minutes = $settings->whatsappClickFollowUpMinutes();
+
+                    if ($clickWithoutMessage->created_at->lte(now()->subMinutes($minutes))) {
+                        $alert = $this->createAlert($comment, 'whatsapp_click_no_message', 'warning', [
+                            'whatsapp_clicked_at' => $clickWithoutMessage->created_at->toISOString(),
+                            'minutes_without_message' => $clickWithoutMessage->created_at->diffInMinutes(now()),
+                        ]);
+
+                        if ($alert?->wasRecentlyCreated) {
+                            $summary['whatsapp_click_no_message']++;
+                        }
+
+                        if ($alert?->wasRecentlyCreated && $settings->whatsappFollowUpAutoReplyEnabled()) {
+                            app(SocialAutoReplyService::class)->sendFollowUpReply($comment->fresh());
+                        }
                     }
                 }
             });

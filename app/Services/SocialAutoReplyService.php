@@ -94,6 +94,13 @@ class SocialAutoReplyService
                 ]),
             ]);
 
+            app(SocialLeadAlertService::class)->createAlert(
+                $comment->fresh(),
+                'auto_reply_sent',
+                'info',
+                ['auto_reply_external_id' => $externalId !== '' ? $externalId : null],
+            );
+
             return [
                 'status' => 'sent',
                 'published' => true,
@@ -203,5 +210,48 @@ class SocialAutoReplyService
         $normalized = Str::of($text)->lower()->ascii()->toString();
 
         return preg_match('/\b(dolor|sangrado|infeccion|pus|hinchado|hinchazon|trauma|golpe|urgencia|emergencia|embarazada|medicamento|alergia|demanda|denuncia|estafa|mala atencion|queja|reclamo)\b/u', $normalized) === 1;
+    }
+
+    public function sendFollowUpReply(SocialComment $comment): array
+    {
+        $alreadySent = $comment->actions()
+            ->where('action', SocialCommentActionType::WhatsappClickFollowUpSent)
+            ->exists();
+
+        if ($alreadySent) {
+            return ['status' => 'skipped', 'reason' => 'already_sent'];
+        }
+
+        $settings = app(SocialCrmSettingsService::class);
+        $message = strtr($settings->whatsappFollowUpAutoReplyTemplate(), [
+            '{author_name}' => $comment->author_name,
+            '{platform}' => $comment->platform?->label() ?? 'redes sociales',
+        ]);
+
+        try {
+            $response = app(MetaSocialService::class)->replyToComment($comment, $message);
+            $externalId = (string) ($response['id'] ?? '');
+
+            $comment->actions()->create([
+                'action' => SocialCommentActionType::WhatsappClickFollowUpSent,
+                'notes' => 'Seguimiento automatico por clic en WhatsApp sin mensaje enviado.',
+                'response_text' => $message,
+                'external_response' => ['meta_response' => $response],
+            ]);
+
+            return [
+                'status' => 'sent',
+                'published' => true,
+                'external_id' => $externalId !== '' ? $externalId : null,
+            ];
+        } catch (\Throwable $e) {
+            $comment->actions()->create([
+                'action' => SocialCommentActionType::Error,
+                'notes' => 'Fallo envio de seguimiento por WhatsApp click sin mensaje.',
+                'external_response' => ['error' => $e->getMessage()],
+            ]);
+
+            return ['status' => 'failed', 'error' => $e->getMessage()];
+        }
     }
 }

@@ -24,6 +24,7 @@ class SocialLeadOperationsService
                     ->orWhereNotNull('follow_up_at')
                     ->orWhereIn('conversion_status', [
                         SocialConversionStatus::TokenGenerated->value,
+                        SocialConversionStatus::WhatsappStarted->value,
                         SocialConversionStatus::PendingPatientCreation->value,
                     ]);
             })

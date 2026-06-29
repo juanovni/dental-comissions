@@ -97,6 +97,13 @@ class MetaSocialService
                 app(SocialCommentClassificationService::class)->classify($comment);
                 $this->dispatchAutoReplyIfEligible($comment->refresh());
 
+                app(SocialLeadAlertService::class)->createAlert(
+                    $comment->fresh(),
+                    'new_lead_arrived',
+                    in_array($comment->reputation_risk, [\App\Enums\SocialReputationRisk::High, \App\Enums\SocialReputationRisk::Critical], true) ? 'danger' : 'info',
+                    ['classification' => $comment->classification?->value, 'platform' => $comment->platform?->value],
+                );
+
                 $summary['comments']++;
             }
         }
@@ -216,6 +223,15 @@ class MetaSocialService
                 }
 
                 $this->dispatchAutoReplyIfEligible($comment->refresh());
+
+                if ($comment->wasRecentlyCreated) {
+                    app(SocialLeadAlertService::class)->createAlert(
+                        $comment->fresh(),
+                        'new_lead_arrived',
+                        in_array($comment->reputation_risk, [\App\Enums\SocialReputationRisk::High, \App\Enums\SocialReputationRisk::Critical], true) ? 'danger' : 'info',
+                        ['classification' => $comment->classification?->value, 'platform' => $comment->platform?->value],
+                    );
+                }
 
                 $summary['comments']++;
             }

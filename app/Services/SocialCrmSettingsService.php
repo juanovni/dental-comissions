@@ -227,6 +227,24 @@ class SocialCrmSettingsService
         return max(1, (int) $this->get('social_alert_check_frequency_minutes', 10));
     }
 
+    public function whatsappClickFollowUpMinutes(): int
+    {
+        return max(5, (int) $this->get('social_whatsapp_click_follow_up_minutes', 30));
+    }
+
+    public function whatsappFollowUpAutoReplyEnabled(): bool
+    {
+        return (bool) $this->get('social_whatsapp_follow_up_auto_reply_enabled', false);
+    }
+
+    public function whatsappFollowUpAutoReplyTemplate(): string
+    {
+        return (string) $this->get(
+            'social_whatsapp_follow_up_auto_reply_template',
+            'Hola {author_name}, vi que abriste el enlace de WhatsApp pero no me enviaste mensaje. ¿Te quedó alguna duda? Puedes responder aquí mismo o escribirme al WhatsApp cuando gustes.',
+        );
+    }
+
     public function alertMessage(string $type): array
     {
         $messages = $this->get('social_alert_messages', []);

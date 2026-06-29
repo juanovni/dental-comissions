@@ -32,6 +32,7 @@ enum SocialCommentActionType: string
     case AutoReplySent = 'auto_reply_sent';
     case AutoReplyFailed = 'auto_reply_failed';
     case AutoReplySkipped = 'auto_reply_skipped';
+    case WhatsappClickFollowUpSent = 'whatsapp_click_follow_up_sent';
 
     public function label(): string
     {
@@ -64,6 +65,7 @@ enum SocialCommentActionType: string
             self::AutoReplySent => 'Respuesta automática enviada',
             self::AutoReplyFailed => 'Respuesta automática fallida',
             self::AutoReplySkipped => 'Respuesta automática omitida',
+            self::WhatsappClickFollowUpSent => 'Seguimiento por clic WhatsApp sin mensaje',
         };
     }
 }
