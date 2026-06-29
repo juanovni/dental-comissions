@@ -506,21 +506,41 @@
             transition: width .2s ease;
         }
 
-        .smart-thermo-fill.is-warm { background: #f97316; }
-        .smart-thermo-fill.is-hot { background: #dc2626; }
-        .smart-thermo-fill.is-max { background: #b91c1c; }
+        .smart-thermo-fill.temp-warm { background: #f97316; }
+        .smart-thermo-fill.temp-hot { background: #dc2626; }
+        .smart-thermo-fill.temp-max { background: #dc2626; }
 
         .smart-thermo-state {
-            border-radius: .375rem;
-            font-size: .7rem;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .4rem;
+            display: inline-flex;
+            font-size: .68rem;
             font-weight: 500;
-            padding: .25rem .45rem;
+            gap: .28rem;
+            padding: .24rem .45rem;
+            white-space: nowrap;
         }
 
-        .smart-thermo-state.is-cold { background: #eff6ff; color: #1d4ed8; }
-        .smart-thermo-state.is-warm { background: #fff7ed; color: #c2410c; }
-        .smart-thermo-state.is-hot,
-        .smart-thermo-state.is-max { background: #fef2f2; color: #b91c1c; }
+        .smart-thermo-state.temp-cold { color: #1d4ed8; }
+        .smart-thermo-state.temp-warm { color: #c2410c; }
+        .smart-thermo-state.temp-hot,
+        .smart-thermo-state.temp-max { color: #b91c1c; }
+
+        .smart-thermo-state::before {
+            content: '';
+            display: inline-block;
+            width: .5rem;
+            height: .5rem;
+            border-radius: 50%;
+            margin-right: .3rem;
+            vertical-align: middle;
+        }
+        .smart-thermo-state.temp-cold::before { background: #3b82f6; }
+        .smart-thermo-state.temp-warm::before { background: #f59e0b; }
+        .smart-thermo-state.temp-hot::before,
+        .smart-thermo-state.temp-max::before { background: #ef4444; }
 
         @media (max-width: 760px) {
             .smart-drawer {
@@ -1807,10 +1827,10 @@
                 $engagementScore = (int) $selectedComment->recent_engagement_score;
                 $displayEngagementScore = min($engagementScore, 100);
                 $engagementState = match (true) {
-                    $engagementScore >= 100 => ['label' => 'Alta prioridad', 'class' => 'is-max'],
-                    $engagementScore >= 71 => ['label' => 'Caliente', 'class' => 'is-hot'],
-                    $engagementScore >= 31 => ['label' => 'Tibio', 'class' => 'is-warm'],
-                    default => ['label' => 'Frio', 'class' => 'is-cold'],
+                    $engagementScore >= 100 => ['label' => 'Alta prioridad', 'class' => 'temp-max'],
+                    $engagementScore >= 71 => ['label' => 'Caliente', 'class' => 'temp-hot'],
+                    $engagementScore >= 31 => ['label' => 'Tibio', 'class' => 'temp-warm'],
+                    default => ['label' => 'Frio', 'class' => 'temp-cold'],
                 };
                 $drawerAutoReply = $this->autoReplyStatus($selectedComment);
             @endphp

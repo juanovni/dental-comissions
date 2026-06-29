@@ -868,8 +868,8 @@
                                     $realScore = (int) $comment->recent_engagement_score;
                                     $displayScore = min(100, max(0, $realScore));
                                     $temperature = match (true) {
-                                        $realScore >= 100 => ['label' => 'MAX', 'class' => 'temp-max'],
-                                        $realScore >= 71 => ['label' => 'Hot', 'class' => 'temp-hot'],
+                                        $realScore >= 100 => ['label' => 'Alta prioridad', 'class' => 'temp-max'],
+                                        $realScore >= 71 => ['label' => 'Caliente', 'class' => 'temp-hot'],
                                         $realScore >= 31 => ['label' => 'Tibio', 'class' => 'temp-warm'],
                                         default => ['label' => 'Frio', 'class' => 'temp-cold'],
                                     };
