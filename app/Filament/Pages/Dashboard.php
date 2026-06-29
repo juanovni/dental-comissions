@@ -17,11 +17,14 @@ class Dashboard extends BaseDashboard
 
     protected static ?string $navigationLabel = 'Actividad y comisiones';
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar-square';
-
     protected static string|\UnitEnum|null $navigationGroup = 'Dashboards';
 
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationIcon(): string|\BackedEnum|\Illuminate\Contracts\Support\Htmlable|null
+    {
+        return null;
+    }
 
     public function getColumns(): int|array
     {

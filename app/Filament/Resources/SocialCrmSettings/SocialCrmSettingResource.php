@@ -24,8 +24,6 @@ class SocialCrmSettingResource extends Resource
 {
     protected static ?string $model = SocialCrmSetting::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-adjustments-horizontal';
-
     protected static string|\UnitEnum|null $navigationGroup = 'Configuración';
 
     protected static ?string $navigationLabel = 'Configuracion CRM';

@@ -44,19 +44,23 @@ class AdminPanelProvider extends PanelProvider
                 return '/images/logo-odon-crm_2.png';
             })
             ->brandLogoHeight(function () {
-                return request()->routeIs('filament.admin.auth.login') ? '3rem' : '1.75rem';
+                return request()->routeIs('filament.admin.auth.login') ? '3rem' : '1.55rem';
             })
             ->colors([
                 'primary' => Color::Teal,
             ])
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
-                NavigationGroup::make('Dashboards'),
-                NavigationGroup::make('Operación Clínica'),
-                NavigationGroup::make('Comisiones y Pagos'),
+                NavigationGroup::make('Dashboards')
+                    ->icon('heroicon-o-chart-bar-square'),
+                NavigationGroup::make('Operación Clínica')
+                    ->icon('heroicon-o-clipboard-document-list'),
+                NavigationGroup::make('Comisiones y Pagos')
+                    ->icon('heroicon-o-currency-dollar'),
                 NavigationGroup::make('Reputacion Digital')
                     ->collapsible(false),
-                NavigationGroup::make('Configuración'),
+                NavigationGroup::make('Configuración')
+                    ->icon('heroicon-o-cog-6-tooth'),
             ])
             ->maxContentWidth('fi-width-full')
             ->viteTheme('resources/css/app.css')

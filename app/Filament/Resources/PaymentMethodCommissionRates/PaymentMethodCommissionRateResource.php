@@ -25,8 +25,6 @@ class PaymentMethodCommissionRateResource extends Resource
 {
     protected static ?string $model = PaymentMethodCommissionRate::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
-
     protected static string | \UnitEnum | null $navigationGroup = 'Comisiones y Pagos';
 
     protected static ?string $navigationLabel = 'Comisiones por pago';

@@ -29,8 +29,6 @@ class WeeklyReportResource extends Resource
 {
     protected static ?string $model = WeeklyReport::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-chart-bar';
-
     protected static string | \UnitEnum | null $navigationGroup = 'Comisiones y Pagos';
 
     protected static ?string $navigationLabel = 'Reportes semanales';

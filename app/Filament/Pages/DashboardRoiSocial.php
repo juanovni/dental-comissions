@@ -29,11 +29,14 @@ class DashboardRoiSocial extends BaseDashboard
 
     protected static ?string $navigationLabel = 'ROI Social';
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-currency-dollar';
-
     protected static string|\UnitEnum|null $navigationGroup = 'Dashboards';
 
     protected static ?int $navigationSort = 2;
+
+    public static function getNavigationIcon(): string|\BackedEnum|\Illuminate\Contracts\Support\Htmlable|null
+    {
+        return null;
+    }
 
     public function filtersForm(Schema $schema): Schema
     {
