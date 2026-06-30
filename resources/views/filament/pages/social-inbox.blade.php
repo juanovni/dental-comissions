@@ -158,7 +158,6 @@
 
         .smart-list-column {
             max-height: calc(100vh - 12rem);
-            overflow: auto;
             padding-right: .2rem;
         }
 
