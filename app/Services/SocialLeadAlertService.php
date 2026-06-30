@@ -119,7 +119,7 @@ class SocialLeadAlertService
                             $summary['whatsapp_click_no_message']++;
                         }
 
-                        if ($alert?->wasRecentlyCreated && $settings->whatsappFollowUpAutoReplyEnabled()) {
+                        if ($settings->whatsappFollowUpAutoReplyEnabled()) {
                             app(SocialAutoReplyService::class)->sendFollowUpReply($comment->fresh());
                         }
                     }

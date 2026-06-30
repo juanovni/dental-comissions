@@ -9,8 +9,11 @@ use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Models\SocialPost;
+use App\Services\SocialAutoReplyService;
 use App\Services\SocialLeadAlertService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 class SocialLeadAlertServiceTest extends TestCase
@@ -58,6 +61,35 @@ class SocialLeadAlertServiceTest extends TestCase
             'social_comment_id' => $followUp->id,
             'alert_type' => 'follow_up_due',
         ]);
+    }
+
+    public function test_whatsapp_click_follow_up_sends_even_when_alert_already_exists(): void
+    {
+        DB::table('social_crm_settings')
+            ->where('key', 'social_whatsapp_follow_up_auto_reply_enabled')
+            ->update(['value' => json_encode(true)]);
+
+        $comment = $this->socialComment([
+            'conversion_status' => SocialConversionStatus::TokenGenerated,
+            'tracking_token' => 'DNT-TEST01',
+        ]);
+
+        DB::table('social_link_events')->insert([
+            'social_comment_id' => $comment->id,
+            'event_type' => 'whatsapp_click',
+            'created_at' => now()->subHour(),
+            'updated_at' => now()->subHour(),
+        ]);
+
+        app(SocialLeadAlertService::class)->createAlert($comment, 'whatsapp_click_no_message', 'warning');
+
+        $this->mock(SocialAutoReplyService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('sendFollowUpReply')
+                ->once()
+                ->andReturn(['status' => 'sent']);
+        });
+
+        app(SocialLeadAlertService::class)->runScheduledChecks();
     }
 
     private function socialComment(array $overrides = []): SocialComment

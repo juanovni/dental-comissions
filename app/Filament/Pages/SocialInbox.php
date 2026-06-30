@@ -9,6 +9,7 @@ use App\Enums\SocialReputationRisk;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Models\Procedure;
 use App\Models\SocialComment;
+use App\Models\WhatsappMessage;
 use App\Services\GeminiJsonService;
 use App\Services\SocialAutoReplyService;
 use App\Services\SocialConversionService;
@@ -140,7 +141,11 @@ class SocialInbox extends Page
         }
 
         return $this->baseQuery()
-            ->with(['actions' => fn ($query) => $query->latest()->limit(6), 'leadAlerts' => fn ($query) => $query->latest()->limit(6)])
+            ->with([
+                'replies',
+                'actions' => fn ($query) => $query->latest()->limit(6),
+                'leadAlerts' => fn ($query) => $query->latest()->limit(6),
+            ])
             ->find($commentId);
     }
 
@@ -161,6 +166,162 @@ class SocialInbox extends Page
                 'duration' => $event->duration_seconds,
             ])
             ->all() ?? [];
+    }
+
+    public function conversationEvents(SocialComment $comment): array
+    {
+        $events = [];
+
+        // 1. Original comment
+        $events[] = [
+            'platform' => $comment->platform?->value ?? 'comment',
+            'channel' => $comment->platform?->value ?? 'social',
+            'color' => match ($comment->platform?->value) {
+                'instagram' => 'indigo',
+                default => 'blue',
+            },
+            'channel_label' => $comment->platform?->label() ?? 'Social',
+            'channel_class' => match ($comment->platform?->value) {
+                'instagram' => 'hot',
+                default => 'info',
+            },
+            'author' => $comment->author_name ?: $comment->author_username ?: 'Anónimo',
+            'kind_label' => 'Comentario en publicación',
+            'message' => $comment->comment_text,
+            'date' => $this->formatConversationDate($comment->created_at),
+            'time' => $this->formatConversationTime($comment->created_at),
+            'short_date' => $this->formatConversationShortDate($comment->created_at),
+            'is_automated' => false,
+            'rule_label' => null,
+            'created_at' => $comment->created_at,
+        ];
+
+        // 2. Social media replies
+        foreach ($comment->replies as $reply) {
+            $events[] = [
+                'platform' => $reply->platform?->value ?? 'comment',
+                'channel' => $reply->platform?->value ?? 'social',
+                'color' => match ($reply->platform?->value) {
+                    'instagram' => 'indigo',
+                    default => 'blue',
+                },
+                'channel_label' => $reply->platform?->label() ?? 'Social',
+                'channel_class' => match ($reply->platform?->value) {
+                    'instagram' => 'hot',
+                    default => 'info',
+                },
+                'author' => $reply->author_name ?: $reply->author_username ?: 'Anónimo',
+                'kind_label' => 'Respuesta en publicación',
+                'message' => $reply->comment_text,
+                'date' => $this->formatConversationDate($reply->created_at),
+                'time' => $this->formatConversationTime($reply->created_at),
+                'short_date' => $this->formatConversationShortDate($reply->created_at),
+                'is_automated' => false,
+                'rule_label' => null,
+                'created_at' => $reply->created_at,
+            ];
+        }
+
+        // 3. WhatsApp messages via tracking token
+        if ($comment->tracking_token) {
+            $whatsappMessages = WhatsappMessage::where('message_body', 'like', '%'.$comment->tracking_token.'%')
+                ->orderBy('created_at')
+                ->get();
+
+            foreach ($whatsappMessages as $msg) {
+                $cleaned = trim(preg_replace('/\s*\bDNT-\w+\b\s*/', '', $msg->message_body));
+                $events[] = [
+                    'platform' => 'whatsapp',
+                    'channel' => 'whatsapp',
+                    'color' => 'green',
+                    'channel_label' => 'WhatsApp',
+                    'channel_class' => 'success',
+                    'author' => $msg->direction?->value === 'incoming' ? 'Cliente' : 'Clinica',
+                    'kind_label' => 'Mensaje directo',
+                    'message' => $cleaned ?: $msg->message_body,
+                    'date' => $this->formatConversationDate($msg->created_at),
+                    'time' => $this->formatConversationTime($msg->created_at),
+                    'short_date' => $this->formatConversationShortDate($msg->created_at),
+                    'is_automated' => false,
+                    'rule_label' => null,
+                    'created_at' => $msg->created_at,
+                ];
+            }
+        }
+
+        // 4. Key actions
+        $actionTypes = [
+            SocialCommentActionType::AutoReplySent,
+            SocialCommentActionType::AutoReplyGenerated,
+            SocialCommentActionType::AutoReplyFailed,
+            SocialCommentActionType::RedirectToWhatsapp,
+            SocialCommentActionType::WhatsappHandshake,
+            SocialCommentActionType::WhatsappClickFollowUpSent,
+            SocialCommentActionType::ScheduleFollowUp,
+            SocialCommentActionType::MarkAsContacted,
+            SocialCommentActionType::MarkAsLost,
+            SocialCommentActionType::LeadReheated,
+            SocialCommentActionType::PipelineStageChanged,
+        ];
+
+        foreach ($comment->actions as $action) {
+            if (in_array($action->action, $actionTypes, true)) {
+                $isAiAction = in_array($action->action, [
+                    SocialCommentActionType::AutoReplySent,
+                    SocialCommentActionType::AutoReplyGenerated,
+                    SocialCommentActionType::WhatsappClickFollowUpSent,
+                ], true);
+
+                $events[] = [
+                    'platform' => 'action',
+                    'channel' => $isAiAction ? ($comment->platform?->value ?? 'social') : 'system',
+                    'color' => 'orange',
+                    'channel_label' => $isAiAction ? ($comment->platform?->label() ?? 'Social') : 'Sistema',
+                    'channel_class' => $isAiAction ? match ($comment->platform?->value) {
+                        'instagram' => 'hot',
+                        default => 'info',
+                    } : 'neutral',
+                    'author' => $isAiAction ? 'Asistente IA' : $action->action->label(),
+                    'kind_label' => $isAiAction ? 'Respuesta automática · '.($comment->platform?->label() ?? 'Social') : 'Evento del sistema',
+                    'message' => $action->response_text ?: $action->notes ?: '',
+                    'date' => $this->formatConversationDate($action->created_at),
+                    'time' => $this->formatConversationTime($action->created_at),
+                    'short_date' => $this->formatConversationShortDate($action->created_at),
+                    'is_automated' => $isAiAction,
+                    'rule_label' => $isAiAction ? $action->notes : null,
+                    'created_at' => $action->created_at,
+                ];
+            }
+        }
+
+        usort($events, fn ($a, $b) => ($a['created_at']?->timestamp ?? 0) <=> ($b['created_at']?->timestamp ?? 0));
+
+        return $events;
+    }
+
+    private function formatConversationDate($date): string
+    {
+        if (! $date) {
+            return 'Fecha no registrada';
+        }
+
+        return $date->diffForHumans().', '.$date->format('g:i A');
+    }
+
+    private function formatConversationTime($date): string
+    {
+        return $date ? $date->format('H:i') : 'Sin hora';
+    }
+
+    private function formatConversationShortDate($date): string
+    {
+        if (! $date) {
+            return 'Fecha no registrada';
+        }
+
+        return $date->isToday()
+            ? 'Hoy, '.$date->format('H:i')
+            : $date->format('d M, H:i');
     }
 
     public function suggestHistoricalReply(int $commentId): void

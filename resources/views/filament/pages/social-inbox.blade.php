@@ -13,6 +13,7 @@
         $selectedComment = $this->selectedComment();
         $selectedPatient = $selectedComment?->socialIdentity?->patient ?: $selectedComment?->convertedPatient;
         $selectedTimeline = $selectedComment ? $this->timelineEvents($selectedComment->id) : [];
+        $drawerConversation = $selectedComment ? $this->conversationEvents($selectedComment) : [];
     @endphp
 
     <style>
@@ -413,7 +414,7 @@
         .smart-activity-icon svg {
             height: .95rem;
             width: .95rem;
-            color: black
+            color: #000000;
         }
 
         .smart-activity-icon.blue,
@@ -426,7 +427,10 @@
         .smart-activity-icon.emerald { color: #0f766e; }
 
         .smart-activity-title {
+            align-items: center;
             color: #0f172a;
+            display: flex;
+            gap: .4rem;
             font-size: .84rem;
             font-weight: 500;
             line-height: 1.35;
@@ -443,6 +447,121 @@
             font-size: .8rem;
             line-height: 1.45;
             margin: .35rem 0 0;
+        }
+
+        .smart-conversation-bubble {
+            background: #f8fafc;
+            border: 1px solid #eef2f7;
+            border-radius: .625rem;
+            color: #111827;
+            font-size: .82rem;
+            line-height: 1.45;
+            margin-top: .45rem;
+            padding: .7rem;
+            white-space: pre-line;
+        }
+
+        .smart-conversation-summary {
+            background: #ffffff;
+            border: 1px solid #eef2f7;
+            border-radius: .75rem;
+            margin-bottom: .85rem;
+            overflow: hidden;
+        }
+
+        .smart-conversation-route {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .55rem;
+            justify-content: space-between;
+            padding: .65rem .75rem;
+        }
+
+        .smart-conversation-route-main {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+        }
+
+        .smart-conversation-route-arrow,
+        .smart-conversation-summary-date {
+            color: #64748b;
+            font-size: .78rem;
+        }
+
+        .smart-conversation-metrics {
+            border-top: 1px solid #eef2f7;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .smart-conversation-metric {
+            padding: .65rem .75rem;
+        }
+
+        .smart-conversation-metric:not(:last-child) {
+            border-right: 1px solid #eef2f7;
+        }
+
+        .smart-conversation-metric span {
+            color: #64748b;
+            display: block;
+            font-size: .72rem;
+        }
+
+        .smart-conversation-metric strong {
+            color: #0f172a;
+            display: block;
+            font-size: .94rem;
+            line-height: 1.25;
+            margin-top: .1rem;
+        }
+
+        .smart-conversation-content {
+            min-width: 0;
+            width: 100%;
+        }
+
+        .smart-conversation-head {
+            align-items: flex-start;
+            display: flex;
+            gap: .75rem;
+            justify-content: space-between;
+        }
+
+        .smart-conversation-kind {
+            color: #64748b;
+            font-size: .76rem;
+            margin-top: .15rem;
+        }
+
+        .smart-conversation-time {
+            color: #64748b;
+            flex: 0 0 auto;
+            font-size: .76rem;
+            padding-top: .1rem;
+        }
+
+        .smart-conversation-rule {
+            color: #64748b;
+            font-size: .76rem;
+            margin-top: .45rem;
+        }
+
+        .smart-channel-change {
+            align-items: center;
+            color: #64748b;
+            display: flex;
+            font-size: .76rem;
+            gap: .45rem;
+            margin: .45rem 0 .65rem;
+        }
+
+        .smart-channel-change svg {
+            height: .9rem;
+            width: .9rem;
         }
 
         .smart-activity-progress {
@@ -638,6 +757,36 @@
             color: #94a3b8;
         }
 
+        .dark .smart-conversation-bubble {
+            background: rgba(15, 23, 42, .72);
+            border-color: rgba(148, 163, 184, .18);
+            color: #e2e8f0;
+        }
+
+        .dark .smart-conversation-summary {
+            background: rgba(15, 23, 42, .72);
+            border-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-conversation-metrics,
+        .dark .smart-conversation-metric:not(:last-child) {
+            border-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .smart-conversation-metric strong {
+            color: #e2e8f0;
+        }
+
+        .dark .smart-conversation-route-arrow,
+        .dark .smart-conversation-summary-date,
+        .dark .smart-conversation-kind,
+        .dark .smart-conversation-time,
+        .dark .smart-conversation-rule,
+        .dark .smart-channel-change,
+        .dark .smart-conversation-metric span {
+            color: #94a3b8;
+        }
+
         .dark .smart-activity-progress-track {
             background: rgba(148, 163, 184, .18);
         }
@@ -795,7 +944,6 @@
             font-weight: 600;
             letter-spacing: .03em;
             padding: .175rem .4rem;
-            text-transform: uppercase;
         }
 
         .smart-badge.danger { background: #fef2f2; color: #b91c1c; }
@@ -893,11 +1041,9 @@
         }
 
         .smart-panel {
+            border: 1px solid #e5e7eb;
+            border-radius: .75rem;
             overflow: hidden;
-            background: #f8fafc;
-            border: 1px solid #eef2f7;
-            border-radius: .625rem;
-            padding: .65rem;
         }
 
         .smart-panel:not(details) {
@@ -1834,7 +1980,6 @@
                     $engagementScore >= 31 => ['label' => 'Tibio', 'class' => 'temp-warm'],
                     default => ['label' => 'Frio', 'class' => 'temp-cold'],
                 };
-                $drawerAutoReply = $this->autoReplyStatus($selectedComment);
             @endphp
             <div class="smart-drawer-backdrop" wire:click="closeCommentDrawer"></div>
 
@@ -1921,41 +2066,121 @@
                         </div>
                     </section>
 
-                    {{-- Card 1: Conversacion Detalle --}}
+                    {{-- Card 1: Hilo de conversacion --}}
                     <section class="smart-drawer-card is-accent" x-show="tab === 'conversation'" x-cloak>
-                        <div class="smart-drawer-card-kicker">Conversacion / Detalle</div>
-                        <p class="smart-drawer-card-text">"{{ $selectedComment->comment_text }}"</p>
+                        <div class="smart-drawer-card-kicker">Hilo de conversacion</div>
+                        @php
+                            $conversationCollection = collect($drawerConversation);
+                            $conversationChannels = $conversationCollection->where('channel', '!=', 'system')->values();
+                            $firstConversationChannel = $conversationChannels->first();
+                            $lastConversationChannel = $conversationChannels->last();
+                            $messageCount = $conversationCollection->count();
+                            $automatedCount = $conversationCollection->where('is_automated', true)->count();
+                            $automationRate = $messageCount > 0 ? (int) round(($automatedCount / $messageCount) * 100) : 0;
+                            $firstHumanEvent = $conversationCollection->first(fn ($event) => ! ($event['is_automated'] ?? false) && filled($event['created_at'] ?? null));
+                            $firstAutoEvent = $conversationCollection->first(fn ($event) => ($event['is_automated'] ?? false) && filled($event['created_at'] ?? null) && (! $firstHumanEvent || $event['created_at']->greaterThanOrEqualTo($firstHumanEvent['created_at'])));
+                            $responseTime = 'N/D';
 
-                        <div class="smart-panels">
-                            <section class="smart-panel">
-                                <h3>Respuesta sugerida actual</h3>
-                                <p>{{ $selectedComment->suggested_reply ?: 'Sin respuesta base. Usa la accion IA para generar una respuesta con historial.' }}</p>
-                                @if ($selectedComment->ai_reason)
-                                    <p class="smart-muted">Motivo: {{ $selectedComment->ai_reason }}</p>
+                            if ($firstHumanEvent && $firstAutoEvent) {
+                                $responseSeconds = (int) $firstHumanEvent['created_at']->diffInSeconds($firstAutoEvent['created_at']);
+                                $responseTime = $responseSeconds < 60 ? $responseSeconds.' seg' : floor($responseSeconds / 60).' min';
+                            }
+
+                            $previousChannel = null;
+                        @endphp
+
+                        @if ($messageCount > 0)
+                            <div class="smart-conversation-summary">
+                                <div class="smart-conversation-route">
+                                    <div class="smart-conversation-route-main">
+                                        @if ($firstConversationChannel)
+                                            <span style="color:#64748b;font-size:.78rem">Canales:</span>
+                                            <span class="smart-badge {{ $firstConversationChannel['channel_class'] }}">{{ $firstConversationChannel['channel_label'] }}</span>
+                                        @endif
+                                        @if ($firstConversationChannel && $lastConversationChannel && $firstConversationChannel['channel'] !== $lastConversationChannel['channel'])
+                                            <span class="smart-conversation-route-arrow">→</span>
+                                            <span class="smart-badge {{ $lastConversationChannel['channel_class'] }}">{{ $lastConversationChannel['channel_label'] }}</span>
+                                        @endif
+                                    </div>
+                                    <span class="smart-conversation-summary-date">{{ $conversationCollection->first()['short_date'] ?? 'Fecha no registrada' }}</span>
+                                </div>
+                                <div class="smart-conversation-metrics">
+                                    <div class="smart-conversation-metric">
+                                        <span>Respuesta prom.</span>
+                                        <strong>{{ $responseTime }}</strong>
+                                    </div>
+                                    <div class="smart-conversation-metric">
+                                        <span>Mensajes</span>
+                                        <strong>{{ $messageCount }}</strong>
+                                    </div>
+                                    <div class="smart-conversation-metric">
+                                        <span>Automatización</span>
+                                        <strong>{{ $automationRate }}%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="smart-drawer-timeline">
+                            @forelse ($drawerConversation as $event)
+                                @php
+                                    $currentChannel = $event['channel'] ?? $event['platform'];
+                                    $showChannelChange = filled($previousChannel) && $currentChannel !== 'system' && $currentChannel !== $previousChannel;
+                                @endphp
+
+                                @if ($showChannelChange)
+                                    <div class="smart-channel-change">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+                                        <span>Cambio de canal a</span>
+                                        <span class="smart-badge {{ $event['channel_class'] }}">{{ $event['channel_label'] }}</span>
+                                    </div>
                                 @endif
-                            </section>
-                            <section class="smart-panel">
-                                <h3>Seguimiento comercial</h3>
-                                <p><strong>Estado:</strong> {{ $selectedComment->conversion_status?->label() ?? 'Sin estado' }}</p>
-                                <p class="smart-muted"><strong>Pipeline:</strong> {{ $selectedComment->pipeline_stage?->label() ?? 'Sin etapa' }}</p>
-                                <p class="smart-muted"><strong>Valor:</strong> ${{ number_format((float) $selectedComment->estimated_value, 2) }}</p>
-                            </section>
-                            <section class="smart-panel">
-                                <h3>Auto-respuesta Meta</h3>
-                                <p><strong>Estado:</strong> {{ $drawerAutoReply['label'] }}</p>
-                                @if ($selectedComment->auto_replied_at)
-                                    <p class="smart-muted">Publicada {{ $selectedComment->auto_replied_at->diffForHumans() }}</p>
-                                @endif
-                                @if ($selectedComment->auto_reply_external_id)
-                                    <p class="smart-muted">ID Meta: {{ $selectedComment->auto_reply_external_id }}</p>
-                                @endif
-                                @if ($selectedComment->auto_reply_error)
-                                    <p class="smart-muted">Error: {{ $selectedComment->auto_reply_error }}</p>
-                                @endif
-                                @if ($selectedComment->auto_reply_message)
-                                    <p style="margin-top:.45rem; white-space:pre-line">{{ $selectedComment->auto_reply_message }}</p>
-                                @endif
-                            </section>
+
+                                <div class="smart-drawer-timeline-item">
+                                    <span class="smart-activity-icon {{ $event['color'] }}" aria-hidden="true">
+                                        @switch($event['platform'])
+                                            @case('facebook')
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7h2.35l.35-2.72h-2.7V9.55c0-.79.22-1.33 1.35-1.33h1.44V5.79c-.25-.03-1.1-.1-2.1-.1-2.08 0-3.5 1.27-3.5 3.6v1.99H8.34V14h2.35v7h2.81Z" /></svg>
+                                                @break
+                                            @case('instagram')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><rect width="15" height="15" x="4.5" y="4.5" rx="4" /><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 11.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" /><path stroke-linecap="round" d="M16.75 7.75h.01" /></svg>
+                                                @break
+                                            @case('whatsapp')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.75 19.25 6 15.6a7 7 0 1 1 2.42 2.35l-3.67 1.3Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.2 8.95c.18-.5.42-.55.74-.55h.43c.22 0 .4.14.49.34l.68 1.52c.08.18.04.39-.1.53l-.47.48c.48.84 1.16 1.52 2 2l.48-.47c.14-.14.35-.18.53-.1l1.52.68c.2.09.34.27.34.49v.43c0 .32-.05.56-.55.74-.4.14-.83.21-1.28.21-2.64 0-5.26-2.62-5.26-5.26 0-.45.07-.88.21-1.28Z" /></svg>
+                                                @break
+                                            @case('action')
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+                                                @break
+                                        @endswitch
+                                    </span>
+                                    <div class="smart-conversation-content">
+                                        <div class="smart-conversation-head">
+                                            <div>
+                                                <div class="smart-activity-title">
+                                                    {{ $event['author'] }}
+                                                    @unless ($event['is_automated'])
+                                                        <span class="smart-badge {{ $event['channel_class'] }}">{{ $event['channel_label'] }}</span>
+                                                    @endunless
+                                                </div>
+                                                <div class="smart-conversation-kind">{{ $event['kind_label'] }}</div>
+                                            </div>
+                                            <span class="smart-conversation-time">{{ $event['time'] }}</span>
+                                        </div>
+                                        <div class="smart-conversation-bubble">{{ $event['message'] }}</div>
+                                        @if (filled($event['rule_label']))
+                                            <div class="smart-conversation-rule">↯ {{ $event['rule_label'] }}</div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @php
+                                    if ($currentChannel !== 'system') {
+                                        $previousChannel = $currentChannel;
+                                    }
+                                @endphp
+                            @empty
+                                <p class="smart-activity-empty">Sin conversacion registrada.</p>
+                            @endforelse
                         </div>
 
                         <div class="smart-drawer-actions">
