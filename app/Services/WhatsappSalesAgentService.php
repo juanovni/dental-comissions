@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\AppointmentSource;
+use App\Enums\AppointmentStatus;
 use App\Enums\SocialCommentActionType;
 use App\Events\ClosingOpportunityDetected;
 use App\Models\SocialComment;
 use App\Models\WhatsappMessage;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -15,9 +18,16 @@ class WhatsappSalesAgentService
     {
         $comment->loadMissing(['socialPost', 'suggestedProcedure', 'socialIdentity.patient', 'linkEvents']);
 
+        $slotsString = '';
+
+        if (app(SocialCrmSettingsService::class)->appointmentProposeSlots()) {
+            $slots = app(AppointmentAvailabilityService::class)->nextAvailableSlots();
+            $slotsString = app(AppointmentAvailabilityService::class)->formatSlotsForPrompt($slots);
+        }
+
         try {
             $content = app(AiJsonService::class)->generate(
-                $this->systemPrompt(),
+                $this->systemPrompt($slotsString),
                 $this->userPrompt($comment, $message),
             );
 
@@ -36,6 +46,26 @@ class WhatsappSalesAgentService
             ]);
 
             $response = $this->fallbackResponse($comment, $message);
+        }
+
+        $selectedSlot = $this->matchSelectedSlot($message->message_body, $slots ?? []);
+
+        if ($selectedSlot) {
+            $response['appointment_candidate'] = [
+                'wants_appointment' => true,
+                'preferred_date_text' => $selectedSlot->format('Y-m-d g:i A'),
+                'preferred_time_text' => $selectedSlot->format('g:i A'),
+            ];
+            $response['requires_human_handoff'] = false;
+        }
+
+        $response = $this->handleAppointmentCandidate($comment, $response);
+
+        if ($selectedSlot && ($response['appointment_candidate']['wants_appointment'] ?? false)) {
+            $slotLabel = app(AppointmentAvailabilityService::class)->formatSlotsForPrompt([$selectedSlot]);
+            $response['reply'] = "Perfecto, he agendado tu cita para {$slotLabel}. Te confirmaremos los detalles por este medio.";
+        } elseif ($slotsString !== '' && ! str_contains($response['reply'], "\nTenemos disponible:")) {
+            $response['reply'] .= "\n\nTenemos disponible:\n{$slotsString}\n\n¿Cuál te queda mejor?";
         }
 
         $message->update(['ai_response' => $response]);
@@ -63,6 +93,78 @@ class WhatsappSalesAgentService
         app(SocialPipelineAutomationService::class)->applyAgentResponse($comment->refresh(), $response);
 
         return $response;
+    }
+
+    private function handleAppointmentCandidate(SocialComment $comment, array $response): array
+    {
+        $candidate = $response['appointment_candidate'] ?? [];
+
+        if (! ($candidate['wants_appointment'] ?? false)) {
+            return $response;
+        }
+
+        $settings = app(SocialCrmSettingsService::class);
+
+        if ($settings->appointmentAutoConfirm() && ! empty($candidate['preferred_date_text'])) {
+            try {
+                $parsed = Carbon::parse($candidate['preferred_date_text']);
+
+                app(AppointmentCreationService::class)->createFromSocialLead($comment, [
+                    'scheduled_at' => $parsed,
+                    'source' => AppointmentSource::WhatsappAi,
+                    'status' => AppointmentStatus::Scheduled,
+                    'duration_minutes' => $settings->appointmentSlotDuration(),
+                    'notes' => 'Cita creada automaticamente desde WhatsApp Sales Agent.',
+                    'created_by' => null,
+                    'metadata' => [
+                        'auto_created' => true,
+                        'social_comment_id' => $comment->id,
+                        'original_reply' => $response['reply'] ?? null,
+                    ],
+                ]);
+
+                $response['reply'] .= "\n\nListo, he agendado tu cita. Te confirmaremos los detalles por este medio.";
+                $response['handoff_reason'] = 'Cita creada automaticamente.';
+            } catch (\Throwable $e) {
+                Log::warning('Error al crear cita automatica desde WhatsApp Sales Agent.', [
+                    'social_comment_id' => $comment->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                $response['requires_human_handoff'] = true;
+                $response['handoff_reason'] = 'El paciente eligio un horario pero ocurrio un error al crear la cita automaticamente.';
+            }
+        } else {
+            $response['requires_human_handoff'] = true;
+            $response['handoff_reason'] = 'El paciente mostro interes en agendar una cita.';
+        }
+
+        return $response;
+    }
+
+    private function matchSelectedSlot(string $userMessage, array $slots): ?Carbon
+    {
+        if (empty($slots)) {
+            return null;
+        }
+
+        $text = Str::of($userMessage)->lower()->ascii()->toString();
+
+        foreach ($slots as $slot) {
+            $formats = [
+                strtolower($slot->format('g:i')),
+                strtolower($slot->format('H:i')),
+                strtolower($slot->format('g:i A')),
+            ];
+
+            foreach ($formats as $format) {
+                if (str_contains($text, $format)) {
+                    return $slot;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function validateResponse(array $data, SocialComment $comment, WhatsappMessage $message): array
@@ -104,13 +206,20 @@ class WhatsappSalesAgentService
         $analysis = $this->localIntent($message->message_body);
         $greeting = $leadName ? "Hola {$leadName}." : 'Hola.';
 
+        $invitations = [
+            'Si gustas, puedo ayudarte a coordinar una valoracion sin costo.',
+            'Cuando quieras, podemos agendar una cita para revisarlo.',
+            'Quedo atento si prefieres agendar una valoracion.',
+            'Por cierto, si te interesa, podemos coordinar una cita para evaluarlo.',
+        ];
+
         $reply = "{$greeting} Vi que te intereso el contenido de {$treatment}. "
             .'Te podemos ayudar a coordinar una valoracion para que el equipo clinico revise tu caso y te explique opciones con claridad.';
 
         if ($analysis['clinical_safety_flag']) {
             $reply = "{$greeting} Gracias por contarnos. Para orientarte de forma responsable, prefiero que nuestro equipo clinico revise tu caso directamente. Te ayudamos a coordinar una valoracion lo antes posible.";
         } elseif ($analysis['requires_human_handoff']) {
-            $reply .= ' Si quieres, nuestro equipo puede ayudarte a confirmar disponibilidad de horario.';
+            $reply .= ' '.($invitations[array_rand($invitations)]);
         }
 
         return [
@@ -248,9 +357,38 @@ class WhatsappSalesAgentService
             .'Mensaje WhatsApp: '.$message->message_body;
     }
 
-    private function systemPrompt(): string
+    private function systemPrompt(string $availableSlots = ''): string
     {
-        return <<<'PROMPT'
+        if ($availableSlots !== '') {
+            $appointmentSection = <<<SLOTS
+Tenemos estos horarios disponibles actualmente:
+{$availableSlots}
+
+Al final de tu respuesta DEBES incluir UNA frase natural invitando
+a agendar una valoracion, sin presionar.
+Ejemplos:
+- "¿Te gustaria agendar una valoracion?"
+- "Podemos agendar una cita para revisarlo."
+
+Si el paciente elige un horario, marca en appointment_candidate:
+wants_appointment = true, preferred_date_text = la fecha y hora
+que eligio (ej: "Manana 10:00 AM").
+SLOTS;
+        } else {
+            $appointmentSection = <<<'NO_SLOTS'
+Al final de tu respuesta DEBES incluir UNA frase natural invitando
+a agendar una valoracion, sin presionar y sin repetir exactamente
+la misma redaccion.
+Ejemplos:
+- "Si gustas, puedo ayudarte a coordinar una valoracion sin costo."
+- "Cuando quieras, podemos agendar una cita para revisarlo."
+- "Quedo atento si prefieres agendar una valoracion."
+- "Por cierto, si te interesa, podemos coordinar una cita para evaluarlo."
+NO uses frases de urgencia ni inventes horarios.
+NO_SLOTS;
+        }
+
+        return <<<PROMPT
 Eres la Coordinadora de Pacientes de una clinica dental.
 
 Tu tono debe ser profesional, empatico, claro y experto.
@@ -266,6 +404,8 @@ No reemplaces al odontologo.
 Tu objetivo es orientar al paciente y facilitar una valoracion.
 Si detectas intencion de agenda, marca requires_human_handoff=true.
 Si detectas dolor, sangrado, infeccion, embarazo, medicamento, alergia, trauma o urgencia, marca clinical_safety_flag=true y requires_human_handoff=true.
+
+{$appointmentSection}
 
 Retorna SOLO JSON valido con esta estructura exacta:
 {

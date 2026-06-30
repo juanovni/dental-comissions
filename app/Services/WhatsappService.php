@@ -97,12 +97,22 @@ class WhatsappService
                 return $whatsappMessage;
             }
 
+            $existingLead = $socialConversionService->findLeadByPhone($fromPhone);
+
+            if ($existingLead) {
+                $agentResponse = app(WhatsappSalesAgentService::class)->respond($existingLead, $whatsappMessage);
+                $whatsappMessage->markAsProcessed();
+                $this->sendMessage($fromPhone, $agentResponse['reply']);
+
+                return $whatsappMessage;
+            }
+
             if (! $professional) {
                 $this->sendMessage(
                     $fromPhone,
-                    'No eres un profesional activo autorizado para registrar actividades. Si vienes de redes sociales, envia tu codigo, por ejemplo: Mi codigo es DNT-ABCDE.',
+                    'Hola, gracias por escribirnos. Para poder orientarte, necesito el codigo que recibiste en redes sociales. Por favor compartelo asi: "Mi codigo es DNT-XXXXX" y con gusto te ayudo.',
                 );
-                $whatsappMessage->markAsFailed('Profesional no activo o no autorizado');
+                $whatsappMessage->markAsProcessed();
 
                 return $whatsappMessage;
             }

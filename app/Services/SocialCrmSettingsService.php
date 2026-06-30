@@ -256,6 +256,54 @@ class SocialCrmSettingsService
         ];
     }
 
+    // ── Appointment Settings ──────────────────────────────────────
+
+    public function appointmentClinicDays(): array
+    {
+        $days = $this->get('social_appointment_clinic_days', [1, 2, 3, 4, 5]);
+
+        return collect(is_array($days) ? $days : [1, 2, 3, 4, 5])
+            ->filter(fn (mixed $d): bool => is_numeric($d))
+            ->map(fn (mixed $d): int => (int) $d)
+            ->values()
+            ->all();
+    }
+
+    public function appointmentClinicOpen(): string
+    {
+        return (string) $this->get('social_appointment_clinic_open', '09:00');
+    }
+
+    public function appointmentClinicClose(): string
+    {
+        return (string) $this->get('social_appointment_clinic_close', '18:00');
+    }
+
+    public function appointmentSlotDuration(): int
+    {
+        return max(15, (int) $this->get('social_appointment_slot_duration', 45));
+    }
+
+    public function appointmentLeadTimeHours(): int
+    {
+        return max(0, (int) $this->get('social_appointment_lead_time_hours', 2));
+    }
+
+    public function appointmentMaxSlotsOffer(): int
+    {
+        return max(1, (int) $this->get('social_appointment_max_slots_offer', 3));
+    }
+
+    public function appointmentAutoConfirm(): bool
+    {
+        return (bool) $this->get('social_appointment_auto_confirm', false);
+    }
+
+    public function appointmentProposeSlots(): bool
+    {
+        return (bool) $this->get('social_appointment_propose_slots', false);
+    }
+
     public function clearCache(): void
     {
         Cache::forget(self::CACHE_KEY);

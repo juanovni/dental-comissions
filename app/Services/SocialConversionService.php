@@ -9,6 +9,7 @@ use App\Models\Patient;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Models\WhatsappMessage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class SocialConversionService
@@ -147,6 +148,20 @@ class SocialConversionService
         $this->applyHandshake($comment->refresh(), $identity->refresh(), $message);
 
         return $comment->refresh();
+    }
+
+    public function findLeadByPhone(string $phone): ?SocialComment
+    {
+        $normalized = $this->normalizePhone($phone);
+
+        return SocialComment::whereHas('socialIdentity', function (Builder $query) use ($normalized, $phone): void {
+            $query->where('normalized_phone', $normalized)
+                ->orWhere('phone', $phone)
+                ->orWhere('phone', '+'.$normalized);
+        })
+            ->whereNotNull('tracking_token')
+            ->latest('created_at')
+            ->first();
     }
 
     public function extractTrackingToken(string $text): ?string
