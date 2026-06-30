@@ -72,3 +72,40 @@ services:
                 condition: service_started
             dental.pgsql:
                 condition: service_healthy
+
+    dental.scheduler:
+        image: dental-commissions/app:8.4
+        container_name: dental-scheduler
+        command: php artisan schedule:work
+        environment:
+            WWWUSER: '${WWWUSER:-1000}'
+            WWWGROUP: '${WWWGROUP:-1000}'
+            APP_ENV: '${APP_ENV:-local}'
+            APP_DEBUG: '${APP_DEBUG:-true}'
+            APP_URL: '${APP_URL:-http://localhost:8080}'
+            DB_CONNECTION: pgsql
+            DB_HOST: dental.pgsql
+            DB_PORT: 5432
+            DB_DATABASE: '${DB_DATABASE:-dental_commissions_mvp}'
+            DB_USERNAME: '${DB_USERNAME:-dental}'
+            DB_PASSWORD: '${DB_PASSWORD:-dental}'
+            CACHE_STORE: database
+            SESSION_DRIVER: database
+            QUEUE_CONNECTION: database
+            BROADCAST_CONNECTION: '${BROADCAST_CONNECTION:-reverb}'
+            REVERB_APP_ID: '${REVERB_APP_ID:-odoncrm}'
+            REVERB_APP_KEY: '${REVERB_APP_KEY:-local-key}'
+            REVERB_APP_SECRET: '${REVERB_APP_SECRET:-local-secret}'
+            REVERB_HOST: '${REVERB_INTERNAL_HOST:-dental.reverb}'
+            REVERB_PORT: '${REVERB_PORT:-8081}'
+            REVERB_SCHEME: '${REVERB_SCHEME:-http}'
+        volumes:
+            - '.:/var/www/html'
+            - './docker/8.4/php.ini:/usr/local/etc/php/conf.d/99-sail.ini'
+        networks:
+            - dental
+        depends_on:
+            dental.app:
+                condition: service_started
+            dental.pgsql:
+                condition: service_healthy

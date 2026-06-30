@@ -290,26 +290,24 @@
             border-bottom: 1px solid #e5e7eb;
             display: flex;
             gap: .85rem;
-            overflow-x: auto;
             padding: 0 1rem;
         }
 
         .smart-drawer-tab {
             background: transparent;
             border: 0;
-            border-bottom: 2px solid transparent;
             color: #64748b;
             cursor: pointer;
             flex: 0 0 auto;
             font-size: .76rem;
             font-weight: 500;
             padding: .7rem 0 .75rem;
-            transition: border-color .14s ease, color .14s ease;
+            transition: box-shadow .14s ease, color .14s ease;
         }
 
         .smart-drawer-tab:hover,
         .smart-drawer-tab.is-active {
-            border-bottom-color: #000000;
+            box-shadow: inset 0 -2px 0 #000000;
             color: #0f172a;
         }
 
@@ -326,6 +324,15 @@
 
         .smart-drawer-card.is-accent {
             border-color: #e5e7eb;
+        }
+
+        .smart-conversation-card {
+            gap: .75rem;
+            padding: 1rem;
+        }
+
+        .smart-conversation-card .smart-drawer-card-kicker {
+            padding-top: .15rem;
         }
 
         .smart-drawer-card.is-ai {
@@ -2067,7 +2074,7 @@
                     </section>
 
                     {{-- Card 1: Hilo de conversacion --}}
-                    <section class="smart-drawer-card is-accent" x-show="tab === 'conversation'" x-cloak>
+                    <section class="smart-drawer-card is-accent smart-conversation-card" x-show="tab === 'conversation'" x-cloak>
                         <div class="smart-drawer-card-kicker">Hilo de conversacion</div>
                         @php
                             $conversationCollection = collect($drawerConversation);
@@ -2181,15 +2188,6 @@
                             @empty
                                 <p class="smart-activity-empty">Sin conversacion registrada.</p>
                             @endforelse
-                        </div>
-
-                        <div class="smart-drawer-actions">
-                            <button class="smart-action success" type="button" wire:click="suggestHistoricalReply({{ $selectedComment->id }})">
-                                Sugerir respuesta basada en historial
-                            </button>
-                            <button class="smart-action warning" type="button" wire:click="runAutoReply({{ $selectedComment->id }})">
-                                {{ filled($selectedComment->auto_reply_message) || filled($selectedComment->auto_reply_error) ? 'Reintentar auto-respuesta' : 'Generar auto-respuesta' }}
-                            </button>
                         </div>
                     </section>
 

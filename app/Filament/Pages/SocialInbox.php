@@ -229,7 +229,6 @@ class SocialInbox extends Page
                 ->get();
 
             foreach ($whatsappMessages as $msg) {
-                $cleaned = trim(preg_replace('/\s*\bDNT-\w+\b\s*/', '', $msg->message_body));
                 $events[] = [
                     'platform' => 'whatsapp',
                     'channel' => 'whatsapp',
@@ -238,7 +237,7 @@ class SocialInbox extends Page
                     'channel_class' => 'success',
                     'author' => $msg->direction?->value === 'incoming' ? 'Cliente' : 'Clinica',
                     'kind_label' => 'Mensaje directo',
-                    'message' => $cleaned ?: $msg->message_body,
+                    'message' => $msg->message_body,
                     'date' => $this->formatConversationDate($msg->created_at),
                     'time' => $this->formatConversationTime($msg->created_at),
                     'short_date' => $this->formatConversationShortDate($msg->created_at),
@@ -252,38 +251,38 @@ class SocialInbox extends Page
         // 4. Key actions
         $actionTypes = [
             SocialCommentActionType::AutoReplySent,
-            SocialCommentActionType::AutoReplyGenerated,
-            SocialCommentActionType::AutoReplyFailed,
-            SocialCommentActionType::RedirectToWhatsapp,
-            SocialCommentActionType::WhatsappHandshake,
+            SocialCommentActionType::WhatsappSalesAgent,
             SocialCommentActionType::WhatsappClickFollowUpSent,
-            SocialCommentActionType::ScheduleFollowUp,
-            SocialCommentActionType::MarkAsContacted,
-            SocialCommentActionType::MarkAsLost,
-            SocialCommentActionType::LeadReheated,
-            SocialCommentActionType::PipelineStageChanged,
         ];
 
-        foreach ($comment->actions as $action) {
-            if (in_array($action->action, $actionTypes, true)) {
+        $comment->actions()
+            ->whereIn('action', array_map(fn (SocialCommentActionType $action): string => $action->value, $actionTypes))
+            ->oldest('created_at')
+            ->get()
+            ->each(function ($action) use (&$events, $comment): void {
                 $isAiAction = in_array($action->action, [
                     SocialCommentActionType::AutoReplySent,
-                    SocialCommentActionType::AutoReplyGenerated,
+                    SocialCommentActionType::WhatsappSalesAgent,
                     SocialCommentActionType::WhatsappClickFollowUpSent,
                 ], true);
+                $isWhatsappAgent = $action->action === SocialCommentActionType::WhatsappSalesAgent;
+                $message = $action->response_text
+                    ?: ($isWhatsappAgent ? ($action->external_response['reply'] ?? null) : null)
+                    ?: $action->notes
+                    ?: '';
 
                 $events[] = [
                     'platform' => 'action',
-                    'channel' => $isAiAction ? ($comment->platform?->value ?? 'social') : 'system',
-                    'color' => 'orange',
-                    'channel_label' => $isAiAction ? ($comment->platform?->label() ?? 'Social') : 'Sistema',
-                    'channel_class' => $isAiAction ? match ($comment->platform?->value) {
+                    'channel' => $isWhatsappAgent ? 'whatsapp' : ($isAiAction ? ($comment->platform?->value ?? 'social') : 'system'),
+                    'color' => $isWhatsappAgent ? 'green' : 'orange',
+                    'channel_label' => $isWhatsappAgent ? 'WhatsApp' : ($isAiAction ? ($comment->platform?->label() ?? 'Social') : 'Sistema'),
+                    'channel_class' => $isWhatsappAgent ? 'success' : ($isAiAction ? match ($comment->platform?->value) {
                         'instagram' => 'hot',
                         default => 'info',
-                    } : 'neutral',
+                    } : 'neutral'),
                     'author' => $isAiAction ? 'Asistente IA' : $action->action->label(),
-                    'kind_label' => $isAiAction ? 'Respuesta automática · '.($comment->platform?->label() ?? 'Social') : 'Evento del sistema',
-                    'message' => $action->response_text ?: $action->notes ?: '',
+                    'kind_label' => $isWhatsappAgent ? 'Respuesta automática · WhatsApp' : ($isAiAction ? 'Respuesta automática · '.($comment->platform?->label() ?? 'Social') : 'Evento del sistema'),
+                    'message' => $message,
                     'date' => $this->formatConversationDate($action->created_at),
                     'time' => $this->formatConversationTime($action->created_at),
                     'short_date' => $this->formatConversationShortDate($action->created_at),
@@ -291,8 +290,7 @@ class SocialInbox extends Page
                     'rule_label' => $isAiAction ? $action->notes : null,
                     'created_at' => $action->created_at,
                 ];
-            }
-        }
+            });
 
         usort($events, fn ($a, $b) => ($a['created_at']?->timestamp ?? 0) <=> ($b['created_at']?->timestamp ?? 0));
 
@@ -543,13 +541,26 @@ class SocialInbox extends Page
         $comment->update($data);
 
         $conversionService = app(SocialConversionService::class);
-        $token = $conversionService->markRedirectedToWhatsapp($comment->refresh());
+        $replyText = $conversionService->instagramReplyText($comment->refresh());
+
+        try {
+            $token = $conversionService->markRedirectedToWhatsapp($comment->refresh(), $replyText);
+        } catch (\Throwable $e) {
+            Notification::make()
+                ->title('No se pudo publicar en Meta')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+
+            return;
+        }
+
         $comment->refresh();
 
         $this->whatsappToken = $token;
         $this->whatsappLink = $conversionService->whatsappLink($comment) ?? '';
         $this->smartLink = $conversionService->smartLink($comment);
-        $this->whatsappReplyText = $conversionService->instagramReplyText($comment);
+        $this->whatsappReplyText = $replyText;
         $this->whatsappGenerated = true;
 
         $copyText = $this->whatsappReplyText ?: $this->whatsappLink;
@@ -557,13 +568,13 @@ class SocialInbox extends Page
         if ($copyText !== '') {
             $this->dispatch('social-whatsapp-link-generated',
                 text: $copyText,
-                toast: 'Texto de seguimiento copiado. Pegalo como respuesta al comentario.',
+                toast: 'Mensaje publicado en Meta y copiado como respaldo.',
             );
         }
 
         Notification::make()
             ->title('Lead derivado a WhatsApp')
-            ->body("Texto de seguimiento copiado. Token: {$token}")
+            ->body("Mensaje publicado en Meta. Token: {$token}")
             ->success()
             ->send();
     }

@@ -223,10 +223,12 @@ class SocialAutoReplyService
         }
 
         $settings = app(SocialCrmSettingsService::class);
+        $authorName = trim((string) ($comment->author_name ?: $comment->author_username));
         $message = strtr($settings->whatsappFollowUpAutoReplyTemplate(), [
-            '{author_name}' => $comment->author_name,
+            '{author_name}' => $authorName,
             '{platform}' => $comment->platform?->label() ?? 'redes sociales',
         ]);
+        $message = preg_replace('/Hola\s+,/i', 'Hola,', $message) ?? $message;
 
         try {
             $response = app(MetaSocialService::class)->replyToComment($comment, $message);

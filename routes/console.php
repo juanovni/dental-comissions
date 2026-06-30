@@ -17,7 +17,7 @@ Schedule::command('social:classify-comments')
     ->withoutOverlapping();
 
 Schedule::command('social:lead-alerts')
-    ->everyTenMinutes()
+    ->everyMinute()
     ->withoutOverlapping();
 
 Schedule::command('social:roi-leakage-report')

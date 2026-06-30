@@ -75,7 +75,7 @@ class SocialConversionService
         ]);
     }
 
-    public function markRedirectedToWhatsapp(SocialComment $comment): string
+    public function markRedirectedToWhatsapp(SocialComment $comment, ?string $replyText = null): string
     {
         $token = $this->generateTrackingToken($comment);
 
@@ -84,10 +84,27 @@ class SocialConversionService
             'whatsapp_redirected_at' => now(),
         ]);
 
+        $comment = $comment->refresh();
+        $replyText = trim((string) ($replyText ?: $this->instagramReplyText($comment)));
+        $alreadyPublished = $comment->actions()
+            ->where('action', SocialCommentActionType::RedirectToWhatsapp)
+            ->get()
+            ->contains(fn ($action): bool => ! empty($action->external_response['meta_response'] ?? null));
+
+        if ($alreadyPublished) {
+            return $token;
+        }
+
+        $metaResponse = app(MetaSocialService::class)->replyToComment($comment, $replyText);
+
         $comment->actions()->create([
             'action' => SocialCommentActionType::RedirectToWhatsapp,
-            'notes' => 'Lead derivado a WhatsApp con token de rastreo.',
-            'external_response' => ['tracking_token' => $token],
+            'notes' => 'Mensaje de derivación publicado en Meta con token de rastreo.',
+            'response_text' => $replyText,
+            'external_response' => [
+                'tracking_token' => $token,
+                'meta_response' => $metaResponse,
+            ],
         ]);
 
         return $token;

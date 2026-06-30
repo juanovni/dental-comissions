@@ -296,9 +296,9 @@ class SocialCommentResource extends Resource
                 ->label(fn (SocialComment $record): string => $record->whatsapp_redirected_at ? 'Ver texto de seguimiento' : 'Derivar')
                 ->icon('heroicon-o-chat-bubble-left-ellipsis')
                 ->color('success')
-                ->modalHeading('Texto final para copiar y responder')
-                ->modalDescription('Este mensaje incluye tracking. Pegalo como respuesta al comentario en Instagram o Facebook.')
-                ->modalSubmitActionLabel(fn (SocialComment $record): string => $record->whatsapp_redirected_at ? 'Actualizar seguimiento' : 'Generar seguimiento')
+                ->modalHeading('Mensaje final para publicar')
+                ->modalDescription('Este mensaje incluye tracking y se publicara como respuesta al comentario en Instagram o Facebook.')
+                ->modalSubmitActionLabel(fn (SocialComment $record): string => $record->whatsapp_redirected_at ? 'Ver seguimiento' : 'Publicar seguimiento')
                 ->form(fn (SocialComment $record): array => [
                     Textarea::make('final_reply')
                         ->label('Texto final')
@@ -342,11 +342,24 @@ class SocialCommentResource extends Resource
 
                     $record->update($update);
 
-                    $token = app(SocialConversionService::class)->markRedirectedToWhatsapp($record);
+                    try {
+                        $token = app(SocialConversionService::class)->markRedirectedToWhatsapp(
+                            $record->refresh(),
+                            (string) ($data['final_reply'] ?? ''),
+                        );
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('No se pudo publicar en Meta')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
 
                     Notification::make()
-                        ->title('Texto de seguimiento generado')
-                        ->body("Copialo y pegalo como respuesta al comentario. Token: {$token}")
+                        ->title('Mensaje de seguimiento publicado')
+                        ->body("Publicado como respuesta al comentario. Token: {$token}")
                         ->success()
                         ->send();
                 }),
