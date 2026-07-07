@@ -20,6 +20,7 @@ use App\Filament\Resources\SocialComments\Pages\ListSocialComments;
 use App\Filament\Resources\SocialComments\Pages\ViewSocialComment;
 use App\Models\Patient;
 use App\Models\Procedure;
+use App\Models\Professional;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Services\AppointmentCreationService;
@@ -465,6 +466,12 @@ class SocialCommentResource extends Resource
                         ->searchable()
                         ->preload()
                         ->nullable(),
+                    Select::make('doctor_id')
+                        ->label('Doctor')
+                        ->options(fn (): array => Professional::query()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
+                        ->searchable()
+                        ->preload()
+                        ->helperText('Selecciona el doctor que realizara el procedimiento.'),
                     TextInput::make('scheduled_at')
                         ->label('Fecha y hora')
                         ->placeholder('YYYY-MM-DD HH:MM')

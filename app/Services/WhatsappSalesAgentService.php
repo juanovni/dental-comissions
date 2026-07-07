@@ -2,428 +2,416 @@
 
 namespace App\Services;
 
-use App\Enums\AppointmentSource;
-use App\Enums\AppointmentStatus;
 use App\Enums\SocialCommentActionType;
+use App\Enums\SocialPipelineStage;
 use App\Events\ClosingOpportunityDetected;
+use App\Models\Procedure;
+use App\Models\Professional;
 use App\Models\SocialComment;
+use App\Models\SocialCrmSetting;
 use App\Models\WhatsappMessage;
-use Illuminate\Support\Carbon;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class WhatsappSalesAgentService
 {
-    public function respond(SocialComment $comment, WhatsappMessage $message): array
+    private const MAX_RETRIES = 2;
+
+    public function respond(SocialComment $comment, WhatsappMessage $message, int $retryCount = 0): array
     {
-        $comment->loadMissing(['socialPost', 'suggestedProcedure', 'socialIdentity.patient', 'linkEvents']);
+        $leadContext = $this->buildLeadContext($comment, $message);
 
-        $slotsString = '';
+        $localReply = $this->buildFallbackReply($leadContext);
 
-        if (app(SocialCrmSettingsService::class)->appointmentProposeSlots()) {
-            $slots = app(AppointmentAvailabilityService::class)->nextAvailableSlots();
-            $slotsString = app(AppointmentAvailabilityService::class)->formatSlotsForPrompt($slots);
-        }
+        if (config('services.ai.provider') === 'local') {
+            $closedLeadTexts = [
+                'Quiero agendar una cita',
+                'Quiero agendar',
+                'Agendame',
+                'Quiero una cita',
+                'Quiero reservar',
+            ];
 
-        try {
-            $content = app(AiJsonService::class)->generate(
-                $this->systemPrompt($slotsString),
-                $this->userPrompt($comment, $message),
-            );
+            $closingKeywords = [
+                'agendar', 'cita', 'reservar', 'programar', 'booking',
+                'schedule appointment',
+            ];
 
-            $decoded = json_decode($content, true);
-
-            if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
-                throw new \RuntimeException('Respuesta de IA no es JSON valido.');
+            $body = mb_strtolower($message->message_body ?? '');
+            $isReadyToBook = false;
+            foreach ($closingKeywords as $keyword) {
+                if (str_contains($body, mb_strtolower($keyword))) {
+                    $isReadyToBook = true;
+                    break;
+                }
             }
 
-            $response = $this->validateResponse($decoded, $comment, $message);
-        } catch (\Throwable $e) {
-            Log::warning('Error generando respuesta de WhatsApp Sales Agent. Usando fallback local.', [
-                'social_comment_id' => $comment->id,
-                'whatsapp_message_id' => $message->id,
-                'error' => $e->getMessage(),
-            ]);
+            if ($isReadyToBook) {
+                $appointmentSlots = $this->resolveAppointmentSlots($comment);
 
-            $response = $this->fallbackResponse($comment, $message);
-        }
+                $reply = $this->formatReadyToBookReply($leadContext, $appointmentSlots);
 
-        $selectedSlot = $this->matchSelectedSlot($message->message_body, $slots ?? []);
+                $response = [
+                    'source' => 'fallback',
+                    'reply' => $reply['text'],
+                    'intent' => 'appointment_interest',
+                    'closing_opportunity_score' => $reply['score'],
+                    'requires_human_handoff' => $reply['requires_handoff'],
+                    'handoff_reason' => $reply['handoff_reason'],
+                    'suggested_pipeline_stage' => 'appointment',
+                    'clinical_safety_flag' => false,
+                    'appointment_candidate' => [
+                        'wants_appointment' => true,
+                        'preferred_date_text' => null,
+                        'preferred_time_text' => null,
+                    ],
+                ];
 
-        if ($selectedSlot) {
-            $response['appointment_candidate'] = [
-                'wants_appointment' => true,
-                'preferred_date_text' => $selectedSlot->format('Y-m-d g:i A'),
-                'preferred_time_text' => $selectedSlot->format('g:i A'),
+                $this->persistAiResponse($message, $response);
+
+                if ($response['closing_opportunity_score'] >= 70) {
+                    event(new ClosingOpportunityDetected($comment, $response));
+                }
+
+                return $response;
+            }
+
+            $response = [
+                'source' => 'fallback',
+                'reply' => $localReply,
+                'intent' => 'information_seeking',
+                'closing_opportunity_score' => 30,
+                'requires_human_handoff' => false,
+                'handoff_reason' => '',
+                'suggested_pipeline_stage' => 'lead',
+                'clinical_safety_flag' => false,
+                'appointment_candidate' => [
+                    'wants_appointment' => false,
+                    'preferred_date_text' => null,
+                    'preferred_time_text' => null,
+                ],
             ];
-            $response['requires_human_handoff'] = false;
-        }
 
-        $response = $this->handleAppointmentCandidate($comment, $response);
+            $this->persistAiResponse($message, $response);
 
-        if ($selectedSlot && ($response['appointment_candidate']['wants_appointment'] ?? false)) {
-            $slotLabel = app(AppointmentAvailabilityService::class)->formatSlotsForPrompt([$selectedSlot]);
-            $response['reply'] = "Perfecto, he agendado tu cita para {$slotLabel}. Te confirmaremos los detalles por este medio.";
-        } elseif ($slotsString !== '' && ! str_contains($response['reply'], "\nTenemos disponible:")) {
-            $response['reply'] .= "\n\nTenemos disponible:\n{$slotsString}\n\n¿Cuál te queda mejor?";
-        }
-
-        $message->update(['ai_response' => $response]);
-
-        $comment->actions()->create([
-            'action' => SocialCommentActionType::WhatsappSalesAgent,
-            'notes' => 'Respuesta contextual generada para WhatsApp.',
-            'external_response' => array_merge($response, [
-                'whatsapp_message_id' => $message->id,
-            ]),
-        ]);
-
-        if ($response['requires_human_handoff']) {
-            $alert = app(SocialLeadAlertService::class)->createAlert($comment->refresh(), 'closing_opportunity', 'danger', [
-                'intent' => $response['intent'],
-                'closing_opportunity_score' => $response['closing_opportunity_score'],
-                'handoff_reason' => $response['handoff_reason'],
-                'whatsapp_message_id' => $message->id,
-                'tracking_token' => $comment->tracking_token,
-            ]);
-
-            ClosingOpportunityDetected::dispatch($comment->refresh(), $response, $alert);
-        }
-
-        app(SocialPipelineAutomationService::class)->applyAgentResponse($comment->refresh(), $response);
-
-        return $response;
-    }
-
-    private function handleAppointmentCandidate(SocialComment $comment, array $response): array
-    {
-        $candidate = $response['appointment_candidate'] ?? [];
-
-        if (! ($candidate['wants_appointment'] ?? false)) {
             return $response;
         }
 
-        $settings = app(SocialCrmSettingsService::class);
+        try {
+            $aiResponse = $this->callGeminiApi($leadContext);
 
-        if ($settings->appointmentAutoConfirm() && ! empty($candidate['preferred_date_text'])) {
-            try {
-                $parsed = Carbon::parse($candidate['preferred_date_text']);
+            $closingScore = $aiResponse['closing_opportunity_score'] ?? 0;
 
-                app(AppointmentCreationService::class)->createFromSocialLead($comment, [
-                    'scheduled_at' => $parsed,
-                    'source' => AppointmentSource::WhatsappAi,
-                    'status' => AppointmentStatus::Scheduled,
-                    'duration_minutes' => $settings->appointmentSlotDuration(),
-                    'notes' => 'Cita creada automaticamente desde WhatsApp Sales Agent.',
-                    'created_by' => null,
-                    'metadata' => [
-                        'auto_created' => true,
-                        'social_comment_id' => $comment->id,
-                        'original_reply' => $response['reply'] ?? null,
-                    ],
-                ]);
-
-                $response['reply'] .= "\n\nListo, he agendado tu cita. Te confirmaremos los detalles por este medio.";
-                $response['handoff_reason'] = 'Cita creada automaticamente.';
-            } catch (\Throwable $e) {
-                Log::warning('Error al crear cita automatica desde WhatsApp Sales Agent.', [
-                    'social_comment_id' => $comment->id,
-                    'error' => $e->getMessage(),
-                ]);
-
-                $response['requires_human_handoff'] = true;
-                $response['handoff_reason'] = 'El paciente eligio un horario pero ocurrio un error al crear la cita automaticamente.';
-            }
-        } else {
-            $response['requires_human_handoff'] = true;
-            $response['handoff_reason'] = 'El paciente mostro interes en agendar una cita.';
-        }
-
-        return $response;
-    }
-
-    private function matchSelectedSlot(string $userMessage, array $slots): ?Carbon
-    {
-        if (empty($slots)) {
-            return null;
-        }
-
-        $text = Str::of($userMessage)->lower()->ascii()->toString();
-
-        foreach ($slots as $slot) {
-            $formats = [
-                strtolower($slot->format('g:i')),
-                strtolower($slot->format('H:i')),
-                strtolower($slot->format('g:i A')),
+            $response = [
+                'source' => 'ai',
+                'reply' => $aiResponse['reply'] ?? $localReply,
+                'intent' => $aiResponse['intent'] ?? 'information_seeking',
+                'closing_opportunity_score' => $closingScore,
+                'requires_human_handoff' => $aiResponse['requires_human_handoff'] ?? false,
+                'handoff_reason' => $aiResponse['handoff_reason'] ?? '',
+                'suggested_pipeline_stage' => $aiResponse['suggested_pipeline_stage'] ?? 'lead',
+                'clinical_safety_flag' => $aiResponse['clinical_safety_flag'] ?? false,
+                'appointment_candidate' => $aiResponse['appointment_candidate'] ?? [
+                    'wants_appointment' => false,
+                    'preferred_date_text' => null,
+                    'preferred_time_text' => null,
+                ],
             ];
 
-            foreach ($formats as $format) {
-                if (str_contains($text, $format)) {
-                    return $slot;
-                }
+            $this->persistAiResponse($message, $response);
+
+            if ($closingScore >= 70) {
+                event(new ClosingOpportunityDetected($comment, $response));
             }
+
+            return $response;
+        } catch (ConnectionException $e) {
+            if ($retryCount < self::MAX_RETRIES) {
+                return $this->respond($comment, $message, $retryCount + 1);
+            }
+
+            Log::warning('WhatsappSalesAgentService: Gemini API connection failed after retries', [
+                'comment_id' => $comment->id,
+                'error' => $e->getMessage(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('WhatsappSalesAgentService: AI response failed', [
+                'comment_id' => $comment->id,
+                'error' => $e->getMessage(),
+            ]);
         }
 
-        return null;
-    }
-
-    private function validateResponse(array $data, SocialComment $comment, WhatsappMessage $message): array
-    {
-        $fallback = $this->fallbackResponse($comment, $message);
-        $reply = trim((string) ($data['reply'] ?? ''));
-
-        if ($reply === '') {
-            return $fallback;
-        }
-
-        $score = max(0, min(100, (int) ($data['closing_opportunity_score'] ?? $fallback['closing_opportunity_score'])));
-        $clinicalSafetyFlag = (bool) ($data['clinical_safety_flag'] ?? $fallback['clinical_safety_flag']);
-        $requiresHandoff = (bool) ($data['requires_human_handoff'] ?? $fallback['requires_human_handoff']);
-
-        if ($clinicalSafetyFlag || $score >= 75) {
-            $requiresHandoff = true;
-        }
-
-        return [
-            'reply' => $reply,
-            'intent' => $this->cleanIntent($data['intent'] ?? $fallback['intent']),
-            'closing_opportunity_score' => $score,
-            'requires_human_handoff' => $requiresHandoff,
-            'handoff_reason' => (string) ($data['handoff_reason'] ?? $fallback['handoff_reason']),
-            'suggested_pipeline_stage' => (string) ($data['suggested_pipeline_stage'] ?? $fallback['suggested_pipeline_stage']),
-            'clinical_safety_flag' => $clinicalSafetyFlag,
-            'appointment_candidate' => is_array($data['appointment_candidate'] ?? null)
-                ? $data['appointment_candidate']
-                : $fallback['appointment_candidate'],
-            'source' => 'ai',
-        ];
-    }
-
-    private function fallbackResponse(SocialComment $comment, WhatsappMessage $message): array
-    {
-        $treatment = $this->treatmentName($comment);
-        $leadName = $this->leadFirstName($comment);
-        $analysis = $this->localIntent($message->message_body);
-        $greeting = $leadName ? "Hola {$leadName}." : 'Hola.';
-
-        $invitations = [
-            'Si gustas, puedo ayudarte a coordinar una valoracion sin costo.',
-            'Cuando quieras, podemos agendar una cita para revisarlo.',
-            'Quedo atento si prefieres agendar una valoracion.',
-            'Por cierto, si te interesa, podemos coordinar una cita para evaluarlo.',
-        ];
-
-        $reply = "{$greeting} Vi que te intereso el contenido de {$treatment}. "
-            .'Te podemos ayudar a coordinar una valoracion para que el equipo clinico revise tu caso y te explique opciones con claridad.';
-
-        if ($analysis['clinical_safety_flag']) {
-            $reply = "{$greeting} Gracias por contarnos. Para orientarte de forma responsable, prefiero que nuestro equipo clinico revise tu caso directamente. Te ayudamos a coordinar una valoracion lo antes posible.";
-        } elseif ($analysis['requires_human_handoff']) {
-            $reply .= ' '.($invitations[array_rand($invitations)]);
-        }
-
-        return [
-            'reply' => $reply,
-            'intent' => $analysis['intent'],
-            'closing_opportunity_score' => $analysis['closing_opportunity_score'],
-            'requires_human_handoff' => $analysis['requires_human_handoff'],
-            'handoff_reason' => $analysis['handoff_reason'],
-            'suggested_pipeline_stage' => $analysis['requires_human_handoff'] ? 'appointment' : 'qualified',
-            'clinical_safety_flag' => $analysis['clinical_safety_flag'],
-            'appointment_candidate' => [
-                'wants_appointment' => in_array($analysis['intent'], ['appointment_interest', 'ready_to_book'], true),
-                'preferred_date_text' => null,
-                'preferred_time_text' => null,
-            ],
+        $fallbackResponse = [
             'source' => 'fallback',
-        ];
-    }
-
-    private function localIntent(string $text): array
-    {
-        $normalized = Str::of($text)->lower()->ascii()->toString();
-        $clinical = preg_match('/\b(dolor|sangrado|infeccion|embarazada|medicamento|alergia|trauma|urgencia)\b/u', $normalized) === 1;
-        $ready = preg_match('/\b(agendar|agenda|cita|turno|horario|manana|hoy|disponibilidad|reservar)\b/u', $normalized) === 1;
-        $price = preg_match('/\b(precio|costo|cuanto|valor|presupuesto)\b/u', $normalized) === 1;
-
-        if ($clinical) {
-            return [
-                'intent' => 'medical_sensitive',
-                'closing_opportunity_score' => 90,
-                'requires_human_handoff' => true,
-                'handoff_reason' => 'El paciente menciona una condicion clinica sensible.',
-                'clinical_safety_flag' => true,
-            ];
-        }
-
-        if ($ready) {
-            return [
-                'intent' => 'ready_to_book',
-                'closing_opportunity_score' => 85,
-                'requires_human_handoff' => true,
-                'handoff_reason' => 'El paciente muestra intencion de agendar.',
-                'clinical_safety_flag' => false,
-            ];
-        }
-
-        if ($price) {
-            return [
-                'intent' => 'price_question',
-                'closing_opportunity_score' => 60,
-                'requires_human_handoff' => false,
-                'handoff_reason' => '',
-                'clinical_safety_flag' => false,
-            ];
-        }
-
-        return [
-            'intent' => 'general_interest',
-            'closing_opportunity_score' => 40,
+            'reply' => $localReply,
+            'intent' => 'information_seeking',
+            'closing_opportunity_score' => 30,
             'requires_human_handoff' => false,
-            'handoff_reason' => '',
+            'handoff_reason' => 'ai_failure',
+            'suggested_pipeline_stage' => 'lead',
             'clinical_safety_flag' => false,
         ];
+
+        $this->persistAiResponse($message, $fallbackResponse);
+
+        return $fallbackResponse;
     }
 
-    private function treatmentName(SocialComment $comment): string
+    public function buildLeadContext(SocialComment $comment, WhatsappMessage $message): array
     {
-        return $comment->suggestedProcedure?->name
-            ?: $comment->socialPost?->procedure?->name
-            ?: $this->treatmentFromCaption($comment)
-            ?: 'una valoracion dental';
+        $procedure = $comment->suggestedProcedure;
+
+        $context = [
+            'tipo_mensaje' => 'whatsapp',
+            'nombre_paciente' => $comment->author_name ?? $comment->author_username ?? 'Paciente',
+            'username' => $comment->author_username ?? '',
+            'procedimiento_de_interes' => $procedure?->name ?? 'No especificado',
+            'costo_procedimiento' => $procedure?->base_cost ?? 'No disponible',
+            'mensaje_usuario' => $message->message_body ?? '',
+            'historial_conversacion' => $this->buildRecentHistory($comment, $message),
+            'etapa_embudo' => $comment->pipeline_stage ?? 'lead',
+            'tiene_cita_agendada' => !is_null($comment->appointment_scheduled_at),
+            'cita_agendada' => $comment->appointment_scheduled_at?->format('d/m/Y H:i'),
+        ];
+
+        return $context;
     }
 
-    private function treatmentFromCaption(SocialComment $comment): ?string
+    public function buildFallbackReply(array $leadContext): string
     {
-        $text = Str::of((string) $comment->socialPost?->caption)->lower()->ascii()->toString();
+        $procedimiento = $leadContext['procedimiento_de_interes'] ?? 'procedimiento';
+        $nombre = $leadContext['nombre_paciente'] ?? '';
 
-        return match (true) {
-            str_contains($text, 'implante') => 'implantes dentales',
-            str_contains($text, 'ortodoncia') || str_contains($text, 'alineador') => 'ortodoncia',
-            str_contains($text, 'limpieza') => 'limpieza dental',
-            str_contains($text, 'diseno') || str_contains($text, 'sonrisa') => 'diseno de sonrisa',
-            default => null,
-        };
+        $baseMessages = [
+            "Hola {$nombre}, gracias por contactarnos. El procedimiento de {$procedimiento} es uno de los mas solicitados en nuestra clinica. ¿Te gustaria agendar una valoracion gratuita para evaluar tu caso?",
+            "¡Hola {$nombre}! Gracias por escribirnos. Con gusto podemos ayudarte con informacion sobre {$procedimiento}. ¿Que te gustaria saber? ¿Te gustaria agendar una cita de valoracion?",
+            "Hola {$nombre}, gracias por tu interes en {$procedimiento}. En nuestra clinica ofrecemos este tratamiento con los mejores especialistas. ¿Te gustaria agendar una valoracion para que te evalue uno de nuestros doctores?",
+        ];
+
+        return $baseMessages[array_rand($baseMessages)];
     }
 
-    private function leadFirstName(SocialComment $comment): ?string
+    public function buildFallbackReplyForDirectWhatsApp(array $leadContext): string
     {
-        $name = trim((string) ($comment->socialIdentity?->display_name ?: $comment->author_name));
+        $procedimiento = $leadContext['procedimiento_de_interes'] ?? 'procedimiento';
+        $nombre = $leadContext['nombre_paciente'] ?? '';
 
-        if ($name === '' || str_starts_with($name, '@') || preg_match('/[0-9_]/', $name)) {
-            return null;
+        $messages = [
+            "Hola {$nombre}, gracias por contactarnos. El procedimiento de {$procedimiento} es uno de los mas solicitados en nuestra clinica. ¿Te gustaria agendar una valoracion gratuita?",
+            "¡Hola {$nombre}! Gracias por escribirnos. Con gusto podemos ayudarte con {$procedimiento}. ¿Que te gustaria saber?",
+        ];
+
+        return $messages[array_rand($messages)];
+    }
+
+    private function buildRecentHistory(SocialComment $comment, WhatsappMessage $currentMessage): array
+    {
+        try {
+            $recentMessages = WhatsappMessage::where('social_comment_id', $comment->id)
+                ->where('id', '!=', $currentMessage->id)
+                ->latest()
+                ->take(5)
+                ->get()
+                ->reverse();
+        } catch (\Exception $e) {
+            return [];
         }
 
-        $firstName = Str::of($name)->squish()->explode(' ')->first();
-
-        return is_string($firstName) && strlen($firstName) >= 2 ? $firstName : null;
-    }
-
-    private function cleanIntent(mixed $intent): string
-    {
-        $intent = is_string($intent) ? $intent : 'general_interest';
-
-        return in_array($intent, [
-            'general_interest',
-            'price_question',
-            'appointment_interest',
-            'ready_to_book',
-            'objection_price',
-            'objection_time',
-            'medical_sensitive',
-            'not_interested',
-            'unknown',
-        ], true) ? $intent : 'unknown';
-    }
-
-    private function userPrompt(SocialComment $comment, WhatsappMessage $message): string
-    {
-        $events = $comment->linkEvents()
-            ->latest()
-            ->limit(8)
-            ->get()
-            ->map(fn ($event): string => "- {$event->event_type} ({$event->created_at?->diffForHumans()})")
-            ->implode("\n");
-
-        return "Lead: ".($comment->author_name ?: $comment->author_username ?: 'Sin nombre')."\n"
-            .'Tratamiento: '.$this->treatmentName($comment)."\n"
-            .'Red social: '.$comment->platform->label()."\n"
-            .'Comentario original: '.$comment->comment_text."\n"
-            .'Publicacion: '.($comment->socialPost?->caption ?: 'Sin caption')."\n"
-            .'Token: '.($comment->tracking_token ?: 'Sin token')."\n"
-            .'Interest score: '.(int) $comment->interest_score."\n"
-            .'Recent engagement score: '.(int) $comment->recent_engagement_score."\n"
-            .'Eventos recientes: '.($events ?: 'Sin eventos recientes')."\n"
-            .'Mensaje WhatsApp: '.$message->message_body;
-    }
-
-    private function systemPrompt(string $availableSlots = ''): string
-    {
-        if ($availableSlots !== '') {
-            $appointmentSection = <<<SLOTS
-Tenemos estos horarios disponibles actualmente:
-{$availableSlots}
-
-Al final de tu respuesta DEBES incluir UNA frase natural invitando
-a agendar una valoracion, sin presionar.
-Ejemplos:
-- "¿Te gustaria agendar una valoracion?"
-- "Podemos agendar una cita para revisarlo."
-
-Si el paciente elige un horario, marca en appointment_candidate:
-wants_appointment = true, preferred_date_text = la fecha y hora
-que eligio (ej: "Manana 10:00 AM").
-SLOTS;
-        } else {
-            $appointmentSection = <<<'NO_SLOTS'
-Al final de tu respuesta DEBES incluir UNA frase natural invitando
-a agendar una valoracion, sin presionar y sin repetir exactamente
-la misma redaccion.
-Ejemplos:
-- "Si gustas, puedo ayudarte a coordinar una valoracion sin costo."
-- "Cuando quieras, podemos agendar una cita para revisarlo."
-- "Quedo atento si prefieres agendar una valoracion."
-- "Por cierto, si te interesa, podemos coordinar una cita para evaluarlo."
-NO uses frases de urgencia ni inventes horarios.
-NO_SLOTS;
+        $history = [];
+        foreach ($recentMessages as $msg) {
+            $history[] = [
+                'role' => $msg->direction->value === 'inbound' ? 'user' : 'assistant',
+                'content' => $msg->message_body,
+                'timestamp' => $msg->created_at->toIso8601String(),
+            ];
         }
+
+        return $history;
+    }
+
+    private function callGeminiApi(array $context): array
+    {
+        $apiKey = config('services.gemini.api_key');
+        $model = config('services.gemini.model', 'gemini-2.0-flash-exp');
+
+        $prompt = $this->buildAiPrompt($context);
+
+        $response = Http::retry(self::MAX_RETRIES, 1000)
+            ->timeout(30)
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [
+                            ['text' => $prompt],
+                        ],
+                    ],
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.3,
+                    'maxOutputTokens' => 1000,
+                ],
+            ]);
+
+        if (!$response->successful()) {
+            Log::error('Gemini API error', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \RuntimeException('Gemini API returned status '.$response->status());
+        }
+
+        $data = $response->json();
+
+        $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+        $parsed = json_decode($text, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::warning('Gemini response was not valid JSON, using fallback', [
+                'text' => substr($text, 0, 500),
+            ]);
+
+            return [
+                'reply' => $text,
+                'intent' => 'information_seeking',
+                'closing_opportunity_score' => 30,
+                'requires_human_handoff' => false,
+                'handoff_reason' => '',
+                'suggested_pipeline_stage' => 'lead',
+                'clinical_safety_flag' => false,
+                'appointment_candidate' => [
+                    'wants_appointment' => false,
+                    'preferred_date_text' => null,
+                    'preferred_time_text' => null,
+                ],
+            ];
+        }
+
+        return $parsed;
+    }
+
+    private function buildAiPrompt(array $context): string
+    {
+        $history = '';
+        foreach ($context['historial_conversacion'] as $msg) {
+            $role = $msg['role'] === 'user' ? 'Paciente' : 'Asistente';
+            $history .= "{$role}: {$msg['content']}\n";
+        }
+
+        $tieneCita = $context['tiene_cita_agendada'] ? 'Si' : 'No';
+        $citaAgendada = $context['cita_agendada'] ?: 'N/A';
 
         return <<<PROMPT
-Eres la Coordinadora de Pacientes de una clinica dental.
+Eres un asistente de ventas para una clinica dental. Debes responder preguntas sobre procedimientos dentales y ayudar a agendar citas.
+Importante: NUNCA debes proporcionar diagnosticos clinicos ni recomendar tratamientos especificos. Siempre debes sugerir una valoracion presencial con un especialista.
 
-Tu tono debe ser profesional, empatico, claro y experto.
-No preguntes "En que puedo ayudarte?" si ya existe contexto del lead.
-Debes saludar usando el interes detectado, por ejemplo: "Vi que te intereso el video de [Tratamiento]...".
+Contexto del lead:
+- Nombre del paciente: {$context['nombre_paciente']}
+- Username: {$context['username']}
+- Procedimiento de interes: {$context['procedimiento_de_interes']}
+- Costo del procedimiento: {$context['costo_procedimiento']}
+- Etapa del embudo: {$context['etapa_embudo']}
+- Tiene cita agendada: {$tieneCita}
+- Cita agendada: {$citaAgendada}
 
-No diagnostiques.
-No indiques tratamientos definitivos.
-No prometas resultados.
-No des precios definitivos.
-No reemplaces al odontologo.
+Mensaje del paciente: {$context['mensaje_usuario']}
 
-Tu objetivo es orientar al paciente y facilitar una valoracion.
-Si detectas intencion de agenda, marca requires_human_handoff=true.
-Si detectas dolor, sangrado, infeccion, embarazo, medicamento, alergia, trauma o urgencia, marca clinical_safety_flag=true y requires_human_handoff=true.
+Historial de la conversacion:
+{$history}
 
-{$appointmentSection}
-
-Retorna SOLO JSON valido con esta estructura exacta:
+Responde SOLO con un JSON valido con esta estructura exacta:
 {
-  "reply": "respuesta breve y contextual",
-  "intent": "general_interest",
-  "closing_opportunity_score": 0,
-  "requires_human_handoff": false,
-  "handoff_reason": "",
-  "suggested_pipeline_stage": "qualified",
-  "clinical_safety_flag": false,
-  "appointment_candidate": {
-    "wants_appointment": false,
-    "preferred_date_text": null,
-    "preferred_time_text": null
-  }
+    "reply": "tu respuesta amigable y profesional aqui",
+    "intent": "appointment_interest|information_seeking|pricing_question|greeting|complaint|other",
+    "closing_opportunity_score": 0-100,
+    "requires_human_handoff": false,
+    "handoff_reason": "solo si requiere escalamiento",
+    "suggested_pipeline_stage": "lead|appointment|negotiation|closed_won|closed_lost",
+    "clinical_safety_flag": false,
+    "appointment_candidate": {
+        "wants_appointment": false,
+        "preferred_date_text": null,
+        "preferred_time_text": null
+    }
 }
 
-Valores permitidos para intent: general_interest, price_question, appointment_interest, ready_to_book, objection_price, objection_time, medical_sensitive, not_interested, unknown.
+NO incluyas markdown ni bloques de codigo. Solo el JSON.
 PROMPT;
+    }
+
+    private function persistAiResponse(WhatsappMessage $message, array $response): void
+    {
+        $message->update([
+            'ai_response' => $response,
+            'status' => 'processed',
+        ]);
+    }
+
+    private function resolveAppointmentSlots(SocialComment $comment): array
+    {
+        $setting = SocialCrmSetting::where('key', 'social_appointment_propose_slots')->first();
+
+        if (!$setting || !$setting->value) {
+            return [];
+        }
+
+        try {
+            $doctor = $comment->suggestedDoctor;
+
+            if ($doctor && $doctor->google_calendar_enabled) {
+                $availabilityService = app(AppointmentAvailabilityService::class);
+                $slots = $availabilityService->nextAvailableSlotsForDoctor($doctor);
+            } else {
+                $availabilityService = app(AppointmentAvailabilityService::class);
+                $slots = $availabilityService->nextAvailableSlots();
+            }
+
+            return array_map(fn ($slot) => [
+                'datetime' => $slot->format('Y-m-d H:i'),
+                'formatted' => $slot->isoFormat('dddd D [de] MMMM [a las] h:mm A'),
+            ], $slots);
+        } catch (\Exception $e) {
+            Log::warning('WhatsappSalesAgentService: could not resolve appointment slots', [
+                'comment_id' => $comment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    private function formatReadyToBookReply(array $leadContext, array $appointmentSlots): array
+    {
+        $nombre = $leadContext['nombre_paciente'] ?? '';
+        $procedimiento = $leadContext['procedimiento_de_interes'] ?? 'tratamiento';
+
+        $score = 85;
+
+        if (!empty($appointmentSlots)) {
+            $slotsText = '';
+            foreach ($appointmentSlots as $i => $slot) {
+                $slotsText .= ($i + 1).". {$slot['formatted']}\n";
+            }
+
+            $text = "¡Hola {$nombre}! Claro que podemos ayudarte con el agendamiento de tu cita para {$procedimiento}. Estos son nuestros horarios disponibles:\n\n{$slotsText}\n\n¿Alguno de estos horarios te queda bien? Confirma cual y con gusto reservamos tu cita.";
+
+            return [
+                'text' => $text,
+                'score' => $score,
+                'requires_handoff' => false,
+                'handoff_reason' => '',
+            ];
+        }
+
+        $text = "¡Hola {$nombre}! Claro que podemos ayudarte a agendar una cita. ¿Que dia y horario prefieres? Por favor indicanos tu disponibilidad y te confirmamos.";
+
+        return [
+            'text' => $text,
+            'score' => $score,
+            'requires_handoff' => true,
+            'handoff_reason' => 'no_appointment_slots_available',
+        ];
     }
 }

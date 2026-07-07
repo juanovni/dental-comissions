@@ -74,4 +74,16 @@ return [
         'request_timeout' => (int) env('GEMINI_REQUEST_TIMEOUT', 30),
     ],
 
+    'google_oauth' => [
+        'client_id' => env('GOOGLE_OAUTH_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_OAUTH_CLIENT_SECRET'),
+        'redirect_uri' => env('GOOGLE_OAUTH_REDIRECT_URI'),
+        'scopes' => [
+            'https://www.googleapis.com/auth/calendar.readonly',
+            'https://www.googleapis.com/auth/userinfo.email',
+        ],
+        'access_type' => 'offline',
+        'prompt' => 'consent',
+    ],
+
 ];

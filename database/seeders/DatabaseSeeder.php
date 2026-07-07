@@ -18,19 +18,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            ProcedureSeeder::class,
-            ProfessionalSeeder::class,
+            DemoDoctorSeeder::class,
             PaymentMethodSeeder::class,
             PaymentMethodCommissionRateSeeder::class,
         ]);
-
-        User::updateOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name' => 'Test User',
-                'password' => Hash::make('password'),
-                'remember_token' => Str::random(10),
-            ],
-        );
     }
 }
