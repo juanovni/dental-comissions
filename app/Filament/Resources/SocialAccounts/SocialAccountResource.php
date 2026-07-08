@@ -32,6 +32,8 @@ class SocialAccountResource extends Resource
 
     protected static ?string $pluralModelLabel = 'cuentas sociales';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 21;
 
     public static function form(Schema $schema): Schema

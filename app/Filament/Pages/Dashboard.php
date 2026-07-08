@@ -19,6 +19,8 @@ class Dashboard extends BaseDashboard
 
     protected static string|\UnitEnum|null $navigationGroup = 'Dashboards';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 1;
 
     public static function getNavigationIcon(): string|\BackedEnum|\Illuminate\Contracts\Support\Htmlable|null

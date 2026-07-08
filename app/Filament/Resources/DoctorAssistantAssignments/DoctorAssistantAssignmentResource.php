@@ -28,6 +28,8 @@ class DoctorAssistantAssignmentResource extends Resource
 
     protected static ?string $navigationLabel = 'Asignaciones';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 8;
 
     protected static ?string $modelLabel = 'asignacion';

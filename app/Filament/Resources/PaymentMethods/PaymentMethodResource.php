@@ -31,6 +31,8 @@ class PaymentMethodResource extends Resource
 
     protected static ?string $pluralModelLabel = 'metodos de pago';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 12;
 
     public static function form(Schema $schema): Schema

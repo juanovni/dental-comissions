@@ -35,7 +35,7 @@ class DashboardRoiSocial extends BaseDashboard
 
     public static function getNavigationIcon(): string|\BackedEnum|\Illuminate\Contracts\Support\Htmlable|null
     {
-        return null;
+        return 'heroicon-o-presentation-chart-line';
     }
 
     public function filtersForm(Schema $schema): Schema
