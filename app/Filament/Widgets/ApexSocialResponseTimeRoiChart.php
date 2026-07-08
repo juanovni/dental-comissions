@@ -24,7 +24,7 @@ class ApexSocialResponseTimeRoiChart extends ApexChartWidget
         return $this->socialRoiDescription($this->description);
     }
 
-    protected ?string $maxHeight = '360px';
+    protected ?string $maxHeight = '300px';
 
     protected function getOptions(): array
     {
@@ -32,7 +32,7 @@ class ApexSocialResponseTimeRoiChart extends ApexChartWidget
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 360,
+                'height' => 300,
                 'type' => 'line',
             ],
             'colors' => ['#f97316', '#10b981'],

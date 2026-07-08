@@ -19,7 +19,7 @@ class ApexSocialPipelineValueChart extends ApexChartWidget
 
     protected ?string $description = 'Pipeline comercial medido en USD por estado.';
 
-    protected ?string $maxHeight = '330px';
+    protected ?string $maxHeight = '270px';
 
     public function getDescription(): ?string
     {
@@ -32,7 +32,7 @@ class ApexSocialPipelineValueChart extends ApexChartWidget
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 330,
+                'height' => 270,
                 'type' => 'bar',
             ],
             'colors' => ['#0f766e'],

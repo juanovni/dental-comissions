@@ -24,6 +24,11 @@ class SocialRoiRemindersWidget extends Widget
         return $this->heading;
     }
 
+    public function getDescription(): string
+    {
+        return 'Acciones prioritarias del dia';
+    }
+
     protected function getReminders(): Collection
     {
         $appointmentLeakage = Appointment::query()

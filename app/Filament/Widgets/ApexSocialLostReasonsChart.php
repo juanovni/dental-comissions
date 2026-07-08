@@ -19,7 +19,7 @@ class ApexSocialLostReasonsChart extends ApexChartWidget
 
     protected ?string $description = 'Valor estimado perdido y frecuencia por objecion comercial.';
 
-    protected ?string $maxHeight = '330px';
+    protected ?string $maxHeight = '270px';
 
     public function getDescription(): ?string
     {
@@ -32,7 +32,7 @@ class ApexSocialLostReasonsChart extends ApexChartWidget
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 330,
+                'height' => 270,
                 'type' => 'line',
             ],
             'colors' => ['#dc2626', '#f97316'],

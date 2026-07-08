@@ -16,6 +16,8 @@ abstract class ApexChartWidget extends Widget
 
     protected ?string $maxHeight = '320px';
 
+    protected string $cardClass = 'mc-card';
+
     abstract protected function getOptions(): array;
 
     public function getHeading(): ?string
@@ -31,6 +33,11 @@ abstract class ApexChartWidget extends Widget
     public function getMaxHeight(): ?string
     {
         return $this->maxHeight;
+    }
+
+    public function getCardClass(): string
+    {
+        return $this->cardClass;
     }
 
     public function getChartOptions(): array

@@ -20,8 +20,6 @@ trait HasSocialRoiWidgetPeriod
 
     protected function socialRoiDescription(string $description): string
     {
-        $label = $this->getWidgetPeriod()['label'];
-
-        return $description . ' Periodo: ' . $label . '.';
+        return $description;
     }
 }

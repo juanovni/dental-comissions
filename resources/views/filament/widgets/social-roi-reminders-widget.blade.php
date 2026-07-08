@@ -1,27 +1,26 @@
 <x-filament-widgets::widget>
-    <section class="mc-card">
-        <h3 class="mc-section-title">{{ $this->getHeading() }}</h3>
-        <div class="mc-facts">
-            @foreach ($this->getReminders() as $reminder)
-                @php
-                    $badgeClass = match ($reminder['priority']) {
-                        'danger' => 'mc-badge-danger',
-                        'warning' => 'mc-badge-warning',
-                        default => 'mc-badge-success',
-                    };
-                @endphp
-                <div class="mc-fact">
-                    <span class="mc-fact-label">
-                        {{ $reminder['label'] }}
+    <section class="social-roi-panel social-roi-reminders-panel">
+        <div class="social-roi-panel-header">
+            <h3 class="social-roi-panel-title">{{ $this->getHeading() }}</h3>
+            <p class="social-roi-panel-description">{{ $this->getDescription() }}</p>
+        </div>
+
+        <div class="social-roi-reminders-list">
+            @foreach ($this->getRemindersData() as $reminder)
+                <div class="social-roi-reminder-row">
+                    <span class="social-roi-reminder-icon">
+                        <x-filament::icon
+                            icon="heroicon-o-check"
+                            class="social-roi-reminder-icon-svg"
+                        />
                     </span>
-                    <div>
-                        <p class="mc-fact-value">
-                            <span class="mc-badge {{ $badgeClass }}" style="font-size:0.85rem;padding:0.2rem 0.6rem;">
-                                {{ $reminder['value'] }}
-                            </span>
-                            {{ $reminder['description'] }}
-                        </p>
+
+                    <div class="social-roi-reminder-copy">
+                        <span class="social-roi-reminder-label">{{ $reminder['label'] }}</span>
+                        <span class="social-roi-reminder-description">{{ $reminder['description'] }}</span>
                     </div>
+
+                    <span class="social-roi-reminder-badge">{{ $reminder['value'] }}</span>
                 </div>
             @endforeach
         </div>

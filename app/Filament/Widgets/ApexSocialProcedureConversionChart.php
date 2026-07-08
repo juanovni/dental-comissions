@@ -2,14 +2,14 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
+use App\Filament\Widgets\Concerns\HasSocialRoiWidgetPeriod;
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
 use App\Services\SocialRoiService;
 
 class ApexSocialProcedureConversionChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
-    use HasSocialRoiPeriod;
+    use HasSocialRoiWidgetPeriod;
 
     protected static ?int $sort = 34;
 
@@ -24,15 +24,15 @@ class ApexSocialProcedureConversionChart extends ApexChartWidget
         return $this->socialRoiDescription($this->description);
     }
 
-    protected ?string $maxHeight = '380px';
+    protected ?string $maxHeight = '300px';
 
     protected function getOptions(): array
     {
-        $data = app(SocialRoiService::class)->procedureConversionData(5, $this->pageFilters);
+        $data = app(SocialRoiService::class)->procedureConversionData(5, $this->getWidgetPeriodFilters());
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 380,
+                'height' => 300,
                 'type' => 'line',
             ],
             'colors' => ['#6366f1', '#10b981'],

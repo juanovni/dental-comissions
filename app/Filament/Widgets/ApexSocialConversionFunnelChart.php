@@ -15,7 +15,9 @@ class ApexSocialConversionFunnelChart extends ApexChartWidget
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 2];
 
-    protected ?string $maxHeight = '320px';
+    protected ?string $maxHeight = '240px';
+
+    protected string $cardClass = 'social-roi-panel social-roi-chart-panel';
 
     protected ?string $heading = 'Embudo social';
 
@@ -23,7 +25,7 @@ class ApexSocialConversionFunnelChart extends ApexChartWidget
 
     public function getDescription(): ?string
     {
-        return $this->socialRoiDescription($this->description);
+        return $this->description;
     }
 
     protected function getOptions(): array
@@ -32,7 +34,7 @@ class ApexSocialConversionFunnelChart extends ApexChartWidget
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 320,
+                'height' => 240,
                 'type' => 'bar',
             ],
             'colors' => ['#0f766e'],

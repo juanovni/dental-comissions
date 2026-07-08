@@ -15,7 +15,7 @@ class ApexSocialAppointmentStatusChart extends ApexChartWidget
 
     protected int|string|array $columnSpan = ['md' => 1, 'xl' => 2];
 
-    protected ?string $maxHeight = '320px';
+    protected ?string $maxHeight = '260px';
 
     protected ?string $heading = 'Citas por estado';
 
@@ -32,7 +32,7 @@ class ApexSocialAppointmentStatusChart extends ApexChartWidget
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 320,
+                'height' => 260,
                 'type' => 'donut',
             ],
             'colors' => ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#6b7280'],

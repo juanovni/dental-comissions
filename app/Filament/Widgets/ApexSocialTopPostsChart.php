@@ -15,7 +15,7 @@ class ApexSocialTopPostsChart extends ApexChartWidget
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 2];
 
-    protected ?string $maxHeight = '320px';
+    protected ?string $maxHeight = '260px';
 
     protected ?string $heading = 'Posts por revenue';
 
@@ -32,7 +32,7 @@ class ApexSocialTopPostsChart extends ApexChartWidget
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 320,
+                'height' => 260,
                 'type' => 'bar',
             ],
             'colors' => ['#0f766e'],
