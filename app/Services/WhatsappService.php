@@ -105,10 +105,10 @@ class WhatsappService
 
                 app(SocialPipelineAutomationService::class)->applyAgentResponse($socialComment, $agentResponse);
 
-                app(AutoAppointmentService::class)->createFromDetectedIntent($socialComment, $agentResponse);
+                $appointment = app(AutoAppointmentService::class)->createFromDetectedIntent($socialComment, $agentResponse);
 
                 $whatsappMessage->markAsProcessed();
-                $this->sendMessage($fromPhone, $agentResponse['reply']);
+                $this->sendMessage($fromPhone, $appointment ? $this->buildAppointmentCreatedReply($appointment) : $agentResponse['reply']);
 
                 return $whatsappMessage;
             }
@@ -172,10 +172,10 @@ class WhatsappService
 
                 app(SocialPipelineAutomationService::class)->applyAgentResponse($existingLead, $agentResponse);
 
-                app(AutoAppointmentService::class)->createFromDetectedIntent($existingLead, $agentResponse);
+                $appointment = app(AutoAppointmentService::class)->createFromDetectedIntent($existingLead, $agentResponse);
 
                 $whatsappMessage->markAsProcessed();
-                $this->sendMessage($fromPhone, $agentResponse['reply']);
+                $this->sendMessage($fromPhone, $appointment ? $this->buildAppointmentCreatedReply($appointment) : $agentResponse['reply']);
 
                 return $whatsappMessage;
             }
@@ -445,6 +445,22 @@ class WhatsappService
             .'o *CORREGIR* [cambio] para enviarla a revision.';
 
         return $summary;
+    }
+
+    private function buildAppointmentCreatedReply(\App\Models\Appointment $appointment): string
+    {
+        $appointment->loadMissing(['doctor', 'procedure']);
+
+        $date = $appointment->scheduled_at?->isoFormat('dddd D [de] MMMM [a las] h:mm A') ?? 'el horario seleccionado';
+        $procedure = $appointment->procedure?->name ?? 'valoracion dental';
+        $doctor = $appointment->doctor?->name;
+        $doctorLine = $doctor ? "\nDoctor: {$doctor}" : '';
+
+        if ($appointment->status === \App\Enums\AppointmentStatus::Confirmed) {
+            return "Perfecto, tu cita para {$procedure} quedo confirmada.\n\nFecha: {$date}{$doctorLine}\n\nTe esperamos en la clinica. Si necesitas cambiar o cancelar, escribenos por aqui.";
+        }
+
+        return "Perfecto, dejamos tu cita para {$procedure} pre-reservada.\n\nFecha: {$date}{$doctorLine}\n\nPor favor confirma si este horario te queda bien.";
     }
 
     private function findPendingOriginalForReply(WhatsappMessage $reply): ?WhatsappMessage

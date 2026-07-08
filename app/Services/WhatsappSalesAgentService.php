@@ -145,14 +145,23 @@ class WhatsappSalesAgentService
             return false;
         }
 
+        $parsed = app(AppointmentIntentService::class)->extractFromText($body);
+
+        if (($parsed['date'] ?? null) || ($parsed['time'] ?? null)) {
+            return true;
+        }
+
         $affirmatives = [
             'si', 'si por favor', 'sí', 'sí por favor', 'ok', 'dale', 'claro',
             'de acuerdo', 'perfecto', 'quiero', 'si quiero', 'me interesa',
+            'puede ser', 'ese', 'ese horario', 'ese esta bien', 'ese está bien',
+            'el primero', 'la primera', 'el segundo', 'la segunda', 'el tercero', 'la tercera',
         ];
 
         return in_array($normalized, $affirmatives, true)
             || str_starts_with($normalized, 'si ')
-            || str_starts_with($normalized, 'sí ');
+            || str_starts_with($normalized, 'sí ')
+            || str_starts_with($normalized, 'puede ser ');
     }
 
     private function buildReadyToBookResponse(
