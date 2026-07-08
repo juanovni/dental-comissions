@@ -400,7 +400,7 @@ Responde SOLO con un JSON valido con esta estructura exacta:
     "closing_opportunity_score": 0-100,
     "requires_human_handoff": false,
     "handoff_reason": "solo si requiere escalamiento",
-    "suggested_pipeline_stage": "lead|appointment|negotiation|closed_won|closed_lost",
+    "suggested_pipeline_stage": "new|qualified|appointment|proposal|won|lost",
     "clinical_safety_flag": false,
     "appointment_candidate": {
         "wants_appointment": false,

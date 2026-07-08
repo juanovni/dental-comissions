@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\SocialCommentActionType;
 use App\Enums\SocialConversionStatus;
 use App\Enums\SocialIdentityStatus;
+use App\Enums\SocialPipelineStage;
 use App\Models\Patient;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
@@ -27,11 +28,12 @@ class SocialConversionService
         $comment->update([
             'tracking_token' => $token,
             'conversion_status' => SocialConversionStatus::TokenGenerated,
+            'pipeline_stage' => SocialPipelineStage::Qualified,
         ]);
 
         $comment->actions()->create([
             'action' => SocialCommentActionType::GenerateWhatsappToken,
-            'notes' => 'Token de rastreo generado para handshake de WhatsApp.',
+            'notes' => 'Token de rastreo generado. Lead movido a calificado.',
             'external_response' => ['tracking_token' => $token],
         ]);
 
