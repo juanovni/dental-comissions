@@ -7,15 +7,15 @@ use App\Models\ActivityRecord;
 use App\Models\DoctorAssistantAssignment;
 use App\Models\PaymentMethod;
 use App\Models\PaymentMethodCommissionRate;
-use App\Models\Professional;
 use App\Models\Procedure;
+use App\Models\Professional;
+use App\Models\SocialAccount;
+use App\Models\SocialComment;
+use App\Models\SocialPost;
 use App\Models\WhatsappMessage;
-use App\Services\ActivityCreationService;
-use App\Services\AiParsingService;
 use App\Services\WhatsappService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use OpenAI\Laravel\Facades\OpenAI;
-use OpenAI\Responses\Chat\CreateResponse;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class WhatsappServiceTest extends TestCase
@@ -24,11 +24,17 @@ class WhatsappServiceTest extends TestCase
 
     private WhatsappService $whatsappService;
 
+    private array $geminiContent = [];
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->whatsappService = app(WhatsappService::class);
-        $this->fakeOpenAI();
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.gemini.api_key' => 'test-key',
+        ]);
+        $this->fakeGemini();
     }
 
     public function test_process_incoming_message_creates_whatsapp_message(): void
@@ -183,7 +189,7 @@ class WhatsappServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->fakeOpenAI([
+        $this->fakeGemini([
             'patient_name' => 'Maria Perez',
             'procedures' => [$procedure->name],
             'assistants' => [],
@@ -237,7 +243,7 @@ class WhatsappServiceTest extends TestCase
             ]);
         }
 
-        $this->fakeOpenAI([
+        $this->fakeGemini([
             'patient_name' => 'Maria Perez',
             'procedures' => [$procedure->name],
             'assistants' => [],
@@ -289,7 +295,7 @@ class WhatsappServiceTest extends TestCase
             ]);
         }
 
-        $this->fakeOpenAI([
+        $this->fakeGemini([
             'patient_name' => 'Roberto Gomez',
             'procedures' => [$procedure->name],
             'assistants' => [],
@@ -376,9 +382,144 @@ class WhatsappServiceTest extends TestCase
         $this->assertEquals(0, ActivityRecord::count());
     }
 
-    private function fakeOpenAI(?array $content = null): void
+    public function test_social_tracking_token_takes_precedence_over_professional_activity_flow(): void
     {
-        $content ??= [
+        $professional = Professional::factory()->create([
+            'whatsapp_phone' => '+573001112233',
+            'role' => 'doctor',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'instagram',
+            'account_name' => 'Clinica Dental IG',
+            'external_account_id' => 'ig_account_'.uniqid(),
+            'is_active' => true,
+        ]);
+
+        $post = SocialPost::create([
+            'social_account_id' => $account->id,
+            'platform' => 'instagram',
+            'external_post_id' => 'post_'.uniqid(),
+            'caption' => 'Limpieza dental',
+        ]);
+
+        $comment = SocialComment::create([
+            'social_account_id' => $account->id,
+            'social_post_id' => $post->id,
+            'platform' => 'instagram',
+            'external_comment_id' => 'comment_'.uniqid(),
+            'author_name' => 'Paciente Test',
+            'comment_text' => 'Me interesa esta limpieza dental',
+            'tracking_token' => 'DNT-ABC12',
+        ]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('+573001112233', 'Hola, vengo de redes sociales. Mi codigo es DNT-ABC12.'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals($professional->id, $result->professional_id);
+        $this->assertEquals(WhatsappMessageStatus::Processed, $result->status);
+        $this->assertEquals(0, ActivityRecord::count());
+        $this->assertNotNull($comment->refresh()->social_identity_id);
+    }
+
+    public function test_unknown_phone_cannot_register_activity_without_tracking_token(): void
+    {
+        Procedure::factory()->create(['name' => 'Extraccion quirurgica', 'is_active' => true]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Procedimiento: extraccion quirurgica Paciente: Antonio Pepe Auxiliar: Ana Garcia Pago: Efectivo'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertNull($result->professional_id);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertStringContainsString('Profesional no activo o no autorizado', $result->error_message);
+        $this->assertEquals(0, ActivityRecord::count());
+    }
+
+    public function test_unknown_phone_with_tracking_token_is_processed_as_social_lead(): void
+    {
+        $account = SocialAccount::create([
+            'platform' => 'instagram',
+            'account_name' => 'Clinica Dental IG',
+            'external_account_id' => 'ig_account_'.uniqid(),
+            'is_active' => true,
+        ]);
+
+        $post = SocialPost::create([
+            'social_account_id' => $account->id,
+            'platform' => 'instagram',
+            'external_post_id' => 'post_'.uniqid(),
+            'caption' => 'Implantes dentales',
+        ]);
+
+        $comment = SocialComment::create([
+            'social_account_id' => $account->id,
+            'social_post_id' => $post->id,
+            'platform' => 'instagram',
+            'external_comment_id' => 'comment_'.uniqid(),
+            'author_name' => 'Paciente Test',
+            'comment_text' => 'Me interesa una valoracion',
+            'tracking_token' => 'DNT-YG4SV',
+        ]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Hola, Mi codigo es DNT-YG4SV.'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertNull($result->professional_id);
+        $this->assertEquals(WhatsappMessageStatus::Processed, $result->status);
+        $this->assertEquals(0, ActivityRecord::count());
+        $this->assertNotNull($comment->refresh()->social_identity_id);
+    }
+
+    public function test_unknown_tracking_token_does_not_fall_back_to_activity_flow(): void
+    {
+        Professional::factory()->create([
+            'whatsapp_phone' => '+593985925100',
+            'role' => 'doctor',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Hola, vengo de redes sociales. Mi codigo es DNT-FMNPQ.'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertStringContainsString('Codigo de lead no encontrado: DNT-FMNPQ', $result->error_message);
+        $this->assertEquals(0, ActivityRecord::count());
+    }
+
+    public function test_malformed_tracking_token_from_professional_does_not_fall_back_to_activity_flow(): void
+    {
+        $doctor = Professional::factory()->create([
+            'whatsapp_phone' => '+593985925100',
+            'role' => 'doctor',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+
+        $result = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Hola, vengo de redes sociales. Mi codigo es DNT-BY'),
+        );
+
+        $this->assertNotNull($result);
+        $this->assertEquals($doctor->id, $result->professional_id);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertStringContainsString('Codigo de lead incompleto o invalido', $result->error_message);
+        $this->assertEquals(0, ActivityRecord::count());
+    }
+
+    private function fakeGemini(?array $content = null): void
+    {
+        $this->geminiContent = $content ?? [
             'patient_name' => '',
             'procedures' => [],
             'assistants' => [],
@@ -388,21 +529,17 @@ class WhatsappServiceTest extends TestCase
             'review_notes' => 'No se pudo procesar el mensaje',
         ];
 
-        OpenAI::fake([
-            CreateResponse::fake([
-                'choices' => [
-                    [
-                        'index' => 0,
-                        'message' => [
-                            'role' => 'assistant',
-                            'content' => json_encode($content),
+        Http::fake(fn () => Http::response([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            ['text' => json_encode($this->geminiContent)],
                         ],
-                        'logprobs' => null,
-                        'finish_reason' => 'stop',
                     ],
                 ],
-            ]),
-        ]);
+            ],
+        ]));
     }
 
     private function buildPayload(string $phone, string $message): array
@@ -411,7 +548,7 @@ class WhatsappServiceTest extends TestCase
             'messages' => [
                 [
                     'from' => $phone,
-                    'id' => 'test_' . uniqid(),
+                    'id' => 'test_'.uniqid(),
                     'timestamp' => now()->timestamp,
                     'type' => 'text',
                     'text' => ['body' => $message],

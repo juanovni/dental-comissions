@@ -64,6 +64,8 @@ class ActivityCreationService
 
             $activity->calculateCommissions();
 
+            app(SocialRoiService::class)->attributeActivity($activity->refresh());
+
             if ($parsedData['needs_review'] ?? false) {
                 $activity->update([
                     'status' => ActivityStatus::NeedsReview,

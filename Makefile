@@ -1,7 +1,11 @@
-.PHONY: help up down build restart shell migrate seed fresh test pint composer npm install clean logs
+.PHONY: help up down build restart shell migrate seed fresh test pint composer npm install clean logs reverb logs-reverb vite worker scheduler logs-vite logs-worker logs-scheduler
 
 APP_SERVICE = dental.app
 DB_SERVICE = dental.pgsql
+REVERB_SERVICE = dental.reverb
+VITE_SERVICE = dental.vite
+WORKER_SERVICE = dental.worker
+SCHEDULER_SERVICE = dental.scheduler
 
 help:
 	@echo "Dental Commissions MVP - Docker commands"
@@ -19,6 +23,14 @@ help:
 	@echo "  make composer    Run composer (e.g. make composer cmd=install)"
 	@echo "  make npm         Run npm (e.g. make npm cmd=install)"
 	@echo "  make logs        Tail app container logs"
+	@echo "  make reverb      Run Reverb server"
+	@echo "  make logs-reverb Tail Reverb container logs"
+	@echo "  make vite        Run Vite dev server"
+	@echo "  make worker      Run queue worker"
+	@echo "  make scheduler   Run Laravel scheduler"
+	@echo "  make logs-vite   Tail Vite container logs"
+	@echo "  make logs-worker Tail worker container logs"
+	@echo "  make logs-scheduler Tail scheduler container logs"
 	@echo "  make clean       Remove all containers, volumes and images"
 
 up:
@@ -59,6 +71,30 @@ npm:
 
 logs:
 	docker compose logs -f $(APP_SERVICE)
+
+reverb:
+	docker compose up -d $(REVERB_SERVICE)
+
+logs-reverb:
+	docker compose logs -f $(REVERB_SERVICE)
+
+vite:
+	docker compose up -d $(VITE_SERVICE)
+
+worker:
+	docker compose up -d $(WORKER_SERVICE)
+
+scheduler:
+	docker compose up -d $(SCHEDULER_SERVICE)
+
+logs-vite:
+	docker compose logs -f $(VITE_SERVICE)
+
+logs-worker:
+	docker compose logs -f $(WORKER_SERVICE)
+
+logs-scheduler:
+	docker compose logs -f $(SCHEDULER_SERVICE)
 
 clean:
 	docker compose down -v --rmi all --remove-orphans

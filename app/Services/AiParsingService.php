@@ -7,9 +7,9 @@ use App\Models\PaymentMethod;
 use App\Models\Procedure;
 use App\Models\Professional;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use OpenAI\Laravel\Facades\OpenAI;
 
 class AiParsingService
 {
@@ -46,34 +46,26 @@ class AiParsingService
         $systemPrompt = $this->buildSystemPrompt($procedures, $assistants, $paymentMethods, $today);
 
         try {
-            $response = OpenAI::chat()->create([
-                'model' => config('services.openai.model', 'gpt-4o-mini'),
-                'messages' => [
-                    ['role' => 'system', 'content' => $systemPrompt],
-                    ['role' => 'user', 'content' => $messageBody],
-                ],
-                'temperature' => 0.1,
-                'response_format' => ['type' => 'json_object'],
-            ]);
-
-            $content = $response->choices[0]->message->content;
+            $content = app(AiJsonService::class)->generate($systemPrompt, $messageBody);
             $parsed = json_decode($content, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('Error decodificando respuesta JSON de OpenAI', [
+                Log::error('Error decodificando respuesta JSON de IA', [
                     'content' => $content,
                 ]);
+
                 return $this->defaultNeedsReview('Error al interpretar respuesta de IA');
             }
 
             return $this->validateParsedData($parsed);
         } catch (\Throwable $e) {
-            Log::error('Error llamando OpenAI API', [
+            Log::error('Error llamando proveedor IA', [
+                'provider' => config('services.ai.provider', 'gemini'),
                 'error' => $e->getMessage(),
             ]);
 
             return $this->parseLocalFallback($messageBody, $doctor)
-                ?? $this->defaultNeedsReview('Error al conectar con IA: ' . $e->getMessage());
+                ?? $this->defaultNeedsReview('Error al conectar con IA: '.$e->getMessage());
         }
     }
 
@@ -111,15 +103,19 @@ class AiParsingService
                 ->all();
         }
 
-        if (!$patientName) {
+        if (! $patientName) {
             $patientName = $this->extractPatientFromNaturalMessage($messageBody);
         }
 
-        if (!$paymentMethod) {
+        if (! $paymentMethod) {
             $paymentMethod = app(PaymentMethodResolver::class)->findInMessage($messageBody);
         }
 
-        if (!$patientName && empty($procedureNames) && !$paymentMethod) {
+        if ($paymentMethod) {
+            $paymentMethod = $this->normalize($paymentMethod);
+        }
+
+        if (! $patientName && empty($procedureNames) && ! $paymentMethod) {
             return null;
         }
 
@@ -134,7 +130,7 @@ class AiParsingService
         ]);
     }
 
-    private function assignedAssistants(Professional $doctor): \Illuminate\Support\Collection
+    private function assignedAssistants(Professional $doctor): Collection
     {
         $assistantIds = DoctorAssistantAssignment::where('doctor_id', $doctor->id)
             ->where('is_active', true)
@@ -146,7 +142,7 @@ class AiParsingService
     private function extractLabelValue(string $messageBody, array $labels): ?string
     {
         foreach ($labels as $label) {
-            if (preg_match('/(?:^|[\n,;])\s*' . preg_quote($label, '/') . '\s*:\s*([^\n,;]+)/iu', $messageBody, $matches)) {
+            if (preg_match('/(?:^|[\n,;])\s*'.preg_quote($label, '/').'\s*:\s*([^\n,;]+)/iu', $messageBody, $matches)) {
                 return trim($matches[1]);
             }
         }
@@ -158,7 +154,7 @@ class AiParsingService
     {
         $value = $this->extractLabelValue($messageBody, $labels);
 
-        if (!$value) {
+        if (! $value) {
             return [];
         }
 
@@ -196,7 +192,7 @@ class AiParsingService
 
     private function extractPatientFromNaturalMessage(string $messageBody): ?string
     {
-        if (!preg_match('/\b(?:para|a)\s+(.+?)(?:\s*,?\s*(?:pago|metodo de pago|método de pago|forma de pago|hoy|ayer|con|fecha)\b|$)/iu', $messageBody, $matches)) {
+        if (! preg_match('/\b(?:para|a)\s+(.+?)(?:\s*,?\s*(?:pago|metodo de pago|método de pago|forma de pago|hoy|ayer|con|fecha)\b|$)/iu', $messageBody, $matches)) {
             return null;
         }
 
@@ -216,7 +212,7 @@ class AiParsingService
     private function buildSystemPrompt(array $procedures, array $assistants, array $paymentMethods, string $today): string
     {
         $procedureList = collect($procedures)
-            ->map(fn ($p) => "- {$p['name']}" . ($p['code'] ? " ({$p['code']})" : ''))
+            ->map(fn ($p) => "- {$p['name']}".($p['code'] ? " ({$p['code']})" : ''))
             ->implode("\n");
 
         $assistantList = collect($assistants)
@@ -224,12 +220,12 @@ class AiParsingService
             ->implode("\n");
 
         $assistantSection = empty($assistants)
-            ? "No hay auxiliares asignados a este doctor."
+            ? 'No hay auxiliares asignados a este doctor.'
             : "Auxiliares asignados al doctor:\n{$assistantList}";
 
         $paymentMethodList = collect($paymentMethods)
             ->map(function ($paymentMethod): string {
-                $aliases = empty($paymentMethod['aliases']) ? '' : ' aliases: ' . implode(', ', $paymentMethod['aliases']);
+                $aliases = empty($paymentMethod['aliases']) ? '' : ' aliases: '.implode(', ', $paymentMethod['aliases']);
 
                 return "- {$paymentMethod['name']} ({$paymentMethod['code']}){$aliases}";
             })

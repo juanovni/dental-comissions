@@ -20,6 +20,237 @@
         'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+
+@layer components {
+    .mc-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        padding: 1rem;
+    }
+
+    .mc-section-title {
+        color: #1f2937;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin: 0 0 0.875rem;
+    }
+
+    .mc-grid-main {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    @media (min-width: 1100px) {
+        .mc-grid-main {
+            grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.36fr);
+        }
+    }
+
+    .mc-facts {
+        display: grid;
+        gap: 0.55rem;
+    }
+
+    .mc-fact {
+        align-items: start;
+        border-bottom: 1px solid #f1f5f9;
+        display: grid;
+        gap: 0.4rem;
+        grid-template-columns: minmax(6.5rem, 0.35fr) minmax(0, 1fr);
+        padding-bottom: 0.55rem;
+    }
+
+    .mc-fact:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .mc-fact-label {
+        color: #6b7280;
+        font-size: 0.76rem;
+        font-weight: 400;
+    }
+
+    .mc-fact-value {
+        color: #1f2937;
+        font-size: 0.86rem;
+        font-weight: 500;
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .mc-fact-value-muted {
+        color: #6b7280;
+        font-size: 0.84rem;
+        font-style: italic;
+        font-weight: 400;
+    }
+
+    .mc-badge {
+        align-items: center;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        color: #334155;
+        display: inline-flex;
+        font-size: 0.7rem;
+        font-weight: 500;
+        gap: 0.35rem;
+        line-height: 1.1;
+        padding: 0.265rem 0.475rem;
+    }
+
+    .mc-badge-success {
+        background: #ecfdf5;
+        border-color: #bbf7d0;
+        color: #047857;
+    }
+
+    .mc-badge-warning {
+        background: #fffbeb;
+        border-color: #fed7aa;
+        color: #b45309;
+    }
+
+    .mc-badge-danger {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #b91c1c;
+    }
+
+    .mc-btn {
+        align-items: center;
+        border-radius: 0.5rem;
+        display: inline-flex;
+        font-size: 0.75rem;
+        font-weight: 500;
+        justify-content: center;
+        line-height: 1.1;
+        padding: 0.425rem 0.625rem;
+        text-decoration: none;
+    }
+
+    .mc-btn-primary {
+        background: #1d7afc;
+        color: #ffffff;
+    }
+
+    .mc-btn-soft {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        color: #334155;
+    }
+
+    .fi-page-header .fi-ac .fi-btn,
+    .fi-header .fi-ac .fi-btn,
+    .fi-header-actions .fi-btn {
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        min-height: 2rem;
+        padding: 0.375rem 0.625rem;
+    }
+
+    .fi-page-header .fi-ac .fi-btn .fi-btn-icon,
+    .fi-header .fi-ac .fi-btn .fi-btn-icon,
+    .fi-header-actions .fi-btn .fi-btn-icon {
+        height: 0.95rem;
+        width: 0.95rem;
+    }
+
+    .fi-header-heading {
+        font-size: 1.15rem !important;
+        line-height: 1.35 !important;
+    }
+
+    @media (min-width: 1024px) {
+        .social-roi-filters-form {
+            display: flex;
+            justify-content: flex-end;
+            margin: 0;
+            max-width: min(100%, 42rem);
+            width: 100%;
+        }
+
+        .fi-wi-stats-overview .fi-section-header > .social-roi-filters-form {
+            margin-left: auto;
+            max-width: min(100%, 42rem);
+            width: auto;
+        }
+
+        .social-roi-filters-form .fi-sc-grid {
+            align-items: end;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        .social-roi-filters-form .fi-sc-grid > * {
+            min-width: 10rem;
+            width: auto;
+        }
+    }
+
+    .dark .mc-card {
+        background: rgba(15, 23, 42, 0.74);
+        border-color: rgba(148, 163, 184, 0.16);
+    }
+
+    .dark .mc-section-title,
+    .dark .mc-fact-value {
+        color: #e5e7eb;
+    }
+
+    .dark .mc-fact {
+        border-bottom-color: rgba(148, 163, 184, 0.12);
+    }
+
+    .dark .mc-fact-label,
+    .dark .mc-fact-value-muted {
+        color: #94a3b8;
+    }
+
+    .dark .mc-badge,
+    .dark .mc-btn-soft {
+        background: rgba(15, 23, 42, 0.86);
+        border-color: rgba(148, 163, 184, 0.18);
+        color: #cbd5e1;
+    }
+
+    .dark .mc-badge-success {
+        background: rgba(6, 78, 59, 0.28);
+        border-color: rgba(52, 211, 153, 0.24);
+        color: #86efac;
+    }
+
+    .dark .mc-badge-warning {
+        background: rgba(120, 53, 15, 0.28);
+        border-color: rgba(251, 191, 36, 0.24);
+        color: #fcd34d;
+    }
+
+    .dark .mc-badge-danger {
+        background: rgba(127, 29, 29, 0.28);
+        border-color: rgba(248, 113, 113, 0.28);
+        color: #fca5a5;
+    }
+}
+
+@layer components {
+    .fi-logo img {
+        width: auto;
+        object-fit: contain;
+    }
+
+    .fi-simple-header-heading {
+        font-size: 1.2rem;
+    }
+}
+
 @layer components {
     .fi-width-9xl {
         max-width: 96rem;
@@ -76,6 +307,55 @@
         position: absolute;
     }
 
+    .social-roi-stat .fi-wi-stats-overview-stat-description,
+    .social-roi-stat .fi-wi-stats-overview-stat-description > span {
+        display: block;
+        width: 100%;
+    }
+
+    .social-roi-stat-value {
+        align-items: center;
+        display: inline-flex;
+        gap: 0.875rem;
+    }
+
+    .social-roi-trend-badge {
+        align-items: center;
+        border-radius: 0.375rem;
+        display: inline-flex;
+        font-size: 0.72rem;
+        font-weight: 600;
+        gap: 0.25rem;
+        line-height: 1rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .social-roi-trend-badge-success {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .social-roi-trend-badge-danger {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .social-roi-trend-badge-neutral {
+        background: #f3f4f6;
+        color: #4b5563;
+    }
+
+    .social-roi-previous-value {
+        border-top: 1px solid rgba(148, 163, 184, 0.28);
+        color: #64748b;
+        display: block;
+        font-size: 0.75rem;
+        line-height: 1rem;
+        margin-top: 0.875rem;
+        padding-top: 0.875rem;
+        width: 100%;
+    }
+
     .fi-wi-chart .fi-section-content,
     .fi-wi-table .fi-ta-content {
         background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent);
@@ -86,5 +366,145 @@
     .dark .fi-wi-table {
         border-color: color-mix(in srgb, var(--primary-700) 42%, transparent);
         box-shadow: 0 22px 54px -38px rgba(0, 0, 0, 0.75);
+    }
+
+    .fi-main-sidebar {
+        --meta-sidebar-bottom-bar-height: 4rem;
+    }
+
+    /* Sidebar scrollbar: ocupa su carril, pero solo se pinta al pasar el mouse por el menu. */
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-nav {
+        padding-bottom: calc(var(--meta-sidebar-bottom-bar-height) + 0.75rem);
+        scrollbar-color: transparent transparent;
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-nav-groups {
+        gap: 0.35rem;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group {
+        gap: 0.25rem;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group-btn {
+        color: #111827;
+        font-weight: 500;
+        padding-block: 0.375rem;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group-label {
+        color: #111827;
+        font-weight: 500;
+    }
+
+    .dark .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group-btn {
+        color: #f9fafb;
+    }
+
+    .dark .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group-label {
+        color: #f9fafb;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group[data-group-label="Reputacion Digital"] > .fi-sidebar-group-btn .fi-sidebar-group-label {
+        color: #71717b !important;
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .dark .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group[data-group-label="Reputacion Digital"] > .fi-sidebar-group-btn .fi-sidebar-group-label {
+        color: #a1a1aa !important;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group-items {
+        gap: 0.125rem;
+    }
+
+    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-item-btn {
+        min-height: 2rem;
+        padding-block: 0.375rem;
+    }
+
+    .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav {
+        padding-block: 0.75rem 1rem;
+        padding-inline: 0.75rem;
+        scrollbar-gutter: auto;
+    }
+
+    .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav-groups {
+        gap: 0.5rem;
+    }
+
+    .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-group-items {
+        gap: 0.25rem;
+    }
+
+    .fi-main-sidebar:hover .fi-sidebar-nav {
+        scrollbar-color: rgb(156, 163, 175) transparent;
+    }
+
+    .fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-thumb {
+        background-color: transparent;
+        border: 2px solid transparent;
+        border-radius: 9999px;
+        background-clip: content-box;
+    }
+
+    .fi-main-sidebar:hover .fi-sidebar-nav::-webkit-scrollbar-thumb {
+        background-color: rgb(156, 163, 175);
+    }
+
+    .dark .fi-main-sidebar:hover .fi-sidebar-nav {
+        scrollbar-color: rgb(71, 85, 105) transparent;
+    }
+
+    .dark .fi-main-sidebar:hover .fi-sidebar-nav::-webkit-scrollbar-thumb {
+        background-color: rgb(71, 85, 105);
+    }
+
+    @media (min-width: 1024px) {
+        .fi-main-sidebar .fi-sidebar-open-collapse-sidebar-btn,
+        .fi-main-sidebar .fi-sidebar-close-collapse-sidebar-btn {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: 0.5rem;
+            box-shadow: none;
+            color: rgb(75, 85, 99);
+            flex-shrink: 0;
+            height: 2.5rem;
+            justify-content: center;
+            transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+            width: 2.5rem;
+        }
+
+        .fi-main-sidebar .fi-sidebar-open-collapse-sidebar-btn:hover,
+        .fi-main-sidebar .fi-sidebar-close-collapse-sidebar-btn:hover {
+            background: rgb(243, 244, 246);
+            color: rgb(17, 24, 39);
+        }
+
+        .dark .fi-main-sidebar .fi-sidebar-open-collapse-sidebar-btn,
+        .dark .fi-main-sidebar .fi-sidebar-close-collapse-sidebar-btn {
+            background: transparent;
+            color: rgb(203, 213, 225);
+        }
+
+        .dark .fi-main-sidebar .fi-sidebar-open-collapse-sidebar-btn:hover,
+        .dark .fi-main-sidebar .fi-sidebar-close-collapse-sidebar-btn:hover {
+            background: rgb(30, 41, 59);
+            color: rgb(248, 250, 252);
+        }
     }
 }

@@ -9,7 +9,7 @@ administrador revisa y aprueba antes de generar pagos semanales.
 - Backend: Laravel 12
 - Admin Panel: Filament 4
 - Base de datos: PostgreSQL
-- IA: OpenAI API (openai-php/laravel)
+- IA: Google Gemini API (Http facade)
 - WhatsApp: Meta WhatsApp Cloud API (Http facade)
 - PDF: barryvdh/laravel-dompdf
 - Moneda: USD (solo control interno)

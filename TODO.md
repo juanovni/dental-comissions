@@ -101,8 +101,8 @@
 - [x] Logica de reintento
 - [x] Configuracion de credenciales WhatsApp en .env
 
-## Fase 5: Integracion IA (OpenAI) [COMPLETADA]
-- [x] Instalar openai-php/laravel
+## Fase 5: Integracion IA (Google Gemini) [COMPLETADA]
+- [x] Integrar Google Gemini API via Http facade
 - [x] Configurar API key en .env
 - [x] Crear servicio AiParsingService
 - [x] Prompt para extraer paciente
@@ -135,3 +135,95 @@
 - [ ] Medir tasa de error de IA
 - [ ] Ajustar reglas y reportes
 - [ ] Documentar aprendizajes
+
+## Modulo Reputacion Digital - Fase 1: Validacion Meta [COMPLETADA]
+- [x] Definir alcance inicial: Instagram y Facebook
+- [x] Definir modo semiautomatico sin eliminacion automatica
+- [x] Documentar prerrequisitos de cuenta Meta
+- [x] Documentar permisos esperados de Meta Graph API
+- [x] Identificar endpoints iniciales para paginas, publicaciones y comentarios
+- [x] Definir capacidades a validar por plataforma
+- [x] Definir flujo tecnico propuesto
+- [x] Definir contrato JSON de clasificacion IA
+- [x] Documentar reglas de seguridad del MVP
+- [x] Documentar riesgos y mitigaciones
+- [x] Crear documento docs/social-reputation-meta-validation.md
+
+## Modulo Reputacion Digital - Fase 2: Flujo funcional [COMPLETADA]
+- [x] Definir sincronizacion programada como entrada principal
+- [x] Definir webhooks de Meta como entrada complementaria
+- [x] Definir frecuencia de sincronizacion cada 5 minutos
+- [x] Definir importacion inicial de ultimos 30 dias
+- [x] Definir estados de comentarios
+- [x] Definir clasificaciones IA orientadas a reputacion y conversion
+- [x] Definir prioridades y riesgo reputacional
+- [x] Definir acciones sugeridas y canales de respuesta
+- [x] Definir reglas de revision humana obligatoria
+- [x] Definir reglas de ocultamiento manual sin eliminacion
+- [x] Definir contrato JSON de IA para comentarios
+- [x] Definir metricas del MVP e historial requerido
+- [x] Documentar casos operativos y fuera de alcance
+- [x] Crear documento docs/social-reputation-flow.md
+
+## Modulo Reputacion Digital - Fase 3: Base de datos [COMPLETADA]
+- [x] Crear enums del modulo social
+- [x] Crear modelo SocialAccount
+- [x] Crear modelo SocialPost
+- [x] Crear modelo SocialComment
+- [x] Crear modelo SocialCommentAction
+- [x] Crear modelo SocialModerationRule
+- [x] Crear modelo SocialReplyTemplate
+- [x] Crear migracion social_accounts con tokens cifrables e indices
+- [x] Crear migracion social_posts con payload original e indice unico
+- [x] Crear migracion social_comments con clasificacion IA, riesgo reputacional e indice unico
+- [x] Crear migracion social_comment_actions para historial administrativo
+- [x] Crear migracion social_moderation_rules para reglas configurables
+- [x] Crear migracion social_reply_templates para plantillas de respuesta
+- [x] Definir relaciones Eloquent principales
+- [x] Agregar casts explicitos, JSON, fechas y enums
+
+## Modulo Reputacion Digital - Fase 4: Integracion inicial con Meta [COMPLETADA]
+- [x] Agregar configuracion `services.meta`
+- [x] Agregar variables `META_*` en archivos de entorno
+- [x] Crear servicio MetaSocialService
+- [x] Listar paginas autorizadas desde Meta Graph API
+- [x] Crear/actualizar cuentas Facebook automaticamente
+- [x] Detectar cuenta Instagram Business conectada a una pagina
+- [x] Crear/actualizar cuentas Instagram automaticamente
+- [x] Sincronizar publicaciones recientes de ultimos 30 dias
+- [x] Sincronizar comentarios de publicaciones
+- [x] Guardar posts y comentarios con `updateOrCreate`/idempotencia
+- [x] Preservar estados administrativos de comentarios existentes al resincronizar
+- [x] Crear comando `social:sync-comments`
+- [x] Programar sincronizacion cada 5 minutos
+- [x] Crear webhook complementario `/webhook/meta/social`
+- [x] Excluir webhook Meta social de CSRF
+
+## Modulo Reputacion Digital - Fase 5: Clasificacion con IA [COMPLETADA]
+- [x] Crear servicio SocialCommentClassificationService
+- [x] Implementar prompt de IA para reputacion digital dental
+- [x] Validar contrato JSON de clasificacion
+- [x] Guardar classification, sentiment, priority y reputation_risk
+- [x] Guardar suggested_action, response_channel y suggested_reply
+- [x] Marcar comentarios como classified o review_required
+- [x] Registrar ai_response, ai_reason y processed_at
+- [x] Registrar accion classify en social_comment_actions
+- [x] Implementar fallback local si Gemini falla
+- [x] Crear comando `social:classify-comments`
+- [x] Programar clasificacion cada 5 minutos
+- [x] Agregar plan de prueba con `/test/meta/comment`
+
+## Modulo Reputacion Digital - Fase 6: Panel administrativo [COMPLETADA]
+- [x] Crear recurso Filament SocialCommentResource
+- [x] Agregar bandeja de comentarios con filtros por red, estado, clasificacion, prioridad y riesgo
+- [x] Mostrar prioridad, riesgo reputacional, estado y revision humana con badges/iconos
+- [x] Crear vista detalle del comentario con publicacion, autor, clasificacion IA y respuesta sugerida
+- [x] Permitir editar estado, accion sugerida, canal, respuesta sugerida y motivo IA
+- [x] Agregar accion manual interna Marcar revisado
+- [x] Agregar accion manual interna Ignorar
+- [x] Agregar accion manual interna Escalar
+- [x] Agregar accion manual interna Spam interno
+- [x] Registrar acciones manuales en social_comment_actions con usuario administrador
+- [x] Crear recurso Filament SocialAccountResource para revisar cuentas y estado de sincronizacion
+- [x] Mantener acciones sin modificar Meta directamente en esta fase
+- [x] Crear Bandeja de Reputacion minimalista con cards, metricas, filtros rapidos y acciones inline

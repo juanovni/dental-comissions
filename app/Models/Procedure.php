@@ -27,8 +27,18 @@ class Procedure extends Model
         ];
     }
 
-    public function commissionRules(): HasMany
+    public function socialPosts(): HasMany
     {
-        return $this->hasMany(CommissionRule::class);
+        return $this->hasMany(SocialPost::class);
+    }
+
+    public function suggestedSocialComments(): HasMany
+    {
+        return $this->hasMany(SocialComment::class, 'suggested_procedure_id');
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
     }
 }

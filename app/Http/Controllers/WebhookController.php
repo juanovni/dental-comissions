@@ -30,6 +30,10 @@ class WebhookController extends Controller
         $challenge = $params['hub.challenge'] ?? '';
 
         if ($this->whatsappService->verifyWebhook($mode, $token)) {
+            if ($request->expectsJson()) {
+                return response()->json(['challenge' => $challenge]);
+            }
+
             return response($challenge, 200)->header('Content-Type', 'text/plain');
         }
 

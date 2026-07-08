@@ -9,6 +9,8 @@ use App\Models\ActivityRecord;
 use App\Models\DoctorAssistantAssignment;
 use App\Models\Professional;
 use App\Models\WhatsappMessage;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -34,7 +36,7 @@ class WhatsappService
     {
         try {
             $message = $payload['messages'][0] ?? null;
-            if (!$message) {
+            if (! $message) {
                 return null;
             }
 
@@ -62,6 +64,132 @@ class WhatsappService
                 'message_sid' => $messageSid,
             ]);
 
+            $socialConversionService = app(SocialConversionService::class);
+            $trackingToken = $socialConversionService->extractTrackingToken($body);
+            $socialComment = $socialConversionService->processIncomingMessage($whatsappMessage);
+
+            if ($socialComment) {
+                $pendingAppointment = $socialComment->appointments()
+                    ->whereIn('status', [
+                        \App\Enums\AppointmentStatus::PendingConfirmation,
+                        \App\Enums\AppointmentStatus::Scheduled,
+                        \App\Enums\AppointmentStatus::Confirmed,
+                        \App\Enums\AppointmentStatus::Rescheduled,
+                    ])
+                    ->whereNotNull('scheduled_at')
+                    ->latest('id')
+                    ->first();
+
+                if ($pendingAppointment) {
+                    $bookingResult = app(\App\Services\BookingConfirmationService::class)
+                        ->handleMessage($socialComment, $whatsappMessage, $pendingAppointment);
+
+                    $whatsappMessage->markAsProcessed();
+                    $this->sendMessage($fromPhone, $bookingResult['reply']);
+
+                    return $whatsappMessage;
+                }
+
+                $agentResponse = app(WhatsappSalesAgentService::class)->respond($socialComment, $whatsappMessage);
+
+                $socialComment->actions()->create([
+                    'action' => \App\Enums\SocialCommentActionType::WhatsappSalesAgent,
+                    'performed_by' => null,
+                    'notes' => 'Respuesta generada por agente comercial WhatsApp.',
+                    'external_response' => [
+                        'intent' => $agentResponse['intent'] ?? null,
+                        'closing_opportunity_score' => $agentResponse['closing_opportunity_score'] ?? null,
+                        'requires_human_handoff' => $agentResponse['requires_human_handoff'] ?? false,
+                    ],
+                ]);
+
+                app(SocialPipelineAutomationService::class)->applyAgentResponse($socialComment, $agentResponse);
+
+                $appointment = app(AutoAppointmentService::class)->createFromDetectedIntent($socialComment, $agentResponse);
+
+                $whatsappMessage->markAsProcessed();
+                $this->sendMessage($fromPhone, $appointment ? $this->buildAppointmentCreatedReply($appointment) : $agentResponse['reply']);
+
+                return $whatsappMessage;
+            }
+
+            if ($trackingToken) {
+                $this->sendMessage(
+                    $fromPhone,
+                    "No encontramos un lead asociado al codigo {$trackingToken}. Revisa que el codigo este escrito correctamente o contacta a la clinica.",
+                );
+                $whatsappMessage->markAsFailed('Codigo de lead no encontrado: '.$trackingToken);
+
+                return $whatsappMessage;
+            }
+
+            if ($socialConversionService->hasMalformedTrackingToken($body)) {
+                $this->sendMessage(
+                    $fromPhone,
+                    'El codigo parece incompleto. Debe tener el formato DNT-XXXXX, por ejemplo: Mi codigo es DNT-ABCDE.',
+                );
+                $whatsappMessage->markAsFailed('Codigo de lead incompleto o invalido');
+
+                return $whatsappMessage;
+            }
+
+            $existingLead = $socialConversionService->findLeadByPhone($fromPhone);
+
+            if ($existingLead) {
+                $pendingAppointment = $existingLead->appointments()
+                    ->whereIn('status', [
+                        \App\Enums\AppointmentStatus::PendingConfirmation,
+                        \App\Enums\AppointmentStatus::Scheduled,
+                        \App\Enums\AppointmentStatus::Confirmed,
+                        \App\Enums\AppointmentStatus::Rescheduled,
+                    ])
+                    ->whereNotNull('scheduled_at')
+                    ->latest('id')
+                    ->first();
+
+                if ($pendingAppointment) {
+                    $bookingResult = app(\App\Services\BookingConfirmationService::class)
+                        ->handleMessage($existingLead, $whatsappMessage, $pendingAppointment);
+
+                    $whatsappMessage->markAsProcessed();
+                    $this->sendMessage($fromPhone, $bookingResult['reply']);
+
+                    return $whatsappMessage;
+                }
+
+                $agentResponse = app(WhatsappSalesAgentService::class)->respond($existingLead, $whatsappMessage);
+
+                $existingLead->actions()->create([
+                    'action' => \App\Enums\SocialCommentActionType::WhatsappSalesAgent,
+                    'performed_by' => null,
+                    'notes' => 'Respuesta generada por agente comercial WhatsApp.',
+                    'external_response' => [
+                        'intent' => $agentResponse['intent'] ?? null,
+                        'closing_opportunity_score' => $agentResponse['closing_opportunity_score'] ?? null,
+                        'requires_human_handoff' => $agentResponse['requires_human_handoff'] ?? false,
+                    ],
+                ]);
+
+                app(SocialPipelineAutomationService::class)->applyAgentResponse($existingLead, $agentResponse);
+
+                $appointment = app(AutoAppointmentService::class)->createFromDetectedIntent($existingLead, $agentResponse);
+
+                $whatsappMessage->markAsProcessed();
+                $this->sendMessage($fromPhone, $appointment ? $this->buildAppointmentCreatedReply($appointment) : $agentResponse['reply']);
+
+                return $whatsappMessage;
+            }
+
+            if (! $professional) {
+                $this->sendMessage(
+                    $fromPhone,
+                    'Hola, gracias por escribirnos. Para poder orientarte, necesito el codigo que recibiste en redes sociales. Por favor compartelo asi: "Mi codigo es DNT-XXXXX" y con gusto te ayudo.',
+                );
+                $whatsappMessage->markAsProcessed();
+
+                return $whatsappMessage;
+            }
+
             if ($contextId) {
                 $contextMessage = WhatsappMessage::where('message_sid', $contextId)->first();
                 $originalMessage = $contextMessage?->direction === WhatsappMessageDirection::Incoming
@@ -74,7 +202,7 @@ class WhatsappService
                     ]);
                     $this->processReply($whatsappMessage, $originalMessage);
                 }
-            } elseif ($professional) {
+            } else {
                 $originalMessage = $this->findPendingOriginalForReply($whatsappMessage);
 
                 if ($originalMessage) {
@@ -83,18 +211,17 @@ class WhatsappService
                 } else {
                     $this->processWithAI($whatsappMessage, $professional);
                 }
-            } else {
-                $this->sendMessage($fromPhone, 'No pudimos identificar tu numero. Contacta al administrador.');
-                $whatsappMessage->markAsFailed('Profesional no identificado');
             }
 
             return $whatsappMessage;
         } catch (\Throwable $e) {
             Log::error('Error procesando mensaje WhatsApp', [
                 'error' => $e->getMessage(),
-                'file' => $e->getFile() . ':' . $e->getLine(),
+                'file' => $e->getFile().':'.$e->getLine(),
+                'trace' => $e->getTraceAsString(),
                 'payload' => $payload,
             ]);
+
             return null;
         }
     }
@@ -104,7 +231,7 @@ class WhatsappService
         $name = $message->professional?->name ?? '';
         $greeting = $name ? "Hola {$name}!" : 'Hola!';
         $body = "{$greeting} Hemos recibido tu mensaje. Pronto lo procesaremos.\n\n"
-            . 'Responde *OK* para confirmar o *CORREGIR* [descripcion del cambio] si necesitas hacer ajustes.';
+            .'Responde *OK* para confirmar o *CORREGIR* [descripcion del cambio] si necesitas hacer ajustes.';
 
         $this->sendMessage($message->from_phone, $body);
     }
@@ -113,7 +240,7 @@ class WhatsappService
     {
         $doctor = $this->resolveDoctorForSender($sender, $message->message_body);
 
-        if (!$doctor) {
+        if (! $doctor) {
             $error = $this->unresolvedDoctorMessage($sender);
 
             $message->markAsNeedsReview($error);
@@ -143,12 +270,13 @@ class WhatsappService
                     $message->from_phone,
                     'No pudimos registrar la actividad porque falta el metodo de pago. Envia nuevamente el mensaje indicando efectivo, transferencia, credito o debito.',
                 );
+
                 return;
             }
 
             $this->sendMessage($message->from_phone, 'No pudimos procesar tu mensaje. El administrador lo revisara.');
 
-            if (!$message->error_message) {
+            if (! $message->error_message) {
                 $message->markAsNeedsReview($error);
             }
         }
@@ -185,7 +313,7 @@ class WhatsappService
         return $doctorName ? $this->matchAssignedDoctorByName($assignedDoctors, $doctorName) : null;
     }
 
-    private function assignedDoctorsForAssistant(Professional $assistant): \Illuminate\Support\Collection
+    private function assignedDoctorsForAssistant(Professional $assistant): Collection
     {
         return DoctorAssistantAssignment::query()
             ->with('doctor')
@@ -199,7 +327,7 @@ class WhatsappService
 
     private function extractDoctorName(string $messageBody): ?string
     {
-        if (!preg_match('/(?:^|[\n,;])\s*doctor\s*:\s*([^\n,;]+)/iu', $messageBody, $matches)) {
+        if (! preg_match('/(?:^|[\n,;])\s*doctor\s*:\s*([^\n,;]+)/iu', $messageBody, $matches)) {
             return null;
         }
 
@@ -208,14 +336,14 @@ class WhatsappService
 
     private function extractDoctorNameFromStart(string $messageBody): ?string
     {
-        if (!preg_match('/^\s*((?:dr|dra|doctor|doctora)\.?\s+[^\n,;]+)/iu', $messageBody, $matches)) {
+        if (! preg_match('/^\s*((?:dr|dra|doctor|doctora)\.?\s+[^\n,;]+)/iu', $messageBody, $matches)) {
             return null;
         }
 
         return trim($matches[1]);
     }
 
-    private function matchAssignedDoctorByName(\Illuminate\Support\Collection $assignedDoctors, string $doctorName): ?Professional
+    private function matchAssignedDoctorByName(Collection $assignedDoctors, string $doctorName): ?Professional
     {
         $normalizedDoctorName = $this->normalizeProfessionalName($doctorName);
 
@@ -250,7 +378,7 @@ class WhatsappService
             fn (string $assistantName): bool => $this->normalizeProfessionalName($assistantName) === $normalizedSenderName,
         );
 
-        if (!$alreadyIncluded) {
+        if (! $alreadyIncluded) {
             $assistants[] = $sender->name;
         }
 
@@ -272,10 +400,10 @@ class WhatsappService
         }
 
         return "No pudimos registrar la actividad porque perteneces a varios doctores. Envia nuevamente el mensaje indicando el doctor, por ejemplo:\n\n"
-            . "Doctor: Dr. Carlos Ramirez\n"
-            . "Paciente: Maria Perez\n"
-            . "Procedimiento: Limpieza dental\n"
-            . 'Pago: efectivo';
+            ."Doctor: Dr. Carlos Ramirez\n"
+            ."Paciente: Maria Perez\n"
+            ."Procedimiento: Limpieza dental\n"
+            .'Pago: efectivo';
     }
 
     private function normalizeProfessionalName(string $name): string
@@ -293,7 +421,7 @@ class WhatsappService
         $patientName = $activity->patient->full_name ?? $parsedData['patient_name'] ?? 'N/A';
         $procedureName = $activity->procedure->name ?? 'N/A';
         $paymentMethodName = $activity->paymentMethod->name ?? $parsedData['payment_method'] ?? 'N/A';
-        $date = \Carbon\Carbon::parse($parsedData['date'] ?? $activity->activity_date)->format('d/m/Y');
+        $date = Carbon::parse($parsedData['date'] ?? $activity->activity_date)->format('d/m/Y');
         $doctorCommission = number_format($activity->doctor_commission_amount ?? 0, 2);
         $assistantCount = count($parsedData['assistants'] ?? []);
 
@@ -305,7 +433,7 @@ class WhatsappService
         $summary .= "Comision doctor: \${$doctorCommission}\n";
 
         if ($assistantCount > 0) {
-            $summary .= "Auxiliares: " . implode(', ', $parsedData['assistants']) . "\n";
+            $summary .= 'Auxiliares: '.implode(', ', $parsedData['assistants'])."\n";
         }
 
         if ($parsedData['needs_review'] ?? false) {
@@ -314,16 +442,32 @@ class WhatsappService
         }
 
         $summary .= "\nResponde *OK* para confirmar y guardar definitivamente, "
-            . 'o *CORREGIR* [cambio] para enviarla a revision.';
+            .'o *CORREGIR* [cambio] para enviarla a revision.';
 
         return $summary;
+    }
+
+    private function buildAppointmentCreatedReply(\App\Models\Appointment $appointment): string
+    {
+        $appointment->loadMissing(['doctor', 'procedure']);
+
+        $date = $appointment->scheduled_at?->isoFormat('dddd D [de] MMMM [a las] h:mm A') ?? 'el horario seleccionado';
+        $procedure = $appointment->procedure?->name ?? 'valoracion dental';
+        $doctor = $appointment->doctor?->name;
+        $doctorLine = $doctor ? "\nDoctor: {$doctor}" : '';
+
+        if ($appointment->status === \App\Enums\AppointmentStatus::Confirmed) {
+            return "Perfecto, tu cita para {$procedure} quedo confirmada.\n\nFecha: {$date}{$doctorLine}\n\nTe esperamos en la clinica. Si necesitas cambiar o cancelar, escribenos por aqui.";
+        }
+
+        return "Perfecto, dejamos tu cita para {$procedure} pre-reservada.\n\nFecha: {$date}{$doctorLine}\n\nPor favor confirma si este horario te queda bien.";
     }
 
     private function findPendingOriginalForReply(WhatsappMessage $reply): ?WhatsappMessage
     {
         $text = strtolower(trim($reply->message_body));
 
-        if ($text !== 'ok' && !str_starts_with($text, 'corregir')) {
+        if ($text !== 'ok' && ! str_starts_with($text, 'corregir')) {
             return null;
         }
 
@@ -360,7 +504,7 @@ class WhatsappService
     private function findActivityForMessage(WhatsappMessage $message): ?ActivityRecord
     {
         return ActivityRecord::query()
-            ->where('notes', 'like', '%Msg ID: ' . $message->message_sid . '%')
+            ->where('notes', 'like', '%Msg ID: '.$message->message_sid.'%')
             ->latest('id')
             ->first();
     }
@@ -374,6 +518,7 @@ class WhatsappService
                 'to' => $toPhone,
                 'body' => $body,
             ]);
+
             return false;
         }
 
@@ -407,11 +552,13 @@ class WhatsappService
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
+
             return false;
         } catch (\Throwable $e) {
             Log::error('Excepcion enviando mensaje WhatsApp', [
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }

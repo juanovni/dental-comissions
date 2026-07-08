@@ -23,7 +23,7 @@ class PaymentMethodResource extends Resource
 {
     protected static ?string $model = PaymentMethod::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
+    protected static string | \UnitEnum | null $navigationGroup = 'Comisiones y Pagos';
 
     protected static ?string $navigationLabel = 'Metodos de pago';
 
@@ -31,7 +31,7 @@ class PaymentMethodResource extends Resource
 
     protected static ?string $pluralModelLabel = 'metodos de pago';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 12;
 
     public static function form(Schema $schema): Schema
     {

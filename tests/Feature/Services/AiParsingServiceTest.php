@@ -2,14 +2,13 @@
 
 namespace Tests\Feature\Services;
 
-use App\Models\Professional;
-use App\Models\Procedure;
-use App\Models\PaymentMethod;
-use App\Services\AiParsingService;
 use App\Models\DoctorAssistantAssignment;
+use App\Models\PaymentMethod;
+use App\Models\Procedure;
+use App\Models\Professional;
+use App\Services\AiParsingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use OpenAI\Laravel\Facades\OpenAI;
-use OpenAI\Responses\Chat\CreateResponse;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AiParsingServiceTest extends TestCase
@@ -22,6 +21,10 @@ class AiParsingServiceTest extends TestCase
     {
         parent::setUp();
         $this->aiParsingService = app(AiParsingService::class);
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.gemini.api_key' => 'test-key',
+        ]);
         PaymentMethod::create([
             'name' => 'Efectivo',
             'code' => 'EFECTIVO',
@@ -47,21 +50,7 @@ class AiParsingServiceTest extends TestCase
             'review_notes' => '',
         ]);
 
-        OpenAI::fake([
-            CreateResponse::fake([
-                'choices' => [
-                    [
-                        'index' => 0,
-                        'message' => [
-                            'role' => 'assistant',
-                            'content' => $fakeContent,
-                        ],
-                        'logprobs' => null,
-                        'finish_reason' => 'stop',
-                    ],
-                ],
-            ]),
-        ]);
+        $this->fakeGemini($fakeContent);
 
         $result = $this->aiParsingService->parseMessage('Limpieza para Juan Perez con Ana Garcia', $doctor);
 
@@ -90,21 +79,7 @@ class AiParsingServiceTest extends TestCase
             'review_notes' => '',
         ]);
 
-        OpenAI::fake([
-            CreateResponse::fake([
-                'choices' => [
-                    [
-                        'index' => 0,
-                        'message' => [
-                            'role' => 'assistant',
-                            'content' => $fakeContent,
-                        ],
-                        'logprobs' => null,
-                        'finish_reason' => 'stop',
-                    ],
-                ],
-            ]),
-        ]);
+        $this->fakeGemini($fakeContent);
 
         $result = $this->aiParsingService->parseMessage('Limpieza dental', $doctor);
 
@@ -129,21 +104,7 @@ class AiParsingServiceTest extends TestCase
             'review_notes' => '',
         ]);
 
-        OpenAI::fake([
-            CreateResponse::fake([
-                'choices' => [
-                    [
-                        'index' => 0,
-                        'message' => [
-                            'role' => 'assistant',
-                            'content' => $fakeContent,
-                        ],
-                        'logprobs' => null,
-                        'finish_reason' => 'stop',
-                    ],
-                ],
-            ]),
-        ]);
+        $this->fakeGemini($fakeContent);
 
         $result = $this->aiParsingService->parseMessage('Para Juan Perez', $doctor);
 
@@ -168,21 +129,7 @@ class AiParsingServiceTest extends TestCase
             'review_notes' => '',
         ]);
 
-        OpenAI::fake([
-            CreateResponse::fake([
-                'choices' => [
-                    [
-                        'index' => 0,
-                        'message' => [
-                            'role' => 'assistant',
-                            'content' => $fakeContent,
-                        ],
-                        'logprobs' => null,
-                        'finish_reason' => 'stop',
-                    ],
-                ],
-            ]),
-        ]);
+        $this->fakeGemini($fakeContent);
 
         $result = $this->aiParsingService->parseMessage('Limpieza para Juan Perez', $doctor);
 
@@ -196,21 +143,7 @@ class AiParsingServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        OpenAI::fake([
-            CreateResponse::fake([
-                'choices' => [
-                    [
-                        'index' => 0,
-                        'message' => [
-                            'role' => 'assistant',
-                            'content' => 'invalid json response',
-                        ],
-                        'logprobs' => null,
-                        'finish_reason' => 'stop',
-                    ],
-                ],
-            ]),
-        ]);
+        $this->fakeGemini('invalid json response');
 
         $result = $this->aiParsingService->parseMessage('Test message', $doctor);
 
@@ -218,9 +151,9 @@ class AiParsingServiceTest extends TestCase
         $this->assertStringContainsString('Error al interpretar', $result['review_notes']);
     }
 
-    public function test_parse_message_uses_local_fallback_when_openai_is_not_configured(): void
+    public function test_parse_message_uses_local_fallback_when_gemini_is_not_configured(): void
     {
-        config(['services.openai.api_key' => null]);
+        config(['services.gemini.api_key' => null]);
 
         $doctor = Professional::factory()->create([
             'role' => 'doctor',
@@ -258,7 +191,7 @@ class AiParsingServiceTest extends TestCase
 
     public function test_local_fallback_stops_patient_name_before_payment_text(): void
     {
-        config(['services.openai.api_key' => null]);
+        config(['services.gemini.api_key' => null]);
 
         $doctor = Professional::factory()->create([
             'role' => 'doctor',
@@ -285,7 +218,7 @@ class AiParsingServiceTest extends TestCase
 
     public function test_local_fallback_extracts_patient_after_a_before_payment_text(): void
     {
-        config(['services.openai.api_key' => null]);
+        config(['services.gemini.api_key' => null]);
 
         $doctor = Professional::factory()->create([
             'role' => 'doctor',
@@ -308,5 +241,33 @@ class AiParsingServiceTest extends TestCase
         $this->assertSame('Roberto Gomez', $result['patient_name']);
         $this->assertSame(['Limpieza dental'], $result['procedures']);
         $this->assertSame('efectivo', $result['payment_method']);
+    }
+
+    private function fakeGemini(string $content): void
+    {
+        Http::fake([
+            '*generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => $content],
+                            ],
+                        ],
+                    ],
+                ],
+            ]),
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => $content],
+                            ],
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
     }
 }

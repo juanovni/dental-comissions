@@ -24,9 +24,11 @@ class DoctorAssistantAssignmentResource extends Resource
 {
     protected static ?string $model = DoctorAssistantAssignment::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-link';
+    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clínica';
 
     protected static ?string $navigationLabel = 'Asignaciones';
+
+    protected static ?int $navigationSort = 8;
 
     protected static ?string $modelLabel = 'asignacion';
 

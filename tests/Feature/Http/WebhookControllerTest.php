@@ -2,15 +2,16 @@
 
 namespace Tests\Feature\Http;
 
-use App\Enums\WhatsappMessageStatus;
 use App\Models\PaymentMethod;
 use App\Models\PaymentMethodCommissionRate;
-use App\Models\Professional;
 use App\Models\Procedure;
+use App\Models\Professional;
+use App\Models\SocialAccount;
+use App\Models\SocialComment;
+use App\Models\SocialPost;
 use App\Models\WhatsappMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use OpenAI\Laravel\Facades\OpenAI;
-use OpenAI\Responses\Chat\CreateResponse;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class WebhookControllerTest extends TestCase
@@ -138,6 +139,89 @@ class WebhookControllerTest extends TestCase
         $this->assertEquals(2, WhatsappMessage::where('from_phone', '+573001112233')->count());
     }
 
+    public function test_webhook_social_tracking_token_takes_precedence_over_professional_activity_flow(): void
+    {
+        Professional::factory()->create([
+            'whatsapp_phone' => '+593985925100',
+            'role' => 'doctor',
+            'is_active' => true,
+            'can_register_via_whatsapp' => true,
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => 'instagram',
+            'account_name' => 'Clinica Dental IG',
+            'external_account_id' => 'ig_account_'.uniqid(),
+            'is_active' => true,
+        ]);
+
+        $post = SocialPost::create([
+            'social_account_id' => $account->id,
+            'platform' => 'instagram',
+            'external_post_id' => 'post_'.uniqid(),
+            'caption' => 'Limpieza dental',
+        ]);
+
+        $comment = SocialComment::create([
+            'social_account_id' => $account->id,
+            'social_post_id' => $post->id,
+            'platform' => 'instagram',
+            'external_comment_id' => 'comment_'.uniqid(),
+            'author_name' => 'Paciente Test',
+            'comment_text' => 'Me interesa esta limpieza dental',
+            'tracking_token' => 'DNT-8YIT1',
+        ]);
+
+        $payload = [
+            'object' => 'whatsapp_business_account',
+            'entry' => [
+                [
+                    'changes' => [
+                        [
+                            'field' => 'messages',
+                            'value' => [
+                                'messaging_product' => 'whatsapp',
+                                'metadata' => [
+                                    'display_phone_number' => '593000000000',
+                                    'phone_number_id' => '123456789',
+                                ],
+                                'contacts' => [
+                                    [
+                                        'profile' => ['name' => 'Paciente Test'],
+                                        'wa_id' => '593985925100',
+                                    ],
+                                ],
+                                'messages' => [
+                                    [
+                                        'from' => '593985925100',
+                                        'id' => 'wamid.social.'.uniqid(),
+                                        'timestamp' => now()->timestamp,
+                                        'type' => 'text',
+                                        'text' => [
+                                            'body' => 'Hola, vengo de redes sociales. Mi codigo es DNT-8YIT1.',
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $response = $this->postJson('/webhook/whatsapp', $payload);
+
+        $response->assertOk();
+        $response->assertJson(['status' => 'ok']);
+
+        $message = WhatsappMessage::where('from_phone', '593985925100')->first();
+
+        $this->assertNotNull($message);
+        $this->assertSame('processed', $message->status->value);
+        $this->assertDatabaseCount('activity_records', 0);
+        $this->assertNotNull($comment->refresh()->social_identity_id);
+    }
+
     public function test_test_route_works_in_testing_environment(): void
     {
         Professional::factory()->create([
@@ -168,25 +252,30 @@ class WebhookControllerTest extends TestCase
             'is_active' => true,
         ]);
 
-        OpenAI::fake([
-            CreateResponse::fake([
-                'choices' => [
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.gemini.api_key' => 'test-key',
+        ]);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
                     [
-                        'index' => 0,
-                        'message' => [
-                            'role' => 'assistant',
-                            'content' => json_encode([
-                                'patient_name' => 'Juan Perez',
-                                'procedures' => ['Limpieza dental'],
-                                'assistants' => [],
-                                'payment_method' => 'efectivo',
-                                'date' => now()->format('Y-m-d'),
-                                'needs_review' => false,
-                                'review_notes' => '',
-                            ]),
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'patient_name' => 'Juan Perez',
+                                        'procedures' => ['Limpieza dental'],
+                                        'assistants' => [],
+                                        'payment_method' => 'efectivo',
+                                        'date' => now()->format('Y-m-d'),
+                                        'needs_review' => false,
+                                        'review_notes' => '',
+                                    ]),
+                                ],
+                            ],
                         ],
-                        'logprobs' => null,
-                        'finish_reason' => 'stop',
                     ],
                 ],
             ]),
@@ -198,7 +287,7 @@ class WebhookControllerTest extends TestCase
         ]);
 
         if ($response->status() === 500) {
-            $this->fail('500 error: ' . json_encode($response->json()));
+            $this->fail('500 error: '.json_encode($response->json()));
         }
 
         $response->assertOk();
