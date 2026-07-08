@@ -67,6 +67,26 @@ class SocialPipelineAutomationService
             || $suggestedStage === SocialPipelineStage::Appointment->value
             || $score >= $this->closingThreshold()
         ) {
+            $candidate = $agentResponse['appointment_candidate'] ?? [];
+
+            $preferredDate = $candidate['preferred_date_parsed'] ?? null;
+            $preferredTime = $candidate['preferred_time_parsed'] ?? null;
+
+            if ($preferredDate) {
+                $comment->updateQuietly([
+                    'appointment_scheduled_at' => $preferredTime
+                        ? \Carbon\Carbon::parse($preferredDate . ' ' . $preferredTime)
+                        : \Carbon\Carbon::parse($preferredDate),
+                    'ai_intent' => $candidate['intent_type'] ?? $intent,
+                    'ai_confidence' => $candidate['intent_confidence'] ?? $score,
+                ]);
+            } else {
+                $comment->updateQuietly([
+                    'ai_intent' => $candidate['intent_type'] ?? $intent,
+                    'ai_confidence' => $candidate['intent_confidence'] ?? $score,
+                ]);
+            }
+
             return $this->moveTo(
                 $comment,
                 SocialPipelineStage::Appointment,
@@ -76,6 +96,10 @@ class SocialPipelineAutomationService
                     'intent' => $intent,
                     'closing_opportunity_score' => $score,
                     'suggested_pipeline_stage' => $suggestedStage,
+                    'preferred_date_parsed' => $preferredDate,
+                    'preferred_time_parsed' => $preferredTime,
+                    'intent_confidence' => $candidate['intent_confidence'] ?? null,
+                    'extraction_source' => $candidate['extraction_source'] ?? null,
                 ],
                 SocialConversionStatus::WhatsappStarted,
             );

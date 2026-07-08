@@ -79,7 +79,7 @@ return [
         'client_secret' => env('GOOGLE_OAUTH_CLIENT_SECRET'),
         'redirect_uri' => env('GOOGLE_OAUTH_REDIRECT_URI'),
         'scopes' => [
-            'https://www.googleapis.com/auth/calendar.readonly',
+            'https://www.googleapis.com/auth/calendar.events',
             'https://www.googleapis.com/auth/userinfo.email',
         ],
         'access_type' => 'offline',

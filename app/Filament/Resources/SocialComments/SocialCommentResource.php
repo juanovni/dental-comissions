@@ -501,6 +501,7 @@ class SocialCommentResource extends Resource
                     app(AppointmentCreationService::class)->createFromSocialLead($record, [
                         'patient_id' => filled($data['patient_id'] ?? null) ? (int) $data['patient_id'] : null,
                         'procedure_id' => filled($data['procedure_id'] ?? null) ? (int) $data['procedure_id'] : null,
+                        'doctor_id' => filled($data['doctor_id'] ?? null) ? (int) $data['doctor_id'] : null,
                         'scheduled_at' => $data['scheduled_at'],
                         'duration_minutes' => filled($data['duration_minutes'] ?? null) ? (int) $data['duration_minutes'] : null,
                         'status' => AppointmentStatus::from($data['status']),

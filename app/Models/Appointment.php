@@ -18,6 +18,7 @@ class Appointment extends Model
         'social_identity_id',
         'social_post_id',
         'procedure_id',
+        'doctor_id',
         'assigned_user_id',
         'scheduled_at',
         'duration_minutes',
@@ -81,6 +82,11 @@ class Appointment extends Model
         return $this->belongsTo(Procedure::class);
     }
 
+    public function doctor(): BelongsTo
+    {
+        return $this->belongsTo(Professional::class, 'doctor_id');
+    }
+
     public function assignedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id');
@@ -89,6 +95,20 @@ class Appointment extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function hasCalendarSync(): bool
+    {
+        return $this->doctor_id
+            && $this->doctor?->hasGoogleCalendar()
+            && $this->external_appointment_id !== null;
+    }
+
+    public function isSynced(): bool
+    {
+        return $this->hasCalendarSync()
+            && $this->external_status === 'active'
+            && $this->sync_error === null;
     }
 
     public function confirm(): void

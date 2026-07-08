@@ -33,6 +33,11 @@ enum SocialCommentActionType: string
     case AutoReplyFailed = 'auto_reply_failed';
     case AutoReplySkipped = 'auto_reply_skipped';
     case WhatsappClickFollowUpSent = 'whatsapp_click_follow_up_sent';
+    case BookingIntentDetected = 'booking_intent_detected';
+    case AppointmentAutoCreated = 'appointment_auto_created';
+    case BookingConfirmed = 'booking_confirmed';
+    case BookingRejected = 'booking_rejected';
+    case BookingModified = 'booking_modified';
 
     public function label(): string
     {
@@ -66,6 +71,11 @@ enum SocialCommentActionType: string
             self::AutoReplyFailed => 'Respuesta automática fallida',
             self::AutoReplySkipped => 'Respuesta automática omitida',
             self::WhatsappClickFollowUpSent => 'Seguimiento por clic WhatsApp sin mensaje',
+            self::BookingIntentDetected => 'Intención de agendamiento detectada',
+            self::AppointmentAutoCreated => 'Cita creada automáticamente',
+            self::BookingConfirmed => 'Cita confirmada por lead',
+            self::BookingRejected => 'Cita rechazada por lead',
+            self::BookingModified => 'Cita modificada por lead',
         };
     }
 }

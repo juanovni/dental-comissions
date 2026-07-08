@@ -31,4 +31,19 @@ class ProfessionalFactory extends Factory
     {
         return $this->state(fn (array $attributes) => ['role' => 'assistant']);
     }
+
+    public function withGoogleCalendar(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'google_calendar_enabled' => true,
+            'google_calendar_email' => fake()->email(),
+            'google_calendar_token' => encrypt(json_encode([
+                'access_token' => 'test-token',
+                'refresh_token' => 'test-refresh',
+                'expires_in' => 3600,
+                'created' => now()->timestamp,
+            ])),
+            'google_calendar_token_expires_at' => now()->addHour(),
+        ]);
+    }
 }

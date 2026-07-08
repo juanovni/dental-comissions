@@ -12,6 +12,7 @@ use App\Enums\SocialPlatform;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Procedure;
+use App\Models\Professional;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
@@ -29,14 +30,16 @@ class AppointmentCreationServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $patient = Patient::factory()->create();
+        $doctor = Professional::factory()->doctor()->create();
         $procedure = Procedure::factory()->create(['name' => 'Implantes dentales']);
         [$comment, $identity, $post] = $this->socialLead([
             'patient_id' => $patient->id,
             'suggested_procedure_id' => $procedure->id,
+            'suggested_doctor_id' => $doctor->id,
         ]);
 
         $appointment = app(AppointmentCreationService::class)->createFromSocialLead($comment, [
-            'scheduled_at' => now()->addDay()->setSecond(0),
+            'scheduled_at' => now()->addDay()->setTime(10, 0),
             'duration_minutes' => 60,
             'status' => AppointmentStatus::Scheduled,
             'source' => AppointmentSource::WhatsappAi,
@@ -51,6 +54,7 @@ class AppointmentCreationServiceTest extends TestCase
         $this->assertSame($identity->id, $appointment->social_identity_id);
         $this->assertSame($post->id, $appointment->social_post_id);
         $this->assertSame($procedure->id, $appointment->procedure_id);
+        $this->assertSame($doctor->id, $appointment->doctor_id);
         $this->assertSame(AppointmentStatus::Scheduled, $appointment->status);
         $this->assertSame(AppointmentSource::WhatsappAi, $appointment->source);
 
@@ -115,6 +119,7 @@ class AppointmentCreationServiceTest extends TestCase
             'social_identity_id' => $identity->id,
             'social_post_id' => $post->id,
             'suggested_procedure_id' => $overrides['suggested_procedure_id'] ?? null,
+            'suggested_doctor_id' => $overrides['suggested_doctor_id'] ?? null,
             'platform' => SocialPlatform::Instagram,
             'external_comment_id' => 'comment_'.uniqid(),
             'author_name' => 'Paciente Test',

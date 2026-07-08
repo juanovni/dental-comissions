@@ -6,6 +6,7 @@ use App\Enums\ProfessionalRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Crypt;
 
 class Professional extends Model
@@ -77,6 +78,11 @@ class Professional extends Model
             'doctor_id',
             'assistant_id',
         )->withPivot(['is_active', 'starts_at', 'ends_at'])->withTimestamps();
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id');
     }
 
     public function assignedDoctors(): BelongsToMany

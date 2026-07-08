@@ -69,7 +69,43 @@ class WhatsappService
             $socialComment = $socialConversionService->processIncomingMessage($whatsappMessage);
 
             if ($socialComment) {
+                $pendingAppointment = $socialComment->appointments()
+                    ->whereIn('status', [
+                        \App\Enums\AppointmentStatus::PendingConfirmation,
+                        \App\Enums\AppointmentStatus::Scheduled,
+                        \App\Enums\AppointmentStatus::Confirmed,
+                        \App\Enums\AppointmentStatus::Rescheduled,
+                    ])
+                    ->whereNotNull('scheduled_at')
+                    ->latest('id')
+                    ->first();
+
+                if ($pendingAppointment) {
+                    $bookingResult = app(\App\Services\BookingConfirmationService::class)
+                        ->handleMessage($socialComment, $whatsappMessage, $pendingAppointment);
+
+                    $whatsappMessage->markAsProcessed();
+                    $this->sendMessage($fromPhone, $bookingResult['reply']);
+
+                    return $whatsappMessage;
+                }
+
                 $agentResponse = app(WhatsappSalesAgentService::class)->respond($socialComment, $whatsappMessage);
+
+                $socialComment->actions()->create([
+                    'action' => \App\Enums\SocialCommentActionType::WhatsappSalesAgent,
+                    'performed_by' => null,
+                    'notes' => 'Respuesta generada por agente comercial WhatsApp.',
+                    'external_response' => [
+                        'intent' => $agentResponse['intent'] ?? null,
+                        'closing_opportunity_score' => $agentResponse['closing_opportunity_score'] ?? null,
+                        'requires_human_handoff' => $agentResponse['requires_human_handoff'] ?? false,
+                    ],
+                ]);
+
+                app(SocialPipelineAutomationService::class)->applyAgentResponse($socialComment, $agentResponse);
+
+                app(AutoAppointmentService::class)->createFromDetectedIntent($socialComment, $agentResponse);
 
                 $whatsappMessage->markAsProcessed();
                 $this->sendMessage($fromPhone, $agentResponse['reply']);
@@ -100,7 +136,44 @@ class WhatsappService
             $existingLead = $socialConversionService->findLeadByPhone($fromPhone);
 
             if ($existingLead) {
+                $pendingAppointment = $existingLead->appointments()
+                    ->whereIn('status', [
+                        \App\Enums\AppointmentStatus::PendingConfirmation,
+                        \App\Enums\AppointmentStatus::Scheduled,
+                        \App\Enums\AppointmentStatus::Confirmed,
+                        \App\Enums\AppointmentStatus::Rescheduled,
+                    ])
+                    ->whereNotNull('scheduled_at')
+                    ->latest('id')
+                    ->first();
+
+                if ($pendingAppointment) {
+                    $bookingResult = app(\App\Services\BookingConfirmationService::class)
+                        ->handleMessage($existingLead, $whatsappMessage, $pendingAppointment);
+
+                    $whatsappMessage->markAsProcessed();
+                    $this->sendMessage($fromPhone, $bookingResult['reply']);
+
+                    return $whatsappMessage;
+                }
+
                 $agentResponse = app(WhatsappSalesAgentService::class)->respond($existingLead, $whatsappMessage);
+
+                $existingLead->actions()->create([
+                    'action' => \App\Enums\SocialCommentActionType::WhatsappSalesAgent,
+                    'performed_by' => null,
+                    'notes' => 'Respuesta generada por agente comercial WhatsApp.',
+                    'external_response' => [
+                        'intent' => $agentResponse['intent'] ?? null,
+                        'closing_opportunity_score' => $agentResponse['closing_opportunity_score'] ?? null,
+                        'requires_human_handoff' => $agentResponse['requires_human_handoff'] ?? false,
+                    ],
+                ]);
+
+                app(SocialPipelineAutomationService::class)->applyAgentResponse($existingLead, $agentResponse);
+
+                app(AutoAppointmentService::class)->createFromDetectedIntent($existingLead, $agentResponse);
+
                 $whatsappMessage->markAsProcessed();
                 $this->sendMessage($fromPhone, $agentResponse['reply']);
 
@@ -145,6 +218,7 @@ class WhatsappService
             Log::error('Error procesando mensaje WhatsApp', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile().':'.$e->getLine(),
+                'trace' => $e->getTraceAsString(),
                 'payload' => $payload,
             ]);
 

@@ -58,13 +58,7 @@ class AppointmentAvailabilityService
 
             $slotEnd = $cursor->copy()->addMinutes($duration);
 
-            $existing = Appointment::where('scheduled_at', '>=', $cursor)
-                ->where('scheduled_at', '<', $slotEnd)
-                ->whereNotIn('status', [
-                    AppointmentStatus::Cancelled->value,
-                    AppointmentStatus::NoShow->value,
-                ])
-                ->exists();
+            $existing = $this->hasAppointmentConflict(null, $cursor, $slotEnd);
 
             if (! $existing) {
                 $slots[] = $cursor->copy();
@@ -137,13 +131,7 @@ class AppointmentAvailabilityService
                 $slotStart = $cursor->copy();
                 $slotEnd = $cursor->copy()->addMinutes($duration);
 
-                $existing = Appointment::where('scheduled_at', '>=', $slotStart)
-                    ->where('scheduled_at', '<', $slotEnd)
-                    ->whereNotIn('status', [
-                        AppointmentStatus::Cancelled->value,
-                        AppointmentStatus::NoShow->value,
-                    ])
-                    ->exists();
+                $existing = $this->hasAppointmentConflict($professional->id, $slotStart, $slotEnd);
 
                 $googleAvailable = true;
                 if ($googleService && !$existing) {
@@ -154,7 +142,7 @@ class AppointmentAvailabilityService
                     );
                 }
 
-                if (!$existing && $googleAvailable) {
+                if (! $existing && $googleAvailable) {
                     $daySlots[] = $slotStart;
                 }
 
@@ -166,6 +154,39 @@ class AppointmentAvailabilityService
         }
 
         return array_slice($slots, 0, $count);
+    }
+
+    public function isSlotAvailableForDoctor(Professional $doctor, Carbon $start, Carbon $end): bool
+    {
+        $settings = app(SocialCrmSettingsService::class);
+        $clinicDays = $settings->appointmentClinicDays();
+
+        if ($start->lessThan(now()->addHours($settings->appointmentLeadTimeHours()))) {
+            return false;
+        }
+
+        if (! in_array((int) $start->format('w'), $clinicDays, true)) {
+            return false;
+        }
+
+        $openMinutes = $this->timeToMinutes($settings->appointmentClinicOpen());
+        $closeMinutes = $this->timeToMinutes($settings->appointmentClinicClose());
+        $startMinutes = $start->hour * 60 + $start->minute;
+        $endMinutes = $end->hour * 60 + $end->minute;
+
+        if (! $start->isSameDay($end) || $startMinutes < $openMinutes || $endMinutes > $closeMinutes) {
+            return false;
+        }
+
+        if ($this->hasAppointmentConflict($doctor->id, $start, $end)) {
+            return false;
+        }
+
+        if ($doctor->hasGoogleCalendar()) {
+            return app(GoogleCalendarService::class)->isSlotAvailable($doctor, $start, $end);
+        }
+
+        return true;
     }
 
     public function formatSlotsForPrompt(array $slots): string
@@ -198,5 +219,32 @@ class AppointmentAvailabilityService
         $parts = explode(':', $time);
 
         return ((int) ($parts[0] ?? 0)) * 60 + ((int) ($parts[1] ?? 0));
+    }
+
+    private function hasAppointmentConflict(?int $doctorId, Carbon $start, Carbon $end): bool
+    {
+        $defaultDuration = app(SocialCrmSettingsService::class)->appointmentSlotDuration();
+
+        $query = Appointment::query()
+            ->whereNotNull('scheduled_at')
+            ->where('scheduled_at', '<', $end)
+            ->whereNotIn('status', [
+                AppointmentStatus::Cancelled->value,
+                AppointmentStatus::NoShow->value,
+            ]);
+
+        if ($doctorId) {
+            $query->where('doctor_id', $doctorId);
+        }
+
+        return $query->get(['scheduled_at', 'duration_minutes'])
+            ->contains(function (Appointment $appointment) use ($start, $end, $defaultDuration): bool {
+                $appointmentStart = $appointment->scheduled_at;
+                $appointmentEnd = $appointmentStart->copy()->addMinutes(
+                    $appointment->duration_minutes ?: $defaultDuration,
+                );
+
+                return $start->lessThan($appointmentEnd) && $end->greaterThan($appointmentStart);
+            });
     }
 }

@@ -85,6 +85,67 @@ class AppointmentAvailabilityServiceTest extends TestCase
         $this->assertCount(3, $slots);
     }
 
+    public function test_next_available_slots_for_doctor_excludes_own_appointments_only(): void
+    {
+        $doctor = Professional::factory()->doctor()->create();
+        $otherDoctor = Professional::factory()->doctor()->create();
+
+        $slot = $this->service->nextAvailableSlotsForDoctor($doctor, 1)[0];
+
+        Appointment::create([
+            'doctor_id' => $otherDoctor->id,
+            'scheduled_at' => $slot,
+            'duration_minutes' => 45,
+            'status' => 'scheduled',
+            'source' => 'admin_manual',
+        ]);
+
+        $slots = $this->service->nextAvailableSlotsForDoctor($doctor, 3);
+
+        $this->assertContains($slot->timestamp, collect($slots)->map->timestamp->all());
+
+        Appointment::create([
+            'doctor_id' => $doctor->id,
+            'scheduled_at' => $slot,
+            'duration_minutes' => 45,
+            'status' => 'scheduled',
+            'source' => 'admin_manual',
+        ]);
+
+        $slots = $this->service->nextAvailableSlotsForDoctor($doctor, 3);
+
+        $this->assertNotContains($slot->timestamp, collect($slots)->map->timestamp->all());
+    }
+
+    public function test_is_slot_available_for_doctor_detects_conflicts_by_doctor(): void
+    {
+        $doctor = Professional::factory()->doctor()->create();
+        $otherDoctor = Professional::factory()->doctor()->create();
+
+        $slot = $this->service->nextAvailableSlotsForDoctor($doctor, 1)[0];
+        $slotEnd = $slot->copy()->addMinutes(45);
+
+        Appointment::create([
+            'doctor_id' => $otherDoctor->id,
+            'scheduled_at' => $slot,
+            'duration_minutes' => 45,
+            'status' => 'scheduled',
+            'source' => 'admin_manual',
+        ]);
+
+        $this->assertTrue($this->service->isSlotAvailableForDoctor($doctor, $slot, $slotEnd));
+
+        Appointment::create([
+            'doctor_id' => $doctor->id,
+            'scheduled_at' => $slot,
+            'duration_minutes' => 45,
+            'status' => 'scheduled',
+            'source' => 'admin_manual',
+        ]);
+
+        $this->assertFalse($this->service->isSlotAvailableForDoctor($doctor, $slot, $slotEnd));
+    }
+
     public function test_next_available_slots_for_doctor_filters_by_google_calendar(): void
     {
         $token = [

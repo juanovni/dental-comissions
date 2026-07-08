@@ -24,59 +24,11 @@ class WhatsappSalesAgentService
 
         $localReply = $this->buildFallbackReply($leadContext);
 
+        if ($this->isReadyToBookLocally($message->message_body ?? '', $leadContext)) {
+            return $this->buildReadyToBookResponse($comment, $message, $leadContext);
+        }
+
         if (config('services.ai.provider') === 'local') {
-            $closedLeadTexts = [
-                'Quiero agendar una cita',
-                'Quiero agendar',
-                'Agendame',
-                'Quiero una cita',
-                'Quiero reservar',
-            ];
-
-            $closingKeywords = [
-                'agendar', 'cita', 'reservar', 'programar', 'booking',
-                'schedule appointment',
-            ];
-
-            $body = mb_strtolower($message->message_body ?? '');
-            $isReadyToBook = false;
-            foreach ($closingKeywords as $keyword) {
-                if (str_contains($body, mb_strtolower($keyword))) {
-                    $isReadyToBook = true;
-                    break;
-                }
-            }
-
-            if ($isReadyToBook) {
-                $appointmentSlots = $this->resolveAppointmentSlots($comment);
-
-                $reply = $this->formatReadyToBookReply($leadContext, $appointmentSlots);
-
-                $response = [
-                    'source' => 'fallback',
-                    'reply' => $reply['text'],
-                    'intent' => 'appointment_interest',
-                    'closing_opportunity_score' => $reply['score'],
-                    'requires_human_handoff' => $reply['requires_handoff'],
-                    'handoff_reason' => $reply['handoff_reason'],
-                    'suggested_pipeline_stage' => 'appointment',
-                    'clinical_safety_flag' => false,
-                    'appointment_candidate' => [
-                        'wants_appointment' => true,
-                        'preferred_date_text' => null,
-                        'preferred_time_text' => null,
-                    ],
-                ];
-
-                $this->persistAiResponse($message, $response);
-
-                if ($response['closing_opportunity_score'] >= 70) {
-                    event(new ClosingOpportunityDetected($comment, $response));
-                }
-
-                return $response;
-            }
-
             $response = [
                 'source' => 'fallback',
                 'reply' => $localReply,
@@ -119,6 +71,23 @@ class WhatsappSalesAgentService
                 ],
             ];
 
+            $intentResult = app(AppointmentIntentService::class)->analyze(
+                $comment, $message,
+                $response['intent'],
+                $response['appointment_candidate'],
+            );
+
+            $response['appointment_candidate'] = array_merge(
+                $response['appointment_candidate'],
+                [
+                    'preferred_date_parsed' => $intentResult['preferred_date_parsed'],
+                    'preferred_time_parsed' => $intentResult['preferred_time_parsed'],
+                    'intent_confidence' => $intentResult['confidence'],
+                    'intent_type' => $intentResult['intent_type'],
+                    'extraction_source' => $intentResult['extraction_source'],
+                ],
+            );
+
             $this->persistAiResponse($message, $response);
 
             if ($closingScore >= 70) {
@@ -158,6 +127,79 @@ class WhatsappSalesAgentService
         return $fallbackResponse;
     }
 
+    private function isReadyToBookLocally(string $body, array $leadContext): bool
+    {
+        $normalized = str_replace(
+            ['á', 'é', 'í', 'ó', 'ú', 'ü'],
+            ['a', 'e', 'i', 'o', 'u', 'u'],
+            mb_strtolower(trim($body)),
+        );
+
+        foreach (['agendar', 'cita', 'reservar', 'programar', 'booking', 'schedule appointment'] as $keyword) {
+            if (str_contains($normalized, $keyword)) {
+                return true;
+            }
+        }
+
+        if (($leadContext['etapa_embudo'] ?? null) !== SocialPipelineStage::Appointment->value) {
+            return false;
+        }
+
+        $affirmatives = [
+            'si', 'si por favor', 'sí', 'sí por favor', 'ok', 'dale', 'claro',
+            'de acuerdo', 'perfecto', 'quiero', 'si quiero', 'me interesa',
+        ];
+
+        return in_array($normalized, $affirmatives, true)
+            || str_starts_with($normalized, 'si ')
+            || str_starts_with($normalized, 'sí ');
+    }
+
+    private function buildReadyToBookResponse(
+        SocialComment $comment,
+        WhatsappMessage $message,
+        array $leadContext,
+    ): array {
+        $intentResult = app(AppointmentIntentService::class)->analyze(
+            $comment,
+            $message,
+            'appointment_interest',
+            ['wants_appointment' => true, 'preferred_date_text' => null, 'preferred_time_text' => null],
+        );
+
+        $appointmentSlots = $this->resolveAppointmentSlots($comment);
+        $reply = $this->formatReadyToBookReply($leadContext, $appointmentSlots);
+
+        $response = [
+            'source' => 'fallback',
+            'reply' => $reply['text'],
+            'intent' => 'appointment_interest',
+            'closing_opportunity_score' => $reply['score'],
+            'requires_human_handoff' => $reply['requires_handoff'],
+            'handoff_reason' => $reply['handoff_reason'],
+            'suggested_pipeline_stage' => 'appointment',
+            'clinical_safety_flag' => false,
+            'appointment_candidate' => [
+                'wants_appointment' => true,
+                'preferred_date_text' => $intentResult['preferred_date_text'],
+                'preferred_time_text' => $intentResult['preferred_time_text'],
+                'preferred_date_parsed' => $intentResult['preferred_date_parsed'],
+                'preferred_time_parsed' => $intentResult['preferred_time_parsed'],
+                'intent_confidence' => $intentResult['confidence'],
+                'intent_type' => $intentResult['intent_type'],
+                'extraction_source' => $intentResult['extraction_source'],
+            ],
+        ];
+
+        $this->persistAiResponse($message, $response);
+
+        if ($response['closing_opportunity_score'] >= 70) {
+            event(new ClosingOpportunityDetected($comment, $response));
+        }
+
+        return $response;
+    }
+
     public function buildLeadContext(SocialComment $comment, WhatsappMessage $message): array
     {
         $procedure = $comment->suggestedProcedure;
@@ -170,7 +212,7 @@ class WhatsappSalesAgentService
             'costo_procedimiento' => $procedure?->base_cost ?? 'No disponible',
             'mensaje_usuario' => $message->message_body ?? '',
             'historial_conversacion' => $this->buildRecentHistory($comment, $message),
-            'etapa_embudo' => $comment->pipeline_stage ?? 'lead',
+            'etapa_embudo' => $comment->pipeline_stage?->value ?? 'lead',
             'tiene_cita_agendada' => !is_null($comment->appointment_scheduled_at),
             'cita_agendada' => $comment->appointment_scheduled_at?->format('d/m/Y H:i'),
         ];
@@ -221,7 +263,7 @@ class WhatsappSalesAgentService
         $history = [];
         foreach ($recentMessages as $msg) {
             $history[] = [
-                'role' => $msg->direction->value === 'inbound' ? 'user' : 'assistant',
+                'role' => $msg->direction->value === 'incoming' ? 'user' : 'assistant',
                 'content' => $msg->message_body,
                 'timestamp' => $msg->created_at->toIso8601String(),
             ];
@@ -303,6 +345,27 @@ class WhatsappSalesAgentService
         $tieneCita = $context['tiene_cita_agendada'] ? 'Si' : 'No';
         $citaAgendada = $context['cita_agendada'] ?: 'N/A';
 
+        $bookingInstruction = '';
+        if ($context['tiene_cita_agendada']) {
+            $bookingInstruction = <<<BOOKING
+
+INSTRUCCION ADICIONAL - RESPUESTA A PROPUESTA DE CITA:
+El paciente tiene una cita PENDIENTE. Clasifica si su mensaje responde a la propuesta de cita:
+- "confirmed": el paciente ACEPTA la cita (dice si, ok, confirmo, dale, esta bien, etc.)
+- "rejected": el paciente RECHAZA la cita (dice no, no quiero, cancelalo, etc.)
+- "modified": el paciente pide CAMBIAR fecha/hora (menciona otro dia, otra hora, etc.)
+- "propose_alternatives": el paciente pide otras opciones de horario
+- null: el mensaje NO es una respuesta directa a la propuesta de cita (sigue preguntando, saluda, etc.)
+
+Incluye el campo "booking_response" en tu JSON con uno de esos valores.
+BOOKING;
+        }
+
+        $bookingField = $context['tiene_cita_agendada']
+            ? ',
+    "booking_response": null'
+            : '';
+
         return <<<PROMPT
 Eres un asistente de ventas para una clinica dental. Debes responder preguntas sobre procedimientos dentales y ayudar a agendar citas.
 Importante: NUNCA debes proporcionar diagnosticos clinicos ni recomendar tratamientos especificos. Siempre debes sugerir una valoracion presencial con un especialista.
@@ -320,7 +383,7 @@ Mensaje del paciente: {$context['mensaje_usuario']}
 
 Historial de la conversacion:
 {$history}
-
+{$bookingInstruction}
 Responde SOLO con un JSON valido con esta estructura exacta:
 {
     "reply": "tu respuesta amigable y profesional aqui",
@@ -334,7 +397,7 @@ Responde SOLO con un JSON valido con esta estructura exacta:
         "wants_appointment": false,
         "preferred_date_text": null,
         "preferred_time_text": null
-    }
+    }{$bookingField}
 }
 
 NO incluyas markdown ni bloques de codigo. Solo el JSON.

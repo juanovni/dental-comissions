@@ -217,8 +217,8 @@
         <div class="gcal-hero">
             <p class="gcal-kicker">Google Calendar</p>
             <p class="gcal-subtitle">
-                Conecta la cuenta de Google de cada doctor para consultar disponibilidad de horarios y evitar agendamientos conflictivos.
-                Se requiere autorización individual con alcance de solo lectura.
+                Conecta la cuenta de Google de cada doctor para consultar disponibilidad, crear y actualizar eventos automáticamente.
+                <strong>Importante:</strong> Las conexiones creadas antes del 7-Jul-2026 deben reconectarse para habilitar escritura en el calendario.
             </p>
         </div>
 

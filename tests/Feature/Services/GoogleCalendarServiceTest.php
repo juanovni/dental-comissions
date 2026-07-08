@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Services;
 
+use App\Enums\AppointmentStatus;
+use App\Models\Appointment;
+use App\Models\Patient;
 use App\Models\Professional;
 use App\Services\GoogleCalendarService;
 use Carbon\Carbon;
@@ -31,7 +34,7 @@ class GoogleCalendarServiceTest extends TestCase
                 'client_secret' => 'test-client-secret',
                 'redirect_uri' => 'https://example.com/admin/integrations/google-calendar/callback',
                 'scopes' => [
-                    'https://www.googleapis.com/auth/calendar.readonly',
+                    'https://www.googleapis.com/auth/calendar.events',
                     'https://www.googleapis.com/auth/userinfo.email',
                 ],
                 'access_type' => 'offline',
@@ -342,5 +345,237 @@ class GoogleCalendarServiceTest extends TestCase
         $this->assertFalse($professional->google_calendar_enabled);
         $this->assertNull($professional->google_calendar_token);
         $this->assertNull($professional->google_calendar_email);
+    }
+
+    public function test_build_calendar_event_sets_summary_and_times(): void
+    {
+        $patient = Patient::factory()->create(['full_name' => 'Juan Perez']);
+        $appointment = Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'scheduled_at' => now()->addDay()->setHour(10)->setMinute(0),
+            'duration_minutes' => 60,
+        ]);
+
+        $event = $this->service->buildCalendarEvent($appointment);
+
+        $this->assertStringContainsString('Juan Perez', $event->getSummary());
+        $this->assertSame(
+            $appointment->scheduled_at->toRfc3339String(),
+            $event->getStart()->getDateTime(),
+        );
+
+        $expectedEnd = $appointment->scheduled_at->copy()->addMinutes(60);
+        $this->assertSame(
+            $expectedEnd->toRfc3339String(),
+            $event->getEnd()->getDateTime(),
+        );
+    }
+
+    public function test_create_or_update_event_creates_new_when_no_external_id(): void
+    {
+        $appointment = Appointment::factory()->withDoctorWithCalendar()->create([
+            'scheduled_at' => now()->addDay()->setHour(10)->setMinute(0),
+            'external_appointment_id' => null,
+        ]);
+
+        $createdEvent = new CalendarEvent();
+        $createdEvent->setId('test-event-id-123');
+
+        $calendarId = $appointment->doctor->google_calendar_email;
+
+        $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
+        $eventsResource->method('insert')
+            ->with($calendarId, $this->isInstanceOf(CalendarEvent::class))
+            ->willReturn($createdEvent);
+
+        $service = $this->getMockBuilder($this->service::class)
+            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->getMock();
+
+        $service->method('clientForProfessional')
+            ->willReturn($this->createMock(GoogleClient::class));
+
+        $service->method('makeCalendarService')
+            ->willReturnCallback(function ($client) use ($eventsResource) {
+                $calendar = new GoogleCalendar($client);
+                $calendar->events = $eventsResource;
+                return $calendar;
+            });
+
+        $result = $this->callPrivateMethod($service, 'createOrUpdateEvent', $appointment);
+
+        $this->assertSame('test-event-id-123', $result);
+
+        $appointment->refresh();
+        $this->assertSame('test-event-id-123', $appointment->external_appointment_id);
+        $this->assertSame('active', $appointment->external_status);
+        $this->assertNotNull($appointment->last_synced_at);
+        $this->assertNull($appointment->sync_error);
+    }
+
+    public function test_create_or_update_event_updates_when_external_id_exists(): void
+    {
+        $appointment = Appointment::factory()->withDoctorWithCalendar()->create([
+            'scheduled_at' => now()->addDay()->setHour(10)->setMinute(0),
+            'external_appointment_id' => 'existing-event-id',
+            'external_provider' => 'google_calendar',
+        ]);
+
+        $updatedEvent = new CalendarEvent();
+        $updatedEvent->setId('existing-event-id');
+
+        $calendarId = $appointment->doctor->google_calendar_email;
+
+        $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
+        $eventsResource->method('update')
+            ->with($calendarId, 'existing-event-id', $this->isInstanceOf(CalendarEvent::class))
+            ->willReturn($updatedEvent);
+
+        $service = $this->getMockBuilder($this->service::class)
+            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->getMock();
+
+        $service->method('clientForProfessional')
+            ->willReturn($this->createMock(GoogleClient::class));
+
+        $service->method('makeCalendarService')
+            ->willReturnCallback(function ($client) use ($eventsResource) {
+                $calendar = new GoogleCalendar($client);
+                $calendar->events = $eventsResource;
+                return $calendar;
+            });
+
+        $result = $this->callPrivateMethod($service, 'createOrUpdateEvent', $appointment);
+
+        $this->assertSame('existing-event-id', $result);
+        $appointment->refresh();
+        $this->assertSame('existing-event-id', $appointment->external_appointment_id);
+    }
+
+    public function test_delete_event_removes_from_calendar_and_clears_fields(): void
+    {
+        $appointment = Appointment::factory()->withDoctorWithCalendar()->create([
+            'scheduled_at' => now()->addDay()->setHour(10)->setMinute(0),
+            'external_appointment_id' => 'event-to-delete',
+        ]);
+
+        $calendarId = $appointment->doctor->google_calendar_email;
+
+        $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
+        $eventsResource->method('delete')
+            ->with($calendarId, 'event-to-delete');
+
+        $service = $this->getMockBuilder($this->service::class)
+            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->getMock();
+
+        $service->method('clientForProfessional')
+            ->willReturn($this->createMock(GoogleClient::class));
+
+        $service->method('makeCalendarService')
+            ->willReturnCallback(function ($client) use ($eventsResource) {
+                $calendar = new GoogleCalendar($client);
+                $calendar->events = $eventsResource;
+                return $calendar;
+            });
+
+        $result = $this->callPrivateMethod($service, 'deleteEvent', $appointment);
+
+        $this->assertTrue($result);
+        $appointment->refresh();
+        $this->assertNull($appointment->external_appointment_id);
+        $this->assertSame('deleted', $appointment->external_status);
+    }
+
+    public function test_delete_event_noop_when_no_external_id(): void
+    {
+        $appointment = Appointment::factory()->create([
+            'external_appointment_id' => null,
+        ]);
+
+        $result = $this->service->deleteEvent($appointment);
+
+        $this->assertTrue($result);
+    }
+
+    public function test_sync_appointment_creates_event_for_scheduled(): void
+    {
+        $createdEvent = new CalendarEvent();
+        $createdEvent->setId('test-event-sync');
+
+        $appointment = Appointment::factory()->withDoctorWithCalendar()->create([
+            'scheduled_at' => now()->addDay()->setHour(10)->setMinute(0),
+            'status' => AppointmentStatus::Scheduled,
+            'external_appointment_id' => null,
+        ]);
+
+        $calendarId = $appointment->doctor->google_calendar_email;
+
+        $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
+        $eventsResource->method('insert')
+            ->with($calendarId, $this->isInstanceOf(CalendarEvent::class))
+            ->willReturn($createdEvent);
+
+        $service = $this->getMockBuilder($this->service::class)
+            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->getMock();
+
+        $service->method('clientForProfessional')
+            ->willReturn($this->createMock(GoogleClient::class));
+
+        $service->method('makeCalendarService')
+            ->willReturnCallback(function ($client) use ($eventsResource) {
+                $calendar = new GoogleCalendar($client);
+                $calendar->events = $eventsResource;
+                return $calendar;
+            });
+
+        $result = $this->callPrivateMethod($service, 'syncAppointment', $appointment);
+
+        $appointment->refresh();
+        $this->assertNotNull($appointment->external_appointment_id);
+        $this->assertNotNull($result);
+    }
+
+    public function test_sync_appointment_deletes_event_for_cancelled(): void
+    {
+        $appointment = Appointment::factory()->withDoctorWithCalendar()->create([
+            'status' => AppointmentStatus::Cancelled,
+            'external_appointment_id' => 'event-to-delete',
+        ]);
+
+        $calendarId = $appointment->doctor->google_calendar_email;
+
+        $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
+        $eventsResource->method('delete')
+            ->with($calendarId, 'event-to-delete');
+
+        $service = $this->getMockBuilder($this->service::class)
+            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->getMock();
+
+        $service->method('clientForProfessional')
+            ->willReturn($this->createMock(GoogleClient::class));
+
+        $service->method('makeCalendarService')
+            ->willReturnCallback(function ($client) use ($eventsResource) {
+                $calendar = new GoogleCalendar($client);
+                $calendar->events = $eventsResource;
+                return $calendar;
+            });
+
+        $result = $this->callPrivateMethod($service, 'syncAppointment', $appointment);
+
+        $this->assertNull($result);
+        $appointment->refresh();
+        $this->assertNull($appointment->external_appointment_id);
+        $this->assertSame('deleted', $appointment->external_status);
+    }
+
+    private function callPrivateMethod(object $object, string $method, ...$args): mixed
+    {
+        $reflection = new \ReflectionMethod($object, $method);
+        $reflection->setAccessible(true);
+        return $reflection->invoke($object, ...$args);
     }
 }

@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\AppointmentStatus;
+use App\Models\Appointment;
 use App\Models\Professional;
 use Carbon\Carbon;
 use Google\Client as GoogleClient;
 use Google\Service\Calendar as GoogleCalendar;
+use Google\Service\Calendar\Event as CalendarEvent;
+use Google\Service\Calendar\EventDateTime;
 use Google\Service\Oauth2 as GoogleOAuth2;
 use Illuminate\Support\Facades\Log;
 
@@ -184,7 +188,7 @@ class GoogleCalendarService
                 return [];
             }
 
-            $service = new GoogleCalendar($client);
+            $service = $this->makeCalendarService($client);
             $calendarId = $professional->google_calendar_email ?? 'primary';
 
             $optParams = [
@@ -275,5 +279,185 @@ class GoogleCalendarService
         }
 
         return $slots;
+    }
+
+    public function buildCalendarEvent(Appointment $appointment): CalendarEvent
+    {
+        $event = new CalendarEvent();
+        $event->setSummary('Cita: ' . ($appointment->patient?->full_name ?? 'Pendiente'));
+        $event->setDescription($this->buildEventDescription($appointment));
+
+        $start = new EventDateTime();
+        $start->setDateTime($appointment->scheduled_at->toRfc3339String());
+        $start->setTimeZone($appointment->scheduled_at->getTimezone()->getName());
+        $event->setStart($start);
+
+        $end = new EventDateTime();
+        $endAt = $appointment->scheduled_at->copy()->addMinutes($appointment->duration_minutes ?? 60);
+        $end->setDateTime($endAt->toRfc3339String());
+        $end->setTimeZone($endAt->getTimezone()->getName());
+        $event->setEnd($end);
+
+        if ($appointment->procedure_id) {
+            $event->setDescription(($event->getDescription() ?? '') . "\nProcedimiento: " . ($appointment->procedure?->name ?? ''));
+        }
+
+        return $event;
+    }
+
+    private function buildEventDescription(Appointment $appointment): string
+    {
+        $lines = [];
+        $lines[] = 'Cita #' . $appointment->id;
+        $lines[] = 'Paciente: ' . ($appointment->patient?->full_name ?? 'Por asignar');
+        $lines[] = 'Teléfono: ' . ($appointment->patient?->phone ?? 'N/A');
+
+        if ($appointment->procedure) {
+            $lines[] = 'Procedimiento: ' . $appointment->procedure->name;
+        }
+
+        if ($appointment->notes) {
+            $lines[] = 'Notas: ' . $appointment->notes;
+        }
+
+        $lines[] = 'Origen: ' . ($appointment->source?->label() ?? 'N/A');
+        $lines[] = 'Estado: ' . ($appointment->status?->label() ?? 'N/A');
+
+        return implode("\n", $lines);
+    }
+
+    public function createOrUpdateEvent(Appointment $appointment): ?string
+    {
+        try {
+            $professional = $appointment->doctor;
+            if (!$professional?->hasGoogleCalendar()) {
+                Log::info('Sin Google Calendar configurado para doctor', [
+                    'doctor_id' => $professional?->id,
+                    'appointment_id' => $appointment->id,
+                ]);
+                return null;
+            }
+
+            $client = $this->clientForProfessional($professional);
+            if (!$client) {
+                Log::warning('Sin cliente OAuth para doctor', [
+                    'doctor_id' => $professional->id,
+                ]);
+                return null;
+            }
+
+            $service = $this->makeCalendarService($client);
+            $calendarId = $professional->google_calendar_email ?? 'primary';
+
+            $event = $this->buildCalendarEvent($appointment);
+
+            if ($appointment->external_appointment_id) {
+                $updated = $service->events->update($calendarId, $appointment->external_appointment_id, $event);
+                $eventId = $updated->getId();
+            } else {
+                $created = $service->events->insert($calendarId, $event);
+                $eventId = $created->getId();
+            }
+
+            if (!$eventId) {
+                Log::warning('Evento de Google Calendar no devolvió ID', [
+                    'appointment_id' => $appointment->id,
+                ]);
+                return null;
+            }
+
+            $appointment->updateQuietly([
+                'external_appointment_id' => $eventId,
+                'external_calendar_id' => $calendarId,
+                'external_provider' => 'google_calendar',
+                'external_status' => 'active',
+                'last_synced_at' => now(),
+                'sync_error' => null,
+            ]);
+
+            return $eventId;
+        } catch (\Throwable $e) {
+            Log::error('Error sincronizando cita con Google Calendar', [
+                'appointment_id' => $appointment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $appointment->updateQuietly([
+                'external_status' => 'sync_error',
+                'sync_error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    public function deleteEvent(Appointment $appointment): bool
+    {
+        try {
+            $eventId = $appointment->external_appointment_id;
+            if (!$eventId) {
+                return true;
+            }
+
+            $professional = $appointment->doctor;
+            if (!$professional?->hasGoogleCalendar()) {
+                return true;
+            }
+
+            $client = $this->clientForProfessional($professional);
+            if (!$client) {
+                return false;
+            }
+
+            $service = $this->makeCalendarService($client);
+            $calendarId = $professional->google_calendar_email ?? 'primary';
+
+            $service->events->delete($calendarId, $eventId);
+
+            $appointment->updateQuietly([
+                'external_appointment_id' => null,
+                'external_status' => 'deleted',
+                'last_synced_at' => now(),
+                'sync_error' => null,
+            ]);
+
+            Log::info('Evento de Google Calendar eliminado', [
+                'appointment_id' => $appointment->id,
+                'event_id' => $eventId,
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Error eliminando evento de Google Calendar', [
+                'appointment_id' => $appointment->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $appointment->updateQuietly([
+                'external_status' => 'delete_error',
+                'sync_error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function syncAppointment(Appointment $appointment): ?string
+    {
+        if ($appointment->status === AppointmentStatus::Cancelled) {
+            $this->deleteEvent($appointment);
+            return null;
+        }
+
+        if (in_array($appointment->status, [AppointmentStatus::NoShow, AppointmentStatus::Completed])) {
+            return $appointment->external_appointment_id;
+        }
+
+        return $this->createOrUpdateEvent($appointment);
+    }
+
+    protected function makeCalendarService(GoogleClient $client): GoogleCalendar
+    {
+        return new GoogleCalendar($client);
     }
 }
