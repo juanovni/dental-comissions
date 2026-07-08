@@ -8,10 +8,6 @@
 
         <div class="social-roi-stats-header">
             <div>
-                @if ($heading = $this->getHeading())
-                    <h3 class="social-roi-stats-title">{{ $heading }}</h3>
-                @endif
-
                 @if ($description = $this->getDescription())
                     <p class="social-roi-stats-description">
                         <span>{{ $description }}</span>

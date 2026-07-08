@@ -291,15 +291,6 @@
         margin-bottom: 1.4rem;
     }
 
-    .social-roi-stats-title {
-        color: #020617;
-        font-size: 1.25rem;
-        font-weight: 550;
-        letter-spacing: -0.025em;
-        line-height: 1.25;
-        margin: 0 0 0.35rem;
-    }
-
     .social-roi-stats-description {
         align-items: center;
         color: #475569;
@@ -568,7 +559,7 @@
         display: grid;
         gap: 0.9rem;
         grid-template-columns: auto minmax(0, 1fr) auto;
-        min-height: 3.65rem;
+        min-height: 3.98rem;
         padding: 0.55rem 0;
     }
 
@@ -625,7 +616,6 @@
         padding-inline: 0.5rem;
     }
 
-    .dark .social-roi-stats-title,
     .dark .social-roi-stat-main-value,
     .dark .social-roi-stat-footer strong {
         color: #f8fafc;
