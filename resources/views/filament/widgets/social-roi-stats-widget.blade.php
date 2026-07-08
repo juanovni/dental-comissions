@@ -1,56 +1,83 @@
 <x-filament-widgets::widget>
     <div x-data="statsOverview()" x-init="init()">
-        <div class="mc-section-header">
-            @if ($heading = $this->getHeading())
-                <h3 class="mc-section-title">{{ $heading }}</h3>
-            @endif
-        </div>
+        @php
+            $periodBadgeLabel = $this->getPeriodBadgeLabel();
+            $currentPeriodLabel = $this->getCurrentPeriodLabel();
+            $previousPeriodLabel = $this->getPreviousPeriodLabel();
+        @endphp
 
-        @if ($description = $this->getDescription())
-            <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">{{ $description }}</p>
-        @endif
+        <div class="social-roi-stats-header">
+            <div>
+                @if ($heading = $this->getHeading())
+                    <h3 class="social-roi-stats-title">{{ $heading }}</h3>
+                @endif
+
+                @if ($description = $this->getDescription())
+                    <p class="social-roi-stats-description">
+                        <span>{{ $description }}</span>
+                        <span class="social-roi-period-chip" tabindex="0">
+                            {{ $periodBadgeLabel }}
+                            <span class="social-roi-period-info">i</span>
+                            <span class="social-roi-period-tooltip">
+                                <strong>Periodo actual</strong>
+                                <span>{{ $currentPeriodLabel }}</span>
+                                <strong>Compara con</strong>
+                                <span>{{ $previousPeriodLabel }}</span>
+                            </span>
+                        </span>
+                    </p>
+                @endif
+            </div>
+        </div>
 
         <div
             wire:key="roi-stats"
-            style="display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:0.75rem;"
+            class="social-roi-stats-grid"
         >
             @foreach ($this->getStats() as $stat)
-                <div class="fi-wi-stats-overview-stat" style="min-height:6rem;">
-                    <div class="fi-wi-stats-overview-stat-content">
+                <div class="social-roi-stat-card">
+                    <div class="social-roi-stat-card-header">
                         @if ($stat->getIcon())
-                            <div class="fi-wi-stats-overview-stat-icon-ctn">
+                            <span class="social-roi-stat-icon-ctn">
                                 <x-filament::icon
                                     :icon="$stat->getIcon()"
-                                    class="fi-wi-stats-overview-stat-icon"
+                                    class="social-roi-stat-icon"
                                 />
+                            </span>
+                        @endif
+
+                        <span class="social-roi-period-chip social-roi-period-chip-card" tabindex="0">
+                            {{ $periodBadgeLabel }}
+                            <span class="social-roi-period-info">i</span>
+                            <span class="social-roi-period-tooltip">
+                                <strong>Periodo actual</strong>
+                                <span>{{ $currentPeriodLabel }}</span>
+                                <strong>Compara con</strong>
+                                <span>{{ $previousPeriodLabel }}</span>
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="social-roi-stat-card-body">
+                        @if ($label = $stat->getLabel())
+                            <div class="social-roi-stat-label">
+                                {{ $label }}
                             </div>
                         @endif
-                        @if ($label = $stat->getLabel())
-                            <dd class="fi-wi-stats-overview-stat-label">
-                                {{ $label }}
-                            </dd>
-                        @endif
                         @if ($value = $stat->getValue())
-                            <dt class="fi-wi-stats-overview-stat-value">
-                                {{ $value }}
-                            </dt>
-                        @endif
-                        @if ($description = $stat->getDescription())
-                            <dd class="fi-wi-stats-overview-stat-description"
-                                @if ($descriptionColor = $stat->getDescriptionColor())
-                                    style="--c-400:var(--{{ $descriptionColor }}-400);--c-600:var(--{{ $descriptionColor }}-600);"
-                                @endif
-                            >
-                                {{ $description }}
-                            </dd>
+                            <div class="social-roi-stat-main-value">
+                                {!! $value !!}
+                            </div>
                         @endif
                     </div>
-                    @if ($color = $stat->getColor())
-                        <div
-                            class="fi-wi-stats-overview-stat-bg-ctn"
-                            style="--c-50:var(--{{ $color }}-50);--c-100:var(--{{ $color }}-100);--c-500:var(--{{ $color }}-500);"
-                        ></div>
-                    @endif
+
+                    <div class="social-roi-stat-card-divider"></div>
+
+                    <div class="social-roi-stat-card-footer">
+                        @if ($description = $stat->getDescription())
+                            {!! $description !!}
+                        @endif
+                    </div>
                 </div>
             @endforeach
         </div>
