@@ -33,6 +33,8 @@ class PaymentMethodCommissionRateResource extends Resource
 
     protected static ?string $pluralModelLabel = 'comisiones por metodo de pago';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 13;
 
     public static function form(Schema $schema): Schema

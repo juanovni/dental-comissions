@@ -22,7 +22,7 @@ class SocialPipelineKanban extends Page
 
     protected static string|\UnitEnum|null $navigationGroup = 'Reputacion Digital';
 
-    protected static ?string $navigationLabel = 'Pipeline Kanban';
+    protected static ?string $navigationLabel = 'Pipeline';
 
     protected static ?string $title = 'Pipeline Comercial';
 

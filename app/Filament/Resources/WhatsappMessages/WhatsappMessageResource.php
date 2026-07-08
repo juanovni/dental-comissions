@@ -16,7 +16,9 @@ class WhatsappMessageResource extends Resource
 {
     protected static ?string $model = WhatsappMessage::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clínica';
+    protected static string | \UnitEnum | null $navigationGroup = 'CRM de Ventas';
+
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
     protected static ?string $navigationLabel = 'Mensajes WhatsApp';
 

@@ -53,12 +53,10 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 NavigationGroup::make('Dashboards')
                     ->icon('heroicon-o-chart-bar-square'),
-                NavigationGroup::make('Operación Clínica')
-                    ->icon('heroicon-o-clipboard-document-list'),
-                NavigationGroup::make('Comisiones y Pagos')
-                    ->icon('heroicon-o-currency-dollar'),
                 NavigationGroup::make('Reputacion Digital')
                     ->collapsible(false),
+                NavigationGroup::make('CRM de Ventas')
+                    ->icon('heroicon-o-briefcase'),
                 NavigationGroup::make('Configuración')
                     ->icon('heroicon-o-cog-6-tooth'),
             ])

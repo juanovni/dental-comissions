@@ -37,6 +37,8 @@ class WeeklyReportResource extends Resource
 
     protected static ?string $pluralModelLabel = 'reportes semanales';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 10;
 
     public static function form(Schema $schema): Schema
