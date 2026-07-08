@@ -40,8 +40,6 @@ abstract class ApexChartWidget extends Widget
 
     public function getChartRenderKey(): string
     {
-        $filters = property_exists($this, 'pageFilters') ? $this->pageFilters : [];
-
-        return md5(static::class . json_encode($filters));
+        return md5(static::class);
     }
 }

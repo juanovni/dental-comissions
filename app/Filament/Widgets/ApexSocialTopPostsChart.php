@@ -2,14 +2,14 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
+use App\Filament\Widgets\Concerns\HasSocialRoiWidgetPeriod;
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
 use App\Services\SocialRoiService;
 
 class ApexSocialTopPostsChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
-    use HasSocialRoiPeriod;
+    use HasSocialRoiWidgetPeriod;
 
     protected static ?int $sort = 37;
 
@@ -28,7 +28,7 @@ class ApexSocialTopPostsChart extends ApexChartWidget
 
     protected function getOptions(): array
     {
-        $posts = app(SocialRoiService::class)->topPosts(8, $this->pageFilters);
+        $posts = app(SocialRoiService::class)->topPosts(8, $this->getWidgetPeriodFilters());
 
         return $this->baseApexOptions([
             'chart' => [

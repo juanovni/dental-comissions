@@ -2,14 +2,14 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
+use App\Filament\Widgets\Concerns\HasSocialRoiWidgetPeriod;
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
 use App\Services\SocialRoiService;
 
 class ApexSocialResponseTimeRoiChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
-    use HasSocialRoiPeriod;
+    use HasSocialRoiWidgetPeriod;
 
     protected static ?int $sort = 35;
 
@@ -28,7 +28,7 @@ class ApexSocialResponseTimeRoiChart extends ApexChartWidget
 
     protected function getOptions(): array
     {
-        $data = app(SocialRoiService::class)->responseTimeVsRevenueData($this->pageFilters);
+        $data = app(SocialRoiService::class)->responseTimeVsRevenueData($this->getWidgetPeriodFilters());
 
         return $this->baseApexOptions([
             'chart' => [
