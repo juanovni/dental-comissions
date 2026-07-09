@@ -29,6 +29,11 @@ class SocialRoiPeriod
             'current_month' => [$today->copy()->startOfMonth(), $today->copy()->endOfMonth()],
             'previous_month' => [$today->copy()->subMonthNoOverflow()->startOfMonth(), $today->copy()->subMonthNoOverflow()->endOfMonth()],
             'last_12_weeks' => [$today->copy()->startOfWeek()->subWeeks(11)->startOfDay(), $today->copy()->endOfDay()],
+            '1_month' => [$today->copy()->subDays(30)->startOfDay(), $today->copy()->endOfDay()],
+            '2_months' => [$today->copy()->subDays(60)->startOfDay(), $today->copy()->endOfDay()],
+            '3_months' => [$today->copy()->subDays(90)->startOfDay(), $today->copy()->endOfDay()],
+            '6_months' => [$today->copy()->subDays(180)->startOfDay(), $today->copy()->endOfDay()],
+            '12_months' => [$today->copy()->subDays(365)->startOfDay(), $today->copy()->endOfDay()],
             default => [$today->copy()->subDays(29)->startOfDay(), $today->copy()->endOfDay()],
         };
     }

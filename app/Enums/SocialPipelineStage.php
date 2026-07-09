@@ -31,7 +31,7 @@ enum SocialPipelineStage: string
             SocialConversionStatus::WhatsappStarted => self::Qualified,
             SocialConversionStatus::IdentityLinked,
             SocialConversionStatus::PendingPatientCreation => self::Appointment,
-            SocialConversionStatus::AppointmentCreated => self::Proposal,
+            SocialConversionStatus::AppointmentCreated => self::Appointment,
             SocialConversionStatus::Converted => self::Won,
             SocialConversionStatus::Lost => self::Lost,
         };

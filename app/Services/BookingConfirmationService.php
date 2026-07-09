@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\SocialCommentActionType;
+use App\Enums\SocialConversionStatus;
+use App\Enums\SocialPipelineStage;
 use App\Models\Appointment;
 use App\Models\SocialComment;
 use App\Models\WhatsappMessage;
@@ -289,7 +291,6 @@ class BookingConfirmationService
             $this->workflowService->cancel($appointment, $reason);
 
             $comment->update([
-                'conversion_status' => \App\Enums\SocialConversionStatus::WhatsappStarted,
                 'appointment_scheduled_at' => null,
             ]);
         });
@@ -303,7 +304,43 @@ class BookingConfirmationService
             ],
         ]);
 
+        $this->moveToDefinitiveOrQualified($comment, $body);
+
         return ['appointment' => $appointment->fresh()];
+    }
+
+    private function moveToDefinitiveOrQualified(SocialComment $comment, ?string $body): void
+    {
+        $definitive = [
+            'no me interesa', 'no quiero', 'caro', 'muy caro', 'ya no',
+            'mejor no', 'no gracias', 'descartar', 'cancelar todo', 'cancelar',
+            'no voy', 'no voy a ir', 'no pienso ir',
+        ];
+
+        $lower = mb_strtolower(trim((string) $body));
+
+        $isDefinitive = false;
+
+        foreach ($definitive as $phrase) {
+            if ($lower === $phrase || str_starts_with($lower, $phrase.' ') || str_contains($lower, $phrase)) {
+                $isDefinitive = true;
+                break;
+            }
+        }
+
+        if ($isDefinitive) {
+            app(SocialPipelineTransitionService::class)->toLost(
+                $comment,
+                $body ?: 'Rechazo definitivo sin motivo.',
+                'Lead rechazo cita definitivamente.',
+            );
+        } else {
+            app(SocialPipelineTransitionService::class)->toQualified(
+                $comment,
+                SocialConversionStatus::WhatsappStarted,
+                'Lead rechazo cita pero podria reagendar. Vuelve a calificado.',
+            );
+        }
     }
 
     private function modifyBooking(

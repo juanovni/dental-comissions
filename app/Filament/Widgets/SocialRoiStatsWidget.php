@@ -2,28 +2,50 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
+use App\Filament\Widgets\Concerns\HasSocialRoiWidgetPeriod;
 use App\Services\SocialRoiService;
-use App\Support\SocialRoiPeriod;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\HtmlString;
 
 class SocialRoiStatsWidget extends StatsOverviewWidget
 {
-    use HasSocialRoiPeriod;
+    use HasSocialRoiWidgetPeriod;
 
     protected static ?int $sort = 30;
 
     protected int|string|array $columnSpan = 'full';
 
-    protected ?string $heading = 'ROI Social';
+    protected string $view = 'filament.widgets.social-roi-stats-widget';
+
+    protected ?string $heading = 'Dashboard ROI Social';
 
     protected ?string $description = 'Atribucion desde comentario social hasta actividad clinica.';
 
-    protected function getDescription(): ?string
+    public function getDescription(): ?string
     {
-        return $this->socialRoiDescription($this->description);
+        return $this->description;
+    }
+
+    public function getPeriodBadgeLabel(): string
+    {
+        $period = $this->getWidgetPeriod();
+
+        return $this->formatShortDate($period['from']).' - '.$this->formatShortDate($period['until']);
+    }
+
+    public function getCurrentPeriodLabel(): string
+    {
+        $period = $this->getWidgetPeriod();
+
+        return $period['label'];
+    }
+
+    public function getPreviousPeriodLabel(): string
+    {
+        $period = $this->getWidgetPeriod();
+
+        return $period['previous_label'];
     }
 
     protected function getColumns(): int|array
@@ -31,66 +53,67 @@ class SocialRoiStatsWidget extends StatsOverviewWidget
         return [
             'default' => 1,
             'md' => 2,
-            'xl' => 5,
+            'xl' => 4,
         ];
     }
 
     protected function getStats(): array
     {
         $service = app(SocialRoiService::class);
-        $summary = $service->summary($this->pageFilters);
-        $period = SocialRoiPeriod::resolve($this->pageFilters);
+        $period = $this->getWidgetPeriod();
+        $filters = $this->getWidgetPeriodFilters();
+        $summary = $service->summary($filters);
         $previousSummary = $service->summary([
             'period' => 'custom',
             'from' => $period['previous_from_date'],
             'until' => $period['previous_until_date'],
         ]);
 
+        $revenue = (float) ($summary['revenue'] ?? 0);
+        $prevRevenue = (float) ($previousSummary['revenue'] ?? 0);
+        $pipeline = (float) ($summary['pipeline_value'] ?? 0);
+        $prevPipeline = (float) ($previousSummary['pipeline_value'] ?? 0);
+        $rate = (float) ($summary['lead_to_activity_rate'] ?? 0);
+        $prevRate = (float) ($previousSummary['lead_to_activity_rate'] ?? 0);
+        $leakage = (int) ($summary['leakage_count'] ?? 0);
+        $prevLeakage = (int) ($previousSummary['leakage_count'] ?? 0);
+
         return [
-            Stat::make('Dinero en pipeline', $this->valueWithBadge(
-                '$'.number_format($summary['pipeline_value'], 2),
-                $this->percentageTrend($summary['pipeline_value'], $previousSummary['pipeline_value'])
+            Stat::make('Ingresos atribuidos', $this->valueWithBadge(
+                '$'.number_format($revenue, 2),
+                $this->percentageTrend($revenue, $prevRevenue)
             ))
-                ->description('Oportunidades abiertas estimadas en USD')
+                ->description($this->previousValueDescription('$'.number_format($prevRevenue, 2)))
                 ->descriptionColor('gray')
                 ->color('success')
                 ->icon('heroicon-o-banknotes')
                 ->extraAttributes(['class' => 'social-roi-stat']),
-            Stat::make('Ganado este mes', $this->valueWithBadge(
-                '$'.number_format($summary['won_value_month'], 2),
-                $this->percentageTrend($summary['won_value_month'], $previousSummary['won_value_month'])
+            Stat::make('Pipeline abierto', $this->valueWithBadge(
+                '$'.number_format($pipeline, 2),
+                $this->percentageTrend($pipeline, $prevPipeline)
             ))
-                ->description('Valor estimado en etapa Ganado')
+                ->description($this->previousValueDescription('$'.number_format($prevPipeline, 2)))
                 ->descriptionColor('gray')
                 ->color('info')
-                ->icon('heroicon-o-trophy')
+                ->icon('heroicon-o-arrow-trending-up')
                 ->extraAttributes(['class' => 'social-roi-stat']),
-            Stat::make('Perdidos +$1,000', $this->valueWithBadge(
-                (string) $summary['high_value_lost_count'],
-                $this->percentageTrend($summary['high_value_lost_count'], $previousSummary['high_value_lost_count'])
+            Stat::make('Conversion social', $this->valueWithBadge(
+                $rate.'%',
+                $this->pointsTrend($rate, $prevRate)
             ))
-                ->description('Leads perdidos con presupuesto alto')
+                ->description($this->previousValueDescription($prevRate.'%'))
                 ->descriptionColor('gray')
-                ->color($summary['high_value_lost_count'] > 0 ? 'danger' : 'success')
-                ->icon($summary['high_value_lost_count'] > 0 ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-shield-check')
+                ->color($rate > 0 ? 'warning' : 'gray')
+                ->icon('heroicon-o-presentation-chart-bar')
                 ->extraAttributes(['class' => 'social-roi-stat']),
-            Stat::make('Smart Link -> WhatsApp', $this->valueWithBadge(
-                $summary['smart_link_to_whatsapp_rate'].'%',
-                $this->pointsTrend($summary['smart_link_to_whatsapp_rate'], $previousSummary['smart_link_to_whatsapp_rate'])
+            Stat::make('Fuga critica', $this->valueWithBadge(
+                (string) $leakage,
+                $this->percentageTrend($leakage, $prevLeakage)
             ))
-                ->description($this->previousValueDescription($period['comparison_label'], $previousSummary['smart_link_to_whatsapp_rate'].'%'))
+                ->description($this->previousValueDescription((string) $prevLeakage))
                 ->descriptionColor('gray')
-                ->color($summary['smart_link_to_whatsapp_rate'] > 0 ? 'warning' : 'gray')
-                ->icon('heroicon-o-chat-bubble-left-right')
-                ->extraAttributes(['class' => 'social-roi-stat']),
-            Stat::make('Hot leads activos', $this->valueWithBadge(
-                (string) $summary['active_hot_leads_count'],
-                $this->percentageTrend($summary['active_hot_leads_count'], $previousSummary['active_hot_leads_count'])
-            ))
-                ->description('Interes alto sin cierre ganado/perdido')
-                ->descriptionColor('gray')
-                ->color($summary['active_hot_leads_count'] > 0 ? 'warning' : 'success')
-                ->icon('heroicon-o-fire')
+                ->color($leakage > 0 ? 'danger' : 'success')
+                ->icon($leakage > 0 ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-shield-check')
                 ->extraAttributes(['class' => 'social-roi-stat']),
         ];
     }
@@ -117,14 +140,14 @@ class SocialRoiStatsWidget extends StatsOverviewWidget
 HTML);
     }
 
-    private function previousValueDescription(string $periodLabel, string $value): HtmlString
+    private function previousValueDescription(string $value): HtmlString
     {
-        $periodLabel = e($periodLabel);
         $value = e($value);
 
         return new HtmlString(<<<HTML
-<span class="social-roi-previous-value">
-    Vs {$periodLabel}: <strong style="color: #111827; font-weight: 600;">{$value}</strong>
+<span class="social-roi-stat-footer">
+    <span>vs. periodo anterior</span>
+    <strong>{$value}</strong>
 </span>
 HTML);
     }
@@ -156,5 +179,10 @@ HTML);
             'label' => ($change > 0 ? '+' : '').$change.$suffix,
             'status' => $status,
         ];
+    }
+
+    private function formatShortDate(mixed $date): string
+    {
+        return str($date->translatedFormat('j M'))->replace('.', '')->toString();
     }
 }

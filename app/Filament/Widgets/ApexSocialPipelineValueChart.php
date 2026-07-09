@@ -3,13 +3,13 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
-use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
+use App\Filament\Widgets\Concerns\HasSocialRoiWidgetPeriod;
 use App\Services\SocialRoiService;
 
 class ApexSocialPipelineValueChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
-    use HasSocialRoiPeriod;
+    use HasSocialRoiWidgetPeriod;
 
     protected static ?int $sort = 35;
 
@@ -19,7 +19,7 @@ class ApexSocialPipelineValueChart extends ApexChartWidget
 
     protected ?string $description = 'Pipeline comercial medido en USD por estado.';
 
-    protected ?string $maxHeight = '330px';
+    protected ?string $maxHeight = '270px';
 
     public function getDescription(): ?string
     {
@@ -28,11 +28,11 @@ class ApexSocialPipelineValueChart extends ApexChartWidget
 
     protected function getOptions(): array
     {
-        $data = app(SocialRoiService::class)->pipelineValueByStage($this->pageFilters);
+        $data = app(SocialRoiService::class)->pipelineValueByStage($this->getWidgetPeriodFilters());
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 330,
+                'height' => 270,
                 'type' => 'bar',
             ],
             'colors' => ['#0f766e'],

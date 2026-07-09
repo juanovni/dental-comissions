@@ -1,8 +1,10 @@
 <x-filament-widgets::widget>
-    <section class="mc-card">
-        @if ($heading = $this->getHeading())
-            <h3 class="mc-section-title">{{ $heading }}</h3>
-        @endif
+    <section class="{{ $this->getCardClass() }}">
+        <div class="mc-section-header">
+            @if ($heading = $this->getHeading())
+                <h3 class="mc-section-title">{{ $heading }}</h3>
+            @endif
+        </div>
 
         @if ($description = $this->getDescription())
             <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">{{ $description }}</p>

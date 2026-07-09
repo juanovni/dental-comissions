@@ -36,30 +36,29 @@ class SocialPipelineKanbanTest extends TestCase
             ->assertSee($visible->comment_text)
             ->assertDontSee($hidden->comment_text);
 
-        $this->assertSame(1, app(SocialPipelineKanban::class)->cards('smart_inbox')->count());
+        $this->assertSame(1, app(SocialPipelineKanban::class)->cards(SocialPipelineStage::Qualified->value)->count());
     }
 
-    public function test_smart_inbox_merges_new_and_qualified_and_orders_by_recent_engagement(): void
+    public function test_nuevos_column_shows_only_new_leads(): void
     {
-        $qualified = $this->socialComment([
-            'comment_text' => 'Lead calificado intenso',
-            'pipeline_stage' => SocialPipelineStage::Qualified,
-            'recent_engagement_score' => 120,
-            'last_engagement_at' => now(),
-        ]);
         $new = $this->socialComment([
-            'comment_text' => 'Lead nuevo frio',
-            'conversion_status' => SocialConversionStatus::None,
+            'comment_text' => 'Lead nuevo',
             'pipeline_stage' => SocialPipelineStage::New,
             'recent_engagement_score' => 10,
-            'last_engagement_at' => now()->subMinutes(5),
+        ]);
+        $qualified = $this->socialComment([
+            'comment_text' => 'Lead calificado',
+            'pipeline_stage' => SocialPipelineStage::Qualified,
+            'recent_engagement_score' => 120,
         ]);
 
-        $cards = app(SocialPipelineKanban::class)->cards('smart_inbox');
+        $newCards = app(SocialPipelineKanban::class)->cards(SocialPipelineStage::New->value);
+        $qualifiedCards = app(SocialPipelineKanban::class)->cards(SocialPipelineStage::Qualified->value);
 
-        $this->assertTrue($cards->contains($qualified));
-        $this->assertTrue($cards->contains($new));
-        $this->assertSame($qualified->id, $cards->first()->id);
+        $this->assertTrue($newCards->contains($new));
+        $this->assertFalse($newCards->contains($qualified));
+        $this->assertTrue($qualifiedCards->contains($qualified));
+        $this->assertFalse($qualifiedCards->contains($new));
     }
 
     public function test_archive_drop_to_won_converts_directly(): void
@@ -77,16 +76,16 @@ class SocialPipelineKanbanTest extends TestCase
         $this->assertNotNull($comment->converted_at);
     }
 
-    public function test_card_can_move_back_to_smart_inbox(): void
+    public function test_card_can_move_to_qualified(): void
     {
         $comment = $this->socialComment([
-            'pipeline_stage' => SocialPipelineStage::Appointment,
-            'conversion_status' => SocialConversionStatus::PendingPatientCreation,
+            'pipeline_stage' => SocialPipelineStage::New,
+            'conversion_status' => SocialConversionStatus::None,
         ]);
 
         Livewire::actingAs(User::factory()->create())
             ->test(SocialPipelineKanban::class)
-            ->call('moveCard', $comment->id, 'smart_inbox');
+            ->call('moveCard', $comment->id, SocialPipelineStage::Qualified->value);
 
         $this->assertSame(SocialPipelineStage::Qualified, $comment->refresh()->pipeline_stage);
     }

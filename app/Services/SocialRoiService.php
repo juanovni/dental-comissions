@@ -152,6 +152,36 @@ class SocialRoiService
         ];
     }
 
+    public function appointmentStatusData(?array $filters = null): array
+    {
+        $period = SocialRoiPeriod::resolve($filters);
+        $appointments = $this->appointmentsQuery($period);
+
+        $statuses = [
+            AppointmentStatus::PendingConfirmation->value => 'Pendiente',
+            AppointmentStatus::Scheduled->value => 'Programada',
+            AppointmentStatus::Confirmed->value => 'Confirmada',
+            AppointmentStatus::Completed->value => 'Completada',
+            AppointmentStatus::NoShow->value => 'No asistio',
+            AppointmentStatus::Cancelled->value => 'Cancelada',
+        ];
+
+        $counts = (clone $appointments)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $labels = [];
+        $values = [];
+
+        foreach ($statuses as $status => $label) {
+            $labels[] = $label;
+            $values[] = (int) ($counts[$status] ?? 0);
+        }
+
+        return compact('labels', 'values');
+    }
+
     public function appointmentPerformanceByPost(int $limit = 8, ?array $filters = null): Collection
     {
         $period = SocialRoiPeriod::resolve($filters);

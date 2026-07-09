@@ -2,20 +2,22 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
+use App\Filament\Widgets\Concerns\HasSocialRoiWidgetPeriod;
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
 use App\Services\SocialRoiService;
 
 class ApexSocialConversionFunnelChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
-    use HasSocialRoiPeriod;
+    use HasSocialRoiWidgetPeriod;
 
     protected static ?int $sort = 36;
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 2];
 
-    protected ?string $maxHeight = '320px';
+    protected ?string $maxHeight = '240px';
+
+    protected string $cardClass = 'social-roi-panel social-roi-chart-panel';
 
     protected ?string $heading = 'Embudo social';
 
@@ -23,16 +25,16 @@ class ApexSocialConversionFunnelChart extends ApexChartWidget
 
     public function getDescription(): ?string
     {
-        return $this->socialRoiDescription($this->description);
+        return $this->description;
     }
 
     protected function getOptions(): array
     {
-        $funnel = app(SocialRoiService::class)->funnelData($this->pageFilters);
+        $funnel = app(SocialRoiService::class)->funnelData($this->getWidgetPeriodFilters());
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 320,
+                'height' => 240,
                 'type' => 'bar',
             ],
             'colors' => ['#0f766e'],

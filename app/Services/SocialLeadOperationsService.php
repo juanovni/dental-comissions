@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\SocialCommentActionType;
 use App\Enums\SocialConversionStatus;
+use App\Enums\SocialPipelineStage;
 use App\Models\SocialComment;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -82,20 +83,11 @@ class SocialLeadOperationsService
     {
         $reason ??= app(SocialCrmSettingsService::class)->salesLostReasons()[0] ?? 'sin_respuesta';
 
-        $comment->update([
-            'lost_at' => now(),
-            'lost_reason' => $reason,
-            'follow_up_at' => null,
-        ]);
-
-        $comment->actions()->create([
-            'action' => SocialCommentActionType::MarkAsLost,
-            'performed_by' => auth()->id(),
-            'notes' => $notes ?: 'Lead marcado como perdido desde Leads Calientes.',
-            'external_response' => ['lost_reason' => $reason],
-        ]);
-
-        return $comment->refresh();
+        return app(SocialPipelineTransitionService::class)->toLost(
+            $comment,
+            $reason,
+            $notes ?: 'Lead marcado como perdido desde Leads Calientes.',
+        );
     }
 
     public function isOverdue(SocialComment $comment): bool

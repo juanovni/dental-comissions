@@ -19,32 +19,18 @@ class SocialPipelineAutomationService
         }
 
         if ($event->event_type === 'whatsapp_click') {
-            return $this->moveTo(
+            return app(SocialPipelineTransitionService::class)->toAppointment(
                 $comment,
-                SocialPipelineStage::Appointment,
-                'Movido automaticamente a cita por clic hacia WhatsApp.',
-                [
-                    'source' => 'smart_link_engagement',
-                    'event_type' => $event->event_type,
-                    'social_link_event_id' => $event->id,
-                    'recent_engagement_score' => (int) $comment->recent_engagement_score,
-                ],
                 SocialConversionStatus::WhatsappStarted,
+                'Movido automaticamente a cita por clic hacia WhatsApp.',
             );
         }
 
         if ($this->isNew($comment) && (int) $comment->recent_engagement_score >= $this->qualifyThreshold()) {
-            return $this->moveTo(
+            return app(SocialPipelineTransitionService::class)->toQualified(
                 $comment,
-                SocialPipelineStage::Qualified,
+                null,
                 'Movido automaticamente a calificado por engagement reciente.',
-                [
-                    'source' => 'recent_engagement_score',
-                    'event_type' => $event->event_type,
-                    'social_link_event_id' => $event->id,
-                    'recent_engagement_score' => (int) $comment->recent_engagement_score,
-                    'threshold' => $this->qualifyThreshold(),
-                ],
             );
         }
 
@@ -63,7 +49,35 @@ class SocialPipelineAutomationService
         $suggestedStage = (string) ($agentResponse['suggested_pipeline_stage'] ?? '');
         $score = (int) ($agentResponse['closing_opportunity_score'] ?? 0);
 
+        $translated = SocialPipelineTransitionService::translateAgentStage($suggestedStage);
+
+        if ($translated === SocialPipelineStage::Won) {
+            return app(SocialPipelineTransitionService::class)->toWon(
+                $comment,
+                'Movido automaticamente a ganado por deteccion de cierre en WhatsApp.',
+            );
+        }
+
+        if ($translated === SocialPipelineStage::Lost) {
+            $reason = $agentResponse['lost_reason'] ?? 'Rechazo detectado por agente comercial.';
+
+            return app(SocialPipelineTransitionService::class)->toLost(
+                $comment,
+                $reason,
+                'Movido automaticamente a perdido por agente comercial.',
+            );
+        }
+
+        if ($translated === SocialPipelineStage::Proposal) {
+            return app(SocialPipelineTransitionService::class)->toProposal(
+                $comment,
+                null,
+                'Movido automaticamente a presupuesto por deteccion de negociacion en WhatsApp.',
+            );
+        }
+
         if (in_array($intent, ['appointment_interest', 'ready_to_book'], true)
+            || $translated === SocialPipelineStage::Appointment
             || $suggestedStage === SocialPipelineStage::Appointment->value
             || $score >= $this->closingThreshold()
         ) {
@@ -87,63 +101,22 @@ class SocialPipelineAutomationService
                 ]);
             }
 
-            return $this->moveTo(
+            return app(SocialPipelineTransitionService::class)->toAppointment(
                 $comment,
-                SocialPipelineStage::Appointment,
-                'Movido automaticamente a cita por intencion detectada en WhatsApp.',
-                [
-                    'source' => 'whatsapp_sales_agent',
-                    'intent' => $intent,
-                    'closing_opportunity_score' => $score,
-                    'suggested_pipeline_stage' => $suggestedStage,
-                    'preferred_date_parsed' => $preferredDate,
-                    'preferred_time_parsed' => $preferredTime,
-                    'intent_confidence' => $candidate['intent_confidence'] ?? null,
-                    'extraction_source' => $candidate['extraction_source'] ?? null,
-                ],
                 SocialConversionStatus::WhatsappStarted,
+                'Movido automaticamente a cita por intencion detectada en WhatsApp.',
+            );
+        }
+
+        if ($this->isNew($comment) && $score >= $this->qualifyThreshold()) {
+            return app(SocialPipelineTransitionService::class)->toQualified(
+                $comment,
+                null,
+                'Movido automaticamente a calificado por score de oportunidad en WhatsApp.',
             );
         }
 
         return $comment;
-    }
-
-    private function moveTo(
-        SocialComment $comment,
-        SocialPipelineStage $stage,
-        string $notes,
-        array $context,
-        ?SocialConversionStatus $conversionStatus = null,
-    ): SocialComment {
-        if ($comment->pipeline_stage === $stage) {
-            return $comment;
-        }
-
-        $previousStage = $comment->pipeline_stage;
-        $updates = ['pipeline_stage' => $stage];
-
-        if ($conversionStatus && ! in_array($comment->conversion_status, [
-            SocialConversionStatus::AppointmentCreated,
-            SocialConversionStatus::Converted,
-            SocialConversionStatus::Lost,
-        ], true)) {
-            $updates['conversion_status'] = $conversionStatus;
-        }
-
-        $comment->update($updates);
-
-        $comment->actions()->create([
-            'action' => SocialCommentActionType::PipelineStageChanged,
-            'performed_by' => auth()->id(),
-            'notes' => $notes,
-            'external_response' => array_merge($context, [
-                'from' => $previousStage?->value,
-                'to' => $stage->value,
-                'automated' => true,
-            ]),
-        ]);
-
-        return $comment->refresh();
     }
 
     private function isTerminal(SocialComment $comment): bool

@@ -3,13 +3,13 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Widgets\Concerns\HasApexChartDefaults;
-use App\Filament\Widgets\Concerns\HasSocialRoiPeriod;
+use App\Filament\Widgets\Concerns\HasSocialRoiWidgetPeriod;
 use App\Services\SocialRoiService;
 
 class ApexSocialLostReasonsChart extends ApexChartWidget
 {
     use HasApexChartDefaults;
-    use HasSocialRoiPeriod;
+    use HasSocialRoiWidgetPeriod;
 
     protected static ?int $sort = 37;
 
@@ -19,7 +19,7 @@ class ApexSocialLostReasonsChart extends ApexChartWidget
 
     protected ?string $description = 'Valor estimado perdido y frecuencia por objecion comercial.';
 
-    protected ?string $maxHeight = '330px';
+    protected ?string $maxHeight = '270px';
 
     public function getDescription(): ?string
     {
@@ -28,11 +28,11 @@ class ApexSocialLostReasonsChart extends ApexChartWidget
 
     protected function getOptions(): array
     {
-        $data = app(SocialRoiService::class)->lostReasonsData($this->pageFilters);
+        $data = app(SocialRoiService::class)->lostReasonsData($this->getWidgetPeriodFilters());
 
         return $this->baseApexOptions([
             'chart' => [
-                'height' => 330,
+                'height' => 270,
                 'type' => 'line',
             ],
             'colors' => ['#dc2626', '#f97316'],

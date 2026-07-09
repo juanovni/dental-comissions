@@ -167,32 +167,12 @@
         line-height: 1.35 !important;
     }
 
-    @media (min-width: 1024px) {
-        .social-roi-filters-form {
-            display: flex;
-            justify-content: flex-end;
-            margin: 0;
-            max-width: min(100%, 42rem);
-            width: 100%;
-        }
-
-        .fi-wi-stats-overview .fi-section-header > .social-roi-filters-form {
-            margin-left: auto;
-            max-width: min(100%, 42rem);
-            width: auto;
-        }
-
-        .social-roi-filters-form .fi-sc-grid {
-            align-items: end;
-            display: flex;
-            gap: 0.75rem;
-            justify-content: flex-end;
-        }
-
-        .social-roi-filters-form .fi-sc-grid > * {
-            min-width: 10rem;
-            width: auto;
-        }
+    .mc-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
 
     .dark .mc-card {
@@ -307,16 +287,185 @@
         position: absolute;
     }
 
-    .social-roi-stat .fi-wi-stats-overview-stat-description,
-    .social-roi-stat .fi-wi-stats-overview-stat-description > span {
-        display: block;
+    .social-roi-stats-header {
+        margin-bottom: 1.4rem;
+    }
+
+    .social-roi-stats-description {
+        align-items: center;
+        color: #475569;
+        display: flex;
+        flex-wrap: wrap;
+        font-size: 0.88rem;
+        gap: 0.5rem;
+        margin: 0;
+    }
+
+    .social-roi-stats-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    }
+
+    .social-roi-stat-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        box-shadow: 0 14px 34px -28px rgba(15, 23, 42, 0.6);
+        min-height: 13.5rem;
+        overflow: visible;
+        padding: 1.25rem 1.35rem 1.1rem;
+        position: relative;
+        transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .social-roi-stat-card::before {
+        background: linear-gradient(90deg, #2dd4bf, #0eb7a22e);
+        border-radius: 9999px;
+        content: '';
+        height: 4px;
+        inset: 0rem 0.75rem auto;
+        position: absolute;
+        transition: height 0.18s, opacity 0.18s;
+    }
+
+    .social-roi-stat-card:hover {
+        border-color: rgba(45, 212, 191, 0.42);
+        box-shadow: 0 20px 42px -28px rgba(15, 23, 42, 0.76);
+        transform: translateY(-3px);
+    }
+
+    .social-roi-stat-card:hover::before {
+        height: 4px;
+        opacity: 0.95;
+    }
+
+    .social-roi-stat-card-header {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1.15rem;
+    }
+
+    .social-roi-stat-icon-ctn {
+        align-items: center;
+        background: #ccfbf1;
+        border-radius: 9999px;
+        color: #0f766e;
+        display: inline-flex;
+        height: 2.4rem;
+        justify-content: center;
+        width: 2.4rem;
+    }
+
+    .social-roi-stat-icon {
+        height: 1rem;
+        width: 1rem;
+    }
+
+    .social-roi-period-chip {
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        color: #334155;
+        display: inline-flex;
+        font-size: 0.72rem;
+        font-weight: 500;
+        gap: 0.3rem;
+        line-height: 1;
+        padding: 0.35rem 0.55rem;
+        position: relative;
+        white-space: nowrap;
+    }
+
+    .social-roi-period-chip-card {
+        margin-left: auto;
+    }
+
+    .social-roi-period-info {
+        align-items: center;
+        border: 1px solid #94a3b8;
+        border-radius: 9999px;
+        color: #64748b;
+        display: inline-flex;
+        font-size: 0.6rem;
+        height: 0.8rem;
+        justify-content: center;
+        line-height: 1;
+        width: 0.8rem;
+    }
+
+    .social-roi-period-tooltip {
+        background: #111827;
+        border-radius: 0.6rem;
+        box-shadow: 0 18px 38px -18px rgba(15, 23, 42, 0.7);
+        color: #cbd5e1;
+        display: grid;
+        font-size: 0.72rem;
+        gap: 0.18rem;
+        left: 50%;
+        min-width: 13.5rem;
+        opacity: 0;
+        padding: 0.7rem 0.8rem;
+        pointer-events: none;
+        position: absolute;
+        top: calc(100% + 0.55rem);
+        transform: translateX(-50%) translateY(-0.25rem);
+        transition: opacity 160ms ease, transform 160ms ease;
+        visibility: hidden;
+        z-index: 30;
+    }
+
+    .social-roi-period-tooltip strong {
+        color: #f8fafc;
+        font-weight: 550;
+    }
+
+    .social-roi-period-chip:hover .social-roi-period-tooltip,
+    .social-roi-period-chip:focus .social-roi-period-tooltip,
+    .social-roi-period-chip:focus-within .social-roi-period-tooltip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+        visibility: visible;
+    }
+
+    .social-roi-stat-card-body {
+        display: grid;
+        gap: 0.45rem;
+    }
+
+    .social-roi-stat-label {
+        color: #475569;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .social-roi-stat-main-value {
+        color: #020617;
+        font-size: 1.95rem;
+        font-weight: 550;
+        letter-spacing: -0.045em;
+        line-height: 1.1;
+    }
+
+    .social-roi-stat-card-divider {
+        background: #e5e7eb;
+        height: 1px;
+        margin: 1.35rem 0 0.95rem;
         width: 100%;
+    }
+
+    .social-roi-stat-card-footer {
+        color: #475569;
+        font-size: 0.76rem;
+        line-height: 1.1;
     }
 
     .social-roi-stat-value {
         align-items: center;
         display: inline-flex;
-        gap: 0.875rem;
+        gap: 0.55rem;
     }
 
     .social-roi-trend-badge {
@@ -324,7 +473,7 @@
         border-radius: 0.375rem;
         display: inline-flex;
         font-size: 0.72rem;
-        font-weight: 600;
+        font-weight: 500;
         gap: 0.25rem;
         line-height: 1rem;
         padding: 0.25rem 0.5rem;
@@ -345,15 +494,195 @@
         color: #4b5563;
     }
 
-    .social-roi-previous-value {
-        border-top: 1px solid rgba(148, 163, 184, 0.28);
-        color: #64748b;
-        display: block;
-        font-size: 0.75rem;
-        line-height: 1rem;
-        margin-top: 0.875rem;
-        padding-top: 0.875rem;
+    .social-roi-stat-footer {
+        align-items: center;
+        color: #475569;
+        display: flex;
+        justify-content: space-between;
         width: 100%;
+    }
+
+    .social-roi-stat-footer strong {
+        color: #020617;
+        font-weight: 500;
+    }
+
+    .social-roi-panel {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        box-shadow: 0 14px 34px -28px rgba(15, 23, 42, 0.6);
+        min-height: 21rem;
+        padding: 1.25rem 1.35rem;
+        position: relative;
+    }
+
+    .social-roi-panel-header {
+        margin-bottom: 1.1rem;
+    }
+
+    .social-roi-panel-title,
+    .social-roi-panel .mc-section-title {
+        color: #020617;
+        font-size: 0.95rem;
+        font-weight: 550;
+        line-height: 1.2;
+        margin: 0 0 0.45rem;
+    }
+
+    .social-roi-panel-description,
+    .social-roi-panel > p {
+        color: #475569;
+        font-size: 0.82rem;
+        line-height: 1.35;
+        margin: 0;
+    }
+
+    .social-roi-chart-panel {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .social-roi-chart-panel > [wire\:key] {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .social-roi-reminders-list {
+        display: grid;
+        gap: 0;
+    }
+
+    .social-roi-reminder-row {
+        align-items: center;
+        border-bottom: 1px solid #e5e7eb;
+        display: grid;
+        gap: 0.9rem;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        min-height: 3.98rem;
+        padding: 0.55rem 0;
+    }
+
+    .social-roi-reminder-row:last-child {
+        border-bottom: 0;
+    }
+
+    .social-roi-reminder-icon {
+        align-items: center;
+        background: #ecfdf5;
+        border-radius: 9999px;
+        color: #22c55e;
+        display: inline-flex;
+        height: 2.15rem;
+        justify-content: center;
+        width: 2.15rem;
+    }
+
+    .social-roi-reminder-icon-svg {
+        height: 1rem;
+        width: 1rem;
+    }
+
+    .social-roi-reminder-copy {
+        display: grid;
+        gap: 0.18rem;
+        min-width: 0;
+    }
+
+    .social-roi-reminder-label {
+        color: #020617;
+        font-size: 0.9rem;
+        font-weight: 550;
+        line-height: 1.25;
+    }
+
+    .social-roi-reminder-description {
+        color: #475569;
+        font-size: 0.82rem;
+        line-height: 1.35;
+    }
+
+    .social-roi-reminder-badge {
+        align-items: center;
+        background: #f1f5f9;
+        border-radius: 0.65rem;
+        color: #020617;
+        display: inline-flex;
+        font-size: 0.86rem;
+        font-weight: 500;
+        height: 1.75rem;
+        justify-content: center;
+        min-width: 1.75rem;
+        padding-inline: 0.5rem;
+    }
+
+    .dark .social-roi-stat-main-value,
+    .dark .social-roi-stat-footer strong {
+        color: #f8fafc;
+    }
+
+    .dark .social-roi-stats-description,
+    .dark .social-roi-stat-label,
+    .dark .social-roi-stat-card-footer,
+    .dark .social-roi-stat-footer {
+        color: #cbd5e1;
+    }
+
+    .dark .social-roi-stat-card {
+        background: rgba(15, 23, 42, 0.76);
+        border-color: rgba(148, 163, 184, 0.18);
+        box-shadow: 0 20px 50px -34px rgba(0, 0, 0, 0.78);
+    }
+
+    .dark .social-roi-stat-card:hover {
+        border-color: rgba(45, 212, 191, 0.36);
+    }
+
+    .dark .social-roi-stat-icon-ctn {
+        background: rgba(20, 184, 166, 0.2);
+        color: #5eead4;
+    }
+
+    .dark .social-roi-period-chip {
+        background: rgba(15, 23, 42, 0.84);
+        border-color: rgba(148, 163, 184, 0.22);
+        color: #e2e8f0;
+    }
+
+    .dark .social-roi-stat-card-divider {
+        background: rgba(148, 163, 184, 0.16);
+    }
+
+    .dark .social-roi-panel {
+        background: rgba(15, 23, 42, 0.76);
+        border-color: rgba(148, 163, 184, 0.18);
+        box-shadow: 0 20px 50px -34px rgba(0, 0, 0, 0.78);
+    }
+
+    .dark .social-roi-panel-title,
+    .dark .social-roi-panel .mc-section-title,
+    .dark .social-roi-reminder-label,
+    .dark .social-roi-reminder-badge {
+        color: #f8fafc;
+    }
+
+    .dark .social-roi-panel-description,
+    .dark .social-roi-panel > p,
+    .dark .social-roi-reminder-description {
+        color: #cbd5e1;
+    }
+
+    .dark .social-roi-reminder-row {
+        border-bottom-color: rgba(148, 163, 184, 0.16);
+    }
+
+    .dark .social-roi-reminder-icon {
+        background: rgba(34, 197, 94, 0.16);
+        color: #86efac;
+    }
+
+    .dark .social-roi-reminder-badge {
+        background: rgba(30, 41, 59, 0.9);
     }
 
     .fi-wi-chart .fi-section-content,

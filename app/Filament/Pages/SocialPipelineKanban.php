@@ -6,6 +6,7 @@ use App\Enums\SocialCommentActionType;
 use App\Enums\SocialConversionStatus;
 use App\Enums\SocialPipelineStage;
 use App\Models\SocialComment;
+use App\Services\SocialPipelineTransitionService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,7 +25,7 @@ class SocialPipelineKanban extends Page
 
     protected static ?string $navigationLabel = 'Pipeline';
 
-    protected static ?string $title = 'Pipeline Comercial';
+    protected static ?string $title = 'Pipelines';
 
     protected static ?string $slug = 'social-pipeline-kanban';
 
@@ -54,7 +55,8 @@ class SocialPipelineKanban extends Page
     public function columns(): array
     {
         return [
-            'smart_inbox' => 'Smart Inbox',
+            SocialPipelineStage::New->value => SocialPipelineStage::New->label(),
+            SocialPipelineStage::Qualified->value => SocialPipelineStage::Qualified->label(),
             SocialPipelineStage::Appointment->value => SocialPipelineStage::Appointment->label(),
             SocialPipelineStage::Proposal->value => SocialPipelineStage::Proposal->label(),
         ];
@@ -64,14 +66,7 @@ class SocialPipelineKanban extends Page
     {
         return SocialComment::query()
             ->with(['socialIdentity.patient', 'socialAccount', 'suggestedProcedure'])
-            ->when(
-                $stage === 'smart_inbox',
-                fn (Builder $query): Builder => $query->whereIn('pipeline_stage', [
-                    SocialPipelineStage::New->value,
-                    SocialPipelineStage::Qualified->value,
-                ]),
-                fn (Builder $query): Builder => $query->where('pipeline_stage', $stage),
-            )
+            ->where('pipeline_stage', $stage)
             ->where('is_hidden', false)
             ->when($this->search, fn (Builder $q) => $q->where(function (Builder $q): void {
                 $q->where('comment_text', 'ilike', "%{$this->search}%")
@@ -114,9 +109,7 @@ class SocialPipelineKanban extends Page
             return;
         }
 
-        $stage = $toStage === 'smart_inbox'
-            ? SocialPipelineStage::Qualified
-            : SocialPipelineStage::tryFrom($toStage);
+        $stage = SocialPipelineStage::tryFrom($toStage);
 
         if (! $stage) {
             return;
@@ -139,7 +132,7 @@ class SocialPipelineKanban extends Page
             return;
         }
 
-        $this->applyStageChange($comment, SocialPipelineStage::Lost, $this->lostReason);
+        app(SocialPipelineTransitionService::class)->toLost($comment, $this->lostReason);
         $this->closeLostModal();
     }
 
@@ -252,14 +245,7 @@ class SocialPipelineKanban extends Page
     {
         return SocialComment::query()
             ->where('is_hidden', false)
-            ->when(
-                $stage === 'smart_inbox',
-                fn (Builder $query): Builder => $query->whereIn('pipeline_stage', [
-                    SocialPipelineStage::New->value,
-                    SocialPipelineStage::Qualified->value,
-                ]),
-                fn (Builder $query): Builder => $query->where('pipeline_stage', $stage),
-            );
+            ->where('pipeline_stage', $stage);
     }
 
     private function fillMissingEstimatedValuesFromProcedures(): void

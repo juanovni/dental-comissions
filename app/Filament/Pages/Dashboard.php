@@ -23,6 +23,11 @@ class Dashboard extends BaseDashboard
 
     protected static ?int $navigationSort = 1;
 
+    public function mount(): void
+    {
+        $this->redirect(DashboardRoiSocial::getUrl());
+    }
+
     public static function getNavigationIcon(): string|\BackedEnum|\Illuminate\Contracts\Support\Htmlable|null
     {
         return null;

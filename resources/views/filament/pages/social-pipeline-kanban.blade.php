@@ -47,30 +47,92 @@
             width: min(100%, 24rem);
         }
 
+        .kanban-carousel-shell {
+            position: relative;
+        }
+
+        .kanban-carousel-shell::before,
+        .kanban-carousel-shell::after {
+            content: '';
+            inset-block: 0 .75rem;
+            pointer-events: none;
+            position: absolute;
+            width: 3.5rem;
+            z-index: 5;
+        }
+
+        .kanban-carousel-shell::before {
+            background: linear-gradient(90deg, var(--pk-page-bg, #f8fafc), transparent);
+            left: -.1rem;
+        }
+
+        .kanban-carousel-shell::after {
+            background: linear-gradient(270deg, var(--pk-page-bg, #f8fafc), transparent);
+            right: -.1rem;
+        }
+
         .kanban-board {
-            display: grid;
-            gap: .75rem;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            display: flex;
+            gap: .9rem;
             min-height: 70vh;
             overflow-x: auto;
-            padding-bottom: .75rem;
+            overscroll-behavior-x: contain;
+            padding: .15rem 3.8rem .95rem .25rem;
+            scroll-behavior: smooth;
+            scroll-padding-inline: 3.8rem;
+            scroll-snap-type: x proximity;
+            scrollbar-width: none;
         }
 
-        @media (max-width: 1400px) {
-            .kanban-board {
-                grid-template-columns: repeat(3, minmax(280px, 1fr));
+        .kanban-board::-webkit-scrollbar {
+            display: none;
+        }
+
+        .kanban-carousel-btn {
+            align-items: center;
+            background: rgba(255, 255, 255, .92);
+            border: 1px solid var(--pk-border);
+            border-radius: 999px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, .1);
+            color: var(--pk-ink);
+            cursor: pointer;
+            display: inline-flex;
+            font-size: 1.2rem;
+            font-weight: 600;
+            height: 2.45rem;
+            justify-content: center;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+            width: 2.45rem;
+            z-index: 10;
+        }
+
+        .kanban-carousel-btn:hover {
+            background: #ffffff;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, .14);
+            transform: translateY(-50%) scale(1.04);
+        }
+
+        .kanban-carousel-btn.prev {
+            left: .35rem;
+        }
+
+        .kanban-carousel-btn.next {
+            right: .35rem;
+        }
+
+        @media (max-width: 700px) {
+            .kanban-carousel-shell::before,
+            .kanban-carousel-shell::after,
+            .kanban-carousel-btn {
+                display: none;
             }
-        }
 
-        @media (max-width: 900px) {
             .kanban-board {
-                grid-template-columns: repeat(2, minmax(260px, 1fr));
-            }
-        }
-
-        @media (max-width: 600px) {
-            .kanban-board {
-                grid-template-columns: minmax(260px, 1fr);
+                padding-inline: .15rem;
+                scroll-padding-inline: .15rem;
             }
 
             .kanban-detail-panel {
@@ -88,9 +150,11 @@
             border-radius: .7rem;
             display: flex;
             flex-direction: column;
+            flex: 0 0 clamp(22rem, 34vw, 29rem);
             gap: 0;
             max-height: calc(100dvh - 14rem);
             overflow: hidden;
+            scroll-snap-align: start;
         }
 
         .kanban-column-header {
@@ -726,6 +790,7 @@
         .dark .pipeline-kanban,
         .dark .kanban-detail-panel,
         .dark .kanban-modal {
+            --pk-page-bg: #020617;
             --pk-column-bg: rgba(15, 23, 42, .72);
             --pk-card-bg: rgba(15, 23, 42, .86);
             --pk-border: rgba(148, 163, 184, .16);
@@ -748,6 +813,15 @@
 
         .dark .kanban-card-action:hover {
             background: rgba(148, 163, 184, .12);
+        }
+
+        .dark .kanban-carousel-btn {
+            background: rgba(15, 23, 42, .9);
+            color: #e5e7eb;
+        }
+
+        .dark .kanban-carousel-btn:hover {
+            background: rgba(30, 41, 59, .98);
         }
 
         .dark .kanban-score-panel,
@@ -835,15 +909,19 @@
             />
         </div>
 
-        <div class="kanban-board">
-            @foreach ($columns as $stageValue => $stageLabel)
-                @php
-                    $count = $stageCounts[$stageValue] ?? 0;
-                    $total = $stageTotals[$stageValue] ?? 0;
-                    $cards = $this->cards($stageValue);
-                @endphp
+        <div class="kanban-carousel-shell">
+            <button class="kanban-carousel-btn prev" type="button" aria-label="Ver columnas anteriores" onclick="scrollPipeline(-1)">&lsaquo;</button>
+            <button class="kanban-carousel-btn next" type="button" aria-label="Ver columnas siguientes" onclick="scrollPipeline(1)">&rsaquo;</button>
 
-                <div class="kanban-column" data-stage="{{ $stageValue }}">
+            <div class="kanban-board" data-kanban-board>
+                @foreach ($columns as $stageValue => $stageLabel)
+                    @php
+                        $count = $stageCounts[$stageValue] ?? 0;
+                        $total = $stageTotals[$stageValue] ?? 0;
+                        $cards = $this->cards($stageValue);
+                    @endphp
+
+                    <div class="kanban-column" data-stage="{{ $stageValue }}">
                     <div class="kanban-column-header">
                         <span class="kanban-column-label">{{ $stageLabel }}</span>
                         <span class="kanban-column-count">{{ $count }}</span>
@@ -963,8 +1041,9 @@
                             </div>
                         @endif
                     </div>
-                </div>
-            @endforeach
+                    </div>
+                @endforeach
+            </div>
         </div>
 
         <div class="kanban-archive-bar" aria-hidden="true">
@@ -983,7 +1062,7 @@
                 ondragleave="handleArchiveDragLeave(event)"
                 ondrop="handleArchiveDrop(event, 'won')"
             >
-                <strong>Cita confirmada / Ganado</strong>
+                <strong>Tratamiento aceptado / Ganado</strong>
                 <span>Archiva directo como convertido</span>
             </div>
         </div>
@@ -1165,6 +1244,21 @@
 
             Livewire.dispatch('move-card', { commentId: parseInt(commentId, 10), toStage: toStage });
 
+        }
+
+        function scrollPipeline(direction) {
+            const board = document.querySelector('[data-kanban-board]');
+            const column = board?.querySelector('.kanban-column');
+
+            if (! board || ! column) return;
+
+            const gap = parseFloat(getComputedStyle(board).columnGap || '0');
+            const distance = column.getBoundingClientRect().width + gap;
+
+            board.scrollBy({
+                left: direction * distance,
+                behavior: 'smooth',
+            });
         }
 
     </script>
