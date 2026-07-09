@@ -249,11 +249,111 @@
 
 @layer components {
     .fi-body {
+        --collapsed-sidebar-width: 4rem;
         --sidebar-width: 16rem;
+    }
+
+    .fi-topbar {
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        box-shadow: none;
+        min-height: 3.5rem;
+    }
+
+    .fi-topbar > nav {
+        min-height: 3.5rem;
+    }
+
+    .fi-main-sidebar {
+        background: #ffffff;
+        border-right: 1px solid #e5e7eb;
+    }
+
+    .fi-main-sidebar .fi-sidebar-nav {
+        background: #ffffff;
+    }
+
+    .fi-body-has-topbar .fi-main-sidebar {
+        top: 3.5rem;
+        height: calc(100dvh - 3.5rem);
+    }
+
+    .dark .fi-topbar {
+        background: #020617;
+        border-bottom-color: rgba(148, 163, 184, 0.16);
+    }
+
+    .dark .fi-main-sidebar {
+        background: #020617;
+        border-right-color: rgba(148, 163, 184, 0.16);
+    }
+
+    .dark .fi-main-sidebar .fi-sidebar-nav {
+        background: #020617;
+    }
+
+    @media (min-width: 1024px) {
+        .fi-body-has-topbar .fi-main-sidebar .fi-sidebar-header-ctn {
+            display: none;
+        }
+
+        .fi-body-has-sidebar-collapsible-on-desktop .fi-main-sidebar:not(.fi-sidebar-open) {
+            width: var(--collapsed-sidebar-width);
+        }
     }
 
     .fi-sidebar-nav {
         padding-inline: 1rem;
+    }
+
+    .fi-main-sidebar .fi-sidebar-item-btn,
+    .fi-main-sidebar .fi-sidebar-group-dropdown-trigger-btn {
+        border-radius: 0.875rem;
+        color: #4b5563;
+        transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+    }
+
+    .fi-main-sidebar .fi-sidebar-item-btn:hover,
+    .fi-main-sidebar .fi-sidebar-group-dropdown-trigger-btn:hover {
+        background: color-mix(in srgb, var(--primary-100) 68%, #ffffff);
+        color: var(--primary-700);
+    }
+
+    .fi-main-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
+    .fi-main-sidebar .fi-sidebar-item.fi-sidebar-item-has-active-child-items > .fi-sidebar-item-btn,
+    .fi-main-sidebar .fi-sidebar-group.fi-active .fi-sidebar-group-dropdown-trigger-btn {
+        background: color-mix(in srgb, var(--primary-100) 82%, #ffffff);
+        color: var(--primary-700);
+    }
+
+    .fi-main-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover,
+    .fi-main-sidebar .fi-sidebar-item.fi-sidebar-item-has-active-child-items > .fi-sidebar-item-btn:hover,
+    .fi-main-sidebar .fi-sidebar-group.fi-active .fi-sidebar-group-dropdown-trigger-btn:hover {
+        background: color-mix(in srgb, var(--primary-200) 58%, #ffffff);
+    }
+
+    .fi-main-sidebar .fi-sidebar-item-btn .fi-sidebar-item-icon,
+    .fi-main-sidebar .fi-sidebar-item-btn .fi-sidebar-item-label,
+    .fi-main-sidebar .fi-sidebar-group-dropdown-trigger-btn svg {
+        color: currentColor;
+    }
+
+    .dark .fi-main-sidebar .fi-sidebar-item-btn,
+    .dark .fi-main-sidebar .fi-sidebar-group-dropdown-trigger-btn {
+        color: #cbd5e1;
+    }
+
+    .dark .fi-main-sidebar .fi-sidebar-item-btn:hover,
+    .dark .fi-main-sidebar .fi-sidebar-group-dropdown-trigger-btn:hover {
+        background: color-mix(in srgb, var(--primary-900) 38%, transparent);
+        color: var(--primary-200);
+    }
+
+    .dark .fi-main-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
+    .dark .fi-main-sidebar .fi-sidebar-item.fi-sidebar-item-has-active-child-items > .fi-sidebar-item-btn,
+    .dark .fi-main-sidebar .fi-sidebar-group.fi-active .fi-sidebar-group-dropdown-trigger-btn {
+        background: color-mix(in srgb, var(--primary-900) 52%, transparent);
+        color: var(--primary-200);
     }
 
     .fi-main {
@@ -753,13 +853,13 @@
     }
 
     .fi-main-sidebar.fi-sidebar-open .fi-sidebar-item-btn {
-        min-height: 2rem;
-        padding-block: 0.375rem;
+        min-height: 2.25rem;
+        padding-block: 0.425rem;
     }
 
     .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav {
         padding-block: 0.75rem 1rem;
-        padding-inline: 0.75rem;
+        padding-inline: 0.625rem;
         scrollbar-gutter: auto;
     }
 
@@ -769,6 +869,15 @@
 
     .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-group-items {
         gap: 0.25rem;
+    }
+
+    .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-item-btn,
+    .fi-main-sidebar:not(.fi-sidebar-open) .fi-sidebar-group-dropdown-trigger-btn {
+        height: 2.75rem;
+        justify-content: center;
+        margin-inline: auto;
+        min-height: 2.75rem;
+        width: 2.75rem;
     }
 
     .fi-main-sidebar:hover .fi-sidebar-nav {
