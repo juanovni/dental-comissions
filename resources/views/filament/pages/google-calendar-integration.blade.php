@@ -15,24 +15,14 @@
             margin-top: -.25rem;
         }
 
-        .gcal-hero {
-            margin-bottom: 1.55rem;
+        .gcal-integration-page .fi-header > div {
+            max-width: none;
+            width: 100%;
         }
 
-        .gcal-kicker {
-            color: #2563eb;
-            font-size: .7rem;
-            font-weight: 800;
-            letter-spacing: .08em;
-            margin-bottom: .4rem;
-            text-transform: uppercase;
-        }
-
-        .gcal-subtitle {
-            color: var(--gcal-muted);
-            font-size: .92rem;
-            line-height: 1.55;
-            margin: .65rem 0 0;
+        .gcal-integration-page .fi-header-subheading {
+            max-width: min(100%, 86rem);
+            width: 100%;
         }
 
         .gcal-grid {
@@ -214,14 +204,6 @@
     </style>
 
     <section class="gcal-page">
-        <div class="gcal-hero">
-            <p class="gcal-kicker">Google Calendar</p>
-            <p class="gcal-subtitle">
-                Conecta la cuenta de Google de cada doctor para consultar disponibilidad, crear y actualizar eventos automáticamente.
-                <strong>Importante:</strong> Las conexiones creadas antes del 7-Jul-2026 deben reconectarse para habilitar escritura en el calendario.
-            </p>
-        </div>
-
         @if ($connected->isNotEmpty())
             <h3 class="gcal-section-title">Conectados</h3>
             <div class="gcal-grid">
