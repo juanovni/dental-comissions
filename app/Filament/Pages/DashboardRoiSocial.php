@@ -4,11 +4,9 @@ namespace App\Filament\Pages;
 
 use App\Filament\Widgets\ApexSocialAppointmentStatusChart;
 use App\Filament\Widgets\ApexSocialConversionFunnelChart;
-use App\Filament\Widgets\ApexSocialLostReasonsChart;
 use App\Filament\Widgets\ApexSocialPipelineValueChart;
 use App\Filament\Widgets\ApexSocialPlatformPerformanceChart;
 use App\Filament\Widgets\ApexSocialResponseTimeRoiChart;
-use App\Filament\Widgets\ApexSocialTopPostsChart;
 use App\Filament\Widgets\SocialRoiRemindersWidget;
 use App\Filament\Widgets\SocialRoiStatsWidget;
 use App\Support\SocialRoiPeriod;
@@ -79,8 +77,6 @@ HTML);
             ApexSocialPipelineValueChart::class,
             ApexSocialResponseTimeRoiChart::class,
             ApexSocialPlatformPerformanceChart::class,
-            ApexSocialTopPostsChart::class,
-            ApexSocialLostReasonsChart::class,
         ];
     }
 }
