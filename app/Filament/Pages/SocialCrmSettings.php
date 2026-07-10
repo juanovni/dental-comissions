@@ -182,7 +182,7 @@ class SocialCrmSettings extends Page
                         CheckboxList::make('social_appointment_clinic_days')
                             ->label('Días laborables')
                             ->helperText('Selecciona los días de atención.')
-                            ->extraAttributes(['class' => 'crm-weekday-picker'])
+                            ->extraAttributes(['class' => 'crm-weekday-picker crm-pill-picker'])
                             ->options([
                                 1 => 'Lun',
                                 2 => 'Mar',
@@ -265,38 +265,65 @@ class SocialCrmSettings extends Page
             ->icon('heroicon-o-chat-bubble-left-right')
             ->description('Controla cómo y cuándo el sistema responde automáticamente a comentarios en redes sociales.')
             ->schema([
-                Toggle::make('social_auto_reply_enabled')
-                    ->label('Auto-respuestas activadas')
-                    ->helperText('Activa o desactiva las respuestas automáticas en comentarios de Facebook/Instagram.'),
-                Toggle::make('social_auto_reply_dry_run')
-                    ->label('Modo dry-run')
-                    ->helperText('Cuando está activo, genera el mensaje pero no lo publica en Meta. Solo guarda auditoría.'),
-                Toggle::make('social_auto_reply_use_ai')
-                    ->label('Usar IA para generar respuesta')
-                    ->helperText('Si está desactivado, usa la plantilla estática sin IA.'),
-                TextInput::make('social_auto_reply_max_attempts')
-                    ->label('Máximo de reintentos')
-                    ->helperText('Número máximo de intentos de publicación en Meta antes de marcar como fallido.')
-                    ->numeric()
-                    ->minValue(1),
-                Toggle::make('social_auto_reply_use_smart_link')
-                    ->label('Usar Smart Link en vez de WhatsApp directo')
-                    ->helperText('Si está activo, el comentario lleva al Smart Link. Si está desactivado, lleva directamente a WhatsApp.'),
-                Select::make('social_auto_reply_allowed_classifications')
-                    ->label('Clasificaciones que activan auto-respuesta')
-                    ->helperText('Lista de clasificaciones de comentario que disparan respuesta automática.')
-                    ->multiple()
-                    ->options([
-                        'sales_lead' => 'Lead de ventas',
-                        'commercial_question' => 'Consulta comercial',
-                        'medical_sensitive' => 'Consulta médica sensible',
-                        'complaint' => 'Queja',
-                        'spam' => 'Spam',
-                        'positive_opinion' => 'Opinión positiva',
-                        'negative_opinion' => 'Opinión negativa',
-                    ]),
+                Section::make('Activación')
+                    ->icon('heroicon-o-power')
+                    ->description('Habilita el comportamiento general de las auto-respuestas.')
+                    ->schema([
+                        Toggle::make('social_auto_reply_enabled')
+                            ->label('Auto-respuestas activadas')
+                            ->helperText('Activa o desactiva las respuestas automáticas en comentarios de Facebook/Instagram.'),
+                        Toggle::make('social_auto_reply_use_ai')
+                            ->label('Usar IA para generar respuesta')
+                            ->helperText('Si está desactivado, usa la plantilla estática sin IA.'),
+                        Toggle::make('social_auto_reply_use_smart_link')
+                            ->label('Usar Smart Link en vez de WhatsApp directo')
+                            ->helperText('Si está activo, el comentario lleva al Smart Link. Si está desactivado, lleva directamente a WhatsApp.'),
+                    ])
+                    ->columns(3)
+                    ->columnSpanFull(),
+                Section::make('Publicación y reintentos')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->description('Cómo se publican las respuestas y qué hacer ante fallos.')
+                    ->schema([
+                        Toggle::make('social_auto_reply_dry_run')
+                            ->label('Modo dry-run')
+                            ->helperText('Cuando está activo, genera el mensaje pero no lo publica en Meta. Solo guarda auditoría.'),
+                        Select::make('social_auto_reply_max_attempts')
+                            ->label('Máximo de reintentos')
+                            ->helperText('Intentos de publicación en Meta antes de marcar como fallido.')
+                            ->options([
+                                1 => '1 intento',
+                                2 => '2 intentos',
+                                3 => '3 intentos',
+                                4 => '4 intentos',
+                                5 => '5 intentos',
+                            ])
+                            ->native(false),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+                Section::make('Disparadores')
+                    ->icon('heroicon-o-funnel')
+                    ->description('Qué tipos de comentarios activan la respuesta automática.')
+                    ->schema([
+                        CheckboxList::make('social_auto_reply_allowed_classifications')
+                            ->label('Clasificaciones que activan auto-respuesta')
+                            ->helperText('Selecciona una o más clasificaciones.')
+                            ->extraAttributes(['class' => 'crm-classification-picker crm-pill-picker'])
+                            ->options([
+                                'sales_lead' => 'Lead de ventas',
+                                'commercial_question' => 'Consulta comercial',
+                                'medical_sensitive' => 'Consulta médica sensible',
+                                'complaint' => 'Queja',
+                                'spam' => 'Spam',
+                                'positive_opinion' => 'Opinión positiva',
+                                'negative_opinion' => 'Opinión negativa',
+                            ])
+                            ->columns(4),
+                    ])
+                    ->columnSpanFull(),
             ])
-            ->columns(2)
+            ->columns(1)
             ->footerActions([
                 $this->saveSectionAction('save_respuestas_automaticas'),
             ])

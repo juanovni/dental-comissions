@@ -73,11 +73,11 @@
             display: none;
         }
 
-        .crm-settings-guide-page .crm-weekday-picker .fi-fo-checkbox-list {
+        .crm-settings-guide-page .crm-pill-picker .fi-fo-checkbox-list {
             gap: .5rem;
         }
 
-        .crm-settings-guide-page .crm-weekday-picker label {
+        .crm-settings-guide-page .crm-pill-picker label {
             border: 1px solid #cbd5e1;
             border-radius: 999px;
             min-height: 2.25rem;
@@ -85,21 +85,21 @@
             transition: background-color .16s ease, border-color .16s ease, color .16s ease;
         }
 
-        .crm-settings-guide-page .crm-weekday-picker label:has(input:checked) {
+        .crm-settings-guide-page .crm-pill-picker label:has(input:checked) {
             background: oklch(55% .12 185);
             border-color: oklch(55% .12 185);
             color: #ffffff;
         }
 
-        .crm-settings-guide-page .crm-weekday-picker label:has(input:checked) * {
+        .crm-settings-guide-page .crm-pill-picker label:has(input:checked) * {
             color: #ffffff !important;
         }
 
-        .crm-settings-guide-page .crm-weekday-picker label:has(input:checked) input {
+        .crm-settings-guide-page .crm-pill-picker label:has(input:checked) input {
             accent-color: #ffffff;
         }
 
-        .crm-settings-guide-page .crm-weekday-picker label:has(input:focus-visible) {
+        .crm-settings-guide-page .crm-pill-picker label:has(input:focus-visible) {
             outline: 2px solid oklch(68% .105 185);
             outline-offset: 2px;
         }
@@ -139,7 +139,7 @@
             color: #94a3b8;
         }
 
-        .dark .crm-settings-guide-page .crm-weekday-picker label {
+        .dark .crm-settings-guide-page .crm-pill-picker label {
             border-color: rgba(148, 163, 184, .35);
         }
     </style>
