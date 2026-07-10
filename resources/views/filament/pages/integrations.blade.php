@@ -9,6 +9,7 @@
                 'tagline' => 'Captura comentarios y senales comerciales desde videos de TikTok.',
                 'logo' => 'TT',
                 'tone' => 'tiktok',
+                'image' => asset('images/integrations/tiktok-icon.webp'),
                 'status' => 'Proximamente',
             ],
             [
@@ -16,6 +17,7 @@
                 'tagline' => 'Conecta conversaciones y automatiza la recepcion de actividades clinicas.',
                 'logo' => 'WA',
                 'tone' => 'whatsapp',
+                'image' => asset('images/integrations/whatsapp-icon.avif'),
                 'status' => 'Configurado por sistema',
             ],
             [
@@ -23,6 +25,7 @@
                 'tagline' => 'Centraliza resenas, reputacion local y consultas de pacientes.',
                 'logo' => 'G',
                 'tone' => 'google',
+                'image' => asset('images/integrations/google-my-business-icon.webp'),
                 'status' => 'Proximamente',
             ],
         ];
@@ -145,12 +148,13 @@
         }
 
         .integration-logo.meta {
-            background: linear-gradient(135deg, #1877f2, #8b5cf6 48%, #e1306c);
+            background: none;
+            padding: 0;
         }
 
-        .integration-logo.tiktok { background: linear-gradient(135deg, #010101, #ef2950); }
-        .integration-logo.whatsapp { background: linear-gradient(135deg, #128c7e, #25d366); }
-        .integration-logo.google { background: linear-gradient(135deg, #4285f4, #34a853 45%, #fbbc05 70%, #ea4335); }
+        .integration-logo.tiktok { background: none; padding: 0; }
+        .integration-logo.whatsapp { background: none; padding: 0; }
+        .integration-logo.google { background: none; padding: 0; }
 
         .integration-status {
             align-items: center;
@@ -324,7 +328,7 @@
             <article class="integration-card">
                 <div class="integration-body">
                     <div class="integration-top">
-                        <div class="integration-logo meta">Meta</div>
+                        <img class="integration-logo meta" src="{{ asset('images/integrations/meta-icon.png') }}" alt="Meta" width="46" height="46">
                         <a class="integration-external" href="{{ $meta['accounts_url'] }}" aria-label="Abrir cuentas Meta">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M14 3h7v7" />
@@ -371,7 +375,11 @@
                 <article class="integration-card">
                     <div class="integration-body">
                         <div class="integration-top">
-                            <div class="integration-logo {{ $integration['tone'] }}">{{ $integration['logo'] }}</div>
+                            @isset($integration['image'])
+                                <img class="integration-logo {{ $integration['tone'] }}" src="{{ $integration['image'] }}" alt="{{ $integration['name'] }}" width="46" height="46">
+                            @else
+                                <div class="integration-logo {{ $integration['tone'] }}">{{ $integration['logo'] }}</div>
+                            @endisset
                             <span class="integration-external" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14 3h7v7" />
