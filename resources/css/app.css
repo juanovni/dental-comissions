@@ -790,6 +790,16 @@
         background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent);
     }
 
+    .fi-toggle.fi-toggle-on.fi-color.fi-color-primary {
+        --bg: var(--primary-500) !important;
+        background-color: var(--primary-500) !important;
+    }
+
+    .dark .fi-toggle.fi-toggle-on.fi-color.fi-color-primary {
+        --dark-bg: var(--primary-500) !important;
+        background-color: var(--primary-500) !important;
+    }
+
     .dark .fi-wi-stats-overview-stat,
     .dark .fi-wi-chart,
     .dark .fi-wi-table {

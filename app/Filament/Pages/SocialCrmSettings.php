@@ -162,50 +162,96 @@ class SocialCrmSettings extends Page
             ->icon('heroicon-o-calendar-days')
             ->description('Define los horarios, duración y slots disponibles para agendar citas automáticas.')
             ->schema([
-                Toggle::make('social_appointment_propose_slots')
-                    ->label('Proponer slots reales')
-                    ->helperText('Muestra horarios reales disponibles en la respuesta del bot cuando el paciente muestra interés en agendar.'),
-                Toggle::make('social_appointment_auto_confirm')
-                    ->label('Auto-confirmar cita')
-                    ->helperText('Si está activo, crea la cita automáticamente cuando el paciente acepta un slot.'),
-                CheckboxList::make('social_appointment_clinic_days')
-                    ->label('Días laborables')
-                    ->helperText('Días de la semana en que la clínica atiende.')
-                    ->options([
-                        0 => 'Domingo',
-                        1 => 'Lunes',
-                        2 => 'Martes',
-                        3 => 'Miércoles',
-                        4 => 'Jueves',
-                        5 => 'Viernes',
-                        6 => 'Sábado',
+                Section::make('Comportamiento del bot')
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->description('Cómo debe actuar el asistente al agendar.')
+                    ->schema([
+                        Toggle::make('social_appointment_propose_slots')
+                            ->label('Proponer slots reales')
+                            ->helperText('Muestra horarios reales disponibles cuando el paciente muestra interés en agendar.'),
+                        Toggle::make('social_appointment_auto_confirm')
+                            ->label('Auto-confirmar cita')
+                            ->helperText('Si está activo, crea la cita automáticamente cuando el paciente acepta un slot.'),
                     ])
-                    ->columns(7),
-                TextInput::make('social_appointment_clinic_open')
-                    ->label('Hora de apertura')
-                    ->helperText('Hora de inicio de atención (formato HH:MM).')
-                    ->type('time'),
-                TextInput::make('social_appointment_clinic_close')
-                    ->label('Hora de cierre')
-                    ->helperText('Hora de fin de atención (formato HH:MM).')
-                    ->type('time'),
-                TextInput::make('social_appointment_slot_duration')
-                    ->label('Duración de cita (minutos)')
-                    ->helperText('Duración de cada espacio en minutos.')
-                    ->numeric()
-                    ->minValue(15),
-                TextInput::make('social_appointment_lead_time_hours')
-                    ->label('Anticipación mínima (horas)')
-                    ->helperText('Mínimo de horas de anticipación desde ahora para ofrecer un slot.')
-                    ->numeric()
-                    ->minValue(0),
-                TextInput::make('social_appointment_max_slots_offer')
-                    ->label('Máximo de slots a ofrecer')
-                    ->helperText('Cantidad máxima de slots que el bot propone al paciente.')
-                    ->numeric()
-                    ->minValue(1),
+                    ->columns(2)
+                    ->columnSpanFull(),
+                Section::make('Disponibilidad')
+                    ->icon('heroicon-o-clock')
+                    ->description('Días y franja horaria en que la clínica atiende.')
+                    ->schema([
+                        CheckboxList::make('social_appointment_clinic_days')
+                            ->label('Días laborables')
+                            ->helperText('Selecciona los días de atención.')
+                            ->extraAttributes(['class' => 'crm-weekday-picker'])
+                            ->options([
+                                1 => 'Lun',
+                                2 => 'Mar',
+                                3 => 'Mié',
+                                4 => 'Jue',
+                                5 => 'Vie',
+                                6 => 'Sáb',
+                                0 => 'Dom',
+                            ])
+                            ->columns(7)
+                            ->columnSpanFull(),
+                        TextInput::make('social_appointment_clinic_open')
+                            ->label('Hora de apertura')
+                            ->helperText('Hora de inicio de atención.')
+                            ->type('time'),
+                        TextInput::make('social_appointment_clinic_close')
+                            ->label('Hora de cierre')
+                            ->helperText('Hora de fin de atención.')
+                            ->type('time'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+                Section::make('Configuración de slots')
+                    ->icon('heroicon-o-arrow-path-rounded-square')
+                    ->description('Duración y reglas para ofrecer horarios al paciente.')
+                    ->schema([
+                        Select::make('social_appointment_slot_duration')
+                            ->label('Duración de cita')
+                            ->helperText('Minutos por espacio.')
+                            ->options([
+                                15 => '15 minutos',
+                                30 => '30 minutos',
+                                45 => '45 minutos',
+                                60 => '60 minutos',
+                                90 => '90 minutos',
+                                120 => '120 minutos',
+                            ])
+                            ->native(false),
+                        Select::make('social_appointment_lead_time_hours')
+                            ->label('Anticipación mínima')
+                            ->helperText('Horas mínimas desde ahora.')
+                            ->options([
+                                0 => 'Sin anticipación',
+                                1 => '1 hora',
+                                2 => '2 horas',
+                                4 => '4 horas',
+                                8 => '8 horas',
+                                12 => '12 horas',
+                                24 => '24 horas',
+                                48 => '48 horas',
+                            ])
+                            ->native(false),
+                        Select::make('social_appointment_max_slots_offer')
+                            ->label('Máximo de slots')
+                            ->helperText('Cantidad que el bot propone.')
+                            ->options([
+                                1 => '1 slot',
+                                2 => '2 slots',
+                                3 => '3 slots',
+                                4 => '4 slots',
+                                5 => '5 slots',
+                                6 => '6 slots',
+                            ])
+                            ->native(false),
+                    ])
+                    ->columns(3)
+                    ->columnSpanFull(),
             ])
-            ->columns(2)
+            ->columns(1)
             ->footerActions([
                 $this->saveSectionAction('save_citas'),
             ])
