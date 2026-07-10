@@ -163,7 +163,7 @@
         }
 
         .gcal-btn.primary {
-            background: #4285f4;
+            background: oklch(55% .12 185);
             color: #ffffff;
         }
 
@@ -232,7 +232,10 @@
                                 wire:loading.attr="disabled"
                                 wire:target="disconnect({{ $doctor['id'] }})"
                             >
-                                <span wire:loading.remove wire:target="disconnect({{ $doctor['id'] }})">Desconectar</span>
+                                <span wire:loading.remove wire:target="disconnect({{ $doctor['id'] }})">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M9.143 17.082a24.248 24.248 0 0 0 3.844.148m-3.844-.148a24.447 24.447 0 0 1-5.394-2.117m5.394 2.117L5.25 18.75m7.737-1.668a24.248 24.248 0 0 1 3.844-.148m-3.844.148 1.063 1.518m-11.727-9.81a24.248 24.248 0 0 0 1.58-2.92m12.39 2.92a24.305 24.305 0 0 0 3.058-6.72m-16.447 7.8a24.04 24.04 0 0 1-1.28-3.29m13.688 7.8a24.099 24.099 0 0 0 1.28-3.29M12 6v3m0 0v3m0-3h3m-3 0H9"/></svg>
+                                    <span>Desconectar</span>
+                                </span>
                                 <span wire:loading wire:target="disconnect({{ $doctor['id'] }})">Desconectando...</span>
                             </button>
                         </footer>
@@ -257,7 +260,8 @@
                     </div>
                     <footer class="gcal-card-footer">
                         <a class="gcal-btn primary" href="{{ $doctor['connect_url'] }}">
-                            Conectar
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
+                            <span>Conectar</span>
                         </a>
                     </footer>
                 </article>

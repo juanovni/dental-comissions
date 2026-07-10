@@ -419,9 +419,9 @@
                             <div class="ln-message">{{ $alert->message }}</div>
 
                             <div class="ln-actions">
-                                <button class="ln-btn" type="button" wire:click="resolveAlert({{ $alert->id }})" wire:loading.attr="disabled">Resolver</button>
+                                <button class="ln-btn" type="button" wire:click="resolveAlert({{ $alert->id }})" wire:loading.attr="disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="m4.5 12.75 6 6 9-13.5"/></svg><span>Resolver</span></button>
                                 @if ($lead)
-                                    <a class="ln-btn ln-btn-primary" href="{{ $this->leadUrl($alert) }}">Ver Lead</a>
+                                    <a class="ln-btn ln-btn-primary" href="{{ $this->leadUrl($alert) }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Ver Lead</span></a>
                                 @endif
                             </div>
                         </article>
@@ -434,8 +434,8 @@
                 </div>
 
                 <footer class="ln-footer">
-                    <button class="ln-btn" type="button" wire:click="resolveAll" wire:loading.attr="disabled" @disabled($stats['all'] === 0)>Resolver todas</button>
-                    <button class="ln-btn ln-btn-primary" type="button" wire:click="runChecks" wire:loading.attr="disabled">Revisar ahora</button>
+                    <button class="ln-btn" type="button" wire:click="resolveAll" wire:loading.attr="disabled" @disabled($stats['all'] === 0)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="m4.5 12.75 6 6 9-13.5"/></svg><span>Resolver todas</span></button>
+                    <button class="ln-btn ln-btn-primary" type="button" wire:click="runChecks" wire:loading.attr="disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/><path d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z"/></svg><span>Revisar ahora</span></button>
                 </footer>
             </aside>
         </div>

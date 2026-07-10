@@ -58,12 +58,10 @@
         @keyframes crm-automatic-mode-pulse {
             0%, 100% {
                 opacity: 1;
-                transform: scale(1);
             }
 
             50% {
                 opacity: .72;
-                transform: scale(1.08);
             }
         }
 
@@ -81,6 +79,10 @@
             .crm-automatic-mode-button.is-active svg,
             .crm-automatic-mode-indicator {
                 animation: none;
+            }
+
+            .crm-automatic-mode-icon {
+                transform: none !important;
             }
         }
 
@@ -105,7 +107,7 @@
 
     <button
         @class([
-            'crm-automatic-mode-button',
+            'crm-automatic-mode-button group',
             'is-active' => $this->isAutomaticModeActive(),
         ])
         type="button"
@@ -115,7 +117,7 @@
         aria-label="{{ $this->isAutomaticModeActive() ? 'Desactivar modo automático CRM' : 'Activar modo automático CRM' }}"
         title="{{ $this->isAutomaticModeActive() ? 'Desactivar modo automático' : 'Activar modo automático' }}"
     >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="crm-automatic-mode-icon transition-transform duration-200 group-hover:-rotate-12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 8V4H8"></path>
             <rect width="16" height="12" x="4" y="8" rx="2"></rect>
             <path d="M2 14h2"></path>

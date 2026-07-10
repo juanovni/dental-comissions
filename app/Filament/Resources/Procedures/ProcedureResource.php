@@ -26,9 +26,7 @@ class ProcedureResource extends Resource
 
     protected static ?string $navigationLabel = 'Procedimientos';
 
-    protected static bool $shouldRegisterNavigation = false;
-
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 23;
 
     protected static ?string $modelLabel = 'procedimiento';
 

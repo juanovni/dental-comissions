@@ -12,7 +12,6 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Assets\Js;
-use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -49,7 +48,19 @@ class AdminPanelProvider extends PanelProvider
                 return request()->routeIs('filament.admin.auth.login') ? '3rem' : '1.35rem';
             })
             ->colors([
-                'primary' => Color::Teal,
+                'primary' => [
+                    50 => 'oklch(97% .02 185)',
+                    100 => 'oklch(94% .035 185)',
+                    200 => 'oklch(88% .055 185)',
+                    300 => 'oklch(80% .08 185)',
+                    400 => 'oklch(68% .105 185)',
+                    500 => 'oklch(55% .12 185)',
+                    600 => 'oklch(47% .115 185)',
+                    700 => 'oklch(39% .1 185)',
+                    800 => 'oklch(31% .08 185)',
+                    900 => 'oklch(25% .06 185)',
+                    950 => 'oklch(18% .045 185)',
+                ],
             ])
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([

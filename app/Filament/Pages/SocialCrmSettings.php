@@ -24,29 +24,17 @@ class SocialCrmSettings extends Page
 
     protected static string|\UnitEnum|null $navigationGroup = 'Configuración';
 
-    protected static ?string $navigationLabel = 'Configuración guiada CRM';
+    protected static ?string $navigationLabel = 'Configuración CRM';
 
     protected static ?string $slug = 'crm-settings-guide';
 
-    protected static ?string $title = 'Configuración guiada CRM';
+    protected static ?string $title = 'Configuración CRM';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-adjustments-horizontal';
 
     protected static ?int $navigationSort = 22;
 
     public ?array $data = [];
-
-    public static function getNavigationBadge(): ?string
-    {
-        $dryRun = app(SocialCrmSettingsService::class)->autoReplyDryRun();
-
-        return $dryRun ? 'Modo prueba' : null;
-    }
-
-    public static function getNavigationBadgeColor(): string|array|null
-    {
-        return 'warning';
-    }
 
     public function getSubheading(): HtmlString
     {
