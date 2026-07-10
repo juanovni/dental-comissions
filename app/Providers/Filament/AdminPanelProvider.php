@@ -30,7 +30,7 @@ class AdminPanelProvider extends PanelProvider
     {
         FilamentView::registerRenderHook(
             PanelsRenderHook::USER_MENU_BEFORE,
-            fn (): HtmlString => new HtmlString('<div class="me-2">'.view('filament.partials.social-lead-notification-center')->render().'</div>'),
+            fn (): HtmlString => new HtmlString('<div class="">'.view('filament.partials.social-lead-notification-center')->render().'</div>'),
         );
 
         return $panel
