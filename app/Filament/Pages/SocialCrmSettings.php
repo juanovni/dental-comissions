@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\SocialCrmSetting;
 use App\Services\SocialCrmSettingsService;
+use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -12,9 +13,10 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Alignment;
+use Illuminate\Support\HtmlString;
+use Livewire\Attributes\On;
 
 class SocialCrmSettings extends Page
 {
@@ -46,7 +48,18 @@ class SocialCrmSettings extends Page
         return 'warning';
     }
 
+    public function getSubheading(): HtmlString
+    {
+        return new HtmlString('<span class="text-sm font-normal text-muted-foreground">Organiza las configuraciones operativas del CRM social sin editar JSON manualmente.</span>');
+    }
+
     public function mount(): void
+    {
+        $this->form->fill($this->loadSettings());
+    }
+
+    #[On('social-crm-automatic-mode-updated')]
+    public function refreshAutomaticModeSettings(): void
     {
         $this->form->fill($this->loadSettings());
     }
@@ -55,25 +68,67 @@ class SocialCrmSettings extends Page
     {
         return $schema
             ->components([
-                Tabs::make('tabs')
-                    ->tabs([
-                        $this->citasTab(),
-                        $this->respuestasAutomaticasTab(),
-                        $this->mensajesTab(),
-                        $this->seguimientoComercialTab(),
-                        $this->alertasYScoringTab(),
-                        $this->smartLinkTab(),
-                    ])
-                    ->contained(false)
-                    ->persistTabInQueryString(),
+                $this->citasSection(),
+                $this->respuestasAutomaticasSection(),
+                $this->mensajesSection(),
+                $this->seguimientoComercialSection(),
+                $this->alertasYScoringSection(),
+                $this->smartLinkSection(),
             ])
             ->statePath('data');
+    }
+
+    public function settingsNavigationItems(): array
+    {
+        return [
+            [
+                'id' => 'citas',
+                'label' => 'Citas',
+                'description' => 'Horarios y disponibilidad',
+            ],
+            [
+                'id' => 'respuestas-automaticas',
+                'label' => 'Respuestas automáticas',
+                'description' => 'Reglas de auto-respuesta',
+            ],
+            [
+                'id' => 'mensajes-identidad',
+                'label' => 'Mensajes e identidad',
+                'description' => 'Plantillas y nombre visible',
+            ],
+            [
+                'id' => 'seguimiento-comercial',
+                'label' => 'Seguimiento comercial',
+                'description' => 'Urgencia y motivos de pérdida',
+            ],
+            [
+                'id' => 'alertas-scoring',
+                'label' => 'Alertas y scoring',
+                'description' => 'Puntajes y avisos operativos',
+            ],
+            [
+                'id' => 'smart-link',
+                'label' => 'Smart Link',
+                'description' => 'Duración, ping y alertas',
+            ],
+        ];
     }
 
     public function save(): void
     {
         $state = $this->form->getState();
 
+        $this->persistSettings($state);
+
+        Notification::make()
+            ->title('Configuración guardada')
+            ->body('Los cambios se han aplicado correctamente.')
+            ->success()
+            ->send();
+    }
+
+    private function persistSettings(array $state): void
+    {
         foreach ($state as $key => $value) {
             $existing = SocialCrmSetting::query()->where('key', $key)->first();
 
@@ -101,114 +156,125 @@ class SocialCrmSettings extends Page
         }
 
         app(SocialCrmSettingsService::class)->clearCache();
-
-        Notification::make()
-            ->title('Configuración guardada')
-            ->body('Los cambios se han aplicado correctamente.')
-            ->success()
-            ->send();
     }
 
-    private function citasTab(): Tab
+    private function saveSectionAction(string $name): Action
     {
-        return Tab::make('Citas')
+        return Action::make($name)
+            ->label('Guardar configuración')
+            ->icon('heroicon-o-check')
+            ->color('primary')
+            ->action('save');
+    }
+
+    private function citasSection(): Section
+    {
+        return Section::make('Citas')
+            ->id('citas')
             ->icon('heroicon-o-calendar-days')
+            ->description('Define los horarios, duración y slots disponibles para agendar citas automáticas.')
             ->schema([
-                Section::make('Configuración de citas')
-                    ->description('Define los horarios, duración y slots disponibles para agendar citas automáticas.')
-                    ->schema([
-                        Toggle::make('social_appointment_propose_slots')
-                            ->label('Proponer slots reales')
-                            ->helperText('Muestra horarios reales disponibles en la respuesta del bot cuando el paciente muestra interés en agendar.'),
-                        Toggle::make('social_appointment_auto_confirm')
-                            ->label('Auto-confirmar cita')
-                            ->helperText('Si está activo, crea la cita automáticamente cuando el paciente acepta un slot.'),
-                        CheckboxList::make('social_appointment_clinic_days')
-                            ->label('Días laborables')
-                            ->helperText('Días de la semana en que la clínica atiende.')
-                            ->options([
-                                0 => 'Domingo',
-                                1 => 'Lunes',
-                                2 => 'Martes',
-                                3 => 'Miércoles',
-                                4 => 'Jueves',
-                                5 => 'Viernes',
-                                6 => 'Sábado',
-                            ])
-                            ->columns(7),
-                        TextInput::make('social_appointment_clinic_open')
-                            ->label('Hora de apertura')
-                            ->helperText('Hora de inicio de atención (formato HH:MM).')
-                            ->type('time'),
-                        TextInput::make('social_appointment_clinic_close')
-                            ->label('Hora de cierre')
-                            ->helperText('Hora de fin de atención (formato HH:MM).')
-                            ->type('time'),
-                        TextInput::make('social_appointment_slot_duration')
-                            ->label('Duración de cita (minutos)')
-                            ->helperText('Duración de cada espacio en minutos.')
-                            ->numeric()
-                            ->minValue(15),
-                        TextInput::make('social_appointment_lead_time_hours')
-                            ->label('Anticipación mínima (horas)')
-                            ->helperText('Mínimo de horas de anticipación desde ahora para ofrecer un slot.')
-                            ->numeric()
-                            ->minValue(0),
-                        TextInput::make('social_appointment_max_slots_offer')
-                            ->label('Máximo de slots a ofrecer')
-                            ->helperText('Cantidad máxima de slots que el bot propone al paciente.')
-                            ->numeric()
-                            ->minValue(1),
-                    ])->columns(2),
-            ]);
+                Toggle::make('social_appointment_propose_slots')
+                    ->label('Proponer slots reales')
+                    ->helperText('Muestra horarios reales disponibles en la respuesta del bot cuando el paciente muestra interés en agendar.'),
+                Toggle::make('social_appointment_auto_confirm')
+                    ->label('Auto-confirmar cita')
+                    ->helperText('Si está activo, crea la cita automáticamente cuando el paciente acepta un slot.'),
+                CheckboxList::make('social_appointment_clinic_days')
+                    ->label('Días laborables')
+                    ->helperText('Días de la semana en que la clínica atiende.')
+                    ->options([
+                        0 => 'Domingo',
+                        1 => 'Lunes',
+                        2 => 'Martes',
+                        3 => 'Miércoles',
+                        4 => 'Jueves',
+                        5 => 'Viernes',
+                        6 => 'Sábado',
+                    ])
+                    ->columns(7),
+                TextInput::make('social_appointment_clinic_open')
+                    ->label('Hora de apertura')
+                    ->helperText('Hora de inicio de atención (formato HH:MM).')
+                    ->type('time'),
+                TextInput::make('social_appointment_clinic_close')
+                    ->label('Hora de cierre')
+                    ->helperText('Hora de fin de atención (formato HH:MM).')
+                    ->type('time'),
+                TextInput::make('social_appointment_slot_duration')
+                    ->label('Duración de cita (minutos)')
+                    ->helperText('Duración de cada espacio en minutos.')
+                    ->numeric()
+                    ->minValue(15),
+                TextInput::make('social_appointment_lead_time_hours')
+                    ->label('Anticipación mínima (horas)')
+                    ->helperText('Mínimo de horas de anticipación desde ahora para ofrecer un slot.')
+                    ->numeric()
+                    ->minValue(0),
+                TextInput::make('social_appointment_max_slots_offer')
+                    ->label('Máximo de slots a ofrecer')
+                    ->helperText('Cantidad máxima de slots que el bot propone al paciente.')
+                    ->numeric()
+                    ->minValue(1),
+            ])
+            ->columns(2)
+            ->footerActions([
+                $this->saveSectionAction('save_citas'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
     }
 
-    private function respuestasAutomaticasTab(): Tab
+    private function respuestasAutomaticasSection(): Section
     {
-        return Tab::make('Respuestas Automáticas')
+        return Section::make('Respuestas Automáticas')
+            ->id('respuestas-automaticas')
             ->icon('heroicon-o-chat-bubble-left-right')
+            ->description('Controla cómo y cuándo el sistema responde automáticamente a comentarios en redes sociales.')
             ->schema([
-                Section::make('Configuración de respuestas automáticas')
-                    ->description('Controla cómo y cuándo el sistema responde automáticamente a comentarios en redes sociales.')
-                    ->schema([
-                        Toggle::make('social_auto_reply_enabled')
-                            ->label('Auto-respuestas activadas')
-                            ->helperText('Activa o desactiva las respuestas automáticas en comentarios de Facebook/Instagram.'),
-                        Toggle::make('social_auto_reply_dry_run')
-                            ->label('Modo dry-run')
-                            ->helperText('Cuando está activo, genera el mensaje pero no lo publica en Meta. Solo guarda auditoría.'),
-                        Toggle::make('social_auto_reply_use_ai')
-                            ->label('Usar IA para generar respuesta')
-                            ->helperText('Si está desactivado, usa la plantilla estática sin IA.'),
-                        TextInput::make('social_auto_reply_max_attempts')
-                            ->label('Máximo de reintentos')
-                            ->helperText('Número máximo de intentos de publicación en Meta antes de marcar como fallido.')
-                            ->numeric()
-                            ->minValue(1),
-                        Toggle::make('social_auto_reply_use_smart_link')
-                            ->label('Usar Smart Link en vez de WhatsApp directo')
-                            ->helperText('Si está activo, el comentario lleva al Smart Link. Si está desactivado, lleva directamente a WhatsApp.'),
-                        Select::make('social_auto_reply_allowed_classifications')
-                            ->label('Clasificaciones que activan auto-respuesta')
-                            ->helperText('Lista de clasificaciones de comentario que disparan respuesta automática.')
-                            ->multiple()
-                            ->options([
-                                'sales_lead' => 'Lead de ventas',
-                                'commercial_question' => 'Consulta comercial',
-                                'medical_sensitive' => 'Consulta médica sensible',
-                                'complaint' => 'Queja',
-                                'spam' => 'Spam',
-                                'positive_opinion' => 'Opinión positiva',
-                                'negative_opinion' => 'Opinión negativa',
-                            ]),
-                    ])->columns(2),
-            ]);
+                Toggle::make('social_auto_reply_enabled')
+                    ->label('Auto-respuestas activadas')
+                    ->helperText('Activa o desactiva las respuestas automáticas en comentarios de Facebook/Instagram.'),
+                Toggle::make('social_auto_reply_dry_run')
+                    ->label('Modo dry-run')
+                    ->helperText('Cuando está activo, genera el mensaje pero no lo publica en Meta. Solo guarda auditoría.'),
+                Toggle::make('social_auto_reply_use_ai')
+                    ->label('Usar IA para generar respuesta')
+                    ->helperText('Si está desactivado, usa la plantilla estática sin IA.'),
+                TextInput::make('social_auto_reply_max_attempts')
+                    ->label('Máximo de reintentos')
+                    ->helperText('Número máximo de intentos de publicación en Meta antes de marcar como fallido.')
+                    ->numeric()
+                    ->minValue(1),
+                Toggle::make('social_auto_reply_use_smart_link')
+                    ->label('Usar Smart Link en vez de WhatsApp directo')
+                    ->helperText('Si está activo, el comentario lleva al Smart Link. Si está desactivado, lleva directamente a WhatsApp.'),
+                Select::make('social_auto_reply_allowed_classifications')
+                    ->label('Clasificaciones que activan auto-respuesta')
+                    ->helperText('Lista de clasificaciones de comentario que disparan respuesta automática.')
+                    ->multiple()
+                    ->options([
+                        'sales_lead' => 'Lead de ventas',
+                        'commercial_question' => 'Consulta comercial',
+                        'medical_sensitive' => 'Consulta médica sensible',
+                        'complaint' => 'Queja',
+                        'spam' => 'Spam',
+                        'positive_opinion' => 'Opinión positiva',
+                        'negative_opinion' => 'Opinión negativa',
+                    ]),
+            ])
+            ->columns(2)
+            ->footerActions([
+                $this->saveSectionAction('save_respuestas_automaticas'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
     }
 
-    private function mensajesTab(): Tab
+    private function mensajesSection(): Section
     {
-        return Tab::make('Mensajes e Identidad')
+        return Section::make('Mensajes e Identidad')
+            ->id('mensajes-identidad')
             ->icon('heroicon-o-chat-bubble-left-ellipsis')
+            ->description('Nombre de la clínica, cabeceras y plantillas usadas para responder a leads.')
             ->schema([
                 Section::make('Identidad de la clínica')
                     ->description('Nombre y cabecera que aparecen en los mensajes automáticos.')
@@ -238,13 +304,19 @@ class SocialCrmSettings extends Page
                             ->helperText('Toast visible para secretaria cuando el navegador copia el link.')
                             ->maxLength(255),
                     ]),
-            ]);
+            ])
+            ->footerActions([
+                $this->saveSectionAction('save_mensajes_identidad'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
     }
 
-    private function seguimientoComercialTab(): Tab
+    private function seguimientoComercialSection(): Section
     {
-        return Tab::make('Seguimiento Comercial')
+        return Section::make('Seguimiento Comercial')
+            ->id('seguimiento-comercial')
             ->icon('heroicon-o-phone-arrow-up-right')
+            ->description('Define umbrales de urgencia, tiempos de contacto y seguimiento automático.')
             ->schema([
                 Section::make('Reglas de seguimiento')
                     ->description('Define umbrales de urgencia, tiempos de contacto y seguimiento automático.')
@@ -298,13 +370,19 @@ class SocialCrmSettings extends Page
                             ->helperText('Variables: {author_name}, {platform}.')
                             ->rows(3),
                     ]),
-            ]);
+            ])
+            ->footerActions([
+                $this->saveSectionAction('save_seguimiento_comercial'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
     }
 
-    private function alertasYScoringTab(): Tab
+    private function alertasYScoringSection(): Section
     {
-        return Tab::make('Alertas y Scoring')
+        return Section::make('Alertas y Scoring')
+            ->id('alertas-scoring')
             ->icon('heroicon-o-bell-alert')
+            ->description('Controla alertas operativas y puntajes de interacción del lead.')
             ->schema([
                 Section::make('Alertas')
                     ->description('Controla la generación de alertas operativas sobre leads.')
@@ -348,38 +426,45 @@ class SocialCrmSettings extends Page
                             ->minValue(0)
                             ->maxValue(100),
                     ])->columns(2),
-            ]);
+            ])
+            ->footerActions([
+                $this->saveSectionAction('save_alertas_scoring'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
     }
 
-    private function smartLinkTab(): Tab
+    private function smartLinkSection(): Section
     {
-        return Tab::make('Smart Link')
+        return Section::make('Smart Link')
+            ->id('smart-link')
             ->icon('heroicon-o-link')
+            ->description('Configura los umbrales de duración y puntajes asociados a la interacción con el Smart Link.')
             ->schema([
-                Section::make('Comportamiento del Smart Link')
-                    ->description('Configura los umbrales de duración y puntajes asociados a la interacción con el Smart Link.')
-                    ->schema([
-                        TextInput::make('social_smart_link_duration_threshold_seconds')
-                            ->label('Umbral de duración (segundos)')
-                            ->helperText('A partir de cuántos segundos de visualización se considera una visita de calidad.')
-                            ->numeric()
-                            ->minValue(10),
-                        TextInput::make('social_smart_link_ping_seconds')
-                            ->label('Intervalo de ping (segundos)')
-                            ->helperText('Cada cuántos segundos se registra actividad mientras el lead visualiza el Smart Link.')
-                            ->numeric()
-                            ->minValue(5),
-                        TextInput::make('social_smart_link_duration_score')
-                            ->label('Puntos por duración')
-                            ->helperText('Puntaje adicional cuando el lead supera el umbral de duración.')
-                            ->numeric()
-                            ->minValue(0),
-                        Textarea::make('social_smart_link_duration_alert')
-                            ->label('Texto de alerta por alta permanencia')
-                            ->helperText('Mensaje de alerta cuando un lead pasa mucho tiempo en el Smart Link.')
-                            ->rows(2),
-                    ])->columns(2),
-            ]);
+                TextInput::make('social_smart_link_duration_threshold_seconds')
+                    ->label('Umbral de duración (segundos)')
+                    ->helperText('A partir de cuántos segundos de visualización se considera una visita de calidad.')
+                    ->numeric()
+                    ->minValue(10),
+                TextInput::make('social_smart_link_ping_seconds')
+                    ->label('Intervalo de ping (segundos)')
+                    ->helperText('Cada cuántos segundos se registra actividad mientras el lead visualiza el Smart Link.')
+                    ->numeric()
+                    ->minValue(5),
+                TextInput::make('social_smart_link_duration_score')
+                    ->label('Puntos por duración')
+                    ->helperText('Puntaje adicional cuando el lead supera el umbral de duración.')
+                    ->numeric()
+                    ->minValue(0),
+                Textarea::make('social_smart_link_duration_alert')
+                    ->label('Texto de alerta por alta permanencia')
+                    ->helperText('Mensaje de alerta cuando un lead pasa mucho tiempo en el Smart Link.')
+                    ->rows(2),
+            ])
+            ->columns(2)
+            ->footerActions([
+                $this->saveSectionAction('save_smart_link'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
     }
 
     private function loadSettings(): array
