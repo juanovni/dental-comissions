@@ -363,18 +363,21 @@
 
     <div class="pulse-toolbar">
         <button class="pulse-btn {{ $this->sortOrder === 'newest' ? 'active' : '' }}" wire:click="toggleSort">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"/></svg>
             @if ($this->sortOrder === 'newest')
-                ↓ Más reciente
+                <span>Más reciente</span>
             @else
-                ↑ Más antiguo
+                <span>Más antiguo</span>
             @endif
         </button>
 
         <button class="pulse-btn {{ $this->showAllPings ? 'active' : '' }}" wire:click="togglePings">
             @if ($this->showAllPings)
-                Ocultar pings
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>
+                <span>Ocultar pings</span>
             @else
-                Ver todos los pings
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+                <span>Ver todos los pings</span>
             @endif
         </button>
 
@@ -385,9 +388,10 @@
         >
             @if ($this->analyzing)
                 <svg class="animate-spin" style="width:.85rem;height:.85rem" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                Analizando...
+                <span>Analizando...</span>
             @else
-                Analizar comportamiento
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 1-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 1 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 1 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 1-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 1-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 1 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 1 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 1-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 1-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 1 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 1 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 1-1.423 1.423Z"/></svg>
+                <span>Analizar comportamiento</span>
             @endif
         </button>
     </div>

@@ -34,6 +34,8 @@ class SocialCrmSettingResource extends Resource
 
     protected static ?string $pluralModelLabel = 'configuraciones CRM social';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 24;
 
     public static function form(Schema $schema): Schema

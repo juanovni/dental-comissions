@@ -1027,9 +1027,9 @@
                                         </div>
 
                                         <div class="kanban-card-actions">
-                                            <button class="kanban-card-action" type="button" wire:click="openLeadDetail({{ $comment->id }})" title="Ver detalle">Detalle</button>
+                                            <button class="kanban-card-action" type="button" wire:click="openLeadDetail({{ $comment->id }})" title="Ver detalle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/></svg><span>Detalle</span></button>
                                             @if ($patientUrl)
-                                                <a class="kanban-card-action" href="{{ $patientUrl }}" title="Ver ficha del paciente">Paciente</a>
+                                                <a class="kanban-card-action" href="{{ $patientUrl }}" title="Ver ficha del paciente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg><span>Paciente</span></a>
                                             @endif
                                         </div>
                                     </div>
@@ -1141,11 +1141,11 @@
             </div>
 
             <footer class="kanban-detail-actions">
-                <a class="kanban-detail-btn kanban-detail-btn-primary" href="{{ $detailUrl }}">Abrir ficha CRM</a>
+                <a class="kanban-detail-btn kanban-detail-btn-primary" href="{{ $detailUrl }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Abrir ficha CRM</span></a>
                 @if ($patientUrl)
-                    <a class="kanban-detail-btn" href="{{ $patientUrl }}">Ver paciente</a>
+                    <a class="kanban-detail-btn" href="{{ $patientUrl }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><span>Ver paciente</span></a>
                 @endif
-                <button class="kanban-detail-btn" type="button" wire:click="closeLeadDetail">Cerrar</button>
+                <button class="kanban-detail-btn" type="button" wire:click="closeLeadDetail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M6 18 18 6M6 6l12 12"/></svg><span>Cerrar</span></button>
             </footer>
         </aside>
     @endif
@@ -1172,9 +1172,10 @@
                 </label>
 
                 <div class="kanban-modal-actions">
-                    <button class="kanban-modal-btn kanban-modal-btn-soft" type="button" wire:click="closeLostModal">Cancelar</button>
+                    <button class="kanban-modal-btn kanban-modal-btn-soft" type="button" wire:click="closeLostModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M6 18 18 6M6 6l12 12"/></svg><span>Cancelar</span></button>
                     <button class="kanban-modal-btn kanban-modal-btn-primary" type="button" wire:click="confirmLost">
-                        Marcar como perdido
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                        <span>Marcar como perdido</span>
                     </button>
                 </div>
             </section>

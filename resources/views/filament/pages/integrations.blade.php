@@ -43,7 +43,7 @@
         }
 
         .integrations-kicker {
-            color: #2563eb;
+            color: oklch(55% .12 185);
             font-size: .7rem;
             font-weight: 800;
             letter-spacing: .08em;
@@ -136,7 +136,7 @@
         .integration-external:hover {
             background: #f8fafc;
             border-color: #e5e7eb;
-            color: #2563eb;
+            color: oklch(55% .12 185);
         }
 
         .integration-external svg {
@@ -239,7 +239,7 @@
         }
 
         .integration-btn.primary {
-            background: #1d7afc;
+            background: oklch(55% .12 185);
             color: #ffffff;
         }
 
@@ -283,7 +283,7 @@
         }
 
         .integration-switch.is-on {
-            background: #1d7afc;
+            background: oklch(55% .12 185);
             justify-content: flex-end;
         }
 
@@ -314,7 +314,7 @@
 
         .dark .integration-external:hover {
             background: rgba(30, 41, 59, .9);
-            color: #93c5fd;
+            color: oklch(68% .105 185);
         }
     </style>
 
@@ -346,14 +346,19 @@
                 <footer class="integration-footer">
                     <div class="integration-actions">
                         <a class="integration-btn primary" href="{{ $meta['connect_url'] }}">
-                            {{ $meta['connected'] ? 'Reconectar' : 'Conectar' }}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/></svg>
+                            <span>{{ $meta['connected'] ? 'Reconectar' : 'Conectar' }}</span>
                         </a>
                         <a class="integration-btn soft" href="{{ $meta['accounts_url'] }}">
-                            Ver cuentas
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
+                            <span>Ver cuentas</span>
                         </a>
                         @if ($meta['connected'])
                             <button class="integration-btn integration-sync" type="button" wire:click="syncMeta" wire:loading.attr="disabled" wire:target="syncMeta">
-                                <span wire:loading.remove wire:target="syncMeta">Sincronizar</span>
+                                <span wire:loading.remove wire:target="syncMeta">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg>
+                                    <span>Sincronizar</span>
+                                </span>
                                 <span wire:loading wire:target="syncMeta">Sincronizando...</span>
                             </button>
                         @endif

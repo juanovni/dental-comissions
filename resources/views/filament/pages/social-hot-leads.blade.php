@@ -378,17 +378,17 @@
                     <div class="hot-message">{{ $lead->comment_text }}</div>
 
                     <div class="hot-actions">
-                        <button class="mc-btn hot-action-success" type="button" wire:click="markContacted({{ $lead->id }})" wire:loading.attr="disabled">Contactado</button>
-                        <button class="mc-btn mc-btn-soft hot-action-warning" type="button" wire:click="scheduleFollowUp({{ $lead->id }})" wire:loading.attr="disabled">Seguimiento</button>
-                        <button class="mc-btn mc-btn-soft hot-action-danger" type="button" wire:click="markLost({{ $lead->id }})" wire:confirm="Marcar este lead como perdido?" wire:loading.attr="disabled">Perdido</button>
+                        <button class="mc-btn hot-action-success" type="button" wire:click="markContacted({{ $lead->id }})" wire:loading.attr="disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg><span>Contactado</span></button>
+                        <button class="mc-btn mc-btn-soft hot-action-warning" type="button" wire:click="scheduleFollowUp({{ $lead->id }})" wire:loading.attr="disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg><span>Seguimiento</span></button>
+                        <button class="mc-btn mc-btn-soft hot-action-danger" type="button" wire:click="markLost({{ $lead->id }})" wire:confirm="Marcar este lead como perdido?" wire:loading.attr="disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg><span>Perdido</span></button>
 
                         @if ($patientUrl)
-                            <a class="mc-btn mc-btn-primary" href="{{ $patientUrl }}">Ver ficha</a>
+                            <a class="mc-btn mc-btn-primary" href="{{ $patientUrl }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><span>Ver ficha</span></a>
                         @else
-                            <a class="mc-btn mc-btn-primary" href="{{ $detailUrl }}">Crear/Vincular ficha</a>
+                            <a class="mc-btn mc-btn-primary" href="{{ $detailUrl }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/></svg><span>Crear/Vincular ficha</span></a>
                         @endif
 
-                        <a class="mc-btn mc-btn-soft" href="{{ $detailUrl }}">Detalle</a>
+                        <a class="mc-btn mc-btn-soft" href="{{ $detailUrl }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/></svg><span>Detalle</span></a>
                     </div>
                 </article>
             @empty
