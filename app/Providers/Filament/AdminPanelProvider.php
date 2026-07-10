@@ -30,7 +30,7 @@ class AdminPanelProvider extends PanelProvider
     {
         FilamentView::registerRenderHook(
             PanelsRenderHook::USER_MENU_BEFORE,
-            fn (): HtmlString => new HtmlString('<div class="me-2">'.view('filament.partials.social-lead-notification-center')->render().'</div>'),
+            fn (): HtmlString => new HtmlString('<div class="">'.view('filament.partials.social-lead-notification-center')->render().'</div>'),
         );
 
         return $panel
@@ -46,7 +46,7 @@ class AdminPanelProvider extends PanelProvider
                 return '/images/logo-odon-crm_2.png';
             })
             ->brandLogoHeight(function () {
-                return request()->routeIs('filament.admin.auth.login') ? '3rem' : '1.55rem';
+                return request()->routeIs('filament.admin.auth.login') ? '3rem' : '1.35rem';
             })
             ->colors([
                 'primary' => Color::Teal,

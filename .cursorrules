@@ -18,6 +18,14 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 - No usar `font-weight` mayor a `700` salvo casos excepcionales. Lo normal debe ser `400-600`.
 - Evitar textos muy grandes dentro de vistas administrativas.
 
+## Headers de Pagina Filament
+
+- En pantallas nuevas, usar el `fi-header` nativo de Filament para titulo y subtitulo; evitar duplicar titulos/subtitulos dentro del Blade de contenido.
+- Para subtitulos de pagina usar `getSubheading()` en la clase Page. Si requiere HTML, devolver `Illuminate\Support\HtmlString`.
+- Todo subtitulo de pagina debe usar las clases `text-sm font-normal text-muted-foreground`.
+- Si el subtitulo necesita ocupar todo el ancho, agregar una clase scoped al Page con `getPageClasses()` y ajustar `.fi-header-subheading` solo dentro de esa pagina.
+- Mantener el titulo del header simple y sin estilos custom salvo necesidad concreta; no crear kickers decorativos encima del titulo.
+
 ## Cards y Grids
 
 - Cards: fondo blanco, borde `#e5e7eb`, `border-radius` entre `.625rem` y `.875rem`, shadow minimo.

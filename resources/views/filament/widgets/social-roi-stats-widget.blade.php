@@ -6,26 +6,6 @@
             $previousPeriodLabel = $this->getPreviousPeriodLabel();
         @endphp
 
-        <div class="social-roi-stats-header">
-            <div>
-                @if ($description = $this->getDescription())
-                    <p class="social-roi-stats-description">
-                        <span>{{ $description }}</span>
-                        <span class="social-roi-period-chip" tabindex="0">
-                            {{ $periodBadgeLabel }}
-                            <span class="social-roi-period-info">i</span>
-                            <span class="social-roi-period-tooltip">
-                                <strong>Periodo actual</strong>
-                                <span>{{ $currentPeriodLabel }}</span>
-                                <strong>Compara con</strong>
-                                <span>{{ $previousPeriodLabel }}</span>
-                            </span>
-                        </span>
-                    </p>
-                @endif
-            </div>
-        </div>
-
         <div
             wire:key="roi-stats"
             class="social-roi-stats-grid"
