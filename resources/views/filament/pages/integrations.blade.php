@@ -242,6 +242,13 @@
             filter: brightness(.98);
         }
 
+        .integration-btn-content {
+            align-items: center;
+            display: inline-flex;
+            gap: .4rem;
+            justify-content: center;
+        }
+
         .integration-btn.primary {
             background: oklch(55% .12 185);
             color: #ffffff;
@@ -359,11 +366,14 @@
                         </a>
                         @if ($meta['connected'])
                             <button class="integration-btn integration-sync" type="button" wire:click="syncMeta" wire:loading.attr="disabled" wire:target="syncMeta">
-                                <span wire:loading.remove wire:target="syncMeta">
+                                <span class="integration-btn-content" wire:loading.remove wire:target="syncMeta">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg>
                                     <span>Sincronizar</span>
                                 </span>
-                                <span wire:loading wire:target="syncMeta">Sincronizando...</span>
+                                <span class="integration-btn-content" wire:loading wire:target="syncMeta">
+                                    <svg class="animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="width:.9rem;height:.9rem"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    <span>Sincronizando...</span>
+                                </span>
                             </button>
                         @endif
                     </div>
