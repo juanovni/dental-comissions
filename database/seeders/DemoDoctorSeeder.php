@@ -57,6 +57,6 @@ class DemoDoctorSeeder extends Seeder
         $this->command->info('Demo doctor created: Dr. Demo (demo@clinica.com)');
         $this->command->info('Assistant created: Asistente Demo (asistente.demo@clinica.com)');
         $this->command->info('Admin user: admin@clinica.com / password');
-        $this->command->info('Connect Google Calendar at /admin/integrations/google-calendar');
+        $this->command->info('Connect Google Calendar at /admin/integrations#google-calendar');
     }
 }

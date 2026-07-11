@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Professional;
 use App\Services\GoogleCalendarService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,35 +17,31 @@ class GoogleCalendarAuthController extends Controller
                 'error_description' => $request->string('error_description')->toString(),
             ]);
 
-            return redirect('/admin/integrations/google-calendar')
+            return redirect('/admin/integrations#google-calendar')
                 ->with('error', 'Autorizacion cancelada o rechazada.');
         }
 
         abort_unless($request->filled('code'), 400, 'Google no devolvio codigo de autorizacion.');
 
-        $professionalId = $request->string('state')->toString();
-        $professional = Professional::find($professionalId);
-
-        if (!$professional) {
-            Log::error('Professional no encontrado en callback OAuth', [
-                'professional_id' => $professionalId,
+        if ($request->string('state')->toString() !== 'clinic') {
+            Log::error('State OAuth Google Calendar invalido', [
+                'state' => $request->string('state')->toString(),
             ]);
 
-            return redirect('/admin/integrations/google-calendar')
-                ->with('error', 'Profesional no encontrado.');
+            return redirect('/admin/integrations#google-calendar')
+                ->with('error', 'Solicitud de autorizacion invalida.');
         }
 
-        $success = app(GoogleCalendarService::class)->exchangeCode(
-            $professional,
+        $success = app(GoogleCalendarService::class)->exchangeClinicCode(
             $request->string('code')->toString(),
         );
 
         if (!$success) {
-            return redirect('/admin/integrations/google-calendar')
+            return redirect('/admin/integrations#google-calendar')
                 ->with('error', 'No se pudo completar la autenticacion con Google.');
         }
 
-        return redirect('/admin/integrations/google-calendar')
+        return redirect('/admin/integrations#google-calendar')
             ->with('status', 'Google Calendar conectado exitosamente.');
     }
 }

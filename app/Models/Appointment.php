@@ -100,7 +100,7 @@ class Appointment extends Model
     public function hasCalendarSync(): bool
     {
         return $this->doctor_id
-            && $this->doctor?->hasGoogleCalendar()
+            && app(\App\Services\GoogleCalendarService::class)->hasClinicCalendar()
             && $this->external_appointment_id !== null;
     }
 

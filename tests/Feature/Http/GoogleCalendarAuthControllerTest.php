@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Http;
 
-use App\Models\Professional;
 use App\Services\GoogleCalendarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -22,56 +21,46 @@ class GoogleCalendarAuthControllerTest extends TestCase
     {
         $response = $this->get('/auth/google/callback?error=access_denied&error_description=User+denied');
 
-        $response->assertRedirect('/admin/integrations/google-calendar');
+        $response->assertRedirect('/admin/integrations#google-calendar');
         $response->assertSessionHas('error');
     }
 
-    public function test_callback_with_invalid_professional_redirects_with_message(): void
+    public function test_callback_with_invalid_state_redirects_with_message(): void
     {
         $response = $this->get('/auth/google/callback?code=test-code&state=99999');
 
-        $response->assertRedirect('/admin/integrations/google-calendar');
-        $response->assertSessionHas('error', 'Profesional no encontrado.');
+        $response->assertRedirect('/admin/integrations#google-calendar');
+        $response->assertSessionHas('error', 'Solicitud de autorizacion invalida.');
     }
 
     public function test_callback_exchanges_code_and_redirects(): void
     {
-        $professional = Professional::factory()->create([
-            'google_calendar_enabled' => false,
-            'google_calendar_token' => null,
-        ]);
-
         $service = $this->createMock(GoogleCalendarService::class);
         $service->expects($this->once())
-            ->method('exchangeCode')
-            ->with(
-                $this->callback(fn($p) => $p->id === $professional->id),
-                'valid-code',
-            )
+            ->method('exchangeClinicCode')
+            ->with('valid-code')
             ->willReturn(true);
 
         $this->app->instance(GoogleCalendarService::class, $service);
 
-        $response = $this->get("/auth/google/callback?code=valid-code&state={$professional->id}");
+        $response = $this->get('/auth/google/callback?code=valid-code&state=clinic');
 
-        $response->assertRedirect('/admin/integrations/google-calendar');
+        $response->assertRedirect('/admin/integrations#google-calendar');
         $response->assertSessionHas('status');
     }
 
     public function test_callback_handles_exchange_failure(): void
     {
-        $professional = Professional::factory()->create();
-
         $service = $this->createMock(GoogleCalendarService::class);
         $service->expects($this->once())
-            ->method('exchangeCode')
+            ->method('exchangeClinicCode')
             ->willReturn(false);
 
         $this->app->instance(GoogleCalendarService::class, $service);
 
-        $response = $this->get("/auth/google/callback?code=bad-code&state={$professional->id}");
+        $response = $this->get('/auth/google/callback?code=bad-code&state=clinic');
 
-        $response->assertRedirect('/admin/integrations/google-calendar');
+        $response->assertRedirect('/admin/integrations#google-calendar');
         $response->assertSessionHas('error');
     }
 }

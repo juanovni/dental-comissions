@@ -4,6 +4,7 @@ namespace Tests\Feature\Services;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\CalendarIntegration;
 use App\Models\Patient;
 use App\Models\Professional;
 use App\Services\GoogleCalendarService;
@@ -381,7 +382,8 @@ class GoogleCalendarServiceTest extends TestCase
         $createdEvent = new CalendarEvent();
         $createdEvent->setId('test-event-id-123');
 
-        $calendarId = $appointment->doctor->google_calendar_email;
+        $this->connectClinicCalendar();
+        $calendarId = 'primary';
 
         $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
         $eventsResource->method('insert')
@@ -389,10 +391,10 @@ class GoogleCalendarServiceTest extends TestCase
             ->willReturn($createdEvent);
 
         $service = $this->getMockBuilder($this->service::class)
-            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->onlyMethods(['clientForClinic', 'makeCalendarService'])
             ->getMock();
 
-        $service->method('clientForProfessional')
+        $service->method('clientForClinic')
             ->willReturn($this->createMock(GoogleClient::class));
 
         $service->method('makeCalendarService')
@@ -424,7 +426,8 @@ class GoogleCalendarServiceTest extends TestCase
         $updatedEvent = new CalendarEvent();
         $updatedEvent->setId('existing-event-id');
 
-        $calendarId = $appointment->doctor->google_calendar_email;
+        $this->connectClinicCalendar();
+        $calendarId = 'primary';
 
         $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
         $eventsResource->method('update')
@@ -432,10 +435,10 @@ class GoogleCalendarServiceTest extends TestCase
             ->willReturn($updatedEvent);
 
         $service = $this->getMockBuilder($this->service::class)
-            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->onlyMethods(['clientForClinic', 'makeCalendarService'])
             ->getMock();
 
-        $service->method('clientForProfessional')
+        $service->method('clientForClinic')
             ->willReturn($this->createMock(GoogleClient::class));
 
         $service->method('makeCalendarService')
@@ -459,17 +462,18 @@ class GoogleCalendarServiceTest extends TestCase
             'external_appointment_id' => 'event-to-delete',
         ]);
 
-        $calendarId = $appointment->doctor->google_calendar_email;
+        $this->connectClinicCalendar();
+        $calendarId = 'primary';
 
         $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
         $eventsResource->method('delete')
             ->with($calendarId, 'event-to-delete');
 
         $service = $this->getMockBuilder($this->service::class)
-            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->onlyMethods(['clientForClinic', 'makeCalendarService'])
             ->getMock();
 
-        $service->method('clientForProfessional')
+        $service->method('clientForClinic')
             ->willReturn($this->createMock(GoogleClient::class));
 
         $service->method('makeCalendarService')
@@ -509,7 +513,8 @@ class GoogleCalendarServiceTest extends TestCase
             'external_appointment_id' => null,
         ]);
 
-        $calendarId = $appointment->doctor->google_calendar_email;
+        $this->connectClinicCalendar();
+        $calendarId = 'primary';
 
         $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
         $eventsResource->method('insert')
@@ -517,10 +522,10 @@ class GoogleCalendarServiceTest extends TestCase
             ->willReturn($createdEvent);
 
         $service = $this->getMockBuilder($this->service::class)
-            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->onlyMethods(['clientForClinic', 'makeCalendarService'])
             ->getMock();
 
-        $service->method('clientForProfessional')
+        $service->method('clientForClinic')
             ->willReturn($this->createMock(GoogleClient::class));
 
         $service->method('makeCalendarService')
@@ -544,17 +549,18 @@ class GoogleCalendarServiceTest extends TestCase
             'external_appointment_id' => 'event-to-delete',
         ]);
 
-        $calendarId = $appointment->doctor->google_calendar_email;
+        $this->connectClinicCalendar();
+        $calendarId = 'primary';
 
         $eventsResource = $this->createMock(\Google\Service\Calendar\Resource\Events::class);
         $eventsResource->method('delete')
             ->with($calendarId, 'event-to-delete');
 
         $service = $this->getMockBuilder($this->service::class)
-            ->onlyMethods(['clientForProfessional', 'makeCalendarService'])
+            ->onlyMethods(['clientForClinic', 'makeCalendarService'])
             ->getMock();
 
-        $service->method('clientForProfessional')
+        $service->method('clientForClinic')
             ->willReturn($this->createMock(GoogleClient::class));
 
         $service->method('makeCalendarService')
@@ -577,5 +583,21 @@ class GoogleCalendarServiceTest extends TestCase
         $reflection = new \ReflectionMethod($object, $method);
         $reflection->setAccessible(true);
         return $reflection->invoke($object, ...$args);
+    }
+
+    private function connectClinicCalendar(): void
+    {
+        CalendarIntegration::clinicGoogle()->update([
+            'account_email' => 'clinic@example.com',
+            'calendar_id' => 'primary',
+            'token' => Crypt::encryptString(json_encode([
+                'access_token' => 'clinic-token',
+                'refresh_token' => 'clinic-refresh',
+                'expires_in' => 3600,
+                'created' => now()->timestamp,
+            ])),
+            'token_expires_at' => now()->addHour(),
+            'is_enabled' => true,
+        ]);
     }
 }

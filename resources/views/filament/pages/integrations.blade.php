@@ -3,6 +3,9 @@
         $meta = $this->metaStats();
         $metaStatus = $meta['connected'] ? 'Conectado' : 'No conectado';
         $metaStatusClass = $meta['connected'] ? 'is-connected' : 'is-pending';
+        $googleCalendar = $this->googleCalendarStats();
+        $googleCalendarStatus = $googleCalendar['connected'] ? 'Conectado' : 'No conectado';
+        $googleCalendarStatusClass = $googleCalendar['connected'] ? 'is-connected' : 'is-pending';
         $comingSoon = [
             [
                 'name' => 'TikTok',
@@ -206,6 +209,17 @@
             margin: 0;
         }
 
+        .integration-meta-copy {
+            color: #64748b;
+            font-size: .78rem;
+            margin: .8rem 0 0;
+        }
+
+        .integration-meta-copy strong {
+            color: var(--integrations-ink);
+            font-weight: 600;
+        }
+
         .integration-footer {
             align-items: center;
             background: #fcfcfd;
@@ -311,6 +325,7 @@
         }
 
         .dark .integration-copy,
+        .dark .integration-meta-copy,
         .dark .integrations-subtitle {
             color: #94a3b8;
         }
@@ -378,6 +393,57 @@
                         @endif
                     </div>
                     <span class="integration-switch {{ $meta['connected'] ? 'is-on' : '' }}" aria-hidden="true"><span></span></span>
+                </footer>
+            </article>
+
+            <article class="integration-card" id="google-calendar">
+                <div class="integration-body">
+                    <div class="integration-top">
+                        <img class="integration-logo google" src="{{ asset('images/integrations/google-my-business-icon.webp') }}" alt="Google Calendar" width="46" height="46">
+                        <span class="integration-external" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 3h7v7" />
+                                <path d="M10 14 21 3" />
+                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+                            </svg>
+                        </span>
+                    </div>
+
+                    <span class="integration-status {{ $googleCalendarStatusClass }}">{{ $googleCalendarStatus }}</span>
+
+                    <h3 class="integration-name">Google Calendar</h3>
+                    <p class="integration-copy">
+                        Conecta una agenda central de la clinica para crear eventos y revisar bloqueos generales desde una sola cuenta admin.
+                    </p>
+
+                    @if ($googleCalendar['account_email'])
+                        <p class="integration-meta-copy">
+                            Cuenta: <strong>{{ $googleCalendar['account_email'] }}</strong>
+                        </p>
+                    @endif
+                </div>
+
+                <footer class="integration-footer">
+                    <div class="integration-actions">
+                        <a class="integration-btn primary" href="{{ $googleCalendar['connect_url'] }}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/></svg>
+                            <span>{{ $googleCalendar['connected'] ? 'Reconectar' : 'Conectar' }}</span>
+                        </a>
+
+                        @if ($googleCalendar['connected'])
+                            <button class="integration-btn integration-sync" type="button" wire:click="disconnectGoogleCalendar" wire:loading.attr="disabled" wire:target="disconnectGoogleCalendar">
+                                <span class="integration-btn-content" wire:loading.remove wire:target="disconnectGoogleCalendar">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M6 18 18 6M6 6l12 12"/></svg>
+                                    <span>Desconectar</span>
+                                </span>
+                                <span class="integration-btn-content" wire:loading wire:target="disconnectGoogleCalendar">
+                                    <svg class="animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="width:.9rem;height:.9rem"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    <span>Desconectando...</span>
+                                </span>
+                            </button>
+                        @endif
+                    </div>
+                    <span class="integration-switch {{ $googleCalendar['connected'] ? 'is-on' : '' }}" aria-hidden="true"><span></span></span>
                 </footer>
             </article>
 

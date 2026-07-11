@@ -267,6 +267,7 @@
             display: inline-flex;
             font-size: .76rem;
             font-weight: 500;
+            gap: .35rem;
             justify-content: center;
             min-height: 2rem;
             padding: .38rem .65rem;

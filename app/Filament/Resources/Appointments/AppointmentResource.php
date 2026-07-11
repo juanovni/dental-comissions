@@ -296,7 +296,7 @@ class AppointmentResource extends Resource
                 ->icon('heroicon-o-arrow-path-rounded-square')
                 ->color('warning')
                 ->visible(fn (Appointment $record): bool => $record->doctor_id
-                    && $record->doctor?->hasGoogleCalendar()
+                    && app(\App\Services\GoogleCalendarService::class)->hasClinicCalendar()
                     && !$record->isSynced())
                 ->action(function (Appointment $record): void {
                     try {
@@ -307,7 +307,7 @@ class AppointmentResource extends Resource
                         } else {
                             Notification::make()
                                 ->title('No se pudo sincronizar')
-                                ->body('Verifica que el doctor tenga conexion con Google Calendar.')
+                                ->body('Verifica que la clinica tenga conexion con Google Calendar.')
                                 ->warning()
                                 ->send();
                         }

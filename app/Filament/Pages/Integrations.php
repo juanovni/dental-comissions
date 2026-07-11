@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\SocialPlatform;
 use App\Models\SocialAccount;
+use App\Services\GoogleCalendarService;
 use App\Services\MetaSocialService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -43,6 +44,37 @@ class Integrations extends Page
             'accounts_url' => '/admin/social-accounts',
             'connect_url' => route('meta.auth.redirect', [], false),
         ];
+    }
+
+    public function googleCalendarStats(): array
+    {
+        $service = app(GoogleCalendarService::class);
+        $integration = $service->clinicIntegration();
+
+        return [
+            'connected' => $integration->isConnected(),
+            'account_email' => $integration->account_email,
+            'calendar_id' => $integration->calendar_id ?: 'primary',
+            'connect_url' => $service->getClinicAuthorizationUrl(),
+        ];
+    }
+
+    public function disconnectGoogleCalendar(): void
+    {
+        $success = app(GoogleCalendarService::class)->revokeClinicToken();
+
+        if ($success) {
+            Notification::make()
+                ->title('Google Calendar desconectado')
+                ->body('La agenda central de la clinica ha sido desconectada.')
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Error al desconectar')
+                ->danger()
+                ->send();
+        }
     }
 
     public function syncMeta(): void

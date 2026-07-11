@@ -432,7 +432,7 @@ PROMPT;
         try {
             $doctor = $comment->suggestedDoctor;
 
-            if ($doctor && $doctor->google_calendar_enabled) {
+            if ($doctor) {
                 $availabilityService = app(AppointmentAvailabilityService::class);
                 $slots = $availabilityService->nextAvailableSlotsForDoctor($doctor);
             } else {
