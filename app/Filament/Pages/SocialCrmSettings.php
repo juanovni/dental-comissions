@@ -58,6 +58,7 @@ class SocialCrmSettings extends Page
     {
         return $schema
             ->components([
+                $this->botSection(),
                 $this->citasSection(),
                 $this->respuestasAutomaticasSection(),
                 $this->mensajesSection(),
@@ -71,6 +72,11 @@ class SocialCrmSettings extends Page
     public function settingsNavigationItems(): array
     {
         return [
+            [
+                'id' => 'bot',
+                'label' => 'Bot',
+                'description' => 'Comportamiento del asistente',
+            ],
             [
                 'id' => 'citas',
                 'label' => 'Citas',
@@ -157,42 +163,79 @@ class SocialCrmSettings extends Page
             ->action('save');
     }
 
-    private function citasSection(): Section
+    private function botSection(): Section
     {
-        return Section::make('Citas')
-            ->id('citas')
-            ->icon('heroicon-o-calendar-days')
-            ->description('Define los horarios, duración y slots disponibles para agendar citas automáticas.')
+        return Section::make('Bot')
+            ->id('bot')
+            ->icon('heroicon-o-adjustments-horizontal')
+            ->description('Define cómo debe actuar el asistente al responder, proponer horarios y convertir leads.')
             ->schema([
-                Section::make('Comportamiento del bot')
-                    ->icon('heroicon-o-adjustments-horizontal')
-                    ->description('Cómo debe actuar el asistente al agendar.')
+                Section::make('Disponibilidad y confirmación')
+                    ->icon('heroicon-o-check-circle')
+                    ->description('Reglas para proponer horarios y cerrar la cita.')
                     ->schema([
                         Toggle::make('social_appointment_propose_slots')
                             ->label('Proponer slots reales')
-                            ->helperText('Muestra horarios reales disponibles cuando el paciente muestra interés en agendar.'),
+                            ->helperText('Muestra horarios disponibles cuando el paciente muestra interés.'),
                         Toggle::make('social_appointment_auto_confirm')
                             ->label('Auto-confirmar cita')
-                            ->helperText('Si está activo, crea la cita automáticamente cuando el paciente acepta un slot.'),
+                            ->helperText('Crea la cita como confirmada al aceptar un slot.'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+
+                Section::make('Doctor asignado')
+                    ->icon('heroicon-o-user-circle')
+                    ->description('Cómo se maneja el doctor en las conversaciones.')
+                    ->schema([
                         Toggle::make('social_appointment_allow_alternative_doctor')
                             ->label('Sugerir otro doctor')
-                            ->helperText('Permite buscar un doctor alternativo si el principal no tiene disponibilidad.'),
+                            ->helperText('Busca un doctor alternativo si el principal no tiene disponibilidad.'),
                         Toggle::make('social_appointment_show_doctor')
                             ->label('Mostrar doctor')
-                            ->helperText('Muestra el doctor asignado en opciones y confirmaciones cuando aplique.'),
+                            ->helperText('Muestra el doctor asignado en opciones y confirmaciones.'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+
+                Section::make('Ficha del paciente')
+                    ->icon('heroicon-o-user-plus')
+                    ->description('Creación automática de fichas al confirmar una cita.')
+                    ->schema([
                         Toggle::make('social_appointment_auto_create_patient')
                             ->label('Crear ficha al confirmar')
                             ->helperText('Crea o vincula la ficha del paciente cuando confirma una cita.'),
                         Toggle::make('social_appointment_require_whatsapp_phone_for_patient')
                             ->label('Requerir teléfono WhatsApp')
                             ->helperText('Solo crea ficha automática si el lead tiene teléfono de WhatsApp.'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+
+                Section::make('Nombre fallback')
+                    ->icon('heroicon-o-document-text')
+                    ->description('Nombre por defecto si no se obtiene del lead.')
+                    ->schema([
                         TextInput::make('social_appointment_patient_fallback_name')
                             ->label('Nombre fallback')
                             ->helperText('Nombre usado si no hay nombre real disponible.')
                             ->maxLength(255),
                     ])
-                    ->columns(2)
                     ->columnSpanFull(),
+            ])
+            ->footerActions([
+                $this->saveSectionAction('save_bot'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
+    }
+
+    private function citasSection(): Section
+    {
+        return Section::make('Citas')
+            ->id('citas')
+            ->icon('heroicon-o-calendar-days')
+            ->description('Define disponibilidad, horarios y reglas para ofrecer citas automáticas.')
+            ->schema([
                 Section::make('Disponibilidad: Horario de atención')
                     ->icon('heroicon-o-clock')
                     ->description('Días y franja horaria en que la clínica atiende: Define los días, el horario general y los bloques del día que el bot usará al ofrecer citas.')
