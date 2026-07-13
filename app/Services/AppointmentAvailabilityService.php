@@ -18,6 +18,7 @@ class AppointmentAvailabilityService
         $open = $settings->appointmentClinicOpen();
         $close = $settings->appointmentClinicClose();
         $clinicDays = $settings->appointmentClinicDays();
+        $googleService = app(GoogleCalendarService::class);
 
         $openMinutes = $this->timeToMinutes($open);
         $closeMinutes = $this->timeToMinutes($close);
@@ -59,8 +60,9 @@ class AppointmentAvailabilityService
             $slotEnd = $cursor->copy()->addMinutes($duration);
 
             $existing = $this->hasAppointmentConflict(null, $cursor, $slotEnd);
+            $clinicAvailable = $googleService->isClinicSlotAvailable($cursor, $slotEnd);
 
-            if (! $existing) {
+            if (! $existing && $clinicAvailable) {
                 $slots[] = $cursor->copy();
             }
 
@@ -83,8 +85,7 @@ class AppointmentAvailabilityService
         $close = $settings->appointmentClinicClose();
         $clinicDays = $settings->appointmentClinicDays();
 
-        $hasGoogleCalendar = $professional->hasGoogleCalendar();
-        $googleService = $hasGoogleCalendar ? app(GoogleCalendarService::class) : null;
+        $googleService = app(GoogleCalendarService::class);
 
         $slots = [];
         $date = $dayStart?->copy() ?? now()->addHours($settings->appointmentLeadTimeHours());
@@ -133,14 +134,9 @@ class AppointmentAvailabilityService
 
                 $existing = $this->hasAppointmentConflict($professional->id, $slotStart, $slotEnd);
 
-                $googleAvailable = true;
-                if ($googleService && !$existing) {
-                    $googleAvailable = $googleService->isSlotAvailable(
-                        $professional,
-                        $slotStart,
-                        $slotEnd,
-                    );
-                }
+                $googleAvailable = $existing
+                    ? false
+                    : $googleService->isClinicSlotAvailable($slotStart, $slotEnd, $professional);
 
                 if (! $existing && $googleAvailable) {
                     $daySlots[] = $slotStart;
@@ -182,11 +178,7 @@ class AppointmentAvailabilityService
             return false;
         }
 
-        if ($doctor->hasGoogleCalendar()) {
-            return app(GoogleCalendarService::class)->isSlotAvailable($doctor, $start, $end);
-        }
-
-        return true;
+        return app(GoogleCalendarService::class)->isClinicSlotAvailable($start, $end, $doctor);
     }
 
     public function formatSlotsForPrompt(array $slots): string

@@ -3,12 +3,16 @@
         $meta = $this->metaStats();
         $metaStatus = $meta['connected'] ? 'Conectado' : 'No conectado';
         $metaStatusClass = $meta['connected'] ? 'is-connected' : 'is-pending';
+        $googleCalendar = $this->googleCalendarStats();
+        $googleCalendarStatus = $googleCalendar['connected'] ? 'Conectado' : 'No conectado';
+        $googleCalendarStatusClass = $googleCalendar['connected'] ? 'is-connected' : 'is-pending';
         $comingSoon = [
             [
                 'name' => 'TikTok',
                 'tagline' => 'Captura comentarios y senales comerciales desde videos de TikTok.',
                 'logo' => 'TT',
                 'tone' => 'tiktok',
+                'image' => asset('images/integrations/tiktok-icon.webp'),
                 'status' => 'Proximamente',
             ],
             [
@@ -16,6 +20,7 @@
                 'tagline' => 'Conecta conversaciones y automatiza la recepcion de actividades clinicas.',
                 'logo' => 'WA',
                 'tone' => 'whatsapp',
+                'image' => asset('images/integrations/whatsapp-icon.avif'),
                 'status' => 'Configurado por sistema',
             ],
             [
@@ -23,6 +28,7 @@
                 'tagline' => 'Centraliza resenas, reputacion local y consultas de pacientes.',
                 'logo' => 'G',
                 'tone' => 'google',
+                'image' => asset('images/integrations/google-my-business-icon.webp'),
                 'status' => 'Proximamente',
             ],
         ];
@@ -145,12 +151,13 @@
         }
 
         .integration-logo.meta {
-            background: linear-gradient(135deg, #1877f2, #8b5cf6 48%, #e1306c);
+            background: none;
+            padding: 0;
         }
 
-        .integration-logo.tiktok { background: linear-gradient(135deg, #010101, #ef2950); }
-        .integration-logo.whatsapp { background: linear-gradient(135deg, #128c7e, #25d366); }
-        .integration-logo.google { background: linear-gradient(135deg, #4285f4, #34a853 45%, #fbbc05 70%, #ea4335); }
+        .integration-logo.tiktok { background: none; padding: 0; }
+        .integration-logo.whatsapp { background: none; padding: 0; }
+        .integration-logo.google { background: none; padding: 0; }
 
         .integration-status {
             align-items: center;
@@ -202,6 +209,17 @@
             margin: 0;
         }
 
+        .integration-meta-copy {
+            color: #64748b;
+            font-size: .78rem;
+            margin: .8rem 0 0;
+        }
+
+        .integration-meta-copy strong {
+            color: var(--integrations-ink);
+            font-weight: 600;
+        }
+
         .integration-footer {
             align-items: center;
             background: #fcfcfd;
@@ -236,6 +254,13 @@
 
         .integration-btn:hover {
             filter: brightness(.98);
+        }
+
+        .integration-btn-content {
+            align-items: center;
+            display: inline-flex;
+            gap: .4rem;
+            justify-content: center;
         }
 
         .integration-btn.primary {
@@ -300,6 +325,7 @@
         }
 
         .dark .integration-copy,
+        .dark .integration-meta-copy,
         .dark .integrations-subtitle {
             color: #94a3b8;
         }
@@ -324,7 +350,7 @@
             <article class="integration-card">
                 <div class="integration-body">
                     <div class="integration-top">
-                        <div class="integration-logo meta">Meta</div>
+                        <img class="integration-logo meta" src="{{ asset('images/integrations/meta-icon.png') }}" alt="Meta" width="46" height="46">
                         <a class="integration-external" href="{{ $meta['accounts_url'] }}" aria-label="Abrir cuentas Meta">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M14 3h7v7" />
@@ -355,11 +381,14 @@
                         </a>
                         @if ($meta['connected'])
                             <button class="integration-btn integration-sync" type="button" wire:click="syncMeta" wire:loading.attr="disabled" wire:target="syncMeta">
-                                <span wire:loading.remove wire:target="syncMeta">
+                                <span class="integration-btn-content" wire:loading.remove wire:target="syncMeta">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg>
                                     <span>Sincronizar</span>
                                 </span>
-                                <span wire:loading wire:target="syncMeta">Sincronizando...</span>
+                                <span class="integration-btn-content" wire:loading wire:target="syncMeta">
+                                    <svg class="animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="width:.9rem;height:.9rem"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    <span>Sincronizando...</span>
+                                </span>
                             </button>
                         @endif
                     </div>
@@ -367,11 +396,66 @@
                 </footer>
             </article>
 
+            <article class="integration-card" id="google-calendar">
+                <div class="integration-body">
+                    <div class="integration-top">
+                        <img class="integration-logo google" src="{{ asset('images/integrations/google-my-business-icon.webp') }}" alt="Google Calendar" width="46" height="46">
+                        <span class="integration-external" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 3h7v7" />
+                                <path d="M10 14 21 3" />
+                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+                            </svg>
+                        </span>
+                    </div>
+
+                    <span class="integration-status {{ $googleCalendarStatusClass }}">{{ $googleCalendarStatus }}</span>
+
+                    <h3 class="integration-name">Google Calendar</h3>
+                    <p class="integration-copy">
+                        Conecta una agenda central de la clinica para crear eventos y revisar bloqueos generales desde una sola cuenta admin.
+                    </p>
+
+                    @if ($googleCalendar['account_email'])
+                        <p class="integration-meta-copy">
+                            Cuenta: <strong>{{ $googleCalendar['account_email'] }}</strong>
+                        </p>
+                    @endif
+                </div>
+
+                <footer class="integration-footer">
+                    <div class="integration-actions">
+                        <a class="integration-btn primary" href="{{ $googleCalendar['connect_url'] }}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/></svg>
+                            <span>{{ $googleCalendar['connected'] ? 'Reconectar' : 'Conectar' }}</span>
+                        </a>
+
+                        @if ($googleCalendar['connected'])
+                            <button class="integration-btn integration-sync" type="button" wire:click="disconnectGoogleCalendar" wire:loading.attr="disabled" wire:target="disconnectGoogleCalendar">
+                                <span class="integration-btn-content" wire:loading.remove wire:target="disconnectGoogleCalendar">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.9rem;height:.9rem"><path d="M6 18 18 6M6 6l12 12"/></svg>
+                                    <span>Desconectar</span>
+                                </span>
+                                <span class="integration-btn-content" wire:loading wire:target="disconnectGoogleCalendar">
+                                    <svg class="animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="width:.9rem;height:.9rem"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    <span>Desconectando...</span>
+                                </span>
+                            </button>
+                        @endif
+                    </div>
+                    <span class="integration-switch {{ $googleCalendar['connected'] ? 'is-on' : '' }}" aria-hidden="true"><span></span></span>
+                </footer>
+            </article>
+
             @foreach ($comingSoon as $integration)
                 <article class="integration-card">
                     <div class="integration-body">
                         <div class="integration-top">
-                            <div class="integration-logo {{ $integration['tone'] }}">{{ $integration['logo'] }}</div>
+                            @isset($integration['image'])
+                                <img class="integration-logo {{ $integration['tone'] }}" src="{{ $integration['image'] }}" alt="{{ $integration['name'] }}" width="46" height="46">
+                            @else
+                                <div class="integration-logo {{ $integration['tone'] }}">{{ $integration['logo'] }}</div>
+                            @endisset
                             <span class="integration-external" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14 3h7v7" />

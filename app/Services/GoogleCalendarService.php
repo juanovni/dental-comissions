@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\CalendarIntegration;
 use App\Models\Professional;
 use Carbon\Carbon;
 use Google\Client as GoogleClient;
 use Google\Service\Calendar as GoogleCalendar;
 use Google\Service\Calendar\Event as CalendarEvent;
 use Google\Service\Calendar\EventDateTime;
+use Google\Service\Calendar\EventExtendedProperties;
 use Google\Service\Oauth2 as GoogleOAuth2;
 use Illuminate\Support\Facades\Log;
 
@@ -18,6 +20,16 @@ class GoogleCalendarService
     private function config(): array
     {
         return config('services.google_oauth', []);
+    }
+
+    public function clinicIntegration(): CalendarIntegration
+    {
+        return CalendarIntegration::clinicGoogle();
+    }
+
+    public function hasClinicCalendar(): bool
+    {
+        return $this->clinicIntegration()->isConnected();
     }
 
     public function client(): GoogleClient
@@ -69,6 +81,74 @@ class GoogleCalendarService
         $client->setState((string) $professional->id);
 
         return $client->createAuthUrl();
+    }
+
+    public function getClinicAuthorizationUrl(): string
+    {
+        $client = $this->client();
+        $client->setState('clinic');
+
+        return $client->createAuthUrl();
+    }
+
+    public function clientForClinic(): ?GoogleClient
+    {
+        $integration = $this->clinicIntegration();
+
+        if (! $integration->isConnected()) {
+            Log::warning('Google Calendar de clinica no configurado');
+            return null;
+        }
+
+        $token = $integration->getTokenDecrypted();
+        if (blank($token)) {
+            return null;
+        }
+
+        $client = $this->client();
+        $client->setAccessToken($token);
+
+        if ($client->isAccessTokenExpired()) {
+            $refreshed = $this->refreshClinicToken($client);
+            if (! $refreshed) {
+                return null;
+            }
+        }
+
+        return $client;
+    }
+
+    public function exchangeClinicCode(string $code): bool
+    {
+        try {
+            $client = $this->client();
+            $token = $client->fetchAccessTokenWithAuthCode($code);
+
+            if (isset($token['error'])) {
+                Log::error('Error intercambiando codigo OAuth de clinica', [
+                    'error' => $token['error_description'] ?? $token['error'],
+                ]);
+                return false;
+            }
+
+            $email = $this->getUserEmail($client);
+            $integration = $this->clinicIntegration();
+
+            $integration->update([
+                'account_email' => $email,
+                'calendar_id' => 'primary',
+                'is_enabled' => true,
+            ]);
+
+            $integration->setToken($token);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Error en exchangeClinicCode OAuth', [
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
     }
 
     public function exchangeCode(Professional $professional, string $code): bool
@@ -180,6 +260,123 @@ class GoogleCalendarService
         }
     }
 
+    public function refreshClinicToken(?GoogleClient $client = null): bool
+    {
+        try {
+            $integration = $this->clinicIntegration();
+            $client = $client ?? $this->client();
+            $token = $integration->getTokenDecrypted();
+
+            if (blank($token) || blank($token['refresh_token'] ?? null)) {
+                Log::warning('No hay refresh_token para Google Calendar de clinica');
+                return false;
+            }
+
+            $client->setAccessToken($token);
+            $newToken = $client->refreshToken($token['refresh_token']);
+
+            if (isset($newToken['error'])) {
+                Log::error('Error refrescando token Google Calendar de clinica', [
+                    'error' => $newToken['error_description'] ?? $newToken['error'],
+                ]);
+                return false;
+            }
+
+            if (! isset($newToken['refresh_token'])) {
+                $newToken['refresh_token'] = $token['refresh_token'];
+            }
+
+            $integration->setToken($newToken);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Error en refreshClinicToken', [
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    public function revokeClinicToken(): bool
+    {
+        try {
+            $integration = $this->clinicIntegration();
+            $client = $this->clientForClinic();
+
+            if ($client) {
+                $token = $integration->getTokenDecrypted();
+                if ($token && ($token['access_token'] ?? null)) {
+                    $client->revokeToken($token['access_token']);
+                }
+            }
+
+            $integration->disconnect();
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Error revocando token Google Calendar de clinica', [
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    public function listClinicEvents(Carbon $start, Carbon $end): array
+    {
+        try {
+            $client = $this->clientForClinic();
+            if (! $client) {
+                return [];
+            }
+
+            $integration = $this->clinicIntegration();
+            $service = $this->makeCalendarService($client);
+            $calendarId = $integration->calendar_id ?: 'primary';
+
+            $events = $service->events->listEvents($calendarId, [
+                'timeMin' => $start->toRfc3339String(),
+                'timeMax' => $end->toRfc3339String(),
+                'singleEvents' => true,
+                'orderBy' => 'startTime',
+            ]);
+
+            return $events->getItems();
+        } catch (\Throwable $e) {
+            Log::error('Error listando eventos de Google Calendar de clinica', [
+                'start' => $start->toDateTimeString(),
+                'end' => $end->toDateTimeString(),
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    public function isClinicSlotAvailable(Carbon $start, Carbon $end, ?Professional $doctor = null): bool
+    {
+        if (! $this->hasClinicCalendar()) {
+            return true;
+        }
+
+        foreach ($this->listClinicEvents($start, $end) as $event) {
+            $eventStart = Carbon::parse($event->start->dateTime ?? $event->start->date);
+            $eventEnd = Carbon::parse($event->end->dateTime ?? $event->end->date);
+
+            if ($start->lessThan($eventEnd) && $end->greaterThan($eventStart)) {
+                $private = $event->getExtendedProperties()?->getPrivate() ?? [];
+
+                if (($private['source'] ?? null) === 'dental_commissions_mvp') {
+                    if ($doctor && (string) ($private['doctor_id'] ?? '') !== (string) $doctor->id) {
+                        continue;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function listEvents(Professional $professional, Carbon $start, Carbon $end): array
     {
         try {
@@ -284,7 +481,10 @@ class GoogleCalendarService
     public function buildCalendarEvent(Appointment $appointment): CalendarEvent
     {
         $event = new CalendarEvent();
-        $event->setSummary('Cita: ' . ($appointment->patient?->full_name ?? 'Pendiente'));
+        $doctorName = $appointment->doctor?->name;
+        $patientName = $appointment->patient?->full_name ?? 'Pendiente';
+
+        $event->setSummary('Cita: ' . ($doctorName ? $doctorName . ' - ' : '') . $patientName);
         $event->setDescription($this->buildEventDescription($appointment));
 
         $start = new EventDateTime();
@@ -298,9 +498,13 @@ class GoogleCalendarService
         $end->setTimeZone($endAt->getTimezone()->getName());
         $event->setEnd($end);
 
-        if ($appointment->procedure_id) {
-            $event->setDescription(($event->getDescription() ?? '') . "\nProcedimiento: " . ($appointment->procedure?->name ?? ''));
-        }
+        $properties = new EventExtendedProperties();
+        $properties->setPrivate([
+            'source' => 'dental_commissions_mvp',
+            'appointment_id' => (string) $appointment->id,
+            'doctor_id' => (string) ($appointment->doctor_id ?? ''),
+        ]);
+        $event->setExtendedProperties($properties);
 
         return $event;
     }
@@ -310,6 +514,7 @@ class GoogleCalendarService
         $lines = [];
         $lines[] = 'Cita #' . $appointment->id;
         $lines[] = 'Paciente: ' . ($appointment->patient?->full_name ?? 'Por asignar');
+        $lines[] = 'Doctor: ' . ($appointment->doctor?->name ?? 'Por asignar');
         $lines[] = 'Teléfono: ' . ($appointment->patient?->phone ?? 'N/A');
 
         if ($appointment->procedure) {
@@ -329,25 +534,24 @@ class GoogleCalendarService
     public function createOrUpdateEvent(Appointment $appointment): ?string
     {
         try {
-            $professional = $appointment->doctor;
-            if (!$professional?->hasGoogleCalendar()) {
-                Log::info('Sin Google Calendar configurado para doctor', [
-                    'doctor_id' => $professional?->id,
+            if (! $this->hasClinicCalendar()) {
+                Log::info('Sin Google Calendar de clinica configurado', [
                     'appointment_id' => $appointment->id,
                 ]);
                 return null;
             }
 
-            $client = $this->clientForProfessional($professional);
+            $client = $this->clientForClinic();
             if (!$client) {
-                Log::warning('Sin cliente OAuth para doctor', [
-                    'doctor_id' => $professional->id,
+                Log::warning('Sin cliente OAuth para Google Calendar de clinica', [
+                    'appointment_id' => $appointment->id,
                 ]);
                 return null;
             }
 
+            $integration = $this->clinicIntegration();
             $service = $this->makeCalendarService($client);
-            $calendarId = $professional->google_calendar_email ?? 'primary';
+            $calendarId = $integration->calendar_id ?: 'primary';
 
             $event = $this->buildCalendarEvent($appointment);
 
@@ -399,18 +603,18 @@ class GoogleCalendarService
                 return true;
             }
 
-            $professional = $appointment->doctor;
-            if (!$professional?->hasGoogleCalendar()) {
+            if (! $this->hasClinicCalendar()) {
                 return true;
             }
 
-            $client = $this->clientForProfessional($professional);
+            $client = $this->clientForClinic();
             if (!$client) {
                 return false;
             }
 
+            $integration = $this->clinicIntegration();
             $service = $this->makeCalendarService($client);
-            $calendarId = $professional->google_calendar_email ?? 'primary';
+            $calendarId = $appointment->external_calendar_id ?: ($integration->calendar_id ?: 'primary');
 
             $service->events->delete($calendarId, $eventId);
 

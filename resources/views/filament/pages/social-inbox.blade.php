@@ -1131,6 +1131,7 @@
             display: inline-flex;
             font-size: .76rem;
             font-weight: 500;
+            gap: .35rem;
             justify-content: center;
             line-height: 1;
             min-height: 2rem;

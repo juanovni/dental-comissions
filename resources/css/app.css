@@ -128,6 +128,7 @@
         display: inline-flex;
         font-size: 0.75rem;
         font-weight: 500;
+        gap: 0.35rem;
         justify-content: center;
         line-height: 1.1;
         padding: 0.425rem 0.625rem;

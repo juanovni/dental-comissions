@@ -24,7 +24,14 @@ class GoogleCalendarIntegration extends Page
 
     protected static ?int $navigationSort = 10;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected string $view = 'filament.pages.google-calendar-integration';
+
+    public function mount(): void
+    {
+        $this->redirect('/admin/integrations#google-calendar');
+    }
 
     public function getSubheading(): string | Htmlable | null
     {

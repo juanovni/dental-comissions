@@ -165,8 +165,8 @@ class AppointmentAvailabilityServiceTest extends TestCase
         $busySlot = now()->addHours(2)->startOfHour();
 
         $mockService = $this->createMock(GoogleCalendarService::class);
-        $mockService->method('isSlotAvailable')
-            ->willReturnCallback(function ($prof, $start, $end) use ($busySlot) {
+        $mockService->method('isClinicSlotAvailable')
+            ->willReturnCallback(function ($start, $end, $prof = null) use ($busySlot) {
                 return $start->timestamp !== $busySlot->timestamp;
             });
 
