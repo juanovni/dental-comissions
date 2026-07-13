@@ -56,6 +56,8 @@ class SocialCrmAutomaticModeButton extends Component
         $settings = app(SocialCrmSettingsService::class);
 
         return $settings->get('social_appointment_propose_slots', false) === true
+            && $settings->get('social_appointment_auto_create_patient', true) === true
+            && $settings->get('social_appointment_require_whatsapp_phone_for_patient', true) === true
             && $settings->get('social_auto_reply_enabled', false) === true
             && $settings->get('social_auto_reply_dry_run', true) === false
             && $settings->get('social_auto_reply_use_ai', false) === true
@@ -74,6 +76,9 @@ class SocialCrmAutomaticModeButton extends Component
         return [
             'social_appointment_propose_slots' => true,
             'social_appointment_auto_confirm' => false,
+            'social_appointment_auto_create_patient' => true,
+            'social_appointment_require_whatsapp_phone_for_patient' => true,
+            'social_appointment_patient_fallback_name' => 'Paciente WhatsApp',
             'social_auto_reply_enabled' => true,
             'social_auto_reply_dry_run' => false,
             'social_auto_reply_use_ai' => true,
@@ -132,6 +137,9 @@ class SocialCrmAutomaticModeButton extends Component
         $labels = [
             'social_appointment_propose_slots' => 'Proponer slots reales',
             'social_appointment_auto_confirm' => 'Auto-confirmar cita',
+            'social_appointment_auto_create_patient' => 'Crear ficha al confirmar cita',
+            'social_appointment_require_whatsapp_phone_for_patient' => 'Requerir telefono WhatsApp para ficha automatica',
+            'social_appointment_patient_fallback_name' => 'Nombre fallback para ficha automatica',
             'social_auto_reply_enabled' => 'Auto-respuestas activadas',
             'social_auto_reply_dry_run' => 'Modo dry-run',
             'social_auto_reply_use_ai' => 'Usar IA para generar respuesta',

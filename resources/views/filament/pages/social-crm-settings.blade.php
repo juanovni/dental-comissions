@@ -104,6 +104,59 @@
             outline-offset: 2px;
         }
 
+        .crm-settings-guide-page .crm-schedule-general,
+        .crm-settings-guide-page .crm-day-block {
+            border-color: rgba(15, 118, 110, .24);
+            border-radius: .85rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+        }
+
+        .crm-settings-guide-page .crm-schedule-general {
+            background: #f0fdfa;
+        }
+
+        .crm-settings-guide-page .crm-day-blocks-section {
+            border-color: transparent;
+            box-shadow: none;
+        }
+
+        .crm-settings-guide-page .crm-day-blocks-section > div {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .crm-settings-guide-page .crm-day-blocks {
+            gap: .85rem;
+        }
+
+        .crm-settings-guide-page .crm-day-block {
+            background: #ffffff;
+            min-height: 13rem;
+        }
+
+        .crm-settings-guide-page .crm-day-block.is-disabled {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            border-style: dashed;
+        }
+
+        .crm-settings-guide-page .crm-day-block.is-disabled .crm-time-field {
+            opacity: .62;
+        }
+
+        .crm-settings-guide-page .crm-time-field input {
+            min-height: 2.35rem;
+        }
+
+        .crm-settings-guide-page .crm-day-block .fi-section-header-description,
+        .crm-settings-guide-page .crm-day-blocks-section .fi-section-header-description,
+        .crm-settings-guide-page .crm-schedule-general .fi-section-header-description {
+            color: #475569;
+            font-size: .82rem;
+            font-weight: 400;
+            line-height: 1.45;
+        }
+
         @media (min-width: 1024px) {
             .crm-settings-guide-layout {
                 align-items: start;
@@ -141,6 +194,27 @@
 
         .dark .crm-settings-guide-page .crm-pill-picker label {
             border-color: rgba(148, 163, 184, .35);
+        }
+
+        .dark .crm-settings-guide-page .crm-schedule-general {
+            background: rgba(20, 184, 166, .08);
+            border-color: rgba(45, 212, 191, .18);
+        }
+
+        .dark .crm-settings-guide-page .crm-day-block {
+            background: rgba(15, 23, 42, .56);
+            border-color: rgba(45, 212, 191, .18);
+        }
+
+        .dark .crm-settings-guide-page .crm-day-block.is-disabled {
+            background: rgba(15, 23, 42, .34);
+            border-color: rgba(148, 163, 184, .26);
+        }
+
+        .dark .crm-settings-guide-page .crm-day-block .fi-section-header-description,
+        .dark .crm-settings-guide-page .crm-day-blocks-section .fi-section-header-description,
+        .dark .crm-settings-guide-page .crm-schedule-general .fi-section-header-description {
+            color: #94a3b8;
         }
     </style>
 

@@ -151,7 +151,10 @@ class AppointmentSlotOfferService
             throw new \RuntimeException('Ese horario acaba de ocuparse.');
         }
 
+        $patient = app(SocialPatientConversionService::class)->ensurePatientForLead($comment);
+
         $appointment = app(AppointmentCreationService::class)->createFromSocialLead($comment, [
+            'patient_id' => $patient?->id,
             'scheduled_at' => $start,
             'duration_minutes' => $duration,
             'doctor_id' => $doctor->id,

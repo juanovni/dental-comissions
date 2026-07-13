@@ -89,8 +89,21 @@ class AppointmentSlotSearchService
     private function sameDayOtherPeriods(Carbon $date, ?string $period, ?Professional $doctor, int $max): array
     {
         $slots = [];
+        $settings = app(SocialCrmSettingsService::class);
         foreach (['morning', 'afternoon', 'night'] as $candidate) {
-            if ($candidate === $period || ($candidate === 'night' && ! app(SocialCrmSettingsService::class)->appointmentNightEnabled())) {
+            if ($candidate === $period) {
+                continue;
+            }
+
+            if ($candidate === 'night' && ! $settings->appointmentNightEnabled()) {
+                continue;
+            }
+
+            if ($candidate === 'morning' && ! $settings->appointmentMorningEnabled()) {
+                continue;
+            }
+
+            if ($candidate === 'afternoon' && ! $settings->appointmentAfternoonEnabled()) {
                 continue;
             }
 

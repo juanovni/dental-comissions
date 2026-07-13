@@ -12,7 +12,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Alignment;
 use Illuminate\Support\HtmlString;
@@ -178,12 +180,22 @@ class SocialCrmSettings extends Page
                         Toggle::make('social_appointment_show_doctor')
                             ->label('Mostrar doctor')
                             ->helperText('Muestra el doctor asignado en opciones y confirmaciones cuando aplique.'),
+                        Toggle::make('social_appointment_auto_create_patient')
+                            ->label('Crear ficha al confirmar')
+                            ->helperText('Crea o vincula la ficha del paciente cuando confirma una cita.'),
+                        Toggle::make('social_appointment_require_whatsapp_phone_for_patient')
+                            ->label('Requerir teléfono WhatsApp')
+                            ->helperText('Solo crea ficha automática si el lead tiene teléfono de WhatsApp.'),
+                        TextInput::make('social_appointment_patient_fallback_name')
+                            ->label('Nombre fallback')
+                            ->helperText('Nombre usado si no hay nombre real disponible.')
+                            ->maxLength(255),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
-                Section::make('Disponibilidad')
+                Section::make('Disponibilidad: Horario de atención')
                     ->icon('heroicon-o-clock')
-                    ->description('Días y franja horaria en que la clínica atiende.')
+                    ->description('Días y franja horaria en que la clínica atiende: Define los días, el horario general y los bloques del día que el bot usará al ofrecer citas.')
                     ->schema([
                         CheckboxList::make('social_appointment_clinic_days')
                             ->label('Días laborables')
@@ -200,38 +212,130 @@ class SocialCrmSettings extends Page
                             ])
                             ->columns(7)
                             ->columnSpanFull(),
-                        TextInput::make('social_appointment_clinic_open')
-                            ->label('Hora de apertura')
-                            ->helperText('Hora de inicio de atención.')
-                            ->type('time'),
-                        TextInput::make('social_appointment_clinic_close')
-                            ->label('Hora de cierre')
-                            ->helperText('Hora de fin de atención.')
-                            ->type('time'),
-                        TextInput::make('social_appointment_morning_start')
-                            ->label('Inicio mañana')
-                            ->type('time'),
-                        TextInput::make('social_appointment_morning_end')
-                            ->label('Fin mañana')
-                            ->type('time'),
-                        TextInput::make('social_appointment_afternoon_start')
-                            ->label('Inicio tarde')
-                            ->type('time'),
-                        TextInput::make('social_appointment_afternoon_end')
-                            ->label('Fin tarde')
-                            ->type('time'),
-                        Toggle::make('social_appointment_night_enabled')
-                            ->label('Habilitar noche'),
-                        TextInput::make('social_appointment_night_start')
-                            ->label('Inicio noche')
-                            ->type('time'),
-                        TextInput::make('social_appointment_night_end')
-                            ->label('Fin noche')
-                            ->type('time'),
+                        Section::make('Horario general de la clínica')
+                            ->icon('heroicon-o-clock')
+                            ->description('Límite global. El bot nunca ofrecerá citas fuera de este rango.')
+                            ->extraAttributes(['class' => 'crm-schedule-general'])
+                            ->schema([
+                                TextInput::make('social_appointment_clinic_open')
+                                    ->label('Abre a las')
+                                    ->type('time')
+                                    ->extraAttributes(['class' => 'crm-time-field']),
+                                TextInput::make('social_appointment_clinic_close')
+                                    ->label('Cierra a las')
+                                    ->type('time')
+                                    ->extraAttributes(['class' => 'crm-time-field']),
+                            ])
+                            ->columns(2)
+                            ->columnSpanFull(),
+                        Section::make('Bloques del día')
+                            ->icon('heroicon-o-calendar-days')
+                            ->description('Define qué significa mañana, tarde y noche cuando el paciente lo mencione en el chat.')
+                            ->extraAttributes(['class' => 'crm-day-blocks-section'])
+                            ->schema([
+                                Grid::make([
+                                    'default' => 1,
+                                    'lg' => 3,
+                                ])
+                                    ->extraAttributes(['class' => 'crm-day-blocks'])
+                                    ->schema([
+                                        Section::make('Mañana')
+                                            ->icon('heroicon-o-sun')
+                                            ->description('Ej.: "quiero cita en la mañana"')
+                                            ->extraAttributes(fn (Get $get): array => [
+                                                'class' => 'crm-day-block crm-day-block-morning '.($get('social_appointment_morning_enabled') ? 'is-enabled' : 'is-disabled'),
+                                            ])
+                                            ->schema([
+                                                Toggle::make('social_appointment_morning_enabled')
+                                                    ->label('Habilitar mañana')
+                                                    ->helperText(fn (Get $get): string => $get('social_appointment_morning_enabled')
+                                                        ? 'Activo. El bot podrá ofrecer citas en este bloque.'
+                                                        : 'Desactivado. El bot no ofrecerá citas en este bloque.')
+                                                    ->live()
+                                                    ->columnSpanFull(),
+                                                TextInput::make('social_appointment_morning_start')
+                                                    ->hiddenLabel()
+                                                    ->placeholder('09:00')
+                                                    ->type('time')
+                                                    ->disabled(fn (Get $get): bool => ! (bool) $get('social_appointment_morning_enabled'))
+                                                    ->dehydrated()
+                                                    ->extraAttributes(['class' => 'crm-time-field']),
+                                                TextInput::make('social_appointment_morning_end')
+                                                    ->hiddenLabel()
+                                                    ->placeholder('12:00')
+                                                    ->type('time')
+                                                    ->disabled(fn (Get $get): bool => ! (bool) $get('social_appointment_morning_enabled'))
+                                                    ->dehydrated()
+                                                    ->extraAttributes(['class' => 'crm-time-field']),
+                                            ])
+                                            ->columns(2),
+                                        Section::make('Tarde')
+                                            ->icon('heroicon-o-sun')
+                                            ->description('Ej.: "prefiero en la tarde"')
+                                            ->extraAttributes(fn (Get $get): array => [
+                                                'class' => 'crm-day-block crm-day-block-afternoon '.($get('social_appointment_afternoon_enabled') ? 'is-enabled' : 'is-disabled'),
+                                            ])
+                                            ->schema([
+                                                Toggle::make('social_appointment_afternoon_enabled')
+                                                    ->label('Habilitar tarde')
+                                                    ->helperText(fn (Get $get): string => $get('social_appointment_afternoon_enabled')
+                                                        ? 'Activo. El bot podrá ofrecer citas en este bloque.'
+                                                        : 'Desactivado. El bot no ofrecerá citas en este bloque.')
+                                                    ->live()
+                                                    ->columnSpanFull(),
+                                                TextInput::make('social_appointment_afternoon_start')
+                                                    ->hiddenLabel()
+                                                    ->placeholder('13:00')
+                                                    ->type('time')
+                                                    ->disabled(fn (Get $get): bool => ! (bool) $get('social_appointment_afternoon_enabled'))
+                                                    ->dehydrated()
+                                                    ->extraAttributes(['class' => 'crm-time-field']),
+                                                TextInput::make('social_appointment_afternoon_end')
+                                                    ->hiddenLabel()
+                                                    ->placeholder('18:00')
+                                                    ->type('time')
+                                                    ->disabled(fn (Get $get): bool => ! (bool) $get('social_appointment_afternoon_enabled'))
+                                                    ->dehydrated()
+                                                    ->extraAttributes(['class' => 'crm-time-field']),
+                                            ])
+                                            ->columns(2),
+                                        Section::make('Noche')
+                                            ->icon('heroicon-o-moon')
+                                            ->description('Ej.: "¿tienen espacio en la noche?"')
+                                            ->extraAttributes(fn (Get $get): array => [
+                                                'class' => 'crm-day-block crm-day-block-night '.($get('social_appointment_night_enabled') ? 'is-enabled' : 'is-disabled'),
+                                            ])
+                                            ->schema([
+                                                Toggle::make('social_appointment_night_enabled')
+                                                    ->label('Habilitar noche')
+                                                    ->helperText(fn (Get $get): string => $get('social_appointment_night_enabled')
+                                                        ? 'Activo. El bot podrá ofrecer citas en este bloque.'
+                                                        : 'Desactivado. El bot no ofrecerá citas en este bloque.')
+                                                    ->live()
+                                                    ->columnSpanFull(),
+                                                TextInput::make('social_appointment_night_start')
+                                                    ->hiddenLabel()
+                                                    ->placeholder('18:00')
+                                                    ->type('time')
+                                                    ->disabled(fn (Get $get): bool => ! (bool) $get('social_appointment_night_enabled'))
+                                                    ->dehydrated()
+                                                    ->extraAttributes(['class' => 'crm-time-field']),
+                                                TextInput::make('social_appointment_night_end')
+                                                    ->hiddenLabel()
+                                                    ->placeholder('20:00')
+                                                    ->type('time')
+                                                    ->disabled(fn (Get $get): bool => ! (bool) $get('social_appointment_night_enabled'))
+                                                    ->dehydrated()
+                                                    ->extraAttributes(['class' => 'crm-time-field']),
+                                            ])
+                                            ->columns(2),
+                                    ]),
+                            ])
+                            ->columnSpanFull(),
                     ])
-                    ->columns(2)
+                    ->columns(1)
                     ->columnSpanFull(),
-                Section::make('Configuración de slots')
+                Section::make('Reglas de agenda')
                     ->icon('heroicon-o-arrow-path-rounded-square')
                     ->description('Duración y reglas para ofrecer horarios al paciente.')
                     ->schema([
@@ -619,8 +723,10 @@ class SocialCrmSettings extends Page
             'social_appointment_clinic_days',
             'social_appointment_clinic_open',
             'social_appointment_clinic_close',
+            'social_appointment_morning_enabled',
             'social_appointment_morning_start',
             'social_appointment_morning_end',
+            'social_appointment_afternoon_enabled',
             'social_appointment_afternoon_start',
             'social_appointment_afternoon_end',
             'social_appointment_night_enabled',
@@ -634,6 +740,9 @@ class SocialCrmSettings extends Page
             'social_appointment_slot_hold_minutes',
             'social_appointment_allow_alternative_doctor',
             'social_appointment_show_doctor',
+            'social_appointment_auto_create_patient',
+            'social_appointment_require_whatsapp_phone_for_patient',
+            'social_appointment_patient_fallback_name',
             // Respuestas automáticas
             'social_auto_reply_enabled',
             'social_auto_reply_dry_run',
@@ -703,8 +812,10 @@ class SocialCrmSettings extends Page
             'social_appointment_clinic_days' => [1, 2, 3, 4, 5],
             'social_appointment_clinic_open' => '09:00',
             'social_appointment_clinic_close' => '18:00',
+            'social_appointment_morning_enabled' => true,
             'social_appointment_morning_start' => '09:00',
             'social_appointment_morning_end' => '12:00',
+            'social_appointment_afternoon_enabled' => true,
             'social_appointment_afternoon_start' => '13:00',
             'social_appointment_afternoon_end' => '18:00',
             'social_appointment_night_enabled' => false,
@@ -718,6 +829,9 @@ class SocialCrmSettings extends Page
             'social_appointment_slot_hold_minutes' => 10,
             'social_appointment_allow_alternative_doctor' => false,
             'social_appointment_show_doctor' => false,
+            'social_appointment_auto_create_patient' => true,
+            'social_appointment_require_whatsapp_phone_for_patient' => true,
+            'social_appointment_patient_fallback_name' => 'Paciente WhatsApp',
             'social_auto_reply_enabled' => false,
             'social_auto_reply_dry_run' => true,
             'social_auto_reply_use_ai' => true,

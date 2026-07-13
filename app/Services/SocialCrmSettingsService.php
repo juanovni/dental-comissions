@@ -299,6 +299,16 @@ class SocialCrmSettingsService
         return (bool) $this->get('social_appointment_auto_confirm', false);
     }
 
+    public function appointmentMorningEnabled(): bool
+    {
+        return (bool) $this->get('social_appointment_morning_enabled', true);
+    }
+
+    public function appointmentAfternoonEnabled(): bool
+    {
+        return (bool) $this->get('social_appointment_afternoon_enabled', true);
+    }
+
     public function appointmentMorningStart(): string
     {
         return (string) $this->get('social_appointment_morning_start', '09:00');
@@ -352,6 +362,21 @@ class SocialCrmSettingsService
     public function appointmentShowDoctor(): bool
     {
         return (bool) $this->get('social_appointment_show_doctor', false);
+    }
+
+    public function appointmentAutoCreatePatient(): bool
+    {
+        return (bool) $this->get('social_appointment_auto_create_patient', true);
+    }
+
+    public function appointmentRequireWhatsappPhoneForPatient(): bool
+    {
+        return (bool) $this->get('social_appointment_require_whatsapp_phone_for_patient', true);
+    }
+
+    public function appointmentPatientFallbackName(): string
+    {
+        return (string) $this->get('social_appointment_patient_fallback_name', 'Paciente WhatsApp');
     }
 
     public function appointmentSearchDays(): int

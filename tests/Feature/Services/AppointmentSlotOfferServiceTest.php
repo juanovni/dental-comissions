@@ -7,6 +7,7 @@ use App\Enums\SocialPlatform;
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
 use App\Models\AppointmentSlotOffer;
+use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Professional;
 use App\Models\SocialAccount;
@@ -93,12 +94,103 @@ class AppointmentSlotOfferServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_confirming_option_creates_patient_when_lead_has_phone(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_auto_create_patient', true, 'boolean');
+        $this->setting('social_appointment_require_whatsapp_phone_for_patient', true, 'boolean');
+
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->socialIdentity->update(['phone' => '+1 (555) 0001', 'display_name' => 'Maria WhatsApp']);
+
+        $offer = $this->createOffer($comment, '2026-07-18');
+        $appointment = app(AppointmentSlotOfferService::class)->confirmFromToken($offer, 1);
+
+        $this->assertNotNull($appointment->patient_id);
+        $this->assertDatabaseHas('patients', [
+            'id' => $appointment->patient_id,
+            'full_name' => 'Maria WhatsApp',
+            'phone' => '+1 (555) 0001',
+        ]);
+        $this->assertSame($appointment->patient_id, $comment->refresh()->converted_patient_id);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_confirming_option_reuses_existing_patient_by_phone(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_auto_create_patient', true, 'boolean');
+        $this->setting('social_appointment_require_whatsapp_phone_for_patient', true, 'boolean');
+
+        $patient = Patient::factory()->create([
+            'full_name' => 'Paciente Existente',
+            'phone' => '+15550001',
+        ]);
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->socialIdentity->update(['phone' => '1 555 0001']);
+
+        $offer = $this->createOffer($comment, '2026-07-19');
+        $appointment = app(AppointmentSlotOfferService::class)->confirmFromToken($offer, 1);
+
+        $this->assertSame($patient->id, $appointment->patient_id);
+        $this->assertSame(1, Patient::where('phone', '+15550001')->count());
+        $this->assertSame($patient->id, $comment->refresh()->converted_patient_id);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_confirming_option_does_not_create_patient_without_required_phone(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_auto_create_patient', true, 'boolean');
+        $this->setting('social_appointment_require_whatsapp_phone_for_patient', true, 'boolean');
+
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+        $comment = $this->socialComment($procedure, $doctor);
+
+        $offer = $this->createOffer($comment, '2026-07-20');
+        $appointment = app(AppointmentSlotOfferService::class)->confirmFromToken($offer, 1);
+
+        $this->assertNull($appointment->patient_id);
+        $this->assertDatabaseCount('patients', 0);
+
+        Carbon::setTestNow();
+    }
+
     private function setting(string $key, mixed $value, string $type): void
     {
         SocialCrmSetting::updateOrCreate(
             ['key' => $key],
             ['value' => $value, 'value_type' => $type, 'label' => $key, 'is_active' => true],
         );
+    }
+
+    private function createOffer(SocialComment $comment, string $date): AppointmentSlotOffer
+    {
+        $message = $this->message($comment, 'Quiero una cita');
+
+        return app(AppointmentSlotOfferService::class)->createFromAgentResponse($comment, $message, [
+            'intent' => 'appointment_interest',
+            'appointment_candidate' => [
+                'wants_appointment' => true,
+                'preferred_date_parsed' => $date,
+                'preferred_time_parsed' => null,
+                'preferred_period' => 'afternoon',
+                'intent_type' => 'appointment_interest',
+            ],
+        ]);
     }
 
     private function socialComment(Procedure $procedure, Professional $doctor): SocialComment
