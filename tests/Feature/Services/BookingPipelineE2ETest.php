@@ -327,7 +327,7 @@ class BookingPipelineE2ETest extends TestCase
     // ───────────────────────────────
 
     /** @test */
-    public function lead_confirms_past_date_gets_reprompt(): void
+    public function lead_cannot_create_past_date_appointment(): void
     {
         $token = 'DNT-EPAST';
         $comment = $this->createLeadComment($token);
@@ -347,21 +347,7 @@ class BookingPipelineE2ETest extends TestCase
         $this->assertNotNull($result1);
 
         $appointment = Appointment::where('social_comment_id', $comment->id)->first();
-        $this->assertNotNull($appointment);
-        $this->assertTrue($appointment->scheduled_at->isPast(), 'Appointment should be in the past');
-
-        $msg2 = 'Si, confirmo';
-
-        $this->whatsappService->processIncomingMessage(
-            $this->buildPayload($this->leadPhone, $msg2, 'e2e_past_2'),
-        );
-
-        $appointment->refresh();
-        $this->assertEquals(
-            AppointmentStatus::Confirmed,
-            $appointment->status,
-            'Auto-confirmed past date should still confirm since auto-confirm bypasses BookingConfirmationService',
-        );
+        $this->assertNull($appointment, 'Past date requests should not create appointments.');
     }
 
     // ───────────────────────────────
@@ -494,7 +480,7 @@ class BookingPipelineE2ETest extends TestCase
         $token = 'DNT-EADIT';
         $comment = $this->createLeadComment($token);
 
-        $msg1 = 'Mi codigo es ' . $token . '. Quiero agendar una cita para el lunes a las 9:00';
+        $msg1 = 'Mi codigo es ' . $token . '. Quiero agendar una cita para el proximo lunes a las 9:00';
 
         $this->whatsappService->processIncomingMessage(
             $this->buildPayload($this->leadPhone, $msg1, 'e2e_audit_1'),

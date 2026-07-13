@@ -87,6 +87,18 @@ class AppointmentIntentServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_extract_weekday_with_day_number_and_time(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13'));
+
+        $result = $this->service->extractFromText('Hay citas para el dia miercoles 15 a las 3pm?');
+
+        $this->assertSame('2026-07-15', $result['date']);
+        $this->assertSame('15:00', $result['time']);
+
+        Carbon::setTestNow();
+    }
+
     public function test_extract_date_with_slash_format(): void
     {
         $result = $this->service->extractFromText('Puedo el 20/08');

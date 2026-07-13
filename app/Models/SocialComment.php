@@ -218,4 +218,14 @@ class SocialComment extends Model
     {
         return $this->hasMany(Appointment::class, 'social_comment_id');
     }
+
+    public function appointmentSlotOffers(): HasMany
+    {
+        return $this->hasMany(AppointmentSlotOffer::class, 'social_comment_id');
+    }
+
+    public function appointmentSlotHolds(): HasMany
+    {
+        return $this->hasMany(AppointmentSlotHold::class, 'social_comment_id');
+    }
 }

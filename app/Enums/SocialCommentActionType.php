@@ -38,6 +38,8 @@ enum SocialCommentActionType: string
     case BookingConfirmed = 'booking_confirmed';
     case BookingRejected = 'booking_rejected';
     case BookingModified = 'booking_modified';
+    case AppointmentSlotsOffered = 'appointment_slots_offered';
+    case AppointmentSlotHeld = 'appointment_slot_held';
 
     public function label(): string
     {
@@ -76,6 +78,8 @@ enum SocialCommentActionType: string
             self::BookingConfirmed => 'Cita confirmada por lead',
             self::BookingRejected => 'Cita rechazada por lead',
             self::BookingModified => 'Cita modificada por lead',
+            self::AppointmentSlotsOffered => 'Horarios de cita ofrecidos',
+            self::AppointmentSlotHeld => 'Horario bloqueado temporalmente',
         };
     }
 }

@@ -172,6 +172,12 @@ class SocialCrmSettings extends Page
                         Toggle::make('social_appointment_auto_confirm')
                             ->label('Auto-confirmar cita')
                             ->helperText('Si está activo, crea la cita automáticamente cuando el paciente acepta un slot.'),
+                        Toggle::make('social_appointment_allow_alternative_doctor')
+                            ->label('Sugerir otro doctor')
+                            ->helperText('Permite buscar un doctor alternativo si el principal no tiene disponibilidad.'),
+                        Toggle::make('social_appointment_show_doctor')
+                            ->label('Mostrar doctor')
+                            ->helperText('Muestra el doctor asignado en opciones y confirmaciones cuando aplique.'),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
@@ -201,6 +207,26 @@ class SocialCrmSettings extends Page
                         TextInput::make('social_appointment_clinic_close')
                             ->label('Hora de cierre')
                             ->helperText('Hora de fin de atención.')
+                            ->type('time'),
+                        TextInput::make('social_appointment_morning_start')
+                            ->label('Inicio mañana')
+                            ->type('time'),
+                        TextInput::make('social_appointment_morning_end')
+                            ->label('Fin mañana')
+                            ->type('time'),
+                        TextInput::make('social_appointment_afternoon_start')
+                            ->label('Inicio tarde')
+                            ->type('time'),
+                        TextInput::make('social_appointment_afternoon_end')
+                            ->label('Fin tarde')
+                            ->type('time'),
+                        Toggle::make('social_appointment_night_enabled')
+                            ->label('Habilitar noche'),
+                        TextInput::make('social_appointment_night_start')
+                            ->label('Inicio noche')
+                            ->type('time'),
+                        TextInput::make('social_appointment_night_end')
+                            ->label('Fin noche')
                             ->type('time'),
                     ])
                     ->columns(2)
@@ -245,6 +271,37 @@ class SocialCrmSettings extends Page
                                 4 => '4 slots',
                                 5 => '5 slots',
                                 6 => '6 slots',
+                            ])
+                            ->native(false),
+                        Select::make('social_appointment_search_days')
+                            ->label('Días a buscar')
+                            ->helperText('Días cercanos adicionales para alternativas.')
+                            ->options([
+                                1 => '1 día',
+                                2 => '2 días',
+                                3 => '3 días',
+                                5 => '5 días',
+                                7 => '7 días',
+                            ])
+                            ->native(false),
+                        Select::make('social_appointment_offer_link_minutes')
+                            ->label('Expiración del enlace')
+                            ->helperText('Tiempo de vida del enlace móvil.')
+                            ->options([
+                                15 => '15 minutos',
+                                30 => '30 minutos',
+                                60 => '1 hora',
+                                120 => '2 horas',
+                            ])
+                            ->native(false),
+                        Select::make('social_appointment_slot_hold_minutes')
+                            ->label('Bloqueo temporal')
+                            ->helperText('Minutos para mantener un horario durante confirmación.')
+                            ->options([
+                                5 => '5 minutos',
+                                10 => '10 minutos',
+                                15 => '15 minutos',
+                                30 => '30 minutos',
                             ])
                             ->native(false),
                     ])
@@ -562,9 +619,21 @@ class SocialCrmSettings extends Page
             'social_appointment_clinic_days',
             'social_appointment_clinic_open',
             'social_appointment_clinic_close',
+            'social_appointment_morning_start',
+            'social_appointment_morning_end',
+            'social_appointment_afternoon_start',
+            'social_appointment_afternoon_end',
+            'social_appointment_night_enabled',
+            'social_appointment_night_start',
+            'social_appointment_night_end',
             'social_appointment_slot_duration',
             'social_appointment_lead_time_hours',
             'social_appointment_max_slots_offer',
+            'social_appointment_search_days',
+            'social_appointment_offer_link_minutes',
+            'social_appointment_slot_hold_minutes',
+            'social_appointment_allow_alternative_doctor',
+            'social_appointment_show_doctor',
             // Respuestas automáticas
             'social_auto_reply_enabled',
             'social_auto_reply_dry_run',
@@ -634,9 +703,21 @@ class SocialCrmSettings extends Page
             'social_appointment_clinic_days' => [1, 2, 3, 4, 5],
             'social_appointment_clinic_open' => '09:00',
             'social_appointment_clinic_close' => '18:00',
+            'social_appointment_morning_start' => '09:00',
+            'social_appointment_morning_end' => '12:00',
+            'social_appointment_afternoon_start' => '13:00',
+            'social_appointment_afternoon_end' => '18:00',
+            'social_appointment_night_enabled' => false,
+            'social_appointment_night_start' => '18:00',
+            'social_appointment_night_end' => '20:00',
             'social_appointment_slot_duration' => 45,
             'social_appointment_lead_time_hours' => 2,
             'social_appointment_max_slots_offer' => 3,
+            'social_appointment_search_days' => 3,
+            'social_appointment_offer_link_minutes' => 30,
+            'social_appointment_slot_hold_minutes' => 10,
+            'social_appointment_allow_alternative_doctor' => false,
+            'social_appointment_show_doctor' => false,
             'social_auto_reply_enabled' => false,
             'social_auto_reply_dry_run' => true,
             'social_auto_reply_use_ai' => true,
