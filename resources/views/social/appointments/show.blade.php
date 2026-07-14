@@ -21,6 +21,7 @@
         * { box-sizing: border-box; }
         body { background: var(--appt-bg); color: var(--appt-text); margin: 0; }
         button, input { font: inherit; }
+        .visually-hidden-copy { left: -9999px; position: fixed; top: -9999px; }
 
         .appointment-shell {
             display: grid;
@@ -30,6 +31,7 @@
             min-height: 100vh;
             padding: 1.1rem;
         }
+        .appointment-shell.is-confirmed { align-content: center; }
 
         .appointment-hero { padding-top: .45rem; }
         .appointment-eyebrow {
@@ -118,6 +120,117 @@
         .appointment-message.error { background: #fef2f2; color: #b91c1c; }
         .appointment-message.warning { background: #fff7ed; color: #9a3412; }
 
+        .confirmation-card {
+            background: var(--appt-card);
+            border: 1px solid var(--appt-border);
+            border-radius: 1.2rem;
+            box-shadow: var(--appt-shadow);
+            overflow: hidden;
+        }
+        .confirmation-hero {
+            background: linear-gradient(145deg, #d8f7f1 0%, #c8f0e8 100%);
+            border-bottom: 1px solid var(--appt-border);
+            padding: 2.2rem 1.2rem 2rem;
+            text-align: center;
+        }
+        .confirmation-check {
+            align-items: center;
+            background: #008574;
+            border-radius: 999px;
+            box-shadow: 0 16px 34px -18px rgba(0, 90, 78, .8);
+            color: #ffffff;
+            display: inline-flex;
+            height: 4rem;
+            justify-content: center;
+            margin-bottom: 1.1rem;
+            width: 4rem;
+        }
+        .confirmation-check svg { height: 2rem; width: 2rem; }
+        .confirmation-kicker {
+            color: #00796b;
+            display: block;
+            font-size: .78rem;
+            font-weight: 600;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+        .confirmation-title {
+            font-size: clamp(1.85rem, 6vw, 2.55rem);
+            font-weight: 650;
+            letter-spacing: -.045em;
+            line-height: 1.04;
+            margin: .7rem 0 0;
+        }
+        .confirmation-copy {
+            color: #475569;
+            font-size: .98rem;
+            line-height: 1.55;
+            margin: .85rem auto 0;
+            max-width: 34rem;
+        }
+        .confirmation-details {
+            display: grid;
+        }
+        .confirmation-detail {
+            align-items: center;
+            border-bottom: 1px solid var(--appt-border);
+            display: flex;
+            gap: .9rem;
+            min-height: 6.1rem;
+            padding: 1.1rem;
+        }
+        .confirmation-detail:last-child { border-bottom: 0; }
+        .confirmation-icon {
+            align-items: center;
+            background: var(--appt-primary-soft);
+            border-radius: 999px;
+            color: #047c72;
+            display: inline-flex;
+            flex: 0 0 auto;
+            height: 2.45rem;
+            justify-content: center;
+            width: 2.45rem;
+        }
+        .confirmation-icon svg { height: 1.18rem; width: 1.18rem; }
+        .confirmation-label { color: var(--appt-muted); display: block; font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+        .confirmation-value { display: block; font-size: 1.02rem; font-weight: 650; margin-top: .22rem; }
+        .confirmation-subvalue { color: #475569; display: block; font-size: .86rem; margin-top: .15rem; }
+        .confirmation-actions {
+            border-top: 1px solid var(--appt-border);
+            display: grid;
+            gap: .55rem;
+            padding: 1rem;
+        }
+        .confirmation-action {
+            align-items: center;
+            background: #fafffe;
+            border: 1px solid var(--appt-border);
+            border-radius: .62rem;
+            color: var(--appt-text);
+            cursor: pointer;
+            display: inline-flex;
+            font-size: .92rem;
+            font-weight: 600;
+            gap: .5rem;
+            justify-content: center;
+            min-height: 2.75rem;
+            padding: .7rem .95rem;
+            text-decoration: none;
+            transition: border-color .16s ease, filter .16s ease, transform .16s ease;
+        }
+        .confirmation-action:hover, .confirmation-action:focus { border-color: rgba(15, 118, 110, .45); filter: brightness(.99); outline: none; transform: translateY(-1px); }
+        .confirmation-action.primary { background: var(--appt-primary); border-color: var(--appt-primary); color: #ffffff; }
+        .confirmation-action svg { height: 1.08rem; width: 1.08rem; }
+        .confirmation-action.wide { grid-column: 1 / -1; }
+        .confirmation-footer {
+            color: #47606d;
+            font-size: .82rem;
+            line-height: 1.45;
+            margin: -.25rem auto 0;
+            max-width: 34rem;
+            text-align: center;
+        }
+
         .summary-card {
             align-items: center;
             display: grid;
@@ -152,6 +265,10 @@
             .appointment-shell { gap: 1.25rem; padding: 2rem 1.25rem; }
             .appointment-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .date-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .confirmation-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .confirmation-detail:nth-child(odd) { border-right: 1px solid var(--appt-border); }
+            .confirmation-detail:nth-last-child(-n + 2) { border-bottom: 0; }
+            .confirmation-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .summary-card { grid-template-columns: minmax(0, 1fr) 14rem; }
             .appointment-btn { width: auto; }
         }
@@ -167,18 +284,84 @@
         $rangeLabel = $firstDate && $lastDate
             ? $firstDate->isoFormat('D MMM').($firstDate->isSameDay($lastDate) ? '' : ' - '.$lastDate->isoFormat('D MMM YYYY'))
             : 'Opciones disponibles';
+        $confirmedDate = $confirmedAppointment?->scheduled_at;
+        $confirmedProcedure = $confirmedAppointment?->procedure?->name ?? $procedureName;
+        $confirmedDuration = $confirmedAppointment?->duration_minutes ?: $duration;
+        $confirmedDoctor = $doctorName;
+        $appointmentSummary = collect([
+            'Mi cita dental quedó registrada:',
+            'Tratamiento: '.$confirmedProcedure,
+            'Fecha: '.($confirmedDate?->isoFormat('dddd D [de] MMMM YYYY') ?? 'Fecha registrada'),
+            'Hora: '.($confirmedDate?->format('H:i') ?? 'Hora registrada').($confirmedDuration ? ' h · '.$confirmedDuration.' min' : ''),
+            $confirmedDoctor ? 'Profesional: '.$confirmedDoctor : null,
+        ])->filter()->implode("\n");
     @endphp
 
-    <main class="appointment-shell">
+    <main class="appointment-shell {{ $confirmedAppointment ? 'is-confirmed' : '' }}">
+        @unless ($confirmedAppointment)
         <header class="appointment-hero">
             <div class="appointment-eyebrow">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m5.6 5.6 2.8 2.8"/><path d="m15.6 15.6 2.8 2.8"/><path d="m18.4 5.6-2.8 2.8"/><path d="m8.4 15.6-2.8 2.8"/></svg>
                 Clínica Dental
             </div>
             <h1>Agenda tu cita</h1>
-            <p class="appointment-copy">Selecciona uno de los horarios disponibles que te ofrecimos por WhatsApp. Validaremos disponibilidad antes de registrar la cita.</p>
+            <p class="appointment-copy">
+                Selecciona uno de los horarios disponibles que te ofrecimos por WhatsApp. Validaremos disponibilidad antes de registrar la cita.
+            </p>
         </header>
+        @endunless
 
+        @if ($confirmedAppointment)
+            <section class="confirmation-card" aria-label="Cita confirmada">
+                <div class="confirmation-hero">
+                    <span class="confirmation-check">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+                    </span>
+                    <span class="confirmation-kicker">Cita confirmada</span>
+                    <h2 class="confirmation-title">¡Tu cita quedó registrada!</h2>
+                    <p class="confirmation-copy">
+                        Te enviamos la confirmación por WhatsApp. Si necesitas hacer un cambio, responde a ese mensaje y con gusto te ayudamos.
+                    </p>
+                </div>
+
+                <div class="confirmation-details">
+                    <div class="confirmation-detail">
+                        <span class="confirmation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg></span>
+                        <span><span class="confirmation-label">Fecha</span><span class="confirmation-value">{{ $confirmedDate?->isoFormat('dddd D [de] MMMM YYYY') ?? 'Fecha registrada' }}</span></span>
+                    </div>
+                    <div class="confirmation-detail">
+                        <span class="confirmation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                        <span><span class="confirmation-label">Hora</span><span class="confirmation-value">{{ $confirmedDate?->format('H:i') ?? 'Hora registrada' }} h @if ($confirmedDuration) · {{ $confirmedDuration }} min @endif</span></span>
+                    </div>
+                    <div class="confirmation-detail">
+                        <span class="confirmation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M7 7h10"/><path d="M7 17h10"/><path d="M5 12h14"/></svg></span>
+                        <span><span class="confirmation-label">Tratamiento</span><span class="confirmation-value">{{ $confirmedProcedure }}</span></span>
+                    </div>
+                    @if ($confirmedDoctor)
+                        <div class="confirmation-detail">
+                            <span class="confirmation-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+                            <span><span class="confirmation-label">Profesional</span><span class="confirmation-value">{{ $confirmedDoctor }}</span></span>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="confirmation-actions" aria-label="Acciones de la cita">
+                    <a class="confirmation-action primary" href="{{ route('social-appointments.calendar', ['token' => $offer->token]) }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M12 14v5"/><path d="M9.5 16.5H14.5"/></svg>
+                        Agregar al calendario
+                    </a>
+                    <a class="confirmation-action" href="https://wa.me/?text={{ rawurlencode($appointmentSummary) }}" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4.3A8 8 0 1 1 20 11.5Z"/><path d="M9.5 8.8c.2 3 1.8 4.7 4.8 5"/></svg>
+                        Compartir por WhatsApp
+                    </a>
+                    <button class="confirmation-action wide" type="button" id="copy-summary" data-summary="{{ e($appointmentSummary) }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="13" height="13" x="8" y="8" rx="2"/><path d="M5 16H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"/></svg>
+                        <span id="copy-summary-label">Copiar resumen</span>
+                    </button>
+                </div>
+            </section>
+            <p class="confirmation-footer">¿Necesitas reagendar? Escríbenos por WhatsApp respondiendo a la confirmación de tu cita.</p>
+        @else
         <section class="appointment-card appointment-context" aria-label="Información de la cita">
             <div class="context-item">
                 <span class="context-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7h6"/><path d="M9 12h6"/><path d="M9 17h4"/><path d="M5 3h14v18H5z"/></svg></span>
@@ -255,6 +438,7 @@
                 </button>
             </form>
         @endif
+        @endif
     </main>
 
     <script>
@@ -276,6 +460,34 @@
                     confirmButton.disabled = false;
                 });
             });
+
+            var copyButton = document.getElementById('copy-summary');
+            var copyLabel = document.getElementById('copy-summary-label');
+
+            if (copyButton && copyLabel) {
+                copyButton.addEventListener('click', function () {
+                    var summary = copyButton.dataset.summary || '';
+                    var markCopied = function () {
+                        copyLabel.textContent = 'Resumen copiado';
+                        window.setTimeout(function () { copyLabel.textContent = 'Copiar resumen'; }, 1800);
+                    };
+
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(summary).then(markCopied);
+                        return;
+                    }
+
+                    var textarea = document.createElement('textarea');
+                    textarea.value = summary;
+                    textarea.setAttribute('readonly', 'readonly');
+                    textarea.className = 'visually-hidden-copy';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    markCopied();
+                });
+            }
         })();
     </script>
 </body>

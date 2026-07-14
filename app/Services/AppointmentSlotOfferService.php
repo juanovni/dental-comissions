@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AppointmentSource;
 use App\Enums\AppointmentStatus;
+use App\Enums\ProfessionalRole;
 use App\Enums\SocialCommentActionType;
 use App\Models\Appointment;
 use App\Models\AppointmentSlotHold;
@@ -150,8 +151,7 @@ class AppointmentSlotOfferService
             ->filter(function (array $option) use ($comment, $duration): bool {
                 $start = Carbon::parse($option['datetime']);
                 $end = $start->copy()->addMinutes($duration);
-                $doctorId = $option['doctor_id'] ?? $comment?->suggested_doctor_id;
-                $doctor = $doctorId ? Professional::find($doctorId) : null;
+                $doctor = $this->doctorForOption($option, $comment);
 
                 return $doctor
                     && app(AppointmentAvailabilityService::class)->isSlotAvailableForDoctor($doctor, $start, $end);
@@ -167,8 +167,7 @@ class AppointmentSlotOfferService
         $start = Carbon::parse($option['datetime']);
         $duration = $settings->appointmentSlotDuration();
         $end = $start->copy()->addMinutes($duration);
-        $doctorId = $option['doctor_id'] ?? $comment->suggested_doctor_id;
-        $doctor = $doctorId ? Professional::find($doctorId) : null;
+        $doctor = $this->doctorForOption($option, $comment);
 
         if (! $doctor || ! app(AppointmentAvailabilityService::class)->isSlotAvailableForDoctor($doctor, $start, $end)) {
             $offer->update(['status' => 'expired']);
@@ -227,6 +226,8 @@ class AppointmentSlotOfferService
             ],
         ]);
 
+        app(SocialLeadScoringService::class)->scoreWhatsappSlotSelected($comment->refresh());
+
         return $appointment;
     }
 
@@ -283,11 +284,28 @@ class AppointmentSlotOfferService
     private function indexedOptions(array $slots, SocialComment $comment): array
     {
         return array_values(array_map(function (array $slot, int $i) use ($comment): array {
+            $doctor = $this->doctorForOption($slot, $comment);
+
             return array_merge($slot, [
                 'index' => $i + 1,
+                'doctor_id' => $doctor?->id,
                 'procedure_id' => $comment->suggested_procedure_id,
             ]);
         }, $slots, array_keys($slots)));
+    }
+
+    private function doctorForOption(array $option, ?SocialComment $comment): ?Professional
+    {
+        $doctorId = $option['doctor_id'] ?? $comment?->suggested_doctor_id;
+
+        if ($doctorId) {
+            return Professional::find($doctorId);
+        }
+
+        return Professional::query()
+            ->where('role', ProfessionalRole::Doctor->value)
+            ->where('is_active', true)
+            ->first();
     }
 
     private function periodLabel(?string $period): ?string

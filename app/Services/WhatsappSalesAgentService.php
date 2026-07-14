@@ -136,17 +136,25 @@ class WhatsappSalesAgentService
             mb_strtolower(trim($body)),
         );
 
-        foreach (['agendar', 'cita', 'reservar', 'programar', 'booking', 'schedule appointment'] as $keyword) {
+        foreach ([
+            'agendar', 'agenda', 'cita', 'reservar', 'programar', 'booking', 'schedule appointment',
+            'disponibilidad', 'disponible', 'horario', 'horarios', 'hora disponible', 'tienen hora',
+            'hay hora', 'tienen espacio', 'hay espacio', 'turno', 'valoracion', 'evaluacion',
+        ] as $keyword) {
             if (str_contains($normalized, $keyword)) {
                 return true;
             }
         }
 
+        $parsed = app(AppointmentIntentService::class)->extractFromText($body);
+
+        if (($parsed['date'] ?? null) && (($parsed['period'] ?? null) || ($parsed['time'] ?? null))) {
+            return true;
+        }
+
         if (($leadContext['etapa_embudo'] ?? null) !== SocialPipelineStage::Appointment->value) {
             return false;
         }
-
-        $parsed = app(AppointmentIntentService::class)->extractFromText($body);
 
         if (($parsed['date'] ?? null) || ($parsed['time'] ?? null)) {
             return true;
@@ -219,7 +227,7 @@ class WhatsappSalesAgentService
             'tipo_mensaje' => 'whatsapp',
             'nombre_paciente' => $comment->author_name ?? $comment->author_username ?? 'Paciente',
             'username' => $comment->author_username ?? '',
-            'procedimiento_de_interes' => $procedure?->name ?? 'No especificado',
+            'procedimiento_de_interes' => $procedure?->name ?? 'valoracion dental',
             'costo_procedimiento' => $procedure?->base_cost ?? 'No disponible',
             'mensaje_usuario' => $message->message_body ?? '',
             'historial_conversacion' => $this->buildRecentHistory($comment, $message),

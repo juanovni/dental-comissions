@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\AppointmentSlotOffer;
+use App\Models\Appointment;
 use App\Services\AppointmentSlotOfferService;
 use App\Services\SocialCrmSettingsService;
+use App\Services\WhatsappService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class SocialAppointmentLinkController extends Controller
@@ -14,7 +17,7 @@ class SocialAppointmentLinkController extends Controller
     public function show(string $token): View
     {
         $offer = AppointmentSlotOffer::query()
-            ->with(['socialComment.suggestedProcedure', 'socialComment.suggestedDoctor'])
+            ->with(['appointment.doctor', 'appointment.procedure', 'socialComment.suggestedProcedure', 'socialComment.suggestedDoctor'])
             ->where('token', $token)
             ->firstOrFail();
 
@@ -32,10 +35,12 @@ class SocialAppointmentLinkController extends Controller
 
         $comment = $offer->socialComment;
         $showDoctor = app(SocialCrmSettingsService::class)->appointmentShowDoctor();
+        $confirmedAppointment = $offer->appointment;
 
         return view('social.appointments.show', [
             'offer' => $offer,
             'comment' => $comment,
+            'confirmedAppointment' => $confirmedAppointment,
             'procedure' => $comment->suggestedProcedure,
             'doctor' => $showDoctor ? $comment->suggestedDoctor : null,
             'groups' => $groups,
@@ -48,6 +53,7 @@ class SocialAppointmentLinkController extends Controller
     public function confirm(string $token): RedirectResponse
     {
         $offer = AppointmentSlotOffer::query()
+            ->with(['socialComment.socialIdentity', 'whatsappMessage'])
             ->where('token', $token)
             ->firstOrFail();
 
@@ -58,13 +64,88 @@ class SocialAppointmentLinkController extends Controller
         $optionIndex = (int) request()->input('option');
 
         try {
-            app(AppointmentSlotOfferService::class)->confirmFromToken($offer, $optionIndex);
+            $appointment = app(AppointmentSlotOfferService::class)->confirmFromToken($offer, $optionIndex);
         } catch (\Throwable $e) {
             return back()->with('appointment_error', 'Ese horario acaba de ocuparse. Por favor elige otra opción o escríbenos por WhatsApp.');
         }
 
+        $sent = $this->sendWhatsappConfirmation($offer->refresh(), $appointment);
+
         return redirect()
             ->route('social-appointments.show', ['token' => $token])
-            ->with('appointment_success', 'Tu cita quedó registrada. Te enviaremos la confirmación por WhatsApp.');
+            ->with('appointment_success', $sent
+                ? 'Tu cita quedó registrada. Te enviamos la confirmación por WhatsApp.'
+                : 'Tu cita quedó registrada. No pudimos enviar la confirmación por WhatsApp en este momento.');
+    }
+
+    public function calendar(string $token): Response
+    {
+        $offer = AppointmentSlotOffer::query()
+            ->with(['appointment.doctor', 'appointment.procedure'])
+            ->where('token', $token)
+            ->firstOrFail();
+
+        $appointment = $offer->appointment;
+
+        abort_unless($appointment && $appointment->scheduled_at, 404);
+
+        $startsAt = $appointment->scheduled_at->copy();
+        $endsAt = $startsAt->copy()->addMinutes($appointment->duration_minutes ?: app(SocialCrmSettingsService::class)->appointmentSlotDuration());
+        $procedure = $appointment->procedure?->name ?? 'Cita dental';
+        $doctor = $appointment->doctor?->name;
+        $timezone = config('app.timezone', 'UTC');
+        $uid = 'appointment-'.$appointment->id.'@'.parse_url(config('app.url', 'https://dental.local'), PHP_URL_HOST);
+        $description = 'Cita dental registrada por WhatsApp.' . ($doctor ? '\nProfesional: '.$doctor : '');
+
+        $ics = implode("\r\n", [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Dental CRM//Appointments//ES',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'BEGIN:VEVENT',
+            'UID:'.$this->icsText($uid),
+            'DTSTAMP:'.now()->utc()->format('Ymd\THis\Z'),
+            'DTSTART;TZID='.$timezone.':'.$startsAt->format('Ymd\THis'),
+            'DTEND;TZID='.$timezone.':'.$endsAt->format('Ymd\THis'),
+            'SUMMARY:'.$this->icsText('Cita dental - '.$procedure),
+            'DESCRIPTION:'.$this->icsText($description),
+            'STATUS:CONFIRMED',
+            'END:VEVENT',
+            'END:VCALENDAR',
+            '',
+        ]);
+
+        return response($ics, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="cita-dental.ics"',
+        ]);
+    }
+
+    private function sendWhatsappConfirmation(AppointmentSlotOffer $offer, Appointment $appointment): bool
+    {
+        $offer->loadMissing(['socialComment.socialIdentity', 'whatsappMessage']);
+
+        $phone = $offer->whatsappMessage?->from_phone
+            ?: $offer->socialComment?->socialIdentity?->phone;
+
+        if (! $phone) {
+            return false;
+        }
+
+        return app(WhatsappService::class)->sendMessage(
+            $phone,
+            app(WhatsappService::class)->buildAppointmentCreatedReply($appointment),
+            $offer->social_comment_id,
+        );
+    }
+
+    private function icsText(string $value): string
+    {
+        return str_replace(
+            ["\\", ";", ",", "\r\n", "\n", "\r"],
+            ["\\\\", "\\;", "\\,", "\\n", "\\n", "\\n"],
+            $value,
+        );
     }
 }

@@ -66,6 +66,62 @@ class SocialLeadScoringService
         );
     }
 
+    public function scoreWhatsappFirstMessage(SocialComment $comment): SocialComment
+    {
+        return $this->addScore(
+            $comment,
+            app(SocialCrmSettingsService::class)->scoreForWhatsappFirstMessage(),
+            'Puntaje sumado por primer mensaje entrante de WhatsApp.',
+            ['event' => 'whatsapp_first_message'],
+            SocialCommentActionType::LeadScoreUpdated,
+        );
+    }
+
+    public function scoreWhatsappTreatmentInterest(SocialComment $comment): SocialComment
+    {
+        if ($this->hasScoreEvent($comment, 'whatsapp_treatment_interest')) {
+            return $comment->refresh();
+        }
+
+        return $this->addScore(
+            $comment,
+            app(SocialCrmSettingsService::class)->scoreForWhatsappTreatmentInterest(),
+            'Puntaje sumado por interes comercial detectado en WhatsApp.',
+            ['event' => 'whatsapp_treatment_interest'],
+            SocialCommentActionType::LeadScoreUpdated,
+        );
+    }
+
+    public function scoreWhatsappAppointmentIntent(SocialComment $comment): SocialComment
+    {
+        if ($this->hasScoreEvent($comment, 'whatsapp_appointment_intent')) {
+            return $comment->refresh();
+        }
+
+        return $this->addScore(
+            $comment,
+            app(SocialCrmSettingsService::class)->scoreForWhatsappAppointmentIntent(),
+            'Puntaje sumado por intencion de cita detectada en WhatsApp.',
+            ['event' => 'whatsapp_appointment_intent'],
+            SocialCommentActionType::LeadScoreUpdated,
+        );
+    }
+
+    public function scoreWhatsappSlotSelected(SocialComment $comment): SocialComment
+    {
+        if ($this->hasScoreEvent($comment, 'whatsapp_slot_selected')) {
+            return $comment->refresh();
+        }
+
+        return $this->addScore(
+            $comment,
+            app(SocialCrmSettingsService::class)->scoreForWhatsappSlotSelected(),
+            'Puntaje sumado por seleccion de horario en WhatsApp.',
+            ['event' => 'whatsapp_slot_selected'],
+            SocialCommentActionType::LeadScoreUpdated,
+        );
+    }
+
     public function scoreSmartLinkVisit(SocialComment $comment): SocialComment
     {
         $settings = app(SocialCrmSettingsService::class);
@@ -110,5 +166,13 @@ class SocialLeadScoringService
         }
 
         return $comment;
+    }
+
+    private function hasScoreEvent(SocialComment $comment, string $event): bool
+    {
+        return $comment->actions()
+            ->where('action', SocialCommentActionType::LeadScoreUpdated->value)
+            ->get()
+            ->contains(fn ($action): bool => ($action->external_response['event'] ?? null) === $event);
     }
 }

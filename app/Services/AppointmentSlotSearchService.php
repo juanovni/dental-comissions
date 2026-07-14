@@ -46,11 +46,15 @@ class AppointmentSlotSearchService
     private function genericNextSlots(?Professional $doctor, int $max, string $strategy): array
     {
         $service = app(AppointmentAvailabilityService::class);
-        $slots = $doctor
-            ? $service->nextAvailableSlotsForDoctor($doctor, $max)
-            : $service->nextAvailableSlots($max);
+        $resolvedDoctor = $doctor ?: $this->fallbackDoctor();
 
-        return $this->map($slots, $doctor, $strategy);
+        if (! $resolvedDoctor) {
+            return [];
+        }
+
+        $slots = $service->nextAvailableSlotsForDoctor($resolvedDoctor, $max);
+
+        return $this->map($slots, $resolvedDoctor, $strategy);
     }
 
     private function exactTime(Carbon $date, string $time, ?Professional $doctor, string $strategy): array

@@ -62,6 +62,7 @@ class SocialCrmAutomaticModeButton extends Component
             && $settings->get('social_auto_reply_dry_run', true) === false
             && $settings->get('social_auto_reply_use_ai', false) === true
             && $settings->get('social_auto_reply_use_smart_link', false) === true
+            && $settings->get('social_whatsapp_first_leads_enabled', true) === true
             && $settings->get('social_whatsapp_follow_up_auto_reply_enabled', false) === true
             && $settings->get('social_alerts_enabled', false) === true;
     }
@@ -84,6 +85,7 @@ class SocialCrmAutomaticModeButton extends Component
             'social_auto_reply_use_ai' => true,
             'social_auto_reply_use_smart_link' => true,
             'social_auto_reply_allowed_classifications' => ['sales_lead', 'commercial_question'],
+            'social_whatsapp_first_leads_enabled' => true,
             'social_whatsapp_follow_up_auto_reply_enabled' => true,
             'social_alerts_enabled' => true,
         ];
@@ -96,6 +98,7 @@ class SocialCrmAutomaticModeButton extends Component
             'social_appointment_auto_confirm' => false,
             'social_auto_reply_enabled' => false,
             'social_auto_reply_dry_run' => true,
+            'social_whatsapp_first_leads_enabled' => true,
             'social_whatsapp_follow_up_auto_reply_enabled' => false,
             'social_alerts_enabled' => false,
         ];
@@ -126,6 +129,7 @@ class SocialCrmAutomaticModeButton extends Component
         return match (true) {
             str_contains($key, 'appointment') => 'appointments',
             str_contains($key, 'auto_reply') => 'auto_reply',
+            $key === 'social_whatsapp_first_leads_enabled' => 'whatsapp_bridge',
             str_contains($key, 'whatsapp') => 'auto_reply',
             str_contains($key, 'alert') => 'alerts',
             default => 'general',
@@ -145,6 +149,7 @@ class SocialCrmAutomaticModeButton extends Component
             'social_auto_reply_use_ai' => 'Usar IA para generar respuesta',
             'social_auto_reply_use_smart_link' => 'Usar Smart Link en vez de WhatsApp directo',
             'social_auto_reply_allowed_classifications' => 'Clasificaciones que activan auto-respuesta',
+            'social_whatsapp_first_leads_enabled' => 'Crear leads desde WhatsApp',
             'social_whatsapp_follow_up_auto_reply_enabled' => 'Auto-respuesta de seguimiento',
             'social_alerts_enabled' => 'Alertas de leads activas',
         ];

@@ -15,6 +15,7 @@ class WhatsappMessage extends Model
 
     protected $fillable = [
         'professional_id',
+        'social_comment_id',
         'direction',
         'status',
         'from_phone',
@@ -40,6 +41,11 @@ class WhatsappMessage extends Model
     public function professional(): BelongsTo
     {
         return $this->belongsTo(Professional::class);
+    }
+
+    public function socialComment(): BelongsTo
+    {
+        return $this->belongsTo(SocialComment::class);
     }
 
     public function relatedMessage(): BelongsTo

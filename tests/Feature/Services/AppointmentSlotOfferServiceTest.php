@@ -174,6 +174,43 @@ class AppointmentSlotOfferServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_offer_without_suggested_doctor_uses_fallback_doctor_for_link_options(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_max_slots_offer', 3, 'integer');
+        $procedure = Procedure::factory()->create(['name' => 'Valoracion dental']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Fallback']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->update(['suggested_doctor_id' => null]);
+        $message = $this->message($comment->refresh(), 'Quiero una cita');
+
+        $offer = app(AppointmentSlotOfferService::class)->createFromAgentResponse($comment->refresh(), $message, [
+            'intent' => 'appointment_interest',
+            'appointment_candidate' => [
+                'wants_appointment' => true,
+                'preferred_date_parsed' => null,
+                'preferred_time_parsed' => null,
+                'preferred_period' => null,
+                'intent_type' => 'appointment_interest',
+            ],
+        ]);
+
+        $this->assertNotNull($offer);
+        $this->assertNotEmpty($offer->metadata['options']);
+        $this->assertSame($doctor->id, $offer->metadata['options'][0]['doctor_id']);
+        $this->assertNotEmpty(app(AppointmentSlotOfferService::class)->validOptionsForOffer($offer));
+
+        $metadata = $offer->metadata;
+        $metadata['options'][0]['doctor_id'] = null;
+        $offer->update(['metadata' => $metadata]);
+
+        $this->assertNotEmpty(app(AppointmentSlotOfferService::class)->validOptionsForOffer($offer->refresh()));
+
+        Carbon::setTestNow();
+    }
+
     public function test_confirming_option_creates_patient_when_lead_has_phone(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));

@@ -664,9 +664,32 @@ class SocialCrmSettings extends Page
                 Section::make('Puntajes (Scoring)')
                     ->description('Define los puntajes asignados a cada acción del lead. El lead caliente se determina al superar el umbral.')
                     ->schema([
+                        Toggle::make('social_whatsapp_first_leads_enabled')
+                            ->label('Crear leads desde WhatsApp')
+                            ->helperText('Crea un lead nuevo cuando escribe un número desconocido por WhatsApp.'),
                         TextInput::make('social_score_token_generated')
                             ->label('Puntos por token generado')
                             ->helperText('Puntaje asignado cuando se genera un token de seguimiento.')
+                            ->numeric()
+                            ->minValue(0),
+                        TextInput::make('social_score_whatsapp_first_message')
+                            ->label('Puntos por primer WhatsApp')
+                            ->helperText('Puntaje inicial para un lead creado por mensaje directo de WhatsApp.')
+                            ->numeric()
+                            ->minValue(0),
+                        TextInput::make('social_score_whatsapp_treatment_interest')
+                            ->label('Puntos por interés en tratamiento')
+                            ->helperText('Puntaje cuando el agente detecta interés comercial o tratamiento.')
+                            ->numeric()
+                            ->minValue(0),
+                        TextInput::make('social_score_whatsapp_appointment_intent')
+                            ->label('Puntos por intención de cita')
+                            ->helperText('Puntaje cuando el agente detecta intención de agendar cita.')
+                            ->numeric()
+                            ->minValue(0),
+                        TextInput::make('social_score_whatsapp_slot_selected')
+                            ->label('Puntos por horario seleccionado')
+                            ->helperText('Puntaje cuando el lead selecciona un horario ofrecido.')
                             ->numeric()
                             ->minValue(0),
                         TextInput::make('social_score_smart_link_click')
@@ -810,7 +833,12 @@ class SocialCrmSettings extends Page
             // Alertas y scoring
             'social_alerts_enabled',
             'social_alert_check_frequency_minutes',
+            'social_whatsapp_first_leads_enabled',
             'social_score_token_generated',
+            'social_score_whatsapp_first_message',
+            'social_score_whatsapp_treatment_interest',
+            'social_score_whatsapp_appointment_intent',
+            'social_score_whatsapp_slot_selected',
             'social_score_smart_link_click',
             'social_score_smart_link_revisit',
             'social_score_reheated_revisit_bonus',
@@ -895,7 +923,12 @@ class SocialCrmSettings extends Page
             'social_whatsapp_follow_up_auto_reply_template' => 'Hola {author_name}, vi que abriste el enlace de WhatsApp pero no me enviaste mensaje. ¿Te quedó alguna duda? Puedes responder aquí mismo o escribirme al WhatsApp cuando gustes.',
             'social_alerts_enabled' => true,
             'social_alert_check_frequency_minutes' => 10,
+            'social_whatsapp_first_leads_enabled' => true,
             'social_score_token_generated' => 30,
+            'social_score_whatsapp_first_message' => 20,
+            'social_score_whatsapp_treatment_interest' => 15,
+            'social_score_whatsapp_appointment_intent' => 30,
+            'social_score_whatsapp_slot_selected' => 20,
             'social_score_smart_link_click' => 15,
             'social_score_smart_link_revisit' => 10,
             'social_score_reheated_revisit_bonus' => 10,

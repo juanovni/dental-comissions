@@ -98,6 +98,42 @@ class SocialConversionServiceTest extends TestCase
         ]);
     }
 
+    public function test_find_or_create_whatsapp_lead_creates_new_lead_from_unknown_phone(): void
+    {
+        $message = $this->whatsappMessage('+573001112233', 'Hola, quiero informacion para una cita');
+
+        $comment = app(SocialConversionService::class)->findOrCreateWhatsappLead($message);
+
+        $this->assertSame(SocialPlatform::Whatsapp, $comment->platform);
+        $this->assertSame(SocialConversionStatus::WhatsappStarted, $comment->conversion_status);
+        $this->assertSame(20, (int) $comment->interest_score);
+        $this->assertDatabaseHas('social_identities', [
+            'id' => $comment->social_identity_id,
+            'platform' => SocialPlatform::Whatsapp->value,
+            'normalized_phone' => '573001112233',
+        ]);
+        $this->assertDatabaseHas('whatsapp_messages', [
+            'id' => $message->id,
+            'social_comment_id' => $comment->id,
+        ]);
+    }
+
+    public function test_find_or_create_whatsapp_lead_reuses_open_lead_for_same_phone(): void
+    {
+        $service = app(SocialConversionService::class);
+        $first = $service->findOrCreateWhatsappLead($this->whatsappMessage('+573001112233', 'Hola'));
+        $secondMessage = $this->whatsappMessage('573001112233', 'Quiero una cita');
+
+        $second = $service->findOrCreateWhatsappLead($secondMessage);
+
+        $this->assertTrue($first->is($second));
+        $this->assertSame(1, SocialComment::where('platform', SocialPlatform::Whatsapp->value)->count());
+        $this->assertDatabaseHas('whatsapp_messages', [
+            'id' => $secondMessage->id,
+            'social_comment_id' => $first->id,
+        ]);
+    }
+
     private function socialComment(?string $token = null): SocialComment
     {
         $account = SocialAccount::create([

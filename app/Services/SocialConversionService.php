@@ -2,11 +2,17 @@
 
 namespace App\Services;
 
+use App\Enums\AppointmentStatus;
 use App\Enums\SocialCommentActionType;
+use App\Enums\SocialCommentClassification;
+use App\Enums\SocialCommentStatus;
 use App\Enums\SocialConversionStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPipelineStage;
+use App\Enums\SocialPlatform;
 use App\Models\Patient;
+use App\Models\Procedure;
+use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Models\WhatsappMessage;
@@ -166,6 +172,141 @@ class SocialConversionService
             ->first();
     }
 
+    public function findOrCreateWhatsappLead(WhatsappMessage $message): SocialComment
+    {
+        $normalized = $this->normalizePhone($message->from_phone);
+        $procedureId = $this->resolveProcedureIdFromText($message->message_body ?? '');
+        $identity = SocialIdentity::query()
+            ->where('platform', SocialPlatform::Whatsapp->value)
+            ->where(function (Builder $query) use ($normalized, $message): void {
+                $query->where('normalized_phone', $normalized)
+                    ->orWhere('phone', $message->from_phone)
+                    ->orWhere('phone', '+'.$normalized);
+            })
+            ->first();
+
+        if (! $identity) {
+            $identity = SocialIdentity::create([
+                'platform' => SocialPlatform::Whatsapp,
+                'platform_user_id' => $normalized,
+                'display_name' => $message->from_phone,
+                'phone' => $message->from_phone,
+                'normalized_phone' => $normalized,
+                'status' => SocialIdentityStatus::NewLead,
+                'first_seen_at' => $message->created_at ?? now(),
+                'last_seen_at' => now(),
+                'metadata' => ['source' => 'whatsapp_first_message'],
+            ]);
+        } else {
+            $identity->update([
+                'phone' => $message->from_phone,
+                'normalized_phone' => $normalized,
+                'last_seen_at' => now(),
+            ]);
+        }
+
+        $comment = $identity->comments()
+            ->where('platform', SocialPlatform::Whatsapp->value)
+            ->where('is_hidden', false)
+            ->whereHas('appointments', function (Builder $query): void {
+                $query->whereIn('status', [
+                    AppointmentStatus::PendingConfirmation->value,
+                    AppointmentStatus::Scheduled->value,
+                    AppointmentStatus::Confirmed->value,
+                    AppointmentStatus::Rescheduled->value,
+                ])->whereNotNull('scheduled_at');
+            })
+            ->latest('id')
+            ->first();
+
+        if ($comment) {
+            if (! $comment->suggested_procedure_id && $procedureId) {
+                $comment->update(['suggested_procedure_id' => $procedureId]);
+            }
+
+            $message->update(['social_comment_id' => $comment->id]);
+
+            return $comment->refresh();
+        }
+
+        $comment = $identity->comments()
+            ->where('platform', SocialPlatform::Whatsapp->value)
+            ->where('is_hidden', false)
+            ->whereNotIn('conversion_status', [
+                SocialConversionStatus::AppointmentCreated->value,
+                SocialConversionStatus::Converted->value,
+                SocialConversionStatus::Lost->value,
+            ])
+            ->latest('id')
+            ->first();
+
+        if ($comment) {
+            if (! $comment->suggested_procedure_id && $procedureId) {
+                $comment->update(['suggested_procedure_id' => $procedureId]);
+            }
+
+            $message->update(['social_comment_id' => $comment->id]);
+
+            return $comment->refresh();
+        }
+
+        $comment = SocialComment::create([
+            'social_account_id' => $this->whatsappSocialAccount()->id,
+            'social_identity_id' => $identity->id,
+            'suggested_procedure_id' => $procedureId,
+            'platform' => SocialPlatform::Whatsapp,
+            'external_comment_id' => 'whatsapp-'.($message->message_sid ?: $message->id),
+            'author_name' => $message->from_phone,
+            'author_username' => $message->from_phone,
+            'author_external_id' => $normalized,
+            'comment_text' => $message->message_body,
+            'classification' => SocialCommentClassification::CommercialQuestion,
+            'status' => SocialCommentStatus::New,
+            'is_hidden' => false,
+            'pipeline_stage' => SocialPipelineStage::New,
+            'conversion_status' => SocialConversionStatus::WhatsappStarted,
+            'published_at' => $message->created_at ?? now(),
+            'processed_at' => now(),
+            'raw_payload' => [
+                'source' => 'whatsapp_first_message',
+                'whatsapp_message_id' => $message->id,
+                'from_phone' => $message->from_phone,
+            ],
+        ]);
+
+        $message->update(['social_comment_id' => $comment->id]);
+
+        $comment->actions()->create([
+            'action' => SocialCommentActionType::WhatsappHandshake,
+            'notes' => 'Lead creado automaticamente desde primer mensaje directo de WhatsApp.',
+            'external_response' => [
+                'whatsapp_message_id' => $message->id,
+                'from_phone' => $message->from_phone,
+            ],
+        ]);
+
+        app(SocialLeadScoringService::class)->scoreWhatsappFirstMessage($comment->refresh());
+
+        return $comment->refresh();
+    }
+
+    public function applyProcedureFromMessage(SocialComment $comment, WhatsappMessage $message): SocialComment
+    {
+        if ($comment->suggested_procedure_id) {
+            return $comment->refresh();
+        }
+
+        $procedureId = $this->resolveProcedureIdFromText($message->message_body ?? '');
+
+        if (! $procedureId) {
+            return $comment->refresh();
+        }
+
+        $comment->update(['suggested_procedure_id' => $procedureId]);
+
+        return $comment->refresh();
+    }
+
     public function extractTrackingToken(string $text): ?string
     {
         if (preg_match('/\bDNT-[A-Z0-9]{5}\b/i', $text, $matches) !== 1) {
@@ -247,5 +388,83 @@ class SocialConversionService
     private function normalizePhone(string $phone): string
     {
         return preg_replace('/\D+/', '', $phone) ?? $phone;
+    }
+
+    private function resolveProcedureIdFromText(string $text): ?int
+    {
+        $normalized = str($text)->ascii()->lower()->squish()->toString();
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        $category = match (true) {
+            str_contains($normalized, 'odontologia invisible'),
+            str_contains($normalized, 'ortodoncia invisible'),
+            str_contains($normalized, 'invisalign'),
+            str_contains($normalized, 'alineador'),
+            str_contains($normalized, 'alineadores'),
+            str_contains($normalized, 'bracket invisible'),
+            str_contains($normalized, 'brackets invisibles') => 'ortodoncia_invisible',
+            str_contains($normalized, 'ortodoncia'),
+            str_contains($normalized, 'bracket'),
+            str_contains($normalized, 'brackets') => 'ortodoncia',
+            str_contains($normalized, 'implante'),
+            str_contains($normalized, 'diente perdido'),
+            str_contains($normalized, 'pieza perdida') => 'implantes',
+            str_contains($normalized, 'limpieza'),
+            str_contains($normalized, 'profilaxis'),
+            str_contains($normalized, 'sarro') => 'limpieza',
+            str_contains($normalized, 'diseno de sonrisa'),
+            str_contains($normalized, 'carilla'),
+            str_contains($normalized, 'estetica'),
+            str_contains($normalized, 'blanqueamiento') => 'diseno_sonrisa',
+            default => null,
+        };
+
+        if (! $category) {
+            return null;
+        }
+
+        $terms = match ($category) {
+            'ortodoncia_invisible' => ['ortodoncia invisible', 'invisalign', 'alineador', 'alineadores', 'ortodoncia'],
+            'ortodoncia' => ['ortodoncia', 'bracket', 'brackets'],
+            'implantes' => ['implante', 'implantes'],
+            'limpieza' => ['limpieza', 'profilaxis'],
+            'diseno_sonrisa' => ['diseno', 'sonrisa', 'carilla', 'blanqueamiento'],
+            default => [$category],
+        };
+
+        return Procedure::query()
+            ->where('is_active', true)
+            ->where(function (Builder $query) use ($category, $terms): void {
+                $query->whereRaw('lower(category) = ?', [$category])
+                    ->orWhereRaw('lower(code) = ?', [$category]);
+
+                foreach ($terms as $term) {
+                    $query->orWhereRaw('lower(name) like ?', ['%'.$term.'%'])
+                        ->orWhereRaw('lower(code) like ?', ['%'.$term.'%'])
+                        ->orWhereRaw('lower(category) like ?', ['%'.$term.'%']);
+                }
+            })
+            ->orderByRaw('case when lower(name) like ? then 0 else 1 end', ['%ortodoncia invisible%'])
+            ->value('id');
+    }
+
+    private function whatsappSocialAccount(): SocialAccount
+    {
+        $externalAccountId = 'whatsapp-'.(config('services.whatsapp.phone_number_id') ?: 'business');
+
+        return SocialAccount::firstOrCreate(
+            [
+                'platform' => SocialPlatform::Whatsapp,
+                'external_account_id' => $externalAccountId,
+            ],
+            [
+                'account_name' => 'WhatsApp Business',
+                'is_active' => true,
+                'sync_settings' => ['source' => 'whatsapp_first_leads'],
+            ],
+        );
     }
 }
