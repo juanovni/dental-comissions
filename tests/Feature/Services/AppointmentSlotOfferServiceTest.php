@@ -94,6 +94,86 @@ class AppointmentSlotOfferServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_afternoon_period_only_offers_afternoon_slots(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_clinic_open', '08:00', 'string');
+        $this->setting('social_appointment_clinic_close', '19:00', 'string');
+        $this->setting('social_appointment_afternoon_start', '13:00', 'string');
+        $this->setting('social_appointment_afternoon_end', '18:00', 'string');
+        $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $message = $this->message($comment, 'Si, tienen disponibilidad para el jueves en la tarde');
+
+        $offer = app(AppointmentSlotOfferService::class)->createFromAgentResponse($comment, $message, [
+            'intent' => 'appointment_interest',
+            'appointment_candidate' => [
+                'wants_appointment' => true,
+                'preferred_date_parsed' => '2026-07-16',
+                'preferred_time_parsed' => null,
+                'preferred_period' => 'afternoon',
+                'intent_type' => 'appointment_interest',
+            ],
+        ]);
+
+        $this->assertInstanceOf(AppointmentSlotOffer::class, $offer);
+        foreach ($offer->metadata['options'] as $option) {
+            $slot = Carbon::parse($option['datetime']);
+            $this->assertGreaterThanOrEqual(13, $slot->hour);
+            $this->assertLessThan(18, $slot->hour + ($slot->minute / 60));
+        }
+
+        Carbon::setTestNow();
+    }
+
+    public function test_full_option_label_confirms_selection(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $offer = $this->createOffer($comment, '2026-07-15');
+        $option = $offer->metadata['options'][2];
+        $slot = Carbon::parse($option['datetime']);
+        $message = $this->message($comment, $slot->isoFormat('dddd D [de] MMMM').' - '.$slot->format('g:i A'));
+
+        $result = app(AppointmentSlotOfferService::class)->handleSelection($comment, $message);
+
+        $this->assertNotNull($result);
+        $this->assertSame($option['datetime'], $result['appointment']->scheduled_at->format('Y-m-d H:i:s'));
+        $this->assertSame('selected', $offer->refresh()->status);
+        $this->assertSame($option['index'], $offer->selected_option_index);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_numeric_selection_can_confirm_options_after_third(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_max_slots_offer', 6, 'integer');
+        $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $offer = $this->createOffer($comment, '2026-07-15');
+        $option = $offer->metadata['options'][4];
+        $message = $this->message($comment, '5');
+
+        $result = app(AppointmentSlotOfferService::class)->handleSelection($comment, $message);
+
+        $this->assertNotNull($result);
+        $this->assertSame($option['datetime'], $result['appointment']->scheduled_at->format('Y-m-d H:i:s'));
+        $this->assertSame(5, $offer->refresh()->selected_option_index);
+
+        Carbon::setTestNow();
+    }
+
     public function test_confirming_option_creates_patient_when_lead_has_phone(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));

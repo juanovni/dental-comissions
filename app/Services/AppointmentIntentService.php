@@ -60,16 +60,16 @@ class AppointmentIntentService
                 $result['extraction_source'] = 'ai';
             }
 
-            if (!$result['preferred_date_parsed'] && !$result['preferred_time_parsed']) {
+            if (! $result['preferred_date_parsed'] || ! $result['preferred_time_parsed'] || ! $result['preferred_period']) {
                 $localParsed = $this->extractFromText($body);
-                if ($localParsed['date'] || $localParsed['time']) {
-                    $result['preferred_date_parsed'] = $localParsed['date'];
-                    $result['preferred_time_parsed'] = $localParsed['time'];
-                    $result['preferred_period'] = $localParsed['period'];
+                if ($localParsed['date'] || $localParsed['time'] || $localParsed['period']) {
+                    $result['preferred_date_parsed'] ??= $localParsed['date'];
+                    $result['preferred_time_parsed'] ??= $localParsed['time'];
+                    $result['preferred_period'] ??= $localParsed['period'];
                     $result['preferred_date_text'] ??= $localParsed['date_text'];
                     $result['preferred_time_text'] ??= $localParsed['time_text'];
-                    $result['confidence'] = 65;
-                    $result['extraction_source'] = 'local_fallback';
+                    $result['confidence'] = max($result['confidence'], 65);
+                    $result['extraction_source'] = $result['extraction_source'] === 'ai' ? 'ai_with_local_fallback' : 'local_fallback';
                 }
             }
 

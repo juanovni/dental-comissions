@@ -82,6 +82,7 @@ class WhatsappSalesAgentService
                 [
                     'preferred_date_parsed' => $intentResult['preferred_date_parsed'],
                     'preferred_time_parsed' => $intentResult['preferred_time_parsed'],
+                    'preferred_period' => $intentResult['preferred_period'],
                     'intent_confidence' => $intentResult['confidence'],
                     'intent_type' => $intentResult['intent_type'],
                     'extraction_source' => $intentResult['extraction_source'],
@@ -194,6 +195,7 @@ class WhatsappSalesAgentService
                 'preferred_time_text' => $intentResult['preferred_time_text'],
                 'preferred_date_parsed' => $intentResult['preferred_date_parsed'],
                 'preferred_time_parsed' => $intentResult['preferred_time_parsed'],
+                'preferred_period' => $intentResult['preferred_period'],
                 'intent_confidence' => $intentResult['confidence'],
                 'intent_type' => $intentResult['intent_type'],
                 'extraction_source' => $intentResult['extraction_source'],

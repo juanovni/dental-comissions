@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AppointmentSlotOffer;
 use App\Services\AppointmentSlotOfferService;
+use App\Services\SocialCrmSettingsService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -12,14 +14,34 @@ class SocialAppointmentLinkController extends Controller
     public function show(string $token): View
     {
         $offer = AppointmentSlotOffer::query()
-            ->with(['socialComment.suggestedProcedure'])
+            ->with(['socialComment.suggestedProcedure', 'socialComment.suggestedDoctor'])
             ->where('token', $token)
             ->firstOrFail();
 
+        $options = app(AppointmentSlotOfferService::class)->validOptionsForOffer($offer);
+        $groups = collect($options)
+            ->groupBy(fn (array $option): string => Carbon::parse($option['datetime'])->toDateString())
+            ->map(fn ($items, string $date): array => [
+                'date' => $date,
+                'label' => Carbon::parse($date)->isoFormat('dddd D [de] MMMM'),
+                'short_label' => Carbon::parse($date)->isoFormat('ddd D MMM'),
+                'options' => $items->values()->all(),
+            ])
+            ->values()
+            ->all();
+
+        $comment = $offer->socialComment;
+        $showDoctor = app(SocialCrmSettingsService::class)->appointmentShowDoctor();
+
         return view('social.appointments.show', [
             'offer' => $offer,
-            'options' => $offer->metadata['options'] ?? [],
+            'comment' => $comment,
+            'procedure' => $comment->suggestedProcedure,
+            'doctor' => $showDoctor ? $comment->suggestedDoctor : null,
+            'groups' => $groups,
+            'options' => $options,
             'expired' => ! $offer->isPending(),
+            'hasAvailableOptions' => $options !== [],
         ]);
     }
 

@@ -8,6 +8,7 @@ use App\Enums\SocialCommentActionType;
 use App\Models\Appointment;
 use App\Models\AppointmentSlotHold;
 use App\Models\AppointmentSlotOffer;
+use App\Models\Professional;
 use App\Models\SocialComment;
 use App\Models\WhatsappMessage;
 use Carbon\Carbon;
@@ -136,6 +137,29 @@ class AppointmentSlotOfferService
         return $this->confirmOption($offer, $option);
     }
 
+    public function validOptionsForOffer(AppointmentSlotOffer $offer): array
+    {
+        if (! $offer->isPending()) {
+            return [];
+        }
+
+        $comment = $offer->socialComment;
+        $duration = app(SocialCrmSettingsService::class)->appointmentSlotDuration();
+
+        return collect($offer->metadata['options'] ?? [])
+            ->filter(function (array $option) use ($comment, $duration): bool {
+                $start = Carbon::parse($option['datetime']);
+                $end = $start->copy()->addMinutes($duration);
+                $doctorId = $option['doctor_id'] ?? $comment?->suggested_doctor_id;
+                $doctor = $doctorId ? Professional::find($doctorId) : null;
+
+                return $doctor
+                    && app(AppointmentAvailabilityService::class)->isSlotAvailableForDoctor($doctor, $start, $end);
+            })
+            ->values()
+            ->all();
+    }
+
     private function confirmOption(AppointmentSlotOffer $offer, array $option): Appointment
     {
         $comment = $offer->socialComment()->with(['suggestedProcedure', 'suggestedDoctor'])->firstOrFail();
@@ -144,7 +168,7 @@ class AppointmentSlotOfferService
         $duration = $settings->appointmentSlotDuration();
         $end = $start->copy()->addMinutes($duration);
         $doctorId = $option['doctor_id'] ?? $comment->suggested_doctor_id;
-        $doctor = $doctorId ? \App\Models\Professional::find($doctorId) : null;
+        $doctor = $doctorId ? Professional::find($doctorId) : null;
 
         if (! $doctor || ! app(AppointmentAvailabilityService::class)->isSlotAvailableForDoctor($doctor, $start, $end)) {
             $offer->update(['status' => 'expired']);
@@ -209,21 +233,51 @@ class AppointmentSlotOfferService
     private function selectedOption(AppointmentSlotOffer $offer, string $message): ?array
     {
         $normalized = str($message)->lower()->ascii()->squish()->toString();
-        $index = match (true) {
-            preg_match('/^(?:opcion\s*)?1$/', $normalized) === 1,
-            preg_match('/\b(?:el|la|opcion|numero)\s+(?:primer[ao]?|1)\b/', $normalized) === 1 => 1,
-            preg_match('/^(?:opcion\s*)?2$/', $normalized) === 1,
-            preg_match('/\b(?:el|la|opcion|numero)\s+(?:segund[ao]|2)\b/', $normalized) === 1 => 2,
-            preg_match('/^(?:opcion\s*)?3$/', $normalized) === 1,
-            preg_match('/\b(?:el|la|opcion|numero)\s+(?:tercer[ao]?|3)\b/', $normalized) === 1 => 3,
-            default => null,
-        };
+        $index = $this->selectedIndex($normalized);
 
         if (! $index) {
-            return null;
+            return $this->selectedOptionByLabel($offer, $normalized);
         }
 
         return collect($offer->metadata['options'] ?? [])->firstWhere('index', $index);
+    }
+
+    private function selectedIndex(string $normalizedMessage): ?int
+    {
+        if (preg_match('/^(?:opcion\s*)?(\d+)$/', $normalizedMessage, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        if (preg_match('/\b(?:opcion|numero)\s+(\d+)\b/', $normalizedMessage, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return match (true) {
+            preg_match('/\b(?:el|la)\s+primer[ao]?\b/', $normalizedMessage) === 1 => 1,
+            preg_match('/\b(?:el|la)\s+segund[ao]\b/', $normalizedMessage) === 1 => 2,
+            preg_match('/\b(?:el|la)\s+tercer[ao]?\b/', $normalizedMessage) === 1 => 3,
+            default => null,
+        };
+    }
+
+    private function selectedOptionByLabel(AppointmentSlotOffer $offer, string $normalizedMessage): ?array
+    {
+        foreach ($offer->metadata['options'] ?? [] as $option) {
+            $slot = Carbon::parse($option['datetime']);
+            $labels = [
+                $option['label'] ?? null,
+                $slot->isoFormat('dddd D [de] MMMM').' - '.$slot->format('g:i A'),
+                $slot->isoFormat('dddd D [de] MMMM [a las] h:mm A'),
+            ];
+
+            foreach (array_filter($labels) as $label) {
+                if ($normalizedMessage === str($label)->lower()->ascii()->squish()->toString()) {
+                    return $option;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function indexedOptions(array $slots, SocialComment $comment): array
