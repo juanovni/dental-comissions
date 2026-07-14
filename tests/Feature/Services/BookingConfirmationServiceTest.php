@@ -112,6 +112,13 @@ class BookingConfirmationServiceTest extends TestCase
     }
 
     /** @test */
+    public function detect_locally_returns_confirmed_for_local_language_pattern(): void
+    {
+        $result = $this->service->detectLocally('De una');
+        $this->assertSame('confirmed', $result);
+    }
+
+    /** @test */
     public function detect_locally_returns_rejected_for_no(): void
     {
         $result = $this->service->detectLocally('No');

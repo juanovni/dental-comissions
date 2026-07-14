@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LocalLanguagePatternType;
 use App\Enums\SocialCommentActionType;
 use App\Enums\SocialPipelineStage;
 use App\Events\ClosingOpportunityDetected;
@@ -144,6 +145,10 @@ class WhatsappSalesAgentService
             if (str_contains($normalized, $keyword)) {
                 return true;
             }
+        }
+
+        if (app(LocalLanguagePatternService::class)->match($body, LocalLanguagePatternType::AppointmentIntent)) {
+            return true;
         }
 
         $parsed = app(AppointmentIntentService::class)->extractFromText($body);

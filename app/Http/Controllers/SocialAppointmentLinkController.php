@@ -9,6 +9,7 @@ use App\Services\SocialCrmSettingsService;
 use App\Services\WhatsappService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
 
@@ -36,6 +37,10 @@ class SocialAppointmentLinkController extends Controller
         $comment = $offer->socialComment;
         $showDoctor = app(SocialCrmSettingsService::class)->appointmentShowDoctor();
         $confirmedAppointment = $offer->appointment;
+        $offerService = app(AppointmentSlotOfferService::class);
+        $needsPatientName = ! $offerService->hasRealPatientName($comment);
+        $patientName = $needsPatientName ? '' : ($offerService->getPatientName($comment) ?? '');
+        $patientPhone = $offerService->getPhoneForConfirmation($comment);
 
         return view('social.appointments.show', [
             'offer' => $offer,
@@ -47,10 +52,13 @@ class SocialAppointmentLinkController extends Controller
             'options' => $options,
             'expired' => ! $offer->isPending(),
             'hasAvailableOptions' => $options !== [],
+            'needsPatientName' => $needsPatientName,
+            'patientName' => $patientName,
+            'patientPhone' => $patientPhone,
         ]);
     }
 
-    public function confirm(string $token): RedirectResponse
+    public function confirm(Request $request, string $token): RedirectResponse
     {
         $offer = AppointmentSlotOffer::query()
             ->with(['socialComment.socialIdentity', 'whatsappMessage'])
@@ -61,10 +69,29 @@ class SocialAppointmentLinkController extends Controller
             return back()->with('appointment_error', 'Este enlace ya expiró o fue utilizado.');
         }
 
-        $optionIndex = (int) request()->input('option');
+        $comment = $offer->socialComment;
+        $offerService = app(AppointmentSlotOfferService::class);
+
+        $patientName = trim((string) $request->input('patient_name', ''));
+        $phoneConfirmed = (bool) $request->input('phone_confirmed', false);
+
+        if (! $offerService->hasRealPatientName($comment)) {
+            if (blank($patientName)) {
+                return back()->with('appointment_error', 'Por favor ingresa el nombre del paciente.');
+            }
+            $identity = $comment->socialIdentity;
+            if ($identity) {
+                $identity->updateQuietly(['display_name' => $patientName]);
+            }
+            if (! $phoneConfirmed && $offerService->getPhoneForConfirmation($comment)) {
+                return back()->with('appointment_error', 'Por favor confirma que el número de teléfono es correcto.');
+            }
+        }
+
+        $optionIndex = (int) $request->input('option');
 
         try {
-            $appointment = app(AppointmentSlotOfferService::class)->confirmFromToken($offer, $optionIndex);
+            $appointment = $offerService->confirmFromToken($offer, $optionIndex);
         } catch (\Throwable $e) {
             return back()->with('appointment_error', 'Ese horario acaba de ocuparse. Por favor elige otra opción o escríbenos por WhatsApp.');
         }

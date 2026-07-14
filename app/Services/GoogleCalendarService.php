@@ -487,15 +487,18 @@ class GoogleCalendarService
         $event->setSummary('Cita: ' . ($doctorName ? $doctorName . ' - ' : '') . $patientName);
         $event->setDescription($this->buildEventDescription($appointment));
 
+        $clinicTz = app(SocialCrmSettingsService::class)->clinicTimezone();
+
         $start = new EventDateTime();
-        $start->setDateTime($appointment->scheduled_at->toRfc3339String());
-        $start->setTimeZone($appointment->scheduled_at->getTimezone()->getName());
+        $localStart = $appointment->scheduled_at->copy()->setTimezone($clinicTz);
+        $start->setDateTime($localStart->format('Y-m-d\TH:i:s'));
+        $start->setTimeZone($clinicTz);
         $event->setStart($start);
 
         $end = new EventDateTime();
-        $endAt = $appointment->scheduled_at->copy()->addMinutes($appointment->duration_minutes ?? 60);
-        $end->setDateTime($endAt->toRfc3339String());
-        $end->setTimeZone($endAt->getTimezone()->getName());
+        $localEnd = $appointment->scheduled_at->copy()->addMinutes($appointment->duration_minutes ?? 60)->setTimezone($clinicTz);
+        $end->setDateTime($localEnd->format('Y-m-d\TH:i:s'));
+        $end->setTimeZone($clinicTz);
         $event->setEnd($end);
 
         $properties = new EventExtendedProperties();

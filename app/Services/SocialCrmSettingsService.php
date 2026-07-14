@@ -414,6 +414,11 @@ class SocialCrmSettingsService
         return (bool) $this->get('social_appointment_propose_slots', false);
     }
 
+    public function clinicTimezone(): string
+    {
+        return (string) $this->get('social_appointment_clinic_timezone', 'America/Guayaquil');
+    }
+
     public function clearCache(): void
     {
         Cache::forget(self::CACHE_KEY);

@@ -261,6 +261,35 @@
         .appointment-btn:disabled { cursor: not-allowed; opacity: .52; }
         .appointment-btn:not(:disabled):hover { filter: brightness(.97); }
 
+        .patient-info-row { display: grid; gap: .4rem; }
+        .patient-info-label { color: var(--appt-muted); font-size: .78rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+        .patient-info-input {
+            background: #fafffe;
+            border: 1px solid var(--appt-border);
+            border-radius: .6rem;
+            color: var(--appt-text);
+            font-size: .94rem;
+            padding: .68rem .78rem;
+            transition: border-color .16s ease;
+            width: 100%;
+        }
+        .patient-info-input:focus { border-color: rgba(15, 118, 110, .45); outline: none; }
+        .phone-confirm-row {
+            align-items: center;
+            background: #fafefd;
+            border: 1px solid var(--appt-border);
+            border-radius: .6rem;
+            cursor: pointer;
+            display: flex;
+            font-size: .86rem;
+            gap: .6rem;
+            min-height: 2.6rem;
+            padding: .55rem .7rem;
+        }
+        .phone-confirm-row input[type="checkbox"] { flex: 0 0 auto; height: 1rem; width: 1rem; }
+        .phone-confirm-text { line-height: 1.4; }
+        .phone-confirm-text strong { color: var(--appt-text); font-weight: 600; }
+
         @media (min-width: 760px) {
             .appointment-shell { gap: 1.25rem; padding: 2rem 1.25rem; }
             .appointment-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -424,6 +453,21 @@
             <form class="appointment-card summary-card" method="POST" action="{{ route('social-appointments.confirm', ['token' => $offer->token]) }}" id="appointment-confirm-form">
                 @csrf
                 <input type="hidden" name="option" id="selected-option" value="">
+
+                @if ($needsPatientName)
+                    <div class="patient-info-row">
+                        <label class="patient-info-label" for="patient-name">Nombre del paciente</label>
+                        <input class="patient-info-input" type="text" name="patient_name" id="patient-name" value="{{ old('patient_name', $patientName) }}" placeholder="Ej: Juan Constantine" autocomplete="name" required>
+                    </div>
+                @endif
+
+                @if ($needsPatientName && $patientPhone)
+                    <label class="phone-confirm-row">
+                        <input type="checkbox" name="phone_confirmed" value="1" required>
+                        <span class="phone-confirm-text">Usaremos <strong>{{ $patientPhone }}</strong> para recordatorios por WhatsApp</span>
+                    </label>
+                @endif
+
                 <div class="summary-content">
                     <span class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
                     <span>

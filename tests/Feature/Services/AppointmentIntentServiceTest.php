@@ -134,6 +134,35 @@ class AppointmentIntentServiceTest extends TestCase
         $this->assertSame('15:00', $result['time']);
     }
 
+    public function test_extract_time_period_horas_de_la_tarde(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13'));
+
+        $result = $this->service->extractFromText('Hola que tal buenos días. Quiero agendar una cita para este jueves en horas de la tarde.');
+
+        $this->assertSame('2026-07-16', $result['date']);
+        $this->assertSame('15:00', $result['time']);
+        $this->assertSame('afternoon', $result['period']);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_extract_time_period_from_local_language_patterns(): void
+    {
+        $result = $this->service->extractFromText('Tiene chance en la tardecita?');
+
+        $this->assertSame('15:00', $result['time']);
+        $this->assertSame('afternoon', $result['period']);
+    }
+
+    public function test_extract_morning_period_from_local_language_patterns(): void
+    {
+        $result = $this->service->extractFromText('Me ayuda primerita hora');
+
+        $this->assertSame('09:00', $result['time']);
+        $this->assertSame('morning', $result['period']);
+    }
+
     public function test_analyze_with_appointment_intent_and_date(): void
     {
         $comment = $this->createComment();

@@ -6,11 +6,13 @@ use App\Enums\AppointmentSource;
 use App\Enums\AppointmentStatus;
 use App\Enums\ProfessionalRole;
 use App\Enums\SocialCommentActionType;
+use App\Enums\SocialIdentityStatus;
 use App\Models\Appointment;
 use App\Models\AppointmentSlotHold;
 use App\Models\AppointmentSlotOffer;
 use App\Models\Professional;
 use App\Models\SocialComment;
+use App\Models\SocialIdentity;
 use App\Models\WhatsappMessage;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -94,12 +96,110 @@ class AppointmentSlotOfferService
             return null;
         }
 
+        if (in_array($offer->metadata['patient_info_state'] ?? null, ['awaiting_name', 'awaiting_phone'], true)) {
+            return null;
+        }
+
+        if (! $this->hasRealPatientName($comment)) {
+            $this->savePendingSelection($offer, $option['index'], 'awaiting_name');
+            return [
+                'pending_patient_info' => true,
+                'reply' => 'Antes de confirmar, ¿a nombre de quién registramos la cita?',
+            ];
+        }
+
         $appointment = $this->confirmOption($offer, $option);
 
         return [
             'appointment' => $appointment,
             'reply' => app(WhatsappService::class)->buildAppointmentCreatedReply($appointment),
         ];
+    }
+
+    public function pendingPatientInfoOffer(SocialComment $comment): ?AppointmentSlotOffer
+    {
+        $offer = $this->pendingOfferFor($comment);
+
+        if (! $offer) {
+            return null;
+        }
+
+        $state = $offer->metadata['patient_info_state'] ?? null;
+
+        if (in_array($state, ['awaiting_name', 'awaiting_phone'], true)) {
+            return $offer;
+        }
+
+        return null;
+    }
+
+    public function handlePatientInfoReply(AppointmentSlotOffer $offer, SocialComment $comment, WhatsappMessage $message): ?array
+    {
+        $metadata = $offer->metadata;
+        $state = $metadata['patient_info_state'] ?? null;
+        $pendingIndex = $metadata['pending_option_index'] ?? null;
+        $body = trim($message->message_body ?? '');
+
+        if (! $pendingIndex || ! $state) {
+            return null;
+        }
+
+        $option = collect($metadata['options'] ?? [])->firstWhere('index', $pendingIndex);
+
+        if (! $option) {
+            return null;
+        }
+
+        if ($state === 'awaiting_name') {
+            if (blank($body)) {
+                return [
+                    'pending_patient_info' => true,
+                    'reply' => 'Por favor, indícanos el nombre del paciente para registrar la cita.',
+                ];
+            }
+
+            $this->savePatientName($comment, $body);
+
+            $phone = $this->getPhoneForConfirmation($comment);
+
+            if ($phone) {
+                $formattedPhone = $this->formatPhoneForDisplay($phone);
+                $this->updateOfferState($offer, 'awaiting_phone');
+                return [
+                    'pending_patient_info' => true,
+                    'reply' => "Perfecto, {$body}.\n\nUsaremos este número para recordatorios:\n{$formattedPhone}\n\n¿Es correcto?",
+                ];
+            }
+
+            $this->clearPendingInfo($offer);
+            $appointment = $this->confirmOption($offer, $option);
+
+            return [
+                'appointment' => $appointment,
+                'reply' => app(WhatsappService::class)->buildAppointmentCreatedReply($appointment),
+            ];
+        }
+
+        if ($state === 'awaiting_phone') {
+            $isConfirm = $this->isConfirmResponse($body);
+
+            if ($isConfirm) {
+                $this->clearPendingInfo($offer);
+                $appointment = $this->confirmOption($offer, $option);
+
+                return [
+                    'appointment' => $appointment,
+                    'reply' => app(WhatsappService::class)->buildAppointmentCreatedReply($appointment),
+                ];
+            }
+
+            return [
+                'pending_patient_info' => true,
+                'reply' => 'Si el número no es correcto, por favor contáctanos directamente para actualizarlo.',
+            ];
+        }
+
+        return null;
     }
 
     public function buildOfferReply(AppointmentSlotOffer $offer): string
@@ -316,5 +416,102 @@ class AppointmentSlotOfferService
             'night' => 'noche',
             default => null,
         };
+    }
+
+    public function hasRealPatientName(SocialComment $comment): bool
+    {
+        $name = $this->getPatientName($comment);
+
+        if (blank($name)) {
+            return false;
+        }
+
+        if (preg_match('/^\+?\d{7,15}$/', $name)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getPatientName(SocialComment $comment): ?string
+    {
+        $comment->loadMissing('socialIdentity');
+
+        return $comment->socialIdentity?->display_name
+            ?? $comment->author_name
+            ?? $comment->author_username;
+    }
+
+    public function getPhoneForConfirmation(SocialComment $comment): ?string
+    {
+        return $comment->socialIdentity?->phone;
+    }
+
+    private function formatPhoneForDisplay(string $phone): string
+    {
+        $cleaned = preg_replace('/\D/', '', $phone);
+
+        if (strlen($cleaned) >= 10) {
+            $country = substr($cleaned, 0, strlen($cleaned) - 10);
+            $rest = substr($cleaned, -10);
+            $formatted = $country ? '+'.$country.' ' : '';
+            $formatted .= substr($rest, 0, 3).' '.substr($rest, 3, 3).' '.substr($rest, 6);
+
+            return $formatted;
+        }
+
+        return $phone;
+    }
+
+    private function savePatientName(SocialComment $comment, string $name): void
+    {
+        $identity = $comment->socialIdentity;
+        if ($identity) {
+            $identity->updateQuietly(['display_name' => $name]);
+        }
+    }
+
+    private function updateOfferState(AppointmentSlotOffer $offer, string $state): void
+    {
+        $metadata = $offer->metadata;
+        $metadata['patient_info_state'] = $state;
+        $offer->updateQuietly(['metadata' => $metadata]);
+    }
+
+    private function savePendingSelection(AppointmentSlotOffer $offer, int $optionIndex, string $state): void
+    {
+        $metadata = $offer->metadata;
+        $metadata['pending_option_index'] = $optionIndex;
+        $metadata['patient_info_state'] = $state;
+        $offer->updateQuietly(['metadata' => $metadata]);
+    }
+
+    private function clearPendingInfo(AppointmentSlotOffer $offer): void
+    {
+        $metadata = $offer->metadata;
+        unset($metadata['patient_info_state'], $metadata['pending_option_index']);
+        $offer->updateQuietly(['metadata' => $metadata]);
+    }
+
+    private function isConfirmResponse(string $body): bool
+    {
+        $confirming = [
+            'si', 'sí', 'ok', 'okay', 'dale', 'confirmo', 'confirmar',
+            'adelante', 'esta bien', 'está bien', 'de acuerdo', 'perfecto',
+            'excelente', 'claro', 'si gracias', 'sí gracias', 'confirmado',
+            'listo', 'hecho', 'confirm', 'yes', 'simon', 'simón', 'sep', 'sipo',
+            'correcto', 'así es', 'asi es', 'tal cual', '👍', '👌', '✅', '✔',
+        ];
+
+        $lower = mb_strtolower($body);
+        $lower = str_replace(['á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ'], ['a', 'e', 'i', 'o', 'u', 'u', 'n'], $lower);
+
+        foreach ($confirming as $keyword) {
+            if ($lower === $keyword || str_starts_with($lower, $keyword.' ') || str_starts_with($lower, $keyword.',')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

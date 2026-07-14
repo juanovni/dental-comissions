@@ -378,6 +378,31 @@ class SocialCrmSettings extends Page
                     ])
                     ->columns(1)
                     ->columnSpanFull(),
+
+                Section::make('Zona horaria')
+                    ->icon('heroicon-o-globe-alt')
+                    ->description('Zona horaria de la clínica para Google Calendar.')
+                    ->schema([
+                        Select::make('social_appointment_clinic_timezone')
+                            ->label('Zona horaria')
+                            ->helperText('Usada al sincronizar citas con Google Calendar.')
+                            ->searchable()
+                            ->options([
+                                'America/Guayaquil' => 'Ecuador (America/Guayaquil) UTC -5',
+                                'America/New_York' => 'Nueva York (UTC -5/-4)',
+                                'America/Mexico_City' => 'Ciudad de México (UTC -6/-5)',
+                                'America/Bogota' => 'Colombia (UTC -5)',
+                                'America/Lima' => 'Perú (UTC -5)',
+                                'America/Santiago' => 'Chile (UTC -4/-3)',
+                                'America/Argentina/Buenos_Aires' => 'Argentina (UTC -3)',
+                                'Europe/Madrid' => 'España (UTC +1/+2)',
+                                'UTC' => 'UTC',
+                            ])
+                            ->default('America/Guayaquil'),
+                    ])
+                    ->columns(1)
+                    ->columnSpanFull(),
+
                 Section::make('Reglas de agenda')
                     ->icon('heroicon-o-arrow-path-rounded-square')
                     ->description('Duración y reglas para ofrecer horarios al paciente.')
@@ -800,6 +825,7 @@ class SocialCrmSettings extends Page
             'social_appointment_night_end',
             'social_appointment_slot_duration',
             'social_appointment_lead_time_hours',
+            'social_appointment_clinic_timezone',
             'social_appointment_max_slots_offer',
             'social_appointment_search_days',
             'social_appointment_offer_link_minutes',
@@ -894,6 +920,7 @@ class SocialCrmSettings extends Page
             'social_appointment_night_end' => '20:00',
             'social_appointment_slot_duration' => 45,
             'social_appointment_lead_time_hours' => 2,
+            'social_appointment_clinic_timezone' => 'America/Guayaquil',
             'social_appointment_max_slots_offer' => 3,
             'social_appointment_search_days' => 3,
             'social_appointment_offer_link_minutes' => 30,

@@ -481,6 +481,18 @@ class WhatsappService
             return $message;
         }
 
+        $pendingInfoOffer = app(AppointmentSlotOfferService::class)->pendingPatientInfoOffer($comment);
+
+        if ($pendingInfoOffer) {
+            $infoResult = app(AppointmentSlotOfferService::class)->handlePatientInfoReply($pendingInfoOffer, $comment, $message);
+
+            if ($infoResult) {
+                $this->sendAndMarkIncoming($message, $fromPhone, $infoResult['reply']);
+
+                return $message;
+            }
+        }
+
         $slotSelection = $this->handleAppointmentSlotSelection($comment, $message, $fromPhone);
 
         if ($slotSelection) {

@@ -286,6 +286,180 @@ class AppointmentSlotOfferServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_whatsapp_first_lead_selection_asks_for_name(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_offer_link_minutes', 30, 'integer');
+
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->socialIdentity->update(['display_name' => '+15550001']);
+
+        $offer = $this->createOffer($comment, '2026-07-15');
+        $message = $this->message($comment, '1');
+
+        $result = app(AppointmentSlotOfferService::class)->handleSelection($comment, $message);
+
+        $this->assertNotNull($result);
+        $this->assertTrue($result['pending_patient_info'] ?? false);
+        $this->assertSame('awaiting_name', $offer->refresh()->metadata['patient_info_state'] ?? null);
+        $this->assertSame(1, $offer->metadata['pending_option_index']);
+        $this->assertStringContainsString('a nombre', $result['reply']);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_handle_patient_name_reply_saves_name_and_asks_for_phone(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_offer_link_minutes', 30, 'integer');
+
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->socialIdentity->update(['display_name' => '+15550001', 'phone' => '+1 555 0001']);
+
+        $offer = $this->createOffer($comment, '2026-07-15');
+        $offer->update(['metadata' => array_merge($offer->metadata, [
+            'pending_option_index' => 2,
+            'patient_info_state' => 'awaiting_name',
+        ])]);
+        $nameMessage = $this->message($comment, 'Juan Constantine');
+
+        $result = app(AppointmentSlotOfferService::class)->handlePatientInfoReply($offer->refresh(), $comment, $nameMessage);
+
+        $this->assertNotNull($result);
+        $this->assertTrue($result['pending_patient_info'] ?? false);
+        $this->assertSame('Juan Constantine', $comment->fresh()->socialIdentity->display_name);
+        $this->assertSame('awaiting_phone', $offer->refresh()->metadata['patient_info_state'] ?? null);
+        $this->assertStringContainsString('perfecto', mb_strtolower($result['reply']));
+        $this->assertStringContainsString('555', $result['reply']);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_handle_phone_confirmation_creates_appointment(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_offer_link_minutes', 30, 'integer');
+        $this->setting('social_appointment_slot_hold_minutes', 10, 'integer');
+        $this->setting('social_appointment_auto_create_patient', true, 'boolean');
+        $this->setting('social_appointment_require_whatsapp_phone_for_patient', true, 'boolean');
+
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->socialIdentity->update(['display_name' => 'Juan Constantine', 'phone' => '+1 555 0001']);
+
+        $offer = $this->createOffer($comment, '2026-07-15');
+        $offer->update(['metadata' => array_merge($offer->metadata, [
+            'pending_option_index' => 1,
+            'patient_info_state' => 'awaiting_phone',
+        ])]);
+        $confirmMessage = $this->message($comment, 'Sí');
+
+        $result = app(AppointmentSlotOfferService::class)->handlePatientInfoReply($offer->refresh(), $comment, $confirmMessage);
+
+        $this->assertNotNull($result);
+        $this->assertArrayNotHasKey('pending_patient_info', $result);
+        $this->assertNotNull($result['appointment']);
+        $this->assertSame('selected', $offer->refresh()->status);
+        $this->assertSame(1, $offer->selected_option_index);
+        $this->assertArrayNotHasKey('patient_info_state', $offer->metadata);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_full_whatsapp_flow_with_patient_info_collection(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_offer_link_minutes', 60, 'integer');
+        $this->setting('social_appointment_slot_hold_minutes', 10, 'integer');
+        $this->setting('social_appointment_auto_create_patient', true, 'boolean');
+        $this->setting('social_appointment_require_whatsapp_phone_for_patient', true, 'boolean');
+
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->socialIdentity->update(['display_name' => '+15550001', 'phone' => '+1 555 0001']);
+
+        $offer = $this->createOffer($comment, '2026-07-16');
+
+        $selectMessage = $this->message($comment, '2');
+        $selectResult = app(AppointmentSlotOfferService::class)->handleSelection($comment, $selectMessage);
+
+        $this->assertNotNull($selectResult);
+        $this->assertTrue($selectResult['pending_patient_info'] ?? false);
+        $this->assertSame('awaiting_name', $offer->refresh()->metadata['patient_info_state']);
+        $this->assertSame(2, $offer->metadata['pending_option_index']);
+
+        $nameMessage = $this->message($comment, 'Maria Perez');
+        $nameResult = app(AppointmentSlotOfferService::class)->handlePatientInfoReply($offer->refresh(), $comment, $nameMessage);
+
+        $this->assertNotNull($nameResult);
+        $this->assertTrue($nameResult['pending_patient_info'] ?? false);
+        $this->assertSame('Maria Perez', $comment->fresh()->socialIdentity->display_name);
+        $this->assertSame('awaiting_phone', $offer->refresh()->metadata['patient_info_state']);
+
+        $phoneMessage = $this->message($comment, 'Sí');
+        $phoneResult = app(AppointmentSlotOfferService::class)->handlePatientInfoReply($offer->refresh(), $comment, $phoneMessage);
+
+        $this->assertNotNull($phoneResult);
+        $this->assertArrayNotHasKey('pending_patient_info', $phoneResult);
+        $this->assertNotNull($phoneResult['appointment']);
+        $this->assertSame('selected', $offer->refresh()->status);
+        $this->assertSame(2, $offer->selected_option_index);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_lead_with_real_name_skips_patient_info_and_confirms_directly(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_offer_link_minutes', 30, 'integer');
+        $this->setting('social_appointment_slot_hold_minutes', 10, 'integer');
+        $this->setting('social_appointment_auto_create_patient', true, 'boolean');
+        $this->setting('social_appointment_require_whatsapp_phone_for_patient', true, 'boolean');
+
+        $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->socialIdentity->update(['display_name' => 'Carlos Ruiz', 'phone' => '+1 555 0001']);
+
+        $offer = $this->createOffer($comment, '2026-07-15');
+        $message = $this->message($comment, '1');
+
+        $result = app(AppointmentSlotOfferService::class)->handleSelection($comment, $message);
+
+        $this->assertNotNull($result);
+        $this->assertArrayNotHasKey('pending_patient_info', $result);
+        $this->assertNotNull($result['appointment']);
+        $this->assertSame('selected', $offer->refresh()->status);
+
+        Carbon::setTestNow();
+    }
+
     private function setting(string $key, mixed $value, string $type): void
     {
         SocialCrmSetting::updateOrCreate(
