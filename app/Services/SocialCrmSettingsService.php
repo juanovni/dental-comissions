@@ -299,6 +299,91 @@ class SocialCrmSettingsService
         return (bool) $this->get('social_appointment_auto_confirm', false);
     }
 
+    public function appointmentMorningEnabled(): bool
+    {
+        return (bool) $this->get('social_appointment_morning_enabled', true);
+    }
+
+    public function appointmentAfternoonEnabled(): bool
+    {
+        return (bool) $this->get('social_appointment_afternoon_enabled', true);
+    }
+
+    public function appointmentMorningStart(): string
+    {
+        return (string) $this->get('social_appointment_morning_start', '09:00');
+    }
+
+    public function appointmentMorningEnd(): string
+    {
+        return (string) $this->get('social_appointment_morning_end', '12:00');
+    }
+
+    public function appointmentAfternoonStart(): string
+    {
+        return (string) $this->get('social_appointment_afternoon_start', '13:00');
+    }
+
+    public function appointmentAfternoonEnd(): string
+    {
+        return (string) $this->get('social_appointment_afternoon_end', '18:00');
+    }
+
+    public function appointmentNightEnabled(): bool
+    {
+        return (bool) $this->get('social_appointment_night_enabled', false);
+    }
+
+    public function appointmentNightStart(): string
+    {
+        return (string) $this->get('social_appointment_night_start', '18:00');
+    }
+
+    public function appointmentNightEnd(): string
+    {
+        return (string) $this->get('social_appointment_night_end', '20:00');
+    }
+
+    public function appointmentOfferLinkMinutes(): int
+    {
+        return max(5, (int) $this->get('social_appointment_offer_link_minutes', 30));
+    }
+
+    public function appointmentSlotHoldMinutes(): int
+    {
+        return max(2, (int) $this->get('social_appointment_slot_hold_minutes', 10));
+    }
+
+    public function appointmentAllowAlternativeDoctor(): bool
+    {
+        return (bool) $this->get('social_appointment_allow_alternative_doctor', false);
+    }
+
+    public function appointmentShowDoctor(): bool
+    {
+        return (bool) $this->get('social_appointment_show_doctor', false);
+    }
+
+    public function appointmentAutoCreatePatient(): bool
+    {
+        return (bool) $this->get('social_appointment_auto_create_patient', true);
+    }
+
+    public function appointmentRequireWhatsappPhoneForPatient(): bool
+    {
+        return (bool) $this->get('social_appointment_require_whatsapp_phone_for_patient', true);
+    }
+
+    public function appointmentPatientFallbackName(): string
+    {
+        return (string) $this->get('social_appointment_patient_fallback_name', 'Paciente WhatsApp');
+    }
+
+    public function appointmentSearchDays(): int
+    {
+        return max(1, (int) $this->get('social_appointment_search_days', 3));
+    }
+
     public function appointmentProposeSlots(): bool
     {
         return (bool) $this->get('social_appointment_propose_slots', false);

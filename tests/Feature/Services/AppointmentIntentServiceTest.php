@@ -87,6 +87,18 @@ class AppointmentIntentServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_extract_weekday_with_day_number_and_time(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13'));
+
+        $result = $this->service->extractFromText('Hay citas para el dia miercoles 15 a las 3pm?');
+
+        $this->assertSame('2026-07-15', $result['date']);
+        $this->assertSame('15:00', $result['time']);
+
+        Carbon::setTestNow();
+    }
+
     public function test_extract_date_with_slash_format(): void
     {
         $result = $this->service->extractFromText('Puedo el 20/08');
@@ -178,6 +190,27 @@ class AppointmentIntentServiceTest extends TestCase
         $this->assertNotNull($result['preferred_date_parsed']);
         $this->assertSame('14:00', $result['preferred_time_parsed']);
         $this->assertSame('ai', $result['extraction_source']);
+    }
+
+    public function test_analyze_keeps_local_period_when_ai_only_extracts_date(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13'));
+
+        $comment = $this->createComment();
+        $message = $this->createMessage('Si, tienen disponibilidad para el jueves en la tarde');
+
+        $result = $this->service->analyze($comment, $message, 'appointment_interest', [
+            'wants_appointment' => true,
+            'preferred_date_text' => 'jueves',
+            'preferred_time_text' => null,
+        ]);
+
+        $this->assertSame('2026-07-16', $result['preferred_date_parsed']);
+        $this->assertSame('15:00', $result['preferred_time_parsed']);
+        $this->assertSame('afternoon', $result['preferred_period']);
+        $this->assertSame('ai_with_local_fallback', $result['extraction_source']);
+
+        Carbon::setTestNow();
     }
 
     public function test_ready_to_book_intent(): void

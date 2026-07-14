@@ -8,7 +8,6 @@ use App\Enums\SocialCommentActionType;
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialConversionStatus;
-use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
 use App\Enums\SocialPriority;
 use App\Enums\SocialReputationRisk;
@@ -22,11 +21,11 @@ use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Professional;
 use App\Models\SocialComment;
-use App\Models\SocialIdentity;
 use App\Services\AppointmentCreationService;
 use App\Services\SocialAutoReplyService;
 use App\Services\SocialConversionService;
 use App\Services\SocialCrmSettingsService;
+use App\Services\SocialPatientConversionService;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -43,7 +42,6 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
 
 class SocialCommentResource extends Resource
 {
@@ -395,12 +393,18 @@ class SocialCommentResource extends Resource
                 ])
                 ->action(function (SocialComment $record, array $data): void {
                     $patient = Patient::findOrFail($data['patient_id']);
-                    self::linkPatientToComment(
+                    app(SocialPatientConversionService::class)->linkPatientToLead(
                         $record,
                         $patient,
                         'Paciente existente vinculado manualmente desde el inbox social.',
                         SocialCommentActionType::LinkIdentity,
                     );
+
+                    Notification::make()
+                        ->title('Paciente vinculado')
+                        ->body('La identidad social quedo asociada a la ficha clinica.')
+                        ->success()
+                        ->send();
                 }),
             Action::make('create_patient_from_lead')
                 ->label('Crear ficha')
@@ -430,20 +434,21 @@ class SocialCommentResource extends Resource
                         ->columnSpanFull(),
                 ])
                 ->action(function (SocialComment $record, array $data): void {
-                    $patient = Patient::create([
-                        'full_name' => $data['full_name'],
-                        'normalized_name' => self::normalizeName($data['full_name']),
-                        'phone' => $data['phone'],
-                        'date_of_birth' => $data['date_of_birth'] ?? null,
-                        'notes' => $data['notes'] ?? null,
-                    ]);
-
-                    self::linkPatientToComment(
+                    app(SocialPatientConversionService::class)->createPatientFromLead(
                         $record,
-                        $patient,
-                        'Ficha de paciente creada desde lead social.',
-                        SocialCommentActionType::CreatePatientFromLead,
+                        [
+                            'full_name' => $data['full_name'],
+                            'phone' => $data['phone'],
+                            'date_of_birth' => $data['date_of_birth'] ?? null,
+                            'notes' => $data['notes'] ?? null,
+                        ],
                     );
+
+                    Notification::make()
+                        ->title('Ficha creada')
+                        ->body('La ficha del paciente quedo asociada al lead social.')
+                        ->success()
+                        ->send();
                 }),
             Action::make('create_appointment')
                 ->label('Crear cita')
@@ -601,61 +606,6 @@ class SocialCommentResource extends Resource
         return 'gray';
     }
 
-    private static function linkPatientToComment(
-        SocialComment $record,
-        Patient $patient,
-        string $notes,
-        SocialCommentActionType $action,
-    ): void {
-        $identity = $record->socialIdentity;
-
-        if (! $identity) {
-            $identity = SocialIdentity::firstOrCreate(
-                [
-                    'platform' => $record->platform->value,
-                    'platform_user_id' => $record->author_external_id ?: 'unknown-comment-'.$record->id,
-                ],
-                [
-                    'username' => $record->author_username,
-                    'display_name' => $record->author_name,
-                    'first_seen_at' => $record->published_at ?: now(),
-                    'last_seen_at' => now(),
-                    'metadata' => ['source' => 'filament_manual_patient_link'],
-                ],
-            );
-
-            $record->update(['social_identity_id' => $identity->id]);
-        }
-
-        $identity->update([
-            'patient_id' => $patient->id,
-            'phone' => $identity->phone ?: $patient->phone,
-            'normalized_phone' => $identity->normalized_phone ?: self::normalizePhone((string) $patient->phone),
-            'status' => SocialIdentityStatus::LinkedPatient,
-            'linked_at' => now(),
-            'last_seen_at' => now(),
-        ]);
-
-        $record->update([
-            'conversion_status' => SocialConversionStatus::IdentityLinked,
-            'converted_patient_id' => $patient->id,
-            'converted_at' => $record->converted_at ?: now(),
-        ]);
-
-        $record->actions()->create([
-            'action' => $action,
-            'performed_by' => auth()->id(),
-            'notes' => $notes,
-            'external_response' => ['patient_id' => $patient->id],
-        ]);
-
-        Notification::make()
-            ->title('Paciente vinculado')
-            ->body('La identidad social quedo asociada a la ficha clinica.')
-            ->success()
-            ->send();
-    }
-
     private static function whatsappReplyText(SocialComment $record): string
     {
         return app(SocialConversionService::class)->instagramReplyText($record);
@@ -676,16 +626,6 @@ class SocialCommentResource extends Resource
     {
         return "Ficha creada desde lead social. Red: {$record->platform->label()}. Comentario ID: {$record->id}. Usuario: "
             .($record->author_username ?: $record->author_name ?: 'N/A').'.';
-    }
-
-    private static function normalizeName(string $name): string
-    {
-        return Str::of($name)->lower()->ascii()->squish()->toString();
-    }
-
-    private static function normalizePhone(string $phone): string
-    {
-        return preg_replace('/\D+/', '', $phone) ?? $phone;
     }
 
     private static function smartAlertHtml(SocialComment $record): string

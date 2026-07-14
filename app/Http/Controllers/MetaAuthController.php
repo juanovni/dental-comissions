@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\SocialPlatform;
 use App\Models\SocialAccount;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -49,16 +50,36 @@ class MetaAuthController extends Controller
             'Estado OAuth invalido.',
         );
 
-        $shortToken = $this->exchangeCodeForToken($request->string('code')->toString());
-        $longToken = $this->exchangeForLongLivedToken($shortToken['access_token']);
-        $userAccessToken = $this->selectTokenWithPageAccess(
-            $shortToken['access_token'],
-            $longToken['access_token'] ?? null,
-        );
+        try {
+            $shortToken = $this->exchangeCodeForToken($request->string('code')->toString());
+            $longToken = $this->exchangeForLongLivedToken($shortToken['access_token']);
+            $userAccessToken = $this->selectTokenWithPageAccess(
+                $shortToken['access_token'],
+                $longToken['access_token'] ?? null,
+            );
 
-        $this->logGrantedPermissions($userAccessToken);
+            $this->logGrantedPermissions($userAccessToken);
 
-        $summary = $this->storeAuthorizedAccounts($userAccessToken, $longToken['expires_in'] ?? $shortToken['expires_in'] ?? null);
+            $summary = $this->storeAuthorizedAccounts($userAccessToken, $longToken['expires_in'] ?? $shortToken['expires_in'] ?? null);
+        } catch (ConnectionException $e) {
+            Log::error('OAuth Meta no pudo conectar con Graph API.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect('/admin/social-accounts')->with(
+                'error',
+                'No se pudo conectar con Meta Graph API. Revisa DNS/conectividad del servidor e intenta conectar Meta nuevamente.',
+            );
+        } catch (\Throwable $e) {
+            Log::error('OAuth Meta fallo durante la integracion.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect('/admin/social-accounts')->with(
+                'error',
+                'No se pudo completar la conexión con Meta. Intenta nuevamente desde Integraciones.',
+            );
+        }
 
         Log::info('OAuth Meta completado.', $summary);
 

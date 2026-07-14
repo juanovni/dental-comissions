@@ -546,13 +546,24 @@ class SocialInbox extends Page
         try {
             $token = $conversionService->markRedirectedToWhatsapp($comment->refresh(), $replyText);
         } catch (\Throwable $e) {
+            $comment->refresh();
+            $token = $comment->tracking_token ?: 'Sin token generado';
+
+            $this->whatsappToken = $token;
+            $this->whatsappLink = $conversionService->whatsappLink($comment) ?? '';
+            $this->smartLink = $comment->tracking_token ? $conversionService->smartLink($comment) : '';
+            $this->whatsappReplyText = $replyText;
+            $this->whatsappGenerated = filled($comment->tracking_token);
+
             Notification::make()
                 ->title('No se pudo publicar en Meta')
-                ->body($e->getMessage())
+                ->body($e->getMessage().'. El texto quedó listo para copiar manualmente.')
                 ->danger()
                 ->send();
 
-            return;
+            if (! $this->whatsappGenerated) {
+                return;
+            }
         }
 
         $comment->refresh();

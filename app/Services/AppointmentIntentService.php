@@ -36,6 +36,7 @@ class AppointmentIntentService
             'preferred_time_text' => null,
             'preferred_date_parsed' => null,
             'preferred_time_parsed' => null,
+            'preferred_period' => null,
             'confidence' => 0,
             'extraction_source' => 'none',
         ];
@@ -54,19 +55,21 @@ class AppointmentIntentService
                 $parsed = $this->parseDateTimeText($aiDateText, $aiTimeText);
                 $result['preferred_date_parsed'] = $parsed['date'];
                 $result['preferred_time_parsed'] = $parsed['time'];
+                $result['preferred_period'] = $parsed['period'];
                 $result['confidence'] = $parsed['date'] || $parsed['time'] ? 80 : 60;
                 $result['extraction_source'] = 'ai';
             }
 
-            if (!$result['preferred_date_parsed'] && !$result['preferred_time_parsed']) {
+            if (! $result['preferred_date_parsed'] || ! $result['preferred_time_parsed'] || ! $result['preferred_period']) {
                 $localParsed = $this->extractFromText($body);
-                if ($localParsed['date'] || $localParsed['time']) {
-                    $result['preferred_date_parsed'] = $localParsed['date'];
-                    $result['preferred_time_parsed'] = $localParsed['time'];
+                if ($localParsed['date'] || $localParsed['time'] || $localParsed['period']) {
+                    $result['preferred_date_parsed'] ??= $localParsed['date'];
+                    $result['preferred_time_parsed'] ??= $localParsed['time'];
+                    $result['preferred_period'] ??= $localParsed['period'];
                     $result['preferred_date_text'] ??= $localParsed['date_text'];
                     $result['preferred_time_text'] ??= $localParsed['time_text'];
-                    $result['confidence'] = 65;
-                    $result['extraction_source'] = 'local_fallback';
+                    $result['confidence'] = max($result['confidence'], 65);
+                    $result['extraction_source'] = $result['extraction_source'] === 'ai' ? 'ai_with_local_fallback' : 'local_fallback';
                 }
             }
 
@@ -106,6 +109,7 @@ class AppointmentIntentService
             'time' => null,
             'date_text' => null,
             'time_text' => null,
+            'period' => null,
         ];
 
         $now = Carbon::now()->startOfDay();
@@ -121,6 +125,7 @@ class AppointmentIntentService
         if ($timeResult['parsed']) {
             $result['time'] = $timeResult['parsed'];
             $result['time_text'] = $timeResult['text'];
+            $result['period'] = $timeResult['period'] ?? null;
         }
 
         return $result;
@@ -128,11 +133,30 @@ class AppointmentIntentService
 
     private function extractDate(string $text, Carbon $now): array
     {
-        $result = ['parsed' => null, 'text' => null];
+        $result = ['parsed' => null, 'text' => null, 'period' => null];
 
         if (str_contains($text, 'pasado mañana') || str_contains($text, 'pasadomañana') || str_contains($text, 'pasado manana')) {
             $result['parsed'] = $now->copy()->addDays(2)->format('Y-m-d');
             $result['text'] = 'pasado mañana';
+            return $result;
+        }
+
+        if (preg_match('/\b(?:el\s+)?(?:dia\s+)?(' . implode('|', array_keys($this->dias)) . ')\s+(\d{1,2})\b/u', $text, $matches)) {
+            $day = (int) $matches[2];
+            $month = $now->month;
+            $year = $now->year;
+
+            if (checkdate($month, $day, $year)) {
+                $date = $now->copy()->setDate($year, $month, $day)->startOfDay();
+
+                if ($date->lessThan($now)) {
+                    $date->addMonthNoOverflow();
+                }
+
+                $result['parsed'] = $date->format('Y-m-d');
+                $result['text'] = $matches[0];
+            }
+
             return $result;
         }
 
@@ -269,16 +293,17 @@ class AppointmentIntentService
         }
 
         $periods = [
-            'en la mañana' => '09:00', 'en la manana' => '09:00',
-            'por la mañana' => '09:00', 'por la manana' => '09:00',
-            'en la tarde' => '15:00', 'por la tarde' => '15:00',
-            'en la noche' => '17:00', 'por la noche' => '17:00',
+            'en la mañana' => ['09:00', 'morning'], 'en la manana' => ['09:00', 'morning'],
+            'por la mañana' => ['09:00', 'morning'], 'por la manana' => ['09:00', 'morning'],
+            'en la tarde' => ['15:00', 'afternoon'], 'por la tarde' => ['15:00', 'afternoon'],
+            'en la noche' => ['17:00', 'night'], 'por la noche' => ['17:00', 'night'],
         ];
 
-        foreach ($periods as $phrase => $time) {
+        foreach ($periods as $phrase => [$time, $period]) {
             if (str_contains($text, $phrase)) {
                 $result['parsed'] = $time;
                 $result['text'] = $phrase;
+                $result['period'] = $period;
                 return $result;
             }
         }
@@ -288,16 +313,24 @@ class AppointmentIntentService
 
     public function parseDateTimeText(?string $dateText, ?string $timeText): array
     {
-        $result = ['date' => null, 'time' => null];
+        $result = ['date' => null, 'time' => null, 'period' => null];
 
         if ($dateText) {
             $parsed = $this->extractDate(mb_strtolower($dateText), Carbon::now()->startOfDay());
             $result['date'] = $parsed['parsed'];
+
+            $timeParsedFromDateText = $this->extractTime(mb_strtolower($dateText));
+            $result['period'] = $timeParsedFromDateText['period'] ?? null;
+
+            if (! $result['time']) {
+                $result['time'] = $timeParsedFromDateText['parsed'];
+            }
         }
 
         if ($timeText) {
             $parsed = $this->extractTime(mb_strtolower($timeText));
             $result['time'] = $parsed['parsed'];
+                $result['period'] = $parsed['period'] ?? null;
         }
 
         return $result;

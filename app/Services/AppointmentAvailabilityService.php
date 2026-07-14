@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\AppointmentSlotHold;
 use App\Models\Professional;
 use Carbon\Carbon;
 
@@ -59,7 +60,8 @@ class AppointmentAvailabilityService
 
             $slotEnd = $cursor->copy()->addMinutes($duration);
 
-            $existing = $this->hasAppointmentConflict(null, $cursor, $slotEnd);
+            $existing = $this->hasAppointmentConflict(null, $cursor, $slotEnd)
+                || $this->hasActiveHoldConflict(null, $cursor, $slotEnd);
             $clinicAvailable = $googleService->isClinicSlotAvailable($cursor, $slotEnd);
 
             if (! $existing && $clinicAvailable) {
@@ -101,7 +103,7 @@ class AppointmentAvailabilityService
                 continue;
             }
 
-            $currentOpen = $dayStart && $date->isSameDay($dayStart)
+            $currentOpen = ($dayStart && $date->isSameDay($dayStart)) || (! $dayStart && $date->isToday())
                 ? max($this->timeToMinutes($open), $date->hour * 60 + $date->minute)
                 : $this->timeToMinutes($open);
 
@@ -132,7 +134,8 @@ class AppointmentAvailabilityService
                 $slotStart = $cursor->copy();
                 $slotEnd = $cursor->copy()->addMinutes($duration);
 
-                $existing = $this->hasAppointmentConflict($professional->id, $slotStart, $slotEnd);
+                $existing = $this->hasAppointmentConflict($professional->id, $slotStart, $slotEnd)
+                    || $this->hasActiveHoldConflict($professional->id, $slotStart, $slotEnd);
 
                 $googleAvailable = $existing
                     ? false
@@ -157,7 +160,7 @@ class AppointmentAvailabilityService
         $settings = app(SocialCrmSettingsService::class);
         $clinicDays = $settings->appointmentClinicDays();
 
-        if ($start->lessThan(now()->addHours($settings->appointmentLeadTimeHours()))) {
+        if ($start->lessThan(now()->addHours($settings->appointmentLeadTimeHours())->startOfMinute())) {
             return false;
         }
 
@@ -174,7 +177,8 @@ class AppointmentAvailabilityService
             return false;
         }
 
-        if ($this->hasAppointmentConflict($doctor->id, $start, $end)) {
+        if ($this->hasAppointmentConflict($doctor->id, $start, $end)
+            || $this->hasActiveHoldConflict($doctor->id, $start, $end)) {
             return false;
         }
 
@@ -238,5 +242,22 @@ class AppointmentAvailabilityService
 
                 return $start->lessThan($appointmentEnd) && $end->greaterThan($appointmentStart);
             });
+    }
+
+    public function hasActiveHoldConflict(?int $doctorId, Carbon $start, Carbon $end): bool
+    {
+        $query = AppointmentSlotHold::query()
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->where('starts_at', '<', $end)
+            ->where('ends_at', '>', $start);
+
+        if ($doctorId) {
+            $query->where(function ($query) use ($doctorId): void {
+                $query->whereNull('doctor_id')->orWhere('doctor_id', $doctorId);
+            });
+        }
+
+        return $query->exists();
     }
 }

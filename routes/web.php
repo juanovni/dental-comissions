@@ -4,6 +4,7 @@ use App\Http\Controllers\GoogleCalendarAuthController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MetaAuthController;
 use App\Http\Controllers\MetaSocialWebhookController;
+use App\Http\Controllers\SocialAppointmentLinkController;
 use App\Http\Controllers\SocialSmartLinkController;
 use App\Http\Controllers\TestMetaSocialController;
 use App\Http\Controllers\TestWhatsappController;
@@ -26,6 +27,8 @@ Route::get('/auth/meta/callback', [MetaAuthController::class, 'callback'])->name
 Route::get('/auth/google/callback', [GoogleCalendarAuthController::class, 'callback'])->name('google.oauth.callback');
 Route::get('/v/{trackingToken}', [SocialSmartLinkController::class, 'show'])->name('social-smart-link.show');
 Route::post('/v/{trackingToken}/event', [SocialSmartLinkController::class, 'track'])->name('social-smart-link.track');
+Route::get('/social/appointments/{token}', [SocialAppointmentLinkController::class, 'show'])->name('social-appointments.show');
+Route::post('/social/appointments/{token}/confirm', [SocialAppointmentLinkController::class, 'confirm'])->name('social-appointments.confirm');
 
 if (app()->environment('local', 'testing')) {
     Route::post('/test/whatsapp', [TestWhatsappController::class, 'test']);

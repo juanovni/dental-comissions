@@ -8,6 +8,7 @@ use App\Enums\WhatsappMessageStatus;
 use App\Models\ActivityRecord;
 use App\Models\DoctorAssistantAssignment;
 use App\Models\Professional;
+use App\Models\SocialComment;
 use App\Models\WhatsappMessage;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -84,9 +85,14 @@ class WhatsappService
                     $bookingResult = app(\App\Services\BookingConfirmationService::class)
                         ->handleMessage($socialComment, $whatsappMessage, $pendingAppointment);
 
-                    $whatsappMessage->markAsProcessed();
-                    $this->sendMessage($fromPhone, $bookingResult['reply']);
+                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $bookingResult['reply']);
 
+                    return $whatsappMessage;
+                }
+
+                $slotSelection = $this->handleAppointmentSlotSelection($socialComment, $whatsappMessage, $fromPhone);
+
+                if ($slotSelection) {
                     return $whatsappMessage;
                 }
 
@@ -105,10 +111,17 @@ class WhatsappService
 
                 app(SocialPipelineAutomationService::class)->applyAgentResponse($socialComment, $agentResponse);
 
+                $offer = app(AppointmentSlotOfferService::class)->createFromAgentResponse($socialComment, $whatsappMessage, $agentResponse);
+
+                if ($offer) {
+                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, app(AppointmentSlotOfferService::class)->buildOfferReply($offer));
+
+                    return $whatsappMessage;
+                }
+
                 $appointment = app(AutoAppointmentService::class)->createFromDetectedIntent($socialComment, $agentResponse);
 
-                $whatsappMessage->markAsProcessed();
-                $this->sendMessage($fromPhone, $appointment ? $this->buildAppointmentCreatedReply($appointment) : $agentResponse['reply']);
+                $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $appointment ? $this->buildAppointmentCreatedReply($appointment) : $agentResponse['reply']);
 
                 return $whatsappMessage;
             }
@@ -151,9 +164,14 @@ class WhatsappService
                     $bookingResult = app(\App\Services\BookingConfirmationService::class)
                         ->handleMessage($existingLead, $whatsappMessage, $pendingAppointment);
 
-                    $whatsappMessage->markAsProcessed();
-                    $this->sendMessage($fromPhone, $bookingResult['reply']);
+                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $bookingResult['reply']);
 
+                    return $whatsappMessage;
+                }
+
+                $slotSelection = $this->handleAppointmentSlotSelection($existingLead, $whatsappMessage, $fromPhone);
+
+                if ($slotSelection) {
                     return $whatsappMessage;
                 }
 
@@ -172,20 +190,27 @@ class WhatsappService
 
                 app(SocialPipelineAutomationService::class)->applyAgentResponse($existingLead, $agentResponse);
 
+                $offer = app(AppointmentSlotOfferService::class)->createFromAgentResponse($existingLead, $whatsappMessage, $agentResponse);
+
+                if ($offer) {
+                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, app(AppointmentSlotOfferService::class)->buildOfferReply($offer));
+
+                    return $whatsappMessage;
+                }
+
                 $appointment = app(AutoAppointmentService::class)->createFromDetectedIntent($existingLead, $agentResponse);
 
-                $whatsappMessage->markAsProcessed();
-                $this->sendMessage($fromPhone, $appointment ? $this->buildAppointmentCreatedReply($appointment) : $agentResponse['reply']);
+                $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $appointment ? $this->buildAppointmentCreatedReply($appointment) : $agentResponse['reply']);
 
                 return $whatsappMessage;
             }
 
             if (! $professional) {
-                $this->sendMessage(
+                $this->sendAndMarkIncoming(
+                    $whatsappMessage,
                     $fromPhone,
                     'Hola, gracias por escribirnos. Para poder orientarte, necesito el codigo que recibiste en redes sociales. Por favor compartelo asi: "Mi codigo es DNT-XXXXX" y con gusto te ayudo.',
                 );
-                $whatsappMessage->markAsProcessed();
 
                 return $whatsappMessage;
             }
@@ -447,7 +472,7 @@ class WhatsappService
         return $summary;
     }
 
-    private function buildAppointmentCreatedReply(\App\Models\Appointment $appointment): string
+    public function buildAppointmentCreatedReply(\App\Models\Appointment $appointment): string
     {
         $appointment->loadMissing(['doctor', 'procedure']);
 
@@ -461,6 +486,25 @@ class WhatsappService
         }
 
         return "Perfecto, dejamos tu cita para {$procedure} pre-reservada.\n\nFecha: {$date}{$doctorLine}\n\nPor favor confirma si este horario te queda bien.";
+    }
+
+    private function handleAppointmentSlotSelection(SocialComment $comment, WhatsappMessage $message, string $fromPhone): bool
+    {
+        try {
+            $selection = app(AppointmentSlotOfferService::class)->handleSelection($comment, $message);
+        } catch (\Throwable $e) {
+            $this->sendAndMarkIncoming($message, $fromPhone, 'Ese horario acaba de ocuparse. Te mostraremos nuevas opciones disponibles en breve.');
+
+            return true;
+        }
+
+        if (! $selection) {
+            return false;
+        }
+
+        $this->sendAndMarkIncoming($message, $fromPhone, $selection['reply']);
+
+        return true;
     }
 
     private function findPendingOriginalForReply(WhatsappMessage $reply): ?WhatsappMessage
@@ -561,5 +605,19 @@ class WhatsappService
 
             return false;
         }
+    }
+
+    private function sendAndMarkIncoming(WhatsappMessage $message, string $toPhone, string $body): bool
+    {
+        $sent = $this->sendMessage($toPhone, $body);
+
+        if ($sent) {
+            $message->markAsProcessed();
+            return true;
+        }
+
+        $message->markAsFailed('No se pudo enviar la respuesta por WhatsApp. Revisa logs de Meta/Graph API.');
+
+        return false;
     }
 }

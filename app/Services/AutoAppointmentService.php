@@ -64,6 +64,7 @@ class AutoAppointmentService
 
         try {
             $data = [
+                'patient_id' => app(SocialPatientConversionService::class)->ensurePatientForLead($comment)?->id,
                 'scheduled_at' => $scheduledAt,
                 'duration_minutes' => $duration,
                 'doctor_id' => $comment->suggested_doctor_id,
