@@ -294,9 +294,9 @@ class SocialSmartLinkController extends Controller
                 'title' => 'Camino claro para alinear tu sonrisa',
                 'text' => "Con tu codigo {$comment->tracking_token}, el equipo sabra que buscas ortodoncia o alineadores. La cita se enfoca en revisar viabilidad, tiempos y comodidad.",
                 'steps' => [
-                    ['label' => 'Revision de mordida', 'text' => 'Evaluamos alineacion, espacio y objetivos.'],
-                    ['label' => 'Simulacion o plan', 'text' => 'Te mostramos el camino probable antes de iniciar.'],
-                    ['label' => 'Opciones claras', 'text' => 'Comparas alternativas, tiempos y costos sin sorpresas.'],
+                    ['label' => 'Recepción VIP', 'text' => 'Te recibiremos con una breve entrevista para conocer tus expectativas y resolver dudas iniciales.'],
+                    ['label' => 'Escaneo Digital', 'text' => 'Utilizamos tecnología iTero para crear un mapa 3D de tu boca. Adiós a los moldes incómodos.'],
+                    ['label' => 'Plan Maestro', 'text' => 'El doctor diseñará tu plan final y te mostraremos una simulación de cómo quedará tu sonrisa.'],
                 ],
             ];
         }

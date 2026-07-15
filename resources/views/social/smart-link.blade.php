@@ -507,8 +507,26 @@
             padding: clamp(3rem, 7vw, 5.5rem) 0;
         }
 
-        .sp-section.alt {
-            background: var(--sp-bg);
+        .sp-section.is-reveal-ready {
+            filter: blur(8px);
+            opacity: 0;
+            transform: translateY(2.25rem);
+            transition: opacity .7s ease, transform .7s cubic-bezier(.2, .8, .2, 1), filter .7s ease;
+        }
+
+        .sp-section.is-visible {
+            filter: blur(0);
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .sp-section.is-reveal-ready {
+                filter: none;
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
         }
 
         .sp-section-heading {
@@ -526,9 +544,27 @@
             text-transform: uppercase;
         }
 
+        .sp-chip {
+            align-items: center;
+            background: var(--sp-teal-soft);
+            border-radius: 999px;
+            color: var(--sp-teal);
+            display: inline-flex;
+            font-size: .82rem;
+            font-weight: 700;
+            gap: .4rem;
+            margin-bottom: .85rem;
+            padding: .3rem .85rem;
+        }
+
+        .sp-chip svg {
+            height: .85rem;
+            width: .85rem;
+        }
+
         .sp-section-heading h2 {
             color: var(--sp-ink);
-            font-size: clamp(1.7rem, 3vw, 2.25rem);
+            font-size: clamp(2rem, 4vw, 3rem);
             font-weight: 800;
             letter-spacing: -.035em;
             line-height: 1.1;
@@ -576,6 +612,21 @@
             gap: 1rem;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             text-align: center;
+        }
+
+        .sp-step {
+            position: relative;
+        }
+
+        .sp-step:not(:last-child)::after {
+            background: linear-gradient(90deg, rgba(0, 155, 143, .18), rgba(0, 155, 143, .28), rgba(0, 155, 143, .18));
+            content: '';
+            height: 1px;
+            left: calc(50% + 4rem);
+            position: absolute;
+            top: 4rem;
+            width: calc(100% + 1rem - 8rem);
+            z-index: 0;
         }
 
         .sp-step-number {
@@ -670,7 +721,7 @@
 
         .sp-result-card {
             border-radius: 1.2rem;
-            min-height: 24rem;
+            min-height: 32rem;
             overflow: hidden;
             position: relative;
         }
@@ -855,30 +906,6 @@
 
         .sp-carousel-dots button.is-active { background: var(--sp-teal); width: 1.4rem; }
 
-        .sp-smiles-grid {
-            display: grid;
-            gap: 1rem;
-            grid-template-columns: 1.1fr .9fr;
-        }
-
-        .sp-smile-card {
-            background: #ffffff;
-            border: 1px solid var(--sp-border);
-            border-radius: 1.2rem;
-            box-shadow: 0 18px 46px rgba(15, 23, 42, .06);
-            min-height: 14rem;
-            overflow: hidden;
-            padding: 1.2rem;
-            position: relative;
-        }
-
-        .sp-smile-card.featured {
-            background: linear-gradient(135deg, #e9fbf7, #ffffff 56%, #d7f8f2);
-        }
-
-        .sp-smile-card strong { display: block; font-size: 1.35rem; line-height: 1.12; }
-        .sp-smile-card p { color: var(--sp-muted); line-height: 1.6; }
-
         .sp-faq {
             display: grid;
             gap: .75rem;
@@ -978,13 +1005,14 @@
             .sp-results,
             .sp-metrics,
             .sp-doctor,
-            .sp-doctor-list,
-            .sp-smiles-grid {
+            .sp-doctor-list {
                 grid-template-columns: minmax(0, 1fr);
             }
 
-            .sp-result-card { min-height: 17rem; }
+            .sp-result-card { min-height: 20rem; }
             .sp-media { min-height: 14.5rem; }
+
+            .sp-step:not(:last-child)::after { display: none; }
         }
 
         @media (max-width: 440px) {
@@ -1119,9 +1147,9 @@
 
                 <div class="sp-metrics" aria-label="Métricas de la clínica">
                     <div class="sp-metric"><strong>2.547+</strong><span>Pacientes felices</span></div>
-                    <div class="sp-metric"><strong>15 anos</strong><span>De experiencia</span></div>
+                    <div class="sp-metric"><strong>15 años</strong><span>De experiencia</span></div>
                     <div class="sp-metric"><strong>98%</strong><span>Satisfacción</span></div>
-                    <div class="sp-metric"><strong>4.9</strong><span>Rating Google</span></div>
+                    <div class="sp-metric"><strong>4.9 ★</strong><span>Rating Google</span></div>
                 </div>
             </div>
         </section>
@@ -1129,7 +1157,8 @@
         <section class="sp-section" id="visita">
             <div class="sp-shell">
                 <div class="sp-section-heading">
-                    <h2>¿Qué pasará en tu primera visita?</h2>
+                    <div class="sp-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg> Tu primera visita</div>
+                    <h2>¿Qué pasará en tu <span style="color:var(--sp-teal)">primera visita?</span></h2>
                     <p>Queremos que te sientas cómodo desde el primer segundo.</p>
                 </div>
 
@@ -1141,9 +1170,9 @@
                                     @if ($index === 0)
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z" /><circle cx="12" cy="13" r="3" /></svg>
                                     @elseif ($index === 1)
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4" /><path d="M17 12h4" /><path d="M12 3v4" /><path d="M12 17v4" /><circle cx="12" cy="12" r="3" /></svg>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path></svg>
                                     @else
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11h6" /><path d="M9 15h6" /><path d="M7 3h10a2 2 0 0 1 2 2v16l-7-3-7 3V5a2 2 0 0 1 2-2Z" /></svg>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg>
                                     @endif
                                 </span>
                                 <span class="sp-step-bubble">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</span>
@@ -1156,12 +1185,12 @@
             </div>
         </section>
 
-        <section class="sp-section alt">
+        <section class="sp-section">
             <div class="sp-shell">
                 <div class="sp-section-heading">
-                    <div class="sp-section-kicker">Resultados visuales</div>
-                    <h2>Tu sonrisa, transformada.</h2>
-                    <p>Placeholder visual para mostrar el tipo de cambio que buscamos explicar en tu valoración. Luego puedes reemplazarlo por casos reales o video.</p>
+                    <div class="sp-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg> Resultados visuales</div>
+                    <h2>Tu sonrisa, <span style="color:var(--sp-teal)">transformada.</span></h2>
+                    <p>Mira el antes y el después. Un cambio real que dura toda la vida.</p>
                 </div>
 
                 @if ($hasBeforeAfterImages)
@@ -1192,49 +1221,14 @@
                     </div>
                 @endif
 
-                <div class="sp-doctor">
-                    <div class="sp-doctor-photo" aria-hidden="true"></div>
-                    <div>
-                        <div class="sp-section-kicker">Tu especialista</div>
-                        <h2>Dra. Laura Mendez</h2>
-                        <p class="sp-subtitle">Especializada en tratamientos dentales personalizados, con foco en diagnóstico claro, tecnologia precisa y una experiencia tranquila desde la primera visita.</p>
-                        <div class="sp-doctor-list">
-                            <span>Certificación Invisalign Diamond</span>
-                            <span>Miembro SAO Argentina</span>
-                            <span>Especialización NYU</span>
-                            <span>Formación continua 2024</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
 
         <section class="sp-section">
             <div class="sp-shell">
                 <div class="sp-section-heading">
-                    <div class="sp-section-kicker">Sonrisas transformadas</div>
-                    <h2>Resultados que se sienten reales.</h2>
-                    <p>Casos, acompañamiento y reseñas para que tomes una decisión con más confianza.</p>
-                </div>
-
-                <div class="sp-smiles-grid">
-                    <article class="sp-smile-card featured">
-                        <strong>Planes pensados para tu ritmo.</strong>
-                        <p>Combinamos evaluación clínica, explicación simple y seguimiento para que cada paso del tratamiento tenga sentido.</p>
-                    </article>
-                    <article class="sp-smile-card">
-                        <strong>Pacientes que vuelven a sonreír.</strong>
-                        <p>La experiencia no termina en la primera cita: acompañamos dudas, avances y decisiónes importantes.</p>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-        <section class="sp-section alt">
-            <div class="sp-shell">
-                <div class="sp-section-heading">
-                    <div class="sp-section-kicker">Lo que dicen nuestros pacientes</div>
-                    <h2>Historias que sonríen.</h2>
+                    <div class="sp-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg> Lo que dicen nuestros pacientes</div>
+                    <h2>Historias que <span style="color:var(--sp-teal)">sonríen</span>.</h2>
                     <p>Comentarios de personas que dieron el primer paso con una guía clara.</p>
                 </div>
 
@@ -1264,8 +1258,8 @@
         <section class="sp-section">
             <div class="sp-shell">
                 <div class="sp-section-heading">
-                    <div class="sp-section-kicker">Preguntas frecuentes</div>
-                    <h2>Sabemos que dar el primer paso cuesta.</h2>
+                    <div class="sp-chip">Preguntas frecuentes</div>
+                    <h2>Sabemos que dar el primer paso <span style="color:var(--sp-teal)">cuesta</span>.</h2>
                     <p>Resolvemos las dudas más habituales antes de que llames.</p>
                 </div>
 
@@ -1330,8 +1324,39 @@
             const thresholdKey = `social-smart-link-threshold:${trackUrl}`;
             const sessionId = sessionStorage.getItem(storageKey) || crypto.randomUUID();
             const startedAt = Date.now();
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
             sessionStorage.setItem(storageKey, sessionId);
+
+            const revealSections = Array.from(document.querySelectorAll('.sp-section'));
+
+            if (revealSections.length > 0) {
+                revealSections.forEach((section, index) => {
+                    section.classList.add('is-reveal-ready');
+                    section.style.transitionDelay = prefersReducedMotion ? '0ms' : `${Math.min(index * 90, 240)}ms`;
+                });
+
+                if ('IntersectionObserver' in window && ! prefersReducedMotion) {
+                    const revealObserver = new IntersectionObserver((entries) => {
+                        entries.forEach((entry) => {
+                            if (! entry.isIntersecting) {
+                                return;
+                            }
+
+                            entry.target.classList.add('is-visible');
+                            entry.target.style.transitionDelay = '0ms';
+                            revealObserver.unobserve(entry.target);
+                        });
+                    }, {
+                        rootMargin: '0px 0px -8% 0px',
+                        threshold: .18,
+                    });
+
+                    revealSections.forEach((section) => revealObserver.observe(section));
+                } else {
+                    revealSections.forEach((section) => section.classList.add('is-visible'));
+                }
+            }
 
             const send = (eventType, durationSeconds = null, metadata = {}) => {
                 fetch(trackUrl, {
