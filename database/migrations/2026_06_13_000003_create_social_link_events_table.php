@@ -91,10 +91,10 @@ return new class extends Migration
                     ],
                     'ortodoncia' => [
                         'eyebrow' => 'Ortodoncia invisible',
-                        'title' => 'Alinea tu sonrisa con una experiencia discreta y planificada.',
+                        'title' => 'Tu nueva sonrisa, planificada a medida.',
                         'subtitle' => 'Conoce el flujo visual de un tratamiento moderno antes de escribirnos.',
                         'visual_label' => 'Simulacion Ortodoncia',
-                        'visual_image_url' => '/images/smart-links/ortodoncia/hero.png',
+                        'visual_image_url' => '/images/smart-links/ortodoncia/hero.jpg',
                         'video_url' => '',
                         'before_image_url' => '',
                         'before_video_url' => '/videos/smart-links/ortodoncia/before.mp4',

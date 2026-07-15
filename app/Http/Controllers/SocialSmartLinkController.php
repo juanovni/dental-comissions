@@ -188,7 +188,7 @@ class SocialSmartLinkController extends Controller
         $visitorName = $this->visitorName($comment);
 
         if ($visitorName) {
-            $subtitle = "Hola, {$visitorName}. {$subtitle}";
+            $subtitle = "Hola, <strong>{$visitorName}</strong>. {$subtitle}";
         }
 
         return [

@@ -21,7 +21,7 @@ class ApexSocialConversionFunnelChart extends ApexChartWidget
 
     protected ?string $heading = 'Embudo social';
 
-    protected ?string $description = 'Comentario -> WhatsApp -> ficha -> actividad.';
+    protected ?string $description = 'Comentario -> WhatsApp -> Ficha -> Cita -> Actividad.';
 
     public function getDescription(): ?string
     {

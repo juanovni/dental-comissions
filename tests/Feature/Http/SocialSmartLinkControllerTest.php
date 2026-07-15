@@ -60,7 +60,7 @@ class SocialSmartLinkControllerTest extends TestCase
             ->assertSee('Valoracion dental personalizada')
             ->assertSee('Tu sonrisa merece un plan claro')
             ->assertSee('humano y sin presion.')
-            ->assertSee('Hola, Paciente. Mira como trabajamos')
+            ->assertSee('Hola, <strong>Paciente</strong>. Mira como trabajamos', false)
             ->assertSee('Diagnostico integral')
             ->assertSee('/images/smart-links/unknown/hero.webp')
             ->assertSee('/videos/smart-links/unknown/before.mp4')
