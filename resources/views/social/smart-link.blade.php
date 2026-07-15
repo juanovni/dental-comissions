@@ -864,7 +864,7 @@
 
         .sp-testimonials {
             margin: 0 auto;
-            max-width: 46rem;
+            max-width: 52rem;
             overflow: hidden;
         }
 
@@ -877,7 +877,6 @@
             background: #ffffff;
             border: 1px solid var(--sp-border);
             border-radius: 1.2rem;
-            box-shadow: 0 18px 46px rgba(15, 23, 42, .06);
             flex: 0 0 100%;
             min-height: 13rem;
             padding: clamp(1.25rem, 3vw, 2rem);
