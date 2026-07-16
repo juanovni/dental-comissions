@@ -157,7 +157,9 @@ class SocialInbox extends Page
             ->limit(6)
             ->get()
             ->map(fn ($event): array => [
-                'label' => SocialLinkEventMapper::label($event->event_type),
+                'label' => $event->event_type === 'section_click' && filled($event->metadata['label'] ?? null)
+                    ? 'Exploro: '.$event->metadata['label']
+                    : SocialLinkEventMapper::label($event->event_type),
                 'type' => $event->event_type,
                 'icon' => SocialLinkEventMapper::icon($event->event_type),
                 'color' => SocialLinkEventMapper::color($event->event_type),

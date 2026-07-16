@@ -148,6 +148,13 @@ class SocialSmartLinkControllerTest extends TestCase
         ], ['X-CSRF-TOKEN' => 'test-csrf-token'])->assertOk();
 
         $this->withSession(['_token' => 'test-csrf-token'])->postJson(route('social-smart-link.track', ['trackingToken' => $comment->tracking_token]), [
+            'event_type' => 'section_click',
+            'session_id' => 'session-section',
+            'duration_seconds' => 18,
+            'metadata' => ['label' => 'Resultados visuales', 'target' => '#resultados'],
+        ], ['X-CSRF-TOKEN' => 'test-csrf-token'])->assertOk();
+
+        $this->withSession(['_token' => 'test-csrf-token'])->postJson(route('social-smart-link.track', ['trackingToken' => $comment->tracking_token]), [
             'event_type' => 'video_play_seconds',
             'session_id' => 'session-video',
             'duration_seconds' => 45,
@@ -156,6 +163,10 @@ class SocialSmartLinkControllerTest extends TestCase
         $this->assertDatabaseHas('social_link_events', [
             'social_comment_id' => $comment->id,
             'event_type' => 'button_click',
+        ]);
+        $this->assertDatabaseHas('social_link_events', [
+            'social_comment_id' => $comment->id,
+            'event_type' => 'section_click',
         ]);
         $this->assertDatabaseHas('social_link_events', [
             'social_comment_id' => $comment->id,

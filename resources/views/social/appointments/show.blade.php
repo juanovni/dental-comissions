@@ -6,20 +6,26 @@
     <title>Agenda tu cita</title>
     <style>
         :root {
-            --appt-bg: #f4fbfa;
+            --appt-bg: #edf7f5;
             --appt-card: #ffffff;
             --appt-muted: #64748b;
             --appt-text: #0f172a;
             --appt-border: #dbe8e7;
             --appt-primary: oklch(55% .12 185);
             --appt-primary-soft: #dcf7f3;
-            --appt-shadow: 0 14px 38px -30px rgba(15, 23, 42, .46);
+            --appt-shadow: 0 24px 70px -44px rgba(15, 23, 42, .55);
             color-scheme: light;
             font-family: Aptos, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
         * { box-sizing: border-box; }
-        body { background: var(--appt-bg); color: var(--appt-text); margin: 0; }
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(0, 155, 143, .12), transparent 32rem),
+                linear-gradient(180deg, #f7fdfc 0%, var(--appt-bg) 100%);
+            color: var(--appt-text);
+            margin: 0;
+        }
         button, input { font: inherit; }
         .visually-hidden-copy { left: -9999px; position: fixed; top: -9999px; }
 
@@ -27,13 +33,18 @@
             display: grid;
             gap: 1rem;
             margin: 0 auto;
-            max-width: 48rem;
+            max-width: 90rem;
             min-height: 100vh;
-            padding: 1.1rem;
+            padding: 1rem;
         }
         .appointment-shell.is-confirmed { align-content: center; }
 
-        .appointment-hero { padding-top: .45rem; }
+        .appointment-hero {
+            align-items: end;
+            display: grid;
+            gap: .65rem;
+            padding-top: .45rem;
+        }
         .appointment-eyebrow {
             align-items: center;
             color: #047c72;
@@ -51,21 +62,21 @@
         .appointment-card {
             background: var(--appt-card);
             border: 1px solid var(--appt-border);
-            border-radius: 1rem;
+            border-radius: 1.25rem;
             box-shadow: var(--appt-shadow);
             padding: 1rem;
         }
 
         .appointment-context {
             display: grid;
-            gap: .75rem;
+            gap: .7rem;
         }
 
         .context-item {
             align-items: center;
             background: #fbfefd;
             border: 1px solid var(--appt-border);
-            border-radius: .85rem;
+            border-radius: 1rem;
             display: flex;
             gap: .75rem;
             padding: .85rem;
@@ -85,25 +96,142 @@
         .context-label { color: var(--appt-muted); display: block; font-size: .72rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
         .context-value { display: block; font-size: .98rem; font-weight: 600; margin-top: .2rem; }
 
-        .schedule-head { display: flex; gap: 1rem; justify-content: space-between; margin-bottom: .85rem; }
+        .schedule-head {
+            align-items: end;
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
         .schedule-kicker { color: var(--appt-muted); display: block; font-size: .73rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-        .schedule-title { display: block; font-size: 1.05rem; font-weight: 600; margin-top: .2rem; }
+        .schedule-title { display: block; font-size: clamp(1.45rem, 3vw, 2.05rem); font-weight: 650; letter-spacing: -.04em; line-height: 1; margin-top: .25rem; }
         .schedule-count { color: var(--appt-muted); font-size: .78rem; white-space: nowrap; }
 
-        .date-grid { display: grid; gap: .75rem; }
-        .date-card {
-            border: 1px solid var(--appt-border);
-            border-radius: .9rem;
-            padding: .8rem;
+        .day-pills {
+            display: grid;
+            gap: .75rem;
+            grid-auto-columns: minmax(10.8rem, 1fr);
+            grid-auto-flow: column;
+            overflow-x: auto;
+            padding: .15rem .15rem .55rem;
+            scrollbar-width: none;
         }
-        .date-card.is-today { background: #e0f7f2; border-color: rgba(15, 118, 110, .28); }
-        .date-name { color: var(--appt-muted); display: block; font-size: .72rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
-        .date-value { display: block; font-size: 1.05rem; font-weight: 650; margin-top: .18rem; }
-        .slot-grid { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .75rem; }
+        .day-pills::-webkit-scrollbar { display: none; }
+
+        .day-pill {
+            align-items: stretch;
+            background: linear-gradient(180deg, #ffffff 0%, #fafeFD 100%);
+            border: 1px solid var(--appt-border);
+            border-radius: 1rem;
+            cursor: pointer;
+            display: grid;
+            flex: 0 0 auto;
+            gap: .8rem;
+            min-height: 13.6rem;
+            min-width: 10.8rem;
+            padding: 1rem;
+            position: relative;
+            text-align: left;
+            transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+            user-select: none;
+        }
+        .day-pill:hover { border-color: rgba(15, 118, 110, .32); transform: translateY(-1px); }
+        .day-pill.is-active {
+            background: linear-gradient(180deg, #d7f5ef 0%, #c9eee8 100%);
+            border-color: rgba(0, 155, 143, .5);
+            box-shadow: 0 18px 38px -30px rgba(0, 99, 88, .72);
+            color: var(--appt-text);
+        }
+        .day-pill.is-preferred { border-color: rgba(15, 118, 110, .35); }
+        .day-pill.is-full { opacity: .5; }
+        .day-pill.is-full.is-active { opacity: 1; }
+
+        .day-pill-name {
+            color: var(--appt-muted);
+            display: block;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+        .day-pill-date {
+            display: block;
+            font-size: 1.45rem;
+            font-weight: 650;
+            letter-spacing: -.04em;
+            line-height: 1.05;
+            margin-top: .22rem;
+        }
+        .day-pill-header { position: relative; }
+        .day-pill-status {
+            background: rgba(255, 255, 255, .7);
+            border: 1px solid rgba(219, 232, 231, .86);
+            border-radius: 999px;
+            display: inline-flex;
+            font-size: .67rem;
+            font-weight: 700;
+            margin-top: .6rem;
+            padding: .2rem .48rem;
+        }
+        .day-pill-status.available { color: #047c72; }
+        .day-pill-status.full { color: #b91c1c; }
+        .day-pill.is-active .day-pill-status.available,
+        .day-pill.is-active .day-pill-status.full { color: #047c72; opacity: 1; }
+
+        .day-pill-slots {
+            align-content: start;
+            display: grid;
+            gap: .42rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .day-pill-time {
+            background: rgba(255, 255, 255, .82);
+            border: 1px solid var(--appt-border);
+            border-radius: .6rem;
+            color: var(--appt-text);
+            font-size: .82rem;
+            font-weight: 650;
+            min-height: 2rem;
+            padding: .34rem .4rem;
+            text-align: center;
+        }
+
+        .day-pill.is-active .day-pill-time {
+            border-color: rgba(0, 155, 143, .25);
+        }
+
+        .day-pill-more {
+            color: var(--appt-muted);
+            font-size: .74rem;
+            font-weight: 650;
+            grid-column: 1 / -1;
+            padding: .05rem .1rem;
+        }
+
+        .day-slots-section {
+            background: #f8fdfc;
+            border: 1px solid var(--appt-border);
+            border-radius: 1rem;
+            margin-top: .95rem;
+            padding: .9rem;
+        }
+        .day-slots-label {
+            display: block;
+            color: #0f766e;
+            font-size: .82rem;
+            font-weight: 600;
+            margin-bottom: .55rem;
+        }
+        .slot-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+        }
         .slot-btn {
             background: #ffffff;
             border: 1px solid var(--appt-border);
-            border-radius: .55rem;
+            border-radius: .65rem;
             color: var(--appt-text);
             cursor: pointer;
             font-size: .85rem;
@@ -114,6 +242,43 @@
         }
         .slot-btn:hover, .slot-btn:focus { border-color: rgba(15, 118, 110, .45); outline: none; }
         .slot-btn.is-selected { background: var(--appt-primary); border-color: var(--appt-primary); color: #ffffff; }
+
+        .empty-day-message {
+            color: var(--appt-muted);
+            font-size: .88rem;
+            line-height: 1.5;
+            padding: .75rem 0;
+        }
+
+        .offer-context {
+            background: #fafffe;
+            border: 1px solid var(--appt-border);
+            border-radius: .75rem;
+            padding: .7rem .85rem;
+        }
+        .offer-context-label {
+            color: var(--appt-muted);
+            display: block;
+            font-size: .7rem;
+            font-weight: 600;
+            letter-spacing: .08em;
+            margin-bottom: .35rem;
+            text-transform: uppercase;
+        }
+        .offer-context-time {
+            align-items: center;
+            display: inline-flex;
+            font-size: .82rem;
+            font-weight: 600;
+            gap: .35rem;
+            margin-right: .6rem;
+            white-space: nowrap;
+        }
+        .offer-context-time svg {
+            color: #047c72;
+            height: .72rem;
+            width: .72rem;
+        }
 
         .appointment-message { border-radius: .8rem; font-size: .87rem; line-height: 1.45; padding: .85rem; }
         .appointment-message.success { background: #ecfdf5; color: #047857; }
@@ -168,9 +333,7 @@
             margin: .85rem auto 0;
             max-width: 34rem;
         }
-        .confirmation-details {
-            display: grid;
-        }
+        .confirmation-details { display: grid; }
         .confirmation-detail {
             align-items: center;
             border-bottom: 1px solid var(--appt-border);
@@ -235,6 +398,9 @@
             align-items: center;
             display: grid;
             gap: .85rem;
+            position: sticky;
+            bottom: .85rem;
+            z-index: 5;
         }
         .summary-content { align-items: start; display: flex; gap: .75rem; min-width: 0; }
         .summary-label { color: var(--appt-muted); display: block; font-size: .84rem; }
@@ -290,10 +456,22 @@
         .phone-confirm-text { line-height: 1.4; }
         .phone-confirm-text strong { color: var(--appt-text); font-weight: 600; }
 
+        .full-day-badge {
+            background: #fee2e2;
+            border-radius: .35rem;
+            color: #b91c1c;
+            display: inline-block;
+            font-size: .72rem;
+            font-weight: 700;
+            padding: .2rem .45rem;
+        }
+
         @media (min-width: 760px) {
-            .appointment-shell { gap: 1.25rem; padding: 2rem 1.25rem; }
+            .appointment-shell { gap: 1.25rem; padding: 2rem 1.75rem; }
+            .appointment-hero { grid-template-columns: minmax(0, 1fr) auto; }
+            .appointment-copy { margin-bottom: .1rem; }
             .appointment-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .date-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .day-pills { gap: .65rem; }
             .confirmation-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .confirmation-detail:nth-child(odd) { border-right: 1px solid var(--appt-border); }
             .confirmation-detail:nth-last-child(-n + 2) { border-bottom: 0; }
@@ -301,18 +479,22 @@
             .summary-card { grid-template-columns: minmax(0, 1fr) 14rem; }
             .appointment-btn { width: auto; }
         }
+
+        @media (min-width: 1180px) {
+            .day-pills { grid-template-columns: repeat(auto-fit, minmax(10.8rem, 1fr)); grid-auto-flow: initial; }
+        }
+
+        @media (max-width: 640px) {
+            .schedule-head { align-items: start; flex-direction: column; }
+            .day-pill { min-height: 12.4rem; }
+            .summary-card { bottom: .55rem; }
+        }
     </style>
 </head>
 <body>
     @php
         $procedureName = $procedure?->name ?? 'Valoración dental';
-        $duration = app(\App\Services\SocialCrmSettingsService::class)->appointmentSlotDuration();
         $doctorName = $doctor?->name;
-        $firstDate = collect($options)->pluck('datetime')->filter()->map(fn ($date) => \Carbon\Carbon::parse($date))->sort()->first();
-        $lastDate = collect($options)->pluck('datetime')->filter()->map(fn ($date) => \Carbon\Carbon::parse($date))->sort()->last();
-        $rangeLabel = $firstDate && $lastDate
-            ? $firstDate->isoFormat('D MMM').($firstDate->isSameDay($lastDate) ? '' : ' - '.$lastDate->isoFormat('D MMM YYYY'))
-            : 'Opciones disponibles';
         $confirmedDate = $confirmedAppointment?->scheduled_at;
         $confirmedProcedure = $confirmedAppointment?->procedure?->name ?? $procedureName;
         $confirmedDuration = $confirmedAppointment?->duration_minutes ?: $duration;
@@ -324,6 +506,19 @@
             'Hora: '.($confirmedDate?->format('H:i') ?? 'Hora registrada').($confirmedDuration ? ' h · '.$confirmedDuration.' min' : ''),
             $confirmedDoctor ? 'Profesional: '.$confirmedDoctor : null,
         ])->filter()->implode("\n");
+
+        $windowDays = $availabilityWindow['days'] ?? [];
+        $preferredDateFull = $availabilityWindow['preferred_date_full'] ?? false;
+        $firstAvailableDay = $availabilityWindow['first_available_day'] ?? null;
+        $daysWithSlots = collect($windowDays)->filter(fn ($d) => ! $d['is_full'])->count();
+        $totalSlots = collect($windowDays)->sum('slot_count');
+        $firstWindowDay = collect($windowDays)->first();
+        $lastWindowDay = collect($windowDays)->last();
+        $scheduleStart = $firstWindowDay['date'] ?? null;
+        $scheduleEnd = $lastWindowDay['date'] ?? null;
+        $scheduleRange = $scheduleStart && $scheduleEnd
+            ? $scheduleStart->isoFormat('D MMM').' — '.$scheduleEnd->isoFormat('D MMM YYYY')
+            : 'Próximos días';
     @endphp
 
     <main class="appointment-shell {{ $confirmedAppointment ? 'is-confirmed' : '' }}">
@@ -333,9 +528,9 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m5.6 5.6 2.8 2.8"/><path d="m15.6 15.6 2.8 2.8"/><path d="m18.4 5.6-2.8 2.8"/><path d="m8.4 15.6-2.8 2.8"/></svg>
                 Clínica Dental
             </div>
-            <h1>Agenda tu cita</h1>
+
             <p class="appointment-copy">
-                Selecciona uno de los horarios disponibles que te ofrecimos por WhatsApp. Validaremos disponibilidad antes de registrar la cita.
+                Elige el horario que mejor te funcione. Validaremos disponibilidad antes de registrar la cita.
             </p>
         </header>
         @endunless
@@ -412,46 +607,116 @@
                 <div class="appointment-message error">{{ session('appointment_error') }}</div>
             @elseif ($expired)
                 <div class="appointment-message warning">Este enlace ya expiró o fue utilizado. Escríbenos por WhatsApp para generar nuevas opciones.</div>
-            @elseif (! $hasAvailableOptions)
-                <div class="appointment-message warning">Estos horarios ya no están disponibles. Escríbenos por WhatsApp para generar nuevas opciones.</div>
+            @elseif ($daysWithSlots === 0)
+                <div class="appointment-message warning">No encontramos horarios disponibles en los próximos días. Escríbenos por WhatsApp para ayudarte a coordinar una cita.</div>
             @else
                 <div class="schedule-head">
                     <div>
-                        <span class="schedule-kicker">Opciones ofrecidas</span>
-                        <span class="schedule-title">{{ $rangeLabel }}</span>
+                        <span class="schedule-kicker">
+                            @if ($preferredDate && $preferredDateFull)
+                                {{ $preferredDate->isoFormat('ddd D [de] MMM') }} está completo
+                            @else
+                                Semana
+                            @endif
+                        </span>
+                        <span class="schedule-title">
+                            @if ($preferredDate && $preferredDateFull)
+                                Mostrando opciones cercanas
+                            @else
+                                {{ $scheduleRange }}
+                            @endif
+                        </span>
                     </div>
-                    <span class="schedule-count">{{ count($options) }} horarios</span>
+                    <span class="schedule-count">{{ $totalSlots }} horarios · {{ $daysWithSlots }} días</span>
                 </div>
 
-                <div class="date-grid">
-                    @foreach ($groups as $group)
-                        @php $date = \Carbon\Carbon::parse($group['date']); @endphp
-                        <div class="date-card {{ $date->isToday() ? 'is-today' : '' }}">
-                            <span class="date-name">{{ $date->isoFormat('ddd') }}</span>
-                            <span class="date-value">{{ $date->isoFormat('D MMM') }}</span>
-                            <div class="slot-grid">
-                                @foreach ($group['options'] as $option)
-                                    @php $slot = \Carbon\Carbon::parse($option['datetime']); @endphp
-                                    <button
-                                        class="slot-btn"
-                                        type="button"
-                                        data-option="{{ $option['index'] }}"
-                                        data-summary="{{ $slot->isoFormat('dddd D [de] MMMM') }} · {{ $slot->format('g:i A') }}"
-                                        data-meta="{{ trim(($doctorName ? $doctorName.' · ' : '').$procedureName) }}"
-                                    >
-                                        {{ $slot->format('g:i A') }}
-                                    </button>
+                @if ($preferredDate && $preferredDateFull)
+                    <div class="offer-context" style="margin-bottom:.85rem;">
+                        <span class="offer-context-label">{{ $preferredDate->isoFormat('ddd D [de] MMMM') }}</span>
+                        <span><span class="full-day-badge">Completo</span> &nbsp; <span style="color:var(--appt-muted);font-size:.82rem;">No quedan horarios libres para este día. Te mostramos alternativas cercanas.</span></span>
+                    </div>
+                @endif
+
+                <div class="day-pills" id="day-pills">
+                    @foreach ($windowDays as $day)
+                        @php
+                            $date = $day['date'];
+                            $isActive = $loop->first && ! $preferredDateFull;
+                            $isActive = $isActive || ($loop->first && $preferredDateFull && $firstAvailableDay && $date->isSameDay($firstAvailableDay));
+                            $isActive = $isActive || ($preferredDate && ! $preferredDateFull && $date->isSameDay($preferredDate));
+                        @endphp
+                        <button
+                            class="day-pill
+                                {{ $isActive ? 'is-active' : '' }}
+                                {{ $day['is_preferred'] && ! $day['is_full'] ? 'is-preferred' : '' }}
+                                {{ $day['is_full'] ? 'is-full' : '' }}"
+                            type="button"
+                            data-date="{{ $date->toDateString() }}"
+                            data-slots='@json(collect($day['slots'])->map(fn ($s) => ['datetime' => $s->format('Y-m-d H:i:s'), 'time' => $s->format('g:i A'), 'iso' => $s->isoFormat('dddd D [de] MMMM [a las] h:mm A')])->values()->all())'
+                            aria-label="Seleccionar {{ $day['long_label'] }}"
+                        >
+                            <span class="day-pill-header">
+                                <span class="day-pill-name">{{ $date->isoFormat('ddd') }}</span>
+                                <span class="day-pill-date">{{ $date->isoFormat('D MMM') }}</span>
+                                @if ($day['is_full'])
+                                    <span class="day-pill-status full">Completo</span>
+                                @else
+                                    <span class="day-pill-status available">{{ $day['slot_count'] }} horario{{ $day['slot_count'] !== 1 ? 's' : '' }}</span>
+                                @endif
+                            </span>
+
+                            <span class="day-pill-slots" aria-hidden="true">
+                                @foreach (collect($day['slots'])->take(8) as $slotPreview)
+                                    <span class="day-pill-time">{{ $slotPreview->format('H:i') }}</span>
                                 @endforeach
-                            </div>
-                        </div>
+                                @if ($day['slot_count'] > 8)
+                                    <span class="day-pill-more">+{{ $day['slot_count'] - 8 }} horarios más</span>
+                                @endif
+                            </span>
+                        </button>
                     @endforeach
+                </div>
+
+                <div class="day-slots-section" id="day-slots-section">
+                    @php
+                        $firstDayWithSlots = collect($windowDays)->first(fn ($d) => ! $d['is_full']);
+                        $initialDay = null;
+                        if ($preferredDate && ! $preferredDateFull) {
+                            $initialDay = collect($windowDays)->first(fn ($d) => $d['date']->isSameDay($preferredDate));
+                        }
+                        if (! $initialDay) {
+                            $initialDay = $firstDayWithSlots;
+                        }
+                    @endphp
+
+                    @if ($initialDay)
+                        <span class="day-slots-label" id="day-slots-label">{{ $initialDay['date']->isoFormat('dddd D [de] MMMM') }}</span>
+                        <div class="slot-grid" id="slot-grid">
+                            @foreach ($initialDay['slots'] as $slot)
+                                <button
+                                    class="slot-btn"
+                                    type="button"
+                                    data-datetime="{{ $slot->format('Y-m-d H:i:s') }}"
+                                    data-summary="{{ $slot->isoFormat('dddd D [de] MMMM') }} · {{ $slot->format('g:i A') }}"
+                                    data-meta="{{ trim(($doctorName ? $doctorName.' · ' : '').$procedureName) }}"
+                                >
+                                    {{ $slot->format('g:i A') }}
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div class="empty-day-message" id="empty-day-message" style="display:none;">
+                        Este día no tiene horarios disponibles.
+                    </div>
                 </div>
             @endif
         </section>
 
-        @if (! $expired && $hasAvailableOptions && ! session('appointment_success'))
+        @if (! $expired && $daysWithSlots > 0 && ! session('appointment_success'))
             <form class="appointment-card summary-card" method="POST" action="{{ route('social-appointments.confirm', ['token' => $offer->token]) }}" id="appointment-confirm-form">
                 @csrf
+                <input type="hidden" name="selected_datetime" id="selected-datetime" value="">
                 <input type="hidden" name="option" id="selected-option" value="">
 
                 @if ($needsPatientName)
@@ -487,23 +752,79 @@
 
     <script>
         (function () {
-            var buttons = document.querySelectorAll('.slot-btn');
-            var input = document.getElementById('selected-option');
+            var pills = document.querySelectorAll('.day-pill');
+            var slotGrid = document.getElementById('slot-grid');
+            var slotLabel = document.getElementById('day-slots-label');
+            var emptyMessage = document.getElementById('empty-day-message');
+            var datetimeInput = document.getElementById('selected-datetime');
+            var optionInput = document.getElementById('selected-option');
             var summary = document.getElementById('selected-summary');
             var meta = document.getElementById('selected-meta');
             var confirmButton = document.getElementById('confirm-button');
 
-            buttons.forEach(function (button) {
-                button.addEventListener('click', function () {
-                    buttons.forEach(function (candidate) { candidate.classList.remove('is-selected'); });
-                    button.classList.add('is-selected');
+            function renderSlots(daySlots) {
+                slotGrid.innerHTML = '';
+                emptyMessage.style.display = 'none';
+                slotGrid.style.display = '';
 
-                    input.value = button.dataset.option;
-                    summary.textContent = button.dataset.summary;
-                    meta.textContent = button.dataset.meta;
-                    confirmButton.disabled = false;
+                if (! daySlots || daySlots.length === 0) {
+                    slotGrid.style.display = 'none';
+                    emptyMessage.style.display = '';
+                    return;
+                }
+
+                daySlots.forEach(function (slot) {
+                    var button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'slot-btn';
+                    button.dataset.datetime = slot.datetime;
+                    button.dataset.summary = slot.iso;
+                    button.dataset.meta = meta.textContent;
+                    button.textContent = slot.time;
+
+                    button.addEventListener('click', function () {
+                        slotGrid.querySelectorAll('.slot-btn').forEach(function (candidate) { candidate.classList.remove('is-selected'); });
+                        button.classList.add('is-selected');
+
+                        datetimeInput.value = slot.datetime;
+                        optionInput.value = '';
+                        summary.textContent = slot.iso;
+                        confirmButton.disabled = false;
+                    });
+
+                    slotGrid.appendChild(button);
+                });
+            }
+
+            pills.forEach(function (pill) {
+                pill.addEventListener('click', function () {
+                    if (pill.classList.contains('is-full')) {
+                        return;
+                    }
+
+                    pills.forEach(function (c) { c.classList.remove('is-active'); });
+                    pill.classList.add('is-active');
+
+                    var daySlots = JSON.parse(pill.dataset.slots || '[]');
+                    var dateLabel = pill.querySelector('.day-pill-name').textContent + ' ' + pill.querySelector('.day-pill-date').textContent;
+
+                    slotLabel.textContent = dateLabel;
+                    renderSlots(daySlots);
+
+                    datetimeInput.value = '';
+                    optionInput.value = '';
+                    summary.textContent = 'Selecciona un horario disponible';
+                    confirmButton.disabled = true;
                 });
             });
+
+            if (pills.length > 0) {
+                var activePill = document.querySelector('.day-pill.is-active');
+                if (activePill) {
+                    var initialSlots = JSON.parse(activePill.dataset.slots || '[]');
+                    renderSlots(initialSlots);
+                }
+            }
 
             var copyButton = document.getElementById('copy-summary');
             var copyLabel = document.getElementById('copy-summary-label');

@@ -67,6 +67,14 @@
 
         main { padding-top: 4.25rem; }
 
+        .sp-nav-content {
+            align-items: center;
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            width: 100%;
+        }
+
         .sp-brand,
         .sp-token {
             align-items: center;
@@ -199,6 +207,55 @@
             background: #ffffff;
             border: 1px solid var(--sp-border);
             color: var(--sp-ink);
+        }
+
+        .sp-quick-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .65rem;
+            margin-top: 1rem;
+        }
+
+        .sp-nav .sp-quick-links {
+            flex: 1 1 auto;
+            justify-content: center;
+            margin: 0;
+            min-width: 0;
+        }
+
+        .sp-quick-link {
+            align-items: center;
+            background: rgba(255, 255, 255, .72);
+            border: 1px solid rgba(0, 155, 143, .18);
+            border-radius: 999px;
+            color: var(--sp-ink);
+            display: inline-flex;
+            font-size: .8rem;
+            font-weight: 800;
+            gap: .38rem;
+            padding: .55rem .85rem;
+            text-decoration: none;
+            transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+        }
+
+        .sp-quick-link:hover {
+            background: var(--sp-teal-soft);
+            border-color: rgba(0, 155, 143, .28);
+            color: var(--sp-teal);
+            transform: translateY(-1px);
+        }
+
+        .sp-quick-link svg {
+            color: var(--sp-teal);
+            flex: 0 0 auto;
+            height: .92rem;
+            width: .92rem;
+        }
+
+        .sp-nav .sp-quick-link {
+            font-size: .74rem;
+            padding: .46rem .72rem;
+            white-space: nowrap;
         }
 
         .sp-sticky-whatsapp {
@@ -991,12 +1048,31 @@
                 display: grid;
             }
 
+            .sp-nav-content {
+                display: grid;
+                grid-template-columns: auto auto;
+            }
+
+            .sp-nav .sp-quick-links {
+                grid-column: 1 / -1;
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: .12rem;
+                scrollbar-width: none;
+            }
+
+            .sp-nav .sp-quick-links::-webkit-scrollbar { display: none; }
+
+            main { padding-top: 7.4rem; }
+
             .sp-token,
             .sp-btn,
             .sp-cta-band .sp-btn {
                 justify-content: center;
                 width: 100%;
             }
+
+            .sp-nav .sp-token { width: auto; }
 
             .sp-facts,
             .sp-benefits,
@@ -1032,11 +1108,26 @@
 </head>
 <body>
     <header class="sp-nav">
-        <div class="sp-shell" style="align-items:center;display:flex;justify-content:space-between;width:100%;gap:1rem;">
+        <div class="sp-shell sp-nav-content">
             <div class="sp-brand">
                 <span class="sp-brand-mark">DC</span>
                 <strong>OdonCRM</strong>
             </div>
+
+            <nav class="sp-quick-links" aria-label="Explorar secciones del plan">
+                <a class="sp-quick-link" href="#resultados" data-section-link data-section-name="Resultados visuales">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+                    Ver resultados
+                </a>
+                <a class="sp-quick-link" href="#testimonios" data-section-link data-section-name="Lo que dicen nuestros pacientes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg>
+                    Testimonios
+                </a>
+                <a class="sp-quick-link" href="#preguntas" data-section-link data-section-name="Preguntas frecuentes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>
+                    Preguntas
+                </a>
+            </nav>
 
             <div class="sp-token">Plan activo {{ $trackingToken }}</div>
         </div>
@@ -1072,6 +1163,7 @@
                             @endif
                             <a class="sp-btn sp-btn-soft" href="#visita">Ver primera visita</a>
                         </div>
+
                     </div>
 
                     <aside class="sp-plan-card animate-float" aria-label="Resumen del plan dental">
@@ -1184,7 +1276,7 @@
             </div>
         </section>
 
-        <section class="sp-section">
+        <section class="sp-section" id="resultados">
             <div class="sp-shell">
                 <div class="sp-section-heading">
                     <div class="sp-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg> Resultados visuales</div>
@@ -1223,7 +1315,7 @@
             </div>
         </section>
 
-        <section class="sp-section">
+        <section class="sp-section" id="testimonios">
             <div class="sp-shell">
                 <div class="sp-section-heading">
                     <div class="sp-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg> Lo que dicen nuestros pacientes</div>
@@ -1254,7 +1346,7 @@
             </div>
         </section>
 
-        <section class="sp-section">
+        <section class="sp-section" id="preguntas">
             <div class="sp-shell">
                 <div class="sp-section-heading">
                     <div class="sp-chip">Preguntas frecuentes</div>
@@ -1393,6 +1485,17 @@
                 button.addEventListener('click', () => {
                     const duration = Math.round((Date.now() - startedAt) / 1000);
                     send('button_click', duration, { label: button.textContent.trim(), source: 'smart_link_button' });
+                });
+            });
+
+            document.querySelectorAll('[data-section-link]').forEach((link) => {
+                link.addEventListener('click', () => {
+                    const duration = Math.round((Date.now() - startedAt) / 1000);
+                    send('section_click', duration, {
+                        label: link.dataset.sectionName || link.textContent.trim(),
+                        target: link.getAttribute('href'),
+                        source: 'smart_link_header_nav',
+                    });
                 });
             });
 

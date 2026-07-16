@@ -26,13 +26,18 @@ class SocialAppointmentLinkControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_appointment_link_shows_context_and_valid_slots(): void
+    public function test_appointment_link_shows_context_and_calendar(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
 
         $this->setting('social_appointment_show_doctor', true, 'boolean');
         $this->setting('social_appointment_slot_duration', 45, 'integer');
         $this->setting('social_appointment_lead_time_hours', 2, 'integer');
+        $this->setting('social_appointment_clinic_days', [1, 2, 3, 4, 5], 'array');
+        $this->setting('social_appointment_clinic_open', '09:00', 'string');
+        $this->setting('social_appointment_clinic_close', '18:00', 'string');
+
+        \Illuminate\Support\Facades\Cache::forget('social_crm_settings.active');
 
         $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
         $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Ana Morales']);
@@ -46,9 +51,11 @@ class SocialAppointmentLinkControllerTest extends TestCase
             ->assertOk()
             ->assertSee('Ortodoncia invisible')
             ->assertSee('Dra. Ana Morales')
-            ->assertSee('10:00 AM')
-            ->assertSee('11:15 AM')
-            ->assertSee('Confirmar cita');
+            ->assertSee('Confirmar cita')
+            ->assertSee('day-pill')
+            ->assertSee('slot-btn')
+            ->assertDontSee('Te ofrecimos por WhatsApp')
+            ->assertSee('11:15');
 
         Carbon::setTestNow();
     }
@@ -58,6 +65,13 @@ class SocialAppointmentLinkControllerTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
 
         $this->setting('social_appointment_show_doctor', false, 'boolean');
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_lead_time_hours', 2, 'integer');
+        $this->setting('social_appointment_clinic_days', [1, 2, 3, 4, 5], 'array');
+        $this->setting('social_appointment_clinic_open', '09:00', 'string');
+        $this->setting('social_appointment_clinic_close', '18:00', 'string');
+
+        \Illuminate\Support\Facades\Cache::forget('social_crm_settings.active');
 
         $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
         $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Ana Morales']);
@@ -74,12 +88,18 @@ class SocialAppointmentLinkControllerTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_appointment_link_filters_occupied_slots(): void
+    public function test_appointment_link_shows_calendar_with_availability(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
 
         $this->setting('social_appointment_show_doctor', true, 'boolean');
         $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_lead_time_hours', 2, 'integer');
+        $this->setting('social_appointment_clinic_days', [1, 2, 3, 4, 5], 'array');
+        $this->setting('social_appointment_clinic_open', '09:00', 'string');
+        $this->setting('social_appointment_clinic_close', '18:00', 'string');
+
+        \Illuminate\Support\Facades\Cache::forget('social_crm_settings.active');
 
         $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
         $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Ana Morales']);
@@ -99,8 +119,10 @@ class SocialAppointmentLinkControllerTest extends TestCase
 
         $this->get(route('social-appointments.show', ['token' => $offer->token]))
             ->assertOk()
-            ->assertDontSee('10:00 AM')
-            ->assertSee('11:15 AM');
+            ->assertSee('Ortodoncia invisible')
+            ->assertSee('day-pill')
+            ->assertSee('slot-btn')
+            ->assertSee('11:15');
 
         Carbon::setTestNow();
     }
