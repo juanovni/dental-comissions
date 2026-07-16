@@ -107,13 +107,66 @@
         .schedule-title { display: block; font-size: clamp(1.45rem, 3vw, 2.05rem); font-weight: 650; letter-spacing: -.04em; line-height: 1; margin-top: .25rem; }
         .schedule-count { color: var(--appt-muted); font-size: .78rem; white-space: nowrap; }
 
+        .appointment-carousel-shell {
+            position: relative;
+        }
+
+        .appointment-carousel-shell::before,
+        .appointment-carousel-shell::after {
+            content: '';
+            inset-block: 0 .55rem;
+            pointer-events: none;
+            position: absolute;
+            width: 3rem;
+            z-index: 4;
+        }
+
+        .appointment-carousel-shell::before {
+            background: linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0));
+            left: -.1rem;
+        }
+
+        .appointment-carousel-shell::after {
+            background: linear-gradient(270deg, #ffffff, rgba(255, 255, 255, 0));
+            right: -.1rem;
+        }
+
+        .appointment-carousel-btn {
+            align-items: center;
+            background: rgba(255, 255, 255, .94);
+            border: 1px solid var(--appt-border);
+            border-radius: 999px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
+            color: var(--appt-text);
+            cursor: pointer;
+            display: inline-flex;
+            font-size: 1.25rem;
+            font-weight: 700;
+            height: 2.55rem;
+            justify-content: center;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+            width: 2.55rem;
+            z-index: 8;
+        }
+
+        .appointment-carousel-btn:hover { background: #ffffff; box-shadow: 0 16px 34px rgba(15, 23, 42, .15); transform: translateY(-50%) scale(1.04); }
+        .appointment-carousel-btn.prev { left: .35rem; }
+        .appointment-carousel-btn.next { right: .35rem; }
+
         .day-pills {
             display: grid;
             gap: .75rem;
             grid-auto-columns: minmax(10.8rem, 1fr);
             grid-auto-flow: column;
             overflow-x: auto;
-            padding: .15rem .15rem .55rem;
+            overscroll-behavior-x: contain;
+            padding: .15rem 3.35rem .55rem;
+            scroll-behavior: smooth;
+            scroll-padding-inline: 3.35rem;
+            scroll-snap-type: x proximity;
             scrollbar-width: none;
         }
         .day-pills::-webkit-scrollbar { display: none; }
@@ -123,7 +176,6 @@
             background: linear-gradient(180deg, #ffffff 0%, #fafeFD 100%);
             border: 1px solid var(--appt-border);
             border-radius: 1rem;
-            cursor: pointer;
             display: grid;
             flex: 0 0 auto;
             gap: .8rem;
@@ -131,9 +183,9 @@
             min-width: 10.8rem;
             padding: 1rem;
             position: relative;
+            scroll-snap-align: start;
             text-align: left;
             transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
-            user-select: none;
         }
         .day-pill:hover { border-color: rgba(15, 118, 110, .32); transform: translateY(-1px); }
         .day-pill.is-active {
@@ -178,70 +230,26 @@
         .day-pill.is-active .day-pill-status.available,
         .day-pill.is-active .day-pill-status.full { color: #047c72; opacity: 1; }
 
-        .day-pill-slots {
-            align-content: start;
+        .slot-grid {
             display: grid;
             gap: .42rem;
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-
-        .day-pill-time {
-            background: rgba(255, 255, 255, .82);
-            border: 1px solid var(--appt-border);
-            border-radius: .6rem;
-            color: var(--appt-text);
-            font-size: .82rem;
-            font-weight: 650;
-            min-height: 2rem;
-            padding: .34rem .4rem;
-            text-align: center;
-        }
-
-        .day-pill.is-active .day-pill-time {
-            border-color: rgba(0, 155, 143, .25);
-        }
-
-        .day-pill-more {
-            color: var(--appt-muted);
-            font-size: .74rem;
-            font-weight: 650;
-            grid-column: 1 / -1;
-            padding: .05rem .1rem;
-        }
-
-        .day-slots-section {
-            background: #f8fdfc;
-            border: 1px solid var(--appt-border);
-            border-radius: 1rem;
-            margin-top: .95rem;
-            padding: .9rem;
-        }
-        .day-slots-label {
-            display: block;
-            color: #0f766e;
-            font-size: .82rem;
-            font-weight: 600;
-            margin-bottom: .55rem;
-        }
-        .slot-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .45rem;
-        }
         .slot-btn {
-            background: #ffffff;
+            background: rgba(255, 255, 255, .84);
             border: 1px solid var(--appt-border);
             border-radius: .65rem;
             color: var(--appt-text);
             cursor: pointer;
             font-size: .85rem;
-            font-weight: 600;
+            font-weight: 650;
             min-height: 2.1rem;
-            padding: .4rem .62rem;
-            transition: background-color .16s ease, border-color .16s ease, color .16s ease, filter .16s ease;
+            padding: .42rem .35rem;
+            text-align: center;
+            transition: background-color .16s ease, border-color .16s ease, color .16s ease, filter .16s ease, transform .16s ease;
         }
-        .slot-btn:hover, .slot-btn:focus { border-color: rgba(15, 118, 110, .45); outline: none; }
-        .slot-btn.is-selected { background: var(--appt-primary); border-color: var(--appt-primary); color: #ffffff; }
+        .slot-btn:hover, .slot-btn:focus { border-color: rgba(15, 118, 110, .45); outline: none; transform: translateY(-1px); }
+        .slot-btn.is-selected { background: var(--appt-primary); border-color: var(--appt-primary); color: #ffffff; box-shadow: 0 10px 20px -16px rgba(0, 99, 88, .9); }
 
         .empty-day-message {
             color: var(--appt-muted);
@@ -396,6 +404,8 @@
 
         .summary-card {
             align-items: center;
+            background: rgba(255, 255, 255, .94);
+            backdrop-filter: blur(14px);
             display: grid;
             gap: .85rem;
             position: sticky;
@@ -403,8 +413,9 @@
             z-index: 5;
         }
         .summary-content { align-items: start; display: flex; gap: .75rem; min-width: 0; }
+        .summary-content > span:last-child { min-width: 0; }
         .summary-label { color: var(--appt-muted); display: block; font-size: .84rem; }
-        .summary-title { display: block; font-size: 1rem; font-weight: 650; line-height: 1.3; margin-top: .12rem; }
+        .summary-title { display: block; font-size: 1rem; font-weight: 650; line-height: 1.3; margin-top: .12rem; overflow-wrap: anywhere; }
         .summary-meta { color: #475569; display: block; font-size: .82rem; margin-top: .18rem; }
         .appointment-btn {
             align-items: center;
@@ -415,17 +426,17 @@
             cursor: pointer;
             display: inline-flex;
             font-size: .88rem;
-            font-weight: 600;
+            font-weight: 700;
             gap: .42rem;
             justify-content: center;
-            min-height: 2.55rem;
-            padding: .68rem .9rem;
-            transition: filter .16s ease, opacity .16s ease;
+            min-height: 3rem;
+            padding: .78rem 1rem;
+            transition: filter .16s ease, opacity .16s ease, transform .16s ease;
             width: 100%;
         }
         .appointment-btn svg { height: 1rem; width: 1rem; }
-        .appointment-btn:disabled { cursor: not-allowed; opacity: .52; }
-        .appointment-btn:not(:disabled):hover { filter: brightness(.97); }
+        .appointment-btn:disabled { background: #7bc5bd; cursor: not-allowed; opacity: 1; }
+        .appointment-btn:not(:disabled):hover { filter: brightness(.97); transform: translateY(-1px); }
 
         .patient-info-row { display: grid; gap: .4rem; }
         .patient-info-label { color: var(--appt-muted); font-size: .78rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
@@ -480,14 +491,29 @@
             .appointment-btn { width: auto; }
         }
 
-        @media (min-width: 1180px) {
-            .day-pills { grid-template-columns: repeat(auto-fit, minmax(10.8rem, 1fr)); grid-auto-flow: initial; }
-        }
-
         @media (max-width: 640px) {
+            body { padding-bottom: 12rem; }
             .schedule-head { align-items: start; flex-direction: column; }
-            .day-pill { min-height: 12.4rem; }
-            .summary-card { bottom: .55rem; }
+            .schedule-count { white-space: normal; }
+            .appointment-carousel-shell { margin-inline: -1rem; }
+            .appointment-carousel-shell::before,
+            .appointment-carousel-shell::after { display: none; }
+            .appointment-carousel-btn { height: 2.35rem; opacity: .92; top: 47%; width: 2.35rem; }
+            .appointment-carousel-btn.prev { left: .55rem; }
+            .appointment-carousel-btn.next { right: .55rem; }
+            .day-pills { grid-auto-columns: minmax(16.2rem, 76vw); padding-inline: 1rem 4.4rem; scroll-padding-inline: 1rem; }
+            .day-pill { min-height: 13rem; }
+            .summary-card {
+                border-radius: 1.1rem 1.1rem 0 0;
+                bottom: 0;
+                box-shadow: 0 -18px 44px -30px rgba(15, 23, 42, .75);
+                left: 0;
+                margin: 0;
+                padding: .9rem 1rem calc(.9rem + env(safe-area-inset-bottom));
+                position: fixed;
+                right: 0;
+            }
+            .appointment-btn { width: 100%; }
         }
     </style>
 </head>
@@ -637,23 +663,26 @@
                     </div>
                 @endif
 
-                <div class="day-pills" id="day-pills">
-                    @foreach ($windowDays as $day)
+                <div class="appointment-carousel-shell">
+                    <button class="appointment-carousel-btn prev" type="button" aria-label="Ver días anteriores" data-appointment-carousel="prev">&lsaquo;</button>
+                    <button class="appointment-carousel-btn next" type="button" aria-label="Ver días siguientes" data-appointment-carousel="next">&rsaquo;</button>
+
+                    <div class="day-pills" id="day-pills" data-appointment-days>
+                        @foreach ($windowDays as $day)
                         @php
                             $date = $day['date'];
                             $isActive = $loop->first && ! $preferredDateFull;
                             $isActive = $isActive || ($loop->first && $preferredDateFull && $firstAvailableDay && $date->isSameDay($firstAvailableDay));
                             $isActive = $isActive || ($preferredDate && ! $preferredDateFull && $date->isSameDay($preferredDate));
                         @endphp
-                        <button
+                        <div
                             class="day-pill
                                 {{ $isActive ? 'is-active' : '' }}
                                 {{ $day['is_preferred'] && ! $day['is_full'] ? 'is-preferred' : '' }}
                                 {{ $day['is_full'] ? 'is-full' : '' }}"
-                            type="button"
                             data-date="{{ $date->toDateString() }}"
-                            data-slots='@json(collect($day['slots'])->map(fn ($s) => ['datetime' => $s->format('Y-m-d H:i:s'), 'time' => $s->format('g:i A'), 'iso' => $s->isoFormat('dddd D [de] MMMM [a las] h:mm A')])->values()->all())'
-                            aria-label="Seleccionar {{ $day['long_label'] }}"
+                            aria-label="{{ $day['long_label'] }}"
+                            role="group"
                         >
                             <span class="day-pill-header">
                                 <span class="day-pill-name">{{ $date->isoFormat('ddd') }}</span>
@@ -665,49 +694,26 @@
                                 @endif
                             </span>
 
-                            <span class="day-pill-slots" aria-hidden="true">
-                                @foreach (collect($day['slots'])->take(8) as $slotPreview)
-                                    <span class="day-pill-time">{{ $slotPreview->format('H:i') }}</span>
-                                @endforeach
-                                @if ($day['slot_count'] > 8)
-                                    <span class="day-pill-more">+{{ $day['slot_count'] - 8 }} horarios más</span>
-                                @endif
-                            </span>
-                        </button>
-                    @endforeach
-                </div>
-
-                <div class="day-slots-section" id="day-slots-section">
-                    @php
-                        $firstDayWithSlots = collect($windowDays)->first(fn ($d) => ! $d['is_full']);
-                        $initialDay = null;
-                        if ($preferredDate && ! $preferredDateFull) {
-                            $initialDay = collect($windowDays)->first(fn ($d) => $d['date']->isSameDay($preferredDate));
-                        }
-                        if (! $initialDay) {
-                            $initialDay = $firstDayWithSlots;
-                        }
-                    @endphp
-
-                    @if ($initialDay)
-                        <span class="day-slots-label" id="day-slots-label">{{ $initialDay['date']->isoFormat('dddd D [de] MMMM') }}</span>
-                        <div class="slot-grid" id="slot-grid">
-                            @foreach ($initialDay['slots'] as $slot)
-                                <button
-                                    class="slot-btn"
-                                    type="button"
-                                    data-datetime="{{ $slot->format('Y-m-d H:i:s') }}"
-                                    data-summary="{{ $slot->isoFormat('dddd D [de] MMMM') }} · {{ $slot->format('g:i A') }}"
-                                    data-meta="{{ trim(($doctorName ? $doctorName.' · ' : '').$procedureName) }}"
-                                >
-                                    {{ $slot->format('g:i A') }}
-                                </button>
-                            @endforeach
+                            @if ($day['is_full'])
+                                <div class="empty-day-message">Este día no tiene horarios disponibles.</div>
+                            @else
+                                <div class="slot-grid" aria-label="Horarios de {{ $day['long_label'] }}">
+                                    @foreach ($day['slots'] as $slot)
+                                        <button
+                                            class="slot-btn"
+                                            type="button"
+                                            data-datetime="{{ $slot->format('Y-m-d H:i:s') }}"
+                                            data-summary="{{ $slot->isoFormat('dddd D [de] MMMM') }} · {{ $slot->format('H:i') }}"
+                                            data-meta="{{ trim(($doctorName ? $doctorName.' · ' : '').$procedureName) }}"
+                                            aria-label="Seleccionar {{ $slot->isoFormat('dddd D [de] MMMM [a las] H:mm') }}"
+                                        >
+                                            {{ $slot->format('H:i') }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
-                    @endif
-
-                    <div class="empty-day-message" id="empty-day-message" style="display:none;">
-                        Este día no tiene horarios disponibles.
+                        @endforeach
                     </div>
                 </div>
             @endif
@@ -753,78 +759,68 @@
     <script>
         (function () {
             var pills = document.querySelectorAll('.day-pill');
-            var slotGrid = document.getElementById('slot-grid');
-            var slotLabel = document.getElementById('day-slots-label');
-            var emptyMessage = document.getElementById('empty-day-message');
+            var slotButtons = document.querySelectorAll('.slot-btn');
+            var daysTrack = document.querySelector('[data-appointment-days]');
+            var carouselButtons = document.querySelectorAll('[data-appointment-carousel]');
             var datetimeInput = document.getElementById('selected-datetime');
             var optionInput = document.getElementById('selected-option');
             var summary = document.getElementById('selected-summary');
             var meta = document.getElementById('selected-meta');
             var confirmButton = document.getElementById('confirm-button');
 
-            function renderSlots(daySlots) {
-                slotGrid.innerHTML = '';
-                emptyMessage.style.display = 'none';
-                slotGrid.style.display = '';
+            slotButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var card = button.closest('.day-pill');
 
-                if (! daySlots || daySlots.length === 0) {
-                    slotGrid.style.display = 'none';
-                    emptyMessage.style.display = '';
-                    return;
-                }
+                    pills.forEach(function (candidate) { candidate.classList.remove('is-active'); });
+                    slotButtons.forEach(function (candidate) { candidate.classList.remove('is-selected'); });
 
-                daySlots.forEach(function (slot) {
-                    var button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'slot-btn';
-                    button.dataset.datetime = slot.datetime;
-                    button.dataset.summary = slot.iso;
-                    button.dataset.meta = meta.textContent;
-                    button.textContent = slot.time;
-
-                    button.addEventListener('click', function () {
-                        slotGrid.querySelectorAll('.slot-btn').forEach(function (candidate) { candidate.classList.remove('is-selected'); });
-                        button.classList.add('is-selected');
-
-                        datetimeInput.value = slot.datetime;
-                        optionInput.value = '';
-                        summary.textContent = slot.iso;
-                        confirmButton.disabled = false;
-                    });
-
-                    slotGrid.appendChild(button);
-                });
-            }
-
-            pills.forEach(function (pill) {
-                pill.addEventListener('click', function () {
-                    if (pill.classList.contains('is-full')) {
-                        return;
+                    if (card) {
+                        card.classList.add('is-active');
                     }
 
-                    pills.forEach(function (c) { c.classList.remove('is-active'); });
-                    pill.classList.add('is-active');
+                    button.classList.add('is-selected');
 
-                    var daySlots = JSON.parse(pill.dataset.slots || '[]');
-                    var dateLabel = pill.querySelector('.day-pill-name').textContent + ' ' + pill.querySelector('.day-pill-date').textContent;
+                    if (datetimeInput) {
+                        datetimeInput.value = button.dataset.datetime || '';
+                    }
 
-                    slotLabel.textContent = dateLabel;
-                    renderSlots(daySlots);
+                    if (optionInput) {
+                        optionInput.value = '';
+                    }
 
-                    datetimeInput.value = '';
-                    optionInput.value = '';
-                    summary.textContent = 'Selecciona un horario disponible';
-                    confirmButton.disabled = true;
+                    if (summary) {
+                        summary.textContent = button.dataset.summary || 'Horario seleccionado';
+                    }
+
+                    if (meta && button.dataset.meta) {
+                        meta.textContent = button.dataset.meta;
+                    }
+
+                    if (confirmButton) {
+                        confirmButton.disabled = false;
+                    }
                 });
             });
 
-            if (pills.length > 0) {
-                var activePill = document.querySelector('.day-pill.is-active');
-                if (activePill) {
-                    var initialSlots = JSON.parse(activePill.dataset.slots || '[]');
-                    renderSlots(initialSlots);
-                }
-            }
+            carouselButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var card = daysTrack ? daysTrack.querySelector('.day-pill') : null;
+
+                    if (! daysTrack || ! card) {
+                        return;
+                    }
+
+                    var gap = parseFloat(getComputedStyle(daysTrack).columnGap || '0');
+                    var distance = card.getBoundingClientRect().width + gap;
+                    var direction = button.dataset.appointmentCarousel === 'next' ? 1 : -1;
+
+                    daysTrack.scrollBy({
+                        left: direction * distance,
+                        behavior: 'smooth'
+                    });
+                });
+            });
 
             var copyButton = document.getElementById('copy-summary');
             var copyLabel = document.getElementById('copy-summary-label');
