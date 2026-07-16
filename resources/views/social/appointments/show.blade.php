@@ -233,7 +233,7 @@
         .slot-grid {
             display: grid;
             gap: .42rem;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
         .slot-btn {
             background: rgba(255, 255, 255, .84);
@@ -514,6 +514,10 @@
                 right: 0;
             }
             .appointment-btn { width: 100%; }
+        }
+
+        @media (max-width: 360px) {
+            .slot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
     </style>
 </head>
