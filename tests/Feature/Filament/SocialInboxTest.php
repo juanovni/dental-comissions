@@ -146,6 +146,29 @@ class SocialInboxTest extends TestCase
         $this->assertSame('1', SocialInbox::getNavigationBadge());
     }
 
+    public function test_social_inbox_filters_by_channel(): void
+    {
+        $instagram = $this->socialComment([
+            'platform' => SocialPlatform::Instagram,
+            'comment_text' => 'Lead desde Instagram',
+        ]);
+        $facebook = $this->socialComment([
+            'platform' => SocialPlatform::Facebook,
+            'comment_text' => 'Lead desde Facebook',
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialInbox::class)
+            ->set('filter', 'leads')
+            ->call('setChannel', SocialPlatform::Facebook->value)
+            ->assertSet('channel', SocialPlatform::Facebook->value)
+            ->assertSee($facebook->comment_text)
+            ->assertDontSee($instagram->comment_text)
+            ->call('setChannel', 'all')
+            ->assertSee($instagram->comment_text)
+            ->assertSee($facebook->comment_text);
+    }
+
     public function test_route_to_whatsapp_shows_final_tracking_reply_text(): void
     {
         config(['services.whatsapp.business_phone' => '+593999999999']);

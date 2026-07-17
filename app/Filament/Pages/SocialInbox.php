@@ -6,6 +6,7 @@ use App\Enums\SocialCommentActionType;
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialReputationRisk;
+use App\Enums\SocialPlatform;
 use App\Enums\WhatsappMessageDirection;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Models\Procedure;
@@ -69,6 +70,8 @@ class SocialInbox extends Page
 
     public string $search = '';
 
+    public string $channel = 'all';
+
     public bool $whatsappModalOpen = false;
 
     public ?int $whatsappCommentId = null;
@@ -99,6 +102,22 @@ class SocialInbox extends Page
 
     public function updatedSearch(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatedChannel(): void
+    {
+        $this->resetPage();
+    }
+
+    public function setChannel(string $channel): void
+    {
+        $allowedChannels = collect(SocialPlatform::cases())
+            ->pluck('value')
+            ->push('all')
+            ->all();
+
+        $this->channel = in_array($channel, $allowedChannels, true) ? $channel : 'all';
         $this->resetPage();
     }
 
@@ -467,7 +486,7 @@ class SocialInbox extends Page
     {
         return $this->baseQuery()
             ->when($this->filter === 'archived', fn (Builder $query): Builder => $this->applyArchivedQuery($query))
-            ->when($this->filter !== 'archived', fn (Builder $query): Builder => $this->applyActiveQuery($query))
+            ->when($this->filter !== 'archived' && $this->filter !== 'todos', fn (Builder $query): Builder => $this->applyActiveQuery($query))
             ->when($this->filter === 'crisis', fn (Builder $query): Builder => $this->applyCrisisQuery($query))
             ->when($this->filter === 'leads', fn (Builder $query): Builder => $query->whereIn('classification', [
                 SocialCommentClassification::SalesLead->value,
@@ -491,6 +510,7 @@ class SocialInbox extends Page
     public function stats(): array
     {
         return [
+            'todos' => $this->baseQuery()->count(),
             'leads' => $this->applyActiveQuery(SocialComment::query())->whereIn('classification', [
                 SocialCommentClassification::SalesLead->value,
                 SocialCommentClassification::CommercialQuestion->value,
@@ -799,6 +819,7 @@ class SocialInbox extends Page
                 'socialPost',
                 'suggestedProcedure',
             ])
+            ->when($this->channel !== 'all', fn (Builder $query): Builder => $query->where('platform', $this->channel))
             ->when($this->search !== '', function (Builder $query): Builder {
                 $search = '%'.trim($this->search).'%';
 
@@ -806,7 +827,11 @@ class SocialInbox extends Page
                     $query
                         ->where('comment_text', 'like', $search)
                         ->orWhere('author_name', 'like', $search)
-                        ->orWhere('author_username', 'like', $search);
+                        ->orWhere('author_username', 'like', $search)
+                        ->orWhereHas('socialIdentity', function (Builder $query) use ($search): void {
+                            $query->where('phone', 'like', $search)
+                                ->orWhere('normalized_phone', 'like', $search);
+                        });
                 });
             })
             ->when($this->recentActivityLeadId, fn (Builder $query): Builder => $query->orderByRaw('case when social_comments.id = ? then 0 else 1 end', [$this->recentActivityLeadId]));

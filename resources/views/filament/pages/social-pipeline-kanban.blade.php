@@ -956,7 +956,7 @@
                                         $realScore >= 31 => ['label' => 'Tibio', 'class' => 'temp-warm'],
                                         default => ['label' => 'Frio', 'class' => 'temp-cold'],
                                     };
-                                    $leadName = $comment->author_username ? '@' . $comment->author_username : ($comment->author_name ?: 'Lead social');
+                                    $leadName = $patient?->full_name ?? ($comment->author_username ? '@' . $comment->author_username : ($comment->author_name ?: 'Lead social'));
                                     $lastEngagementMinutes = $comment->last_engagement_at?->diffInMinutes(now());
                                     $isLive = $lastEngagementMinutes !== null && $lastEngagementMinutes <= 2;
                                     $isRecent = $lastEngagementMinutes !== null && $lastEngagementMinutes > 2 && $lastEngagementMinutes <= 10;
@@ -1076,7 +1076,7 @@
     @if ($selectedLead = $this->selectedLead())
         @php
             $patient = $selectedLead->socialIdentity?->patient ?: $selectedLead->convertedPatient;
-            $leadName = $selectedLead->author_username ? '@'.$selectedLead->author_username : ($selectedLead->author_name ?: 'Lead social');
+            $leadName = $patient?->full_name ?? ($selectedLead->author_username ? '@'.$selectedLead->author_username : ($selectedLead->author_name ?: 'Lead social'));
             $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedLead]);
             $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
             $realScore = (int) $selectedLead->recent_engagement_score;

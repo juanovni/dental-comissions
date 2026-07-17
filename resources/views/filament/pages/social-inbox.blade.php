@@ -3,12 +3,19 @@
         $stats = $this->stats();
         $comments = $this->comments();
         $filters = [
+            'todos' => ['label' => 'Todos', 'icon' => 'inbox', 'count' => $stats['todos']],
             'leads' => ['label' => 'Leads', 'icon' => 'user-plus', 'count' => $stats['leads']],
             'crisis' => ['label' => 'Crisis', 'icon' => 'exclamation-triangle', 'count' => $stats['crisis']],
             'vip' => ['label' => 'Pacientes VIP', 'icon' => 'star', 'count' => $stats['vip']],
             'medical' => ['label' => 'Atencion Medica', 'icon' => 'heart', 'count' => $stats['medical']],
             'all' => ['label' => 'Activos', 'icon' => 'magnifying-glass', 'count' => $stats['all']],
             'archived' => ['label' => 'Archivados', 'icon' => 'archive-box', 'count' => $stats['archived']],
+        ];
+        $channels = [
+            'all' => ['label' => 'Todos los canales', 'short' => 'Canal', 'icon' => 'sliders'],
+            'instagram' => ['label' => 'Instagram', 'short' => 'Instagram', 'icon' => 'instagram'],
+            'whatsapp' => ['label' => 'WhatsApp', 'short' => 'WhatsApp', 'icon' => 'whatsapp'],
+            'facebook' => ['label' => 'Facebook', 'short' => 'Facebook', 'icon' => 'facebook'],
         ];
         $selectedComment = $this->selectedComment();
         $selectedPatient = $selectedComment?->socialIdentity?->patient ?: $selectedComment?->convertedPatient;
@@ -18,7 +25,7 @@
 
     <style>
         .social-inbox-page {
-            --inbox-accent: oklch(0.59 0.2 259.81);
+            --inbox-accent: rgb(var(--primary-600, 8 145 178));
             --inbox-ink: #0f172a;
             --inbox-muted: #64748b;
             --inbox-line: rgba(15, 23, 42, .08);
@@ -48,18 +55,130 @@
             }
         }
 
-        .smart-search {
+        .social-inbox-subtitle {
+            color: #64748b;
+            font-size: .84rem;
+            margin: -1.05rem 0 1.25rem;
+        }
+
+        @media (min-width: 900px) {
+            .social-inbox-subtitle {
+                margin-bottom: 1rem;
+                max-width: 28rem;
+            }
+        }
+
+        .smart-search-wrap {
+            align-items: center;
             background: #ffffff;
             border: 1px solid #e5e7eb;
-            border-radius: .5rem;
+            border-radius: .65rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+            color: #64748b;
+            display: flex;
+            gap: .45rem;
+            height: 2.65rem;
+            padding: 0 .75rem;
+            width: min(100%, 24rem);
+        }
+
+        .smart-search-wrap svg {
+            flex: 0 0 auto;
+            height: 1.05rem;
+            width: 1.05rem;
+        }
+
+        .smart-search {
+            background: transparent;
+            border: 0;
             box-shadow: none;
             color: var(--pk-ink);
             font-size: .82rem;
-            height: 2.35rem;
+            height: 100%;
             outline: none;
-            padding: .45rem .75rem;
-            width: min(100%, 24rem);
+            padding: 0;
+            width: 100%;
         }
+
+        .smart-channel-filter {
+            position: relative;
+        }
+
+        .smart-channel-trigger {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .65rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+            color: #111827;
+            cursor: pointer;
+            display: inline-flex;
+            font-size: .82rem;
+            font-weight: 600;
+            gap: .45rem;
+            height: 2.65rem;
+            padding: 0 .85rem;
+        }
+
+        .smart-channel-trigger svg,
+        .smart-channel-item svg {
+            height: 1rem;
+            width: 1rem;
+        }
+
+        .smart-channel-filter[open] .smart-channel-trigger,
+        .smart-channel-trigger:hover,
+        .smart-search-wrap:focus-within {
+            border-color: color-mix(in srgb, var(--inbox-accent) 35%, #e5e7eb);
+            box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
+        }
+
+        .smart-channel-menu {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .75rem;
+            box-shadow: 0 18px 35px rgba(15, 23, 42, .14);
+            min-width: 14rem;
+            padding: .5rem;
+            position: absolute;
+            right: 0;
+            top: calc(100% + .35rem);
+            z-index: 20;
+        }
+
+        .smart-channel-title {
+            border-bottom: 1px solid #eef2f7;
+            color: #111827;
+            font-size: .84rem;
+            font-weight: 700;
+            margin: -.5rem -.5rem .35rem;
+            padding: .8rem .9rem;
+        }
+
+        .smart-channel-item {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: .55rem;
+            color: #1f2937;
+            cursor: pointer;
+            display: flex;
+            font-size: .86rem;
+            gap: .65rem;
+            padding: .55rem .65rem;
+            text-align: left;
+            width: 100%;
+        }
+
+        .smart-channel-item:hover,
+        .smart-channel-item.is-active {
+            background: color-mix(in srgb, var(--inbox-accent) 9%, #ffffff);
+            color: var(--inbox-accent);
+        }
+
+        .smart-channel-icon-instagram { color: #db2777; }
+        .smart-channel-icon-whatsapp { color: #00a884; }
+        .smart-channel-icon-facebook { color: #1877f2; }
 
         .smart-filters {
             align-items: center;
@@ -91,8 +210,9 @@
         }
 
         .smart-filter.is-active {
-            border-bottom-color: #111827;
-            color: #111827;
+            border-bottom-color: oklch(55% .12 185);
+            color: oklch(55% .12 185);
+            font-weight: bold;
         }
 
         .smart-filter-icon {
@@ -109,7 +229,7 @@
         }
 
         .smart-filter.is-active .smart-filter-icon {
-            color: #111827;
+            color: var(--inbox-accent);
         }
 
         .smart-filter-count {
@@ -128,7 +248,8 @@
         }
 
         .smart-filter.is-active .smart-filter-count {
-            color: #111827;
+            background: color-mix(in srgb, var(--inbox-accent) 12%, #ffffff);
+            color: var(--inbox-accent);
         }
 
         @media (max-width: 760px) {
@@ -1299,6 +1420,274 @@
             max-width: 32rem;
         }
 
+        .smart-grid.smart-list-column {
+            display: grid;
+            gap: 0;
+            grid-template-columns: minmax(0, 1fr);
+            overflow: visible;
+        }
+
+        .smart-card {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #dbe3ec;
+            border-radius: 0;
+            border-top: 0;
+            box-shadow: none;
+            cursor: pointer;
+            display: grid;
+            gap: 0.5rem;
+            grid-template-columns: 1.35rem minmax(0, 1fr) minmax(12rem, 22rem) auto;
+            min-height: 5.35rem;
+            overflow: visible;
+            padding: .85rem 1.2rem;
+            position: relative;
+            transition: background .14s ease, border-color .14s ease, box-shadow .14s ease;
+        }
+
+        .smart-card:first-child { border-radius: .85rem .85rem 0 0; }
+        .smart-card:last-child { border-radius: 0 0 .85rem .85rem; }
+        .smart-card:only-child { border-radius: .85rem; }
+        .smart-card + .smart-card { border-top: 0; }
+
+        .smart-card:hover,
+        .smart-card:focus-within,
+        .smart-card.is-selected {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            box-shadow: inset 3px 0 0 var(--inbox-accent);
+        }
+
+        .smart-card.intent-crisis,
+        .smart-card.intent-lead,
+        .smart-card.intent-vip,
+        .smart-card.intent-medical,
+        .smart-card.is-derived {
+            background: #ffffff;
+            border-top: 0;
+        }
+
+        .smart-card.is-hot-lead::before,
+        .smart-card.intent-crisis.risk-critical::after {
+            display: none;
+        }
+
+        .smart-row-status {
+            background: #0d9488;
+            border-radius: 999px;
+            height: .6rem;
+            width: .6rem;
+        }
+
+        .intent-crisis .smart-row-status { background: #ef4444; }
+        .intent-vip .smart-row-status { background: #f59e0b; }
+        .intent-medical .smart-row-status { background: #0284c7; }
+
+        .smart-row-main {
+            align-items: center;
+            display: grid;
+            gap: .85rem;
+            grid-template-columns: 2.9rem minmax(0, 1fr);
+            min-width: 0;
+        }
+
+        .smart-avatar-wrap {
+            height: 2.9rem;
+            position: relative;
+            width: 2.9rem;
+        }
+
+        .smart-avatar {
+            background: #eef8f8;
+            border: 1px solid #dbeafe;
+            color: #0f172a;
+            font-size: .76rem;
+            height: 2.9rem;
+            width: 2.9rem;
+        }
+
+        .smart-channel-dot {
+            align-items: center;
+            background: #ffffff;
+            border-radius: 999px;
+            bottom: -.2rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, .18);
+            display: inline-flex;
+            height: 1.05rem;
+            justify-content: center;
+            position: absolute;
+            right: -.1rem;
+            width: 1.05rem;
+        }
+
+        .smart-channel-dot svg { height: .78rem; width: .78rem; }
+
+        .smart-row-heading {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+            min-width: 0;
+        }
+
+        .smart-user {
+            color: #020617;
+            font-size: .93rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .smart-phone {
+            color: #64748b;
+            font-size: .78rem;
+            font-weight: 500;
+        }
+
+        .smart-message {
+            color: oklch(50% .02 260);;
+            font-size: .92rem;
+            font-weight: 400;
+            line-height: 1.35;
+            margin-top: .2rem;
+            overflow: hidden;
+            padding: 0;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .smart-badge {
+            align-items: center;
+            border: 1px solid transparent;
+            display: inline-flex;
+            gap: .25rem;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .smart-row-meta {
+            display: grid;
+            gap: .55rem;
+            justify-items: start;
+            min-width: 0;
+        }
+
+        .smart-score-line {
+            align-items: center;
+            display: grid;
+            gap: .6rem;
+            grid-template-columns: 5.2rem 2.2rem auto;
+        }
+
+        .smart-score-track {
+            background: #eef2f7;
+            border-radius: 999px;
+            height: .42rem;
+            overflow: hidden;
+        }
+
+        .smart-score-fill {
+            background: #94a3b8;
+            border-radius: inherit;
+            display: block;
+            height: 100%;
+        }
+
+        .smart-score-fill.temp-warm { background: #d99a00; }
+        .smart-score-fill.temp-hot,
+        .smart-score-fill.temp-max { background: #009f5b; }
+
+        .smart-score-value {
+            color: #020617;
+            font-size: .8rem;
+            font-weight: 700;
+        }
+
+        .smart-row-time {
+            align-items: center;
+            color: #64748b;
+            display: inline-flex;
+            font-size: .78rem;
+            gap: .25rem;
+            white-space: nowrap;
+        }
+
+        .smart-row-time svg { height: .88rem; width: .88rem; }
+
+        .smart-auto-line {
+            align-items: center;
+            color: #475569;
+            display: flex;
+            flex-wrap: wrap;
+            font-size: .78rem;
+            gap: .45rem;
+            min-width: 0;
+        }
+
+        .smart-auto-line svg {
+            color: #009f8b;
+            height: .9rem;
+            width: .9rem;
+        }
+
+        .smart-auto-separator { color: #cbd5e1; }
+
+        .smart-row-actions {
+            align-items: center;
+            display: flex;
+            gap: .45rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .14s ease;
+        }
+
+        .smart-card:hover .smart-row-actions,
+        .smart-card:focus-within .smart-row-actions,
+        .smart-card:has(.smart-dropdown[open]) .smart-row-actions {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .smart-row-icon-action {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: .45rem;
+            color: #111827;
+            cursor: pointer;
+            display: inline-flex;
+            height: 2rem;
+            justify-content: center;
+            padding: 0;
+            width: 2rem;
+        }
+
+        .smart-row-icon-action:hover,
+        .smart-trigger:hover { background: #eef2f7; }
+
+        .smart-row-icon-action svg { height: 1.05rem; width: 1.05rem; }
+
+        .smart-trigger {
+            background: transparent;
+            border: 0;
+        }
+
+        @media (max-width: 920px) {
+            .smart-card {
+                align-items: start;
+                grid-template-columns: 1rem minmax(0, 1fr);
+            }
+
+            .smart-row-meta,
+            .smart-row-actions { grid-column: 2; }
+
+            .smart-row-actions {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .smart-message { white-space: normal; }
+        }
+
         .smart-modal-backdrop {
             align-items: center;
             background: rgba(15, 23, 42, .48);
@@ -1725,13 +2114,52 @@
     </style>
 
     <section class="social-inbox-page" wire:poll.10s>
+        <p class="social-inbox-subtitle">
+            {{ $comments->total() }} conversaciones · actualizado hace unos segundos
+        </p>
+
         <header class="social-inbox-toolbar">
-            <input
-                class="smart-search"
-                type="search"
-                wire:model.live.debounce.350ms="search"
-                placeholder="Buscar por comentario, autor o usuario"
-            />
+            <label class="smart-search-wrap" aria-label="Buscar en bandeja social">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                <input
+                    class="smart-search"
+                    type="search"
+                    wire:model.live.debounce.350ms="search"
+                    placeholder="Buscar por mensaje, handle o telefono"
+                />
+            </label>
+
+            <details class="smart-channel-filter">
+                <summary class="smart-channel-trigger">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>
+                    <span>{{ $channels[$channel]['short'] ?? 'Canal' }}</span>
+                </summary>
+                <div class="smart-channel-menu">
+                    <div class="smart-channel-title">Filtrar por canal</div>
+                    @foreach ($channels as $channelKey => $channelItem)
+                        <button
+                            type="button"
+                            wire:click="setChannel('{{ $channelKey }}')"
+                            @class(['smart-channel-item', 'is-active' => $channel === $channelKey])
+                        >
+                            @switch($channelItem['icon'])
+                                @case('instagram')
+                                    <svg class="smart-channel-icon-instagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.4"/><path d="M17.5 6.5h.01"/></svg>
+                                    @break
+                                @case('whatsapp')
+                                    <svg class="smart-channel-icon-whatsapp" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.1 11.7a8.1 8.1 0 0 1-12 7.1L4 20l1.3-4A8.1 8.1 0 1 1 20.1 11.7Z"/><path d="M9.3 8.7c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.7 1.6c.1.2.1.4-.1.6l-.4.5c-.1.1-.2.3-.1.5.3.6.8 1.2 1.4 1.6.5.4 1 .7 1.6.9.2.1.4 0 .5-.2l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.3.1.4.3.4.5 0 .5-.3 1.3-.7 1.6-.4.3-1.2.5-2.6 0-2.2-.8-4.1-2.5-5.2-4.5-.7-1.3-.7-2.1-.4-2.6Z"/></svg>
+                                    @break
+                                @case('facebook')
+                                    <svg class="smart-channel-icon-facebook" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8.5h2V5.2c-.35-.05-1.55-.15-2.95-.15C10.13 5.05 8.13 6.84 8.13 10.13V13H5v3.7h3.13V24h3.85v-7.3h3.02l.48-3.7h-3.5v-2.5c0-1.07.3-2 2.02-2Z"/></svg>
+                                    @break
+                                @default
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>
+                            @endswitch
+                            <span>{{ $channelItem['label'] }}</span>
+                        </button>
+                    @endforeach
+                </div>
+            </details>
         </header>
 
         <div class="smart-filters">
@@ -1742,7 +2170,10 @@
                     @class(['smart-filter', 'is-active' => $filter === $key])
                 >
                     <span class="smart-filter-icon">
-                        @switch($item['icon'])
+                            @switch($item['icon'])
+                            @case('inbox')
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                                @break
                             @case('user-plus')
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" /></svg>
                                 @break
@@ -1799,7 +2230,36 @@
                         'lead' => 'LEAD COMERCIAL',
                         default => 'COMENTARIO SOCIAL',
                     };
-                    $initial = \Illuminate\Support\Str::of($comment->author_name ?: $comment->author_username ?: '?')->substr(0, 1)->upper();
+                    $initial = $patient
+                        ? \Illuminate\Support\Str::of($patient->full_name)->substr(0, 1)->upper()
+                        : \Illuminate\Support\Str::of($comment->author_name ?: $comment->author_username ?: '?')->substr(0, 1)->upper();
+                    $displayName = $patient?->full_name
+                        ?? ($comment->author_username ? '@' . $comment->author_username : ($comment->author_name ?: 'Autor desconocido'));
+                    $phone = $comment->socialIdentity?->phone;
+                    $procedureLabel = $comment->suggestedProcedure?->name ?: ($comment->socialPost?->procedure?->name ?: 'Consulta general');
+                    $score = (int) ($comment->recent_engagement_score ?: ($comment->interest_score ?? 0));
+                    $scoreWidth = min($score, 100);
+                    $scoreState = match (true) {
+                        $score >= 85 => 'temp-hot',
+                        $score >= 70 => 'temp-max',
+                        $score >= 45 => 'temp-warm',
+                        default => 'temp-cold',
+                    };
+                    $updatedAt = $comment->last_engagement_at ?: ($comment->updated_at ?: $comment->created_at);
+                    $categoryLabel = match ($intent) {
+                        'crisis' => 'Crisis',
+                        'vip' => 'VIP',
+                        'medical' => 'Medico',
+                        'lead' => 'Lead',
+                        default => 'Activo',
+                    };
+                    $categoryClass = match ($intent) {
+                        'crisis' => 'danger',
+                        'vip' => 'warning',
+                        'medical' => 'info',
+                        'lead' => 'success',
+                        default => 'neutral',
+                    };
                     $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $comment]);
                     $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
                 @endphp
@@ -1812,41 +2272,68 @@
                     'is-hot-lead' => $isHotLead,
                     'is-selected' => $selectedComment?->id === $comment->id,
                     'is-live' => $recentActivityLeadId === $comment->id,
-                ])>
-                    <div class="smart-card-top">
-                        <div class="smart-person">
+                ]) wire:click="selectComment({{ $comment->id }})" tabindex="0" role="button">
+                    <span class="smart-row-status" aria-hidden="true"></span>
+
+                    <div class="smart-row-main">
+                        <div class="smart-avatar-wrap">
                             <div class="smart-avatar">{{ $initial }}</div>
-                            <div>
-                                <div class="smart-user">
-                                    {{ $comment->author_username ? '@' . $comment->author_username : ($comment->author_name ?: 'Autor desconocido') }}
-                                </div>
-                                <div class="smart-source">via {{ $comment->platform->label() }} / {{ $intentTitle }}</div>
-                                <div class="smart-time">{{ $comment->created_at?->diffForHumans() }}</div>
-                            </div>
+                            <span class="smart-channel-dot" title="{{ $comment->platform?->label() ?? 'Canal' }}">
+                                @switch($comment->platform?->value)
+                                    @case('instagram')
+                                        <svg class="smart-channel-icon-instagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.4"/><path d="M17.5 6.5h.01"/></svg>
+                                        @break
+                                    @case('whatsapp')
+                                        <svg class="smart-channel-icon-whatsapp" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.1 11.7a8.1 8.1 0 0 1-12 7.1L4 20l1.3-4A8.1 8.1 0 1 1 20.1 11.7Z"/></svg>
+                                        @break
+                                    @case('facebook')
+                                        <svg class="smart-channel-icon-facebook" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8.5h2V5.2c-.35-.05-1.55-.15-2.95-.15C10.13 5.05 8.13 6.84 8.13 10.13V13H5v3.7h3.13V24h3.85v-7.3h3.02l.48-3.7h-3.5v-2.5c0-1.07.3-2 2.02-2Z"/></svg>
+                                        @break
+                                @endswitch
+                            </span>
                         </div>
 
-                        <div class="smart-badges">
-                            <span @class(['smart-badge', 'danger' => $isCrisis, 'info' => $isLead, 'warning' => $isMedical, 'success' => $isVip, 'neutral' => ! $isCrisis && ! $isLead && ! $isMedical && ! $isVip])>
-                                {{ $classification?->label() ?? 'Sin clasificar' }}
-                            </span>
-                            <span @class(['smart-badge', 'danger' => in_array($risk, ['high', 'critical'], true), 'warning' => $risk === 'medium', 'neutral' => $risk === 'low'])>
-                                Riesgo {{ $comment->reputation_risk?->label() ?? 'bajo' }}
-                            </span>
-                            <span class="smart-badge neutral">{{ $comment->sentiment?->label() ?? 'Sin sentimiento' }}</span>
-                            <span @class(['smart-badge', 'hot' => $isHotLead, 'neutral' => ! $isHotLead])>
-                                {{ $isHotLead ? '🔥 ' : '' }}Score {{ $comment->interest_score ?? 0 }}
-                            </span>
-                            @if ($isDerived)
-                                <span class="smart-badge warning">Derivado</span>
-                            @endif
-                            @if ($isReheated)
-                                <span class="smart-badge hot">Recalentado</span>
-                            @endif
-                            <span @class(['smart-badge', $autoReply['class']])>{{ $autoReply['label'] }}</span>
+                        <div style="min-width:0">
+                            <div class="smart-row-heading">
+                                <span class="smart-user">{{ $displayName }}</span>
+                                @if ($phone)
+                                    <span class="smart-phone">{{ $phone }}</span>
+                                @endif
+                                <span class="smart-badge {{ $categoryClass }}">{{ $categoryLabel }}</span>
+                            </div>
+                            <div class="smart-message">{{ $comment->comment_text }}</div>
+                        </div>
+                    </div>
 
-                            <details class="smart-dropdown">
-                                <summary class="smart-trigger" aria-label="Mas opciones">⋯</summary>
-                                <div class="smart-dropdown-menu">
+                    <div class="smart-row-meta">
+                        <div class="smart-score-line">
+                            <span class="smart-score-track" aria-label="Score {{ $score }} de 100">
+                                <span class="smart-score-fill {{ $scoreState }}" style="width: {{ $scoreWidth }}%"></span>
+                            </span>
+                            <span class="smart-score-value">{{ $score }}</span>
+                            <span class="smart-row-time">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                {{ $updatedAt?->diffForHumans(null, false, true, 1) }}
+                            </span>
+                        </div>
+                        <div class="smart-auto-line">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                            <span>{{ $autoReply['label'] }}</span>
+                            <span class="smart-auto-separator">·</span>
+                            <span>{{ $procedureLabel }}</span>
+                        </div>
+                    </div>
+
+                    <div class="smart-row-actions" wire:click.stop>
+                        @if ($isLead || blank($comment->tracking_token))
+                            <button class="smart-row-icon-action" type="button" wire:click="routeToWhatsapp({{ $comment->id }})" title="{{ $isDerived ? 'Ver texto de seguimiento' : 'Derivar' }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>
+                            </button>
+                        @endif
+
+                        <details class="smart-dropdown">
+                            <summary class="smart-trigger" aria-label="Mas opciones">⋯</summary>
+                            <div class="smart-dropdown-menu">
                                     @if ($patientUrl)
                                         <a class="smart-dropdown-item" href="{{ $patientUrl }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
@@ -1892,86 +2379,6 @@
                                     </button>
                                 </div>
                             </details>
-                        </div>
-                    </div>
-
-                    <div class="smart-message">"{{ $comment->comment_text }}"</div>
-
-                    @if (filled($comment->auto_reply_message) || filled($comment->auto_reply_error))
-                        <div class="smart-action-banner">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 1-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 1 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 1 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 1-3.09 3.09Z"/></svg>
-                            <div>
-                                <strong>Auto-respuesta Meta</strong>
-                                <p>{{ $comment->auto_reply_error ?: $comment->auto_reply_message }}</p>
-                            </div>
-                        </div>
-                    @endif
-
-                    @if ($comment->conversion_status === \App\Enums\SocialConversionStatus::PendingPatientCreation)
-                        <div class="smart-action-banner">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
-                            <span>El cliente hizo clic en WhatsApp. Crea su ficha y agenda la cita.</span>
-                            <a class="smart-action-link" href="{{ $detailUrl }}">Crear ficha</a>
-                        </div>
-                    @endif
-
-                    @if ($isDerived && filled($comment->tracking_token))
-                        <div class="smart-token">
-                            <span>Token WhatsApp:</span>
-                            <strong>{{ $comment->tracking_token }}</strong>
-                        </div>
-                    @endif
-
-                    <div class="smart-progress" aria-label="Flujo de seguimiento">
-                        <span class="smart-dot {{ $isDerived ? 'done' : 'active' }}"></span>
-                        <span class="smart-dot {{ $isDerived ? 'active' : '' }}"></span>
-                        <span class="smart-dot"></span>
-                        <span class="smart-dot"></span>
-                    </div>
-
-                    <div class="smart-panels">
-                        <details class="smart-panel">
-                            <summary>Contexto Clinico</summary>
-                            <div class="smart-panel-body">
-                                @if ($patient)
-                                    <p><strong>Paciente vinculado:</strong> {{ $patient->full_name }}</p>
-                                    <p class="smart-muted">{{ $lastActivity ? 'Ultima cita: ' . $lastActivity->activity_date?->format('d/m/Y') : 'Sin cita registrada' }}</p>
-                                    <p class="smart-muted">{{ $lastActivity?->doctor?->name ?: 'Doctor no registrado' }}</p>
-                                @else
-                                    <p><strong>Nuevo lead:</strong> Sin ficha clinica</p>
-                                    <p class="smart-muted">Telefono: {{ $comment->socialIdentity?->phone ?: 'pendiente de capturar' }}</p>
-                                    <p class="smart-muted">Procedimiento: {{ $comment->suggestedProcedure?->name ?: 'sin sugerencia' }}</p>
-                                @endif
-                            </div>
-                        </details>
-
-                        <details class="smart-panel smart-ai-panel">
-                            <summary>Respuesta base IA</summary>
-                            <div class="smart-panel-body">
-                                <div class="smart-panel-kicker">Antes de derivar. No incluye token ni link de seguimiento.</div>
-                                <p>{{ $comment->suggested_reply ?: 'Sin respuesta sugerida. Revisar contexto antes de responder.' }}</p>
-                                @if ($comment->ai_reason)
-                                    <p class="smart-muted" style="margin-top:.45rem">Motivo: {{ $comment->ai_reason }}</p>
-                                @endif
-                            </div>
-                        </details>
-                    </div>
-
-                    <div class="smart-actions">
-                        <button class="smart-action primary" type="button" wire:click="selectComment({{ $comment->id }})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Abrir 360</span></button>
-
-                        @if ($isLead || blank($comment->tracking_token))
-                            <button class="smart-action success" type="button" wire:click="routeToWhatsapp({{ $comment->id }})">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
-                                <span>{{ $isDerived ? 'Ver texto de seguimiento' : 'Derivar' }}</span>
-                            </button>
-                        @endif
-
-                        <button class="smart-action warning" type="button" wire:click="runAutoReply({{ $comment->id }})">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 1-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 1 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 1 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 1-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 1-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 1 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 1 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 1-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 1-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 1 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 1 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 1-1.423 1.423Z"/></svg>
-                            <span>{{ filled($comment->auto_reply_message) || filled($comment->auto_reply_error) ? 'Reintentar auto-reply' : 'Generar auto-reply' }}</span>
-                        </button>
-
                     </div>
                 </article>
             @empty
@@ -2009,7 +2416,7 @@
                 <div class="smart-drawer-header">
                     <div style="min-width:0">
                         <div class="smart-drawer-title">
-                            {{ $selectedComment->author_username ? '@'.$selectedComment->author_username : ($selectedComment->author_name ?: 'Lead seleccionado') }}
+                            {{ $drawerPatient?->full_name ?? ($selectedComment->author_username ? '@'.$selectedComment->author_username : ($selectedComment->author_name ?: 'Lead seleccionado')) }}
                         </div>
                         <div class="smart-drawer-subtitle">
                             {{ $drawerPlatformLabel }} · {{ $selectedComment->conversion_status?->label() ?? 'Sin estado' }}
@@ -2031,6 +2438,16 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
                             <span>El cliente hizo clic en WhatsApp. Crea su ficha y agenda la cita.</span>
                             <a class="smart-action-link" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Crear ficha</a>
+                        </div>
+                    @endif
+
+                    @if (filled($selectedComment->auto_reply_message) || filled($selectedComment->auto_reply_error))
+                        <div class="smart-action-banner" style="margin-bottom:.75rem">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 1-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 1 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 1 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 1-3.09 3.09Z"/></svg>
+                            <div>
+                                <strong>Auto-respuesta Meta</strong>
+                                <p>{{ $selectedComment->auto_reply_error ?: $selectedComment->auto_reply_message }}</p>
+                            </div>
                         </div>
                     @endif
 
