@@ -123,6 +123,17 @@ Validacion:
 5. Automatizacion Kanban.
 6. ROI de citas.
 7. Integraciones externas.
+8. Agente telefonico Retell AI solo despues de tener servicios de agenda reutilizables y auditoria suficiente.
+
+## Extension - Agente Telefonico Retell AI
+
+La planificacion completa vive en:
+
+```text
+docs/CRM/odoncrm-voice-agent-retell/
+```
+
+No implementar voz como sistema paralelo. Retell debe consumir endpoints Laravel que reutilicen `AppointmentCreationService`, disponibilidad, pacientes, WhatsApp y auditoria.
 
 ## Comandos De Verificacion
 

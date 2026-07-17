@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Crear una tabla propia `appointments` para registrar citas originadas por leads sociales, WhatsApp, Smart Links o acciones manuales del equipo.
+Crear una tabla propia `appointments` para registrar citas originadas por leads sociales, WhatsApp, llamadas telefonicas, Smart Links o acciones manuales del equipo.
 
 Esta tabla debe funcionar como fuente interna de trazabilidad comercial aunque despues se integre una agenda externa.
 
@@ -101,6 +101,8 @@ Enum o string parametrizable: `source`.
 ```text
 whatsapp_ai
 whatsapp_human
+voice_ai
+voice_human
 smart_link
 admin_manual
 external_provider

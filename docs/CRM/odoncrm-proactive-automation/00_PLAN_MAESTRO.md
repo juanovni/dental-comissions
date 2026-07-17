@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Construir el flujo de automatizacion proactiva que conecta redes sociales, Smart Links, WhatsApp, agenda y ROI para que la clinica gestione leads mas calientes y trazables.
+Construir el flujo de automatizacion proactiva que conecta redes sociales, Smart Links, WhatsApp, voz, agenda y ROI para que la clinica gestione leads mas calientes y trazables.
 
 La automatizacion debe filtrar, calentar y priorizar oportunidades comerciales. No debe reemplazar al humano en decisiones clinicas, diagnosticos o aprobaciones sensibles.
 
@@ -32,10 +32,11 @@ El siguiente bloque convierte el sistema en un flujo comercial completo:
 5. El score reciente mueve prioridad y etapa comercial.
 6. El lead llega a WhatsApp con token.
 7. El agente IA recupera contexto y saluda con intencion especifica.
-8. Si detecta oportunidad de cierre, notifica al equipo.
-9. Se crea una cita en tabla propia `appointments`.
-10. La cita queda trazada hasta el contenido social que la origino.
-11. Si luego existe agenda externa, `appointments` se sincroniza con el proveedor.
+8. Si el lead llama por telefono, Retell AI usa tools de Laravel y conserva la misma trazabilidad.
+9. Si detecta oportunidad de cierre, notifica al equipo.
+10. Se crea una cita en tabla propia `appointments`.
+11. La cita queda trazada hasta el contenido social que la origino.
+12. Si luego existe agenda externa, `appointments` se sincroniza con el proveedor.
 
 ## Fases
 
@@ -46,6 +47,7 @@ El siguiente bloque convierte el sistema en un flujo comercial completo:
 5. Fase 5: Trazabilidad ROI de citas.
 6. Fase 6: Integraciones externas de agenda.
 7. Fase 7: Roadmap de implementacion y validacion.
+8. Extension: Agente telefonico Retell AI en `docs/CRM/odoncrm-voice-agent-retell/`.
 
 ## Principios
 
@@ -54,11 +56,12 @@ El siguiente bloque convierte el sistema en un flujo comercial completo:
 3. Usar campos parametrizables para umbrales, mensajes, estados y reglas.
 4. No dar diagnosticos clinicos por IA.
 5. No prometer tratamientos, precios definitivos ni resultados clinicos.
-6. Escalar a humano cuando exista urgencia, dolor, riesgo medico o intencion clara de cierre.
+6. Escalar a humano cuando exista urgencia, dolor, riesgo medico, reclamo o error de CRM.
 7. Registrar cada automatizacion relevante en `social_comment_actions`.
 8. Mantener UI y etiquetas en espanol.
 9. Usar Enums para estados persistentes.
 10. Agregar tests por servicio y flujo critico.
+11. Mantener WhatsApp y voz como canales sobre los mismos servicios Laravel, no como logicas paralelas.
 
 ## Dependencias Existentes
 
