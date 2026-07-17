@@ -440,6 +440,7 @@
 
         .patient-info-row { display: grid; gap: .4rem; }
         .patient-info-label { color: var(--appt-muted); font-size: .78rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+        .patient-info-help { color: #64748b; font-size: .78rem; line-height: 1.35; }
         .patient-info-input {
             background: #fafffe;
             border: 1px solid var(--appt-border);
@@ -487,7 +488,7 @@
             .confirmation-detail:nth-child(odd) { border-right: 1px solid var(--appt-border); }
             .confirmation-detail:nth-last-child(-n + 2) { border-bottom: 0; }
             .confirmation-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .summary-card { grid-template-columns: minmax(0, 1fr) 14rem; }
+            .summary-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .appointment-btn { width: auto; }
         }
 
@@ -729,12 +730,17 @@
                 <input type="hidden" name="selected_datetime" id="selected-datetime" value="">
                 <input type="hidden" name="option" id="selected-option" value="">
 
-                @if ($needsPatientName)
-                    <div class="patient-info-row">
-                        <label class="patient-info-label" for="patient-name">Nombre del paciente</label>
-                        <input class="patient-info-input" type="text" name="patient_name" id="patient-name" value="{{ old('patient_name', $patientName) }}" placeholder="Ej: Juan Constantine" autocomplete="name" required>
-                    </div>
-                @endif
+                <div class="patient-info-row">
+                    <label class="patient-info-label" for="patient-name">Nombre del paciente</label>
+                    <input class="patient-info-input" type="text" name="patient_name" id="patient-name" value="{{ old('patient_name', $patientName) }}" placeholder="Ej: Juan Constantine" autocomplete="name" required>
+                    <span class="patient-info-help">
+                        @if ($needsPatientName)
+                            Necesitamos este dato para registrar tu cita.
+                        @else
+                            Agendaremos con este nombre. Puedes corregirlo si la cita es para otra persona.
+                        @endif
+                    </span>
+                </div>
 
                 @if ($needsPatientName && $patientPhone)
                     <label class="phone-confirm-row">

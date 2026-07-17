@@ -47,7 +47,7 @@ class SocialAppointmentLinkController extends Controller
         $window = $availabilityService->availabilityWindow($preferredDate, 5, 21);
 
         $needsPatientName = ! $offerService->hasRealPatientName($comment);
-        $patientName = $needsPatientName ? '' : ($offerService->getPatientName($comment) ?? '');
+        $patientName = $offerService->getPatientName($comment) ?? '';
         $patientPhone = $offerService->getPhoneForConfirmation($comment);
 
         return view('social.appointments.show', [
@@ -86,18 +86,25 @@ class SocialAppointmentLinkController extends Controller
         $phoneConfirmed = (bool) $request->input('phone_confirmed', false);
         $selectedDatetime = $request->input('selected_datetime');
         $selectedOptionIndex = $request->input('option');
+        $neededPatientName = ! $offerService->hasRealPatientName($comment);
 
-        if (! $offerService->hasRealPatientName($comment)) {
-            if (blank($patientName)) {
-                return back()->with('appointment_error', 'Por favor ingresa el nombre del paciente.');
-            }
+        if (blank($patientName)) {
+            return back()->with('appointment_error', 'Por favor ingresa el nombre del paciente.');
+        }
+
+        if ($patientName !== $offerService->getPatientName($comment)) {
             $identity = $comment->socialIdentity;
             if ($identity) {
                 $identity->updateQuietly(['display_name' => $patientName]);
             }
-            if (! $phoneConfirmed && $offerService->getPhoneForConfirmation($comment)) {
-                return back()->with('appointment_error', 'Por favor confirma que el número de teléfono es correcto.');
-            }
+        }
+
+        if ($neededPatientName && ! $offerService->hasRealPatientName($comment) && ! $comment->socialIdentity) {
+            return back()->with('appointment_error', 'No pudimos guardar el nombre del paciente. Escríbenos por WhatsApp para ayudarte.');
+        }
+
+        if ($neededPatientName && ! $phoneConfirmed && $offerService->getPhoneForConfirmation($comment)) {
+            return back()->with('appointment_error', 'Por favor confirma que el número de teléfono es correcto.');
         }
 
         try {

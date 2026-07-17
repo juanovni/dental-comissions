@@ -96,7 +96,7 @@ class AppointmentSlotOfferService
             return null;
         }
 
-        if (in_array($offer->metadata['patient_info_state'] ?? null, ['awaiting_name', 'awaiting_phone'], true)) {
+        if (in_array($offer->metadata['patient_info_state'] ?? null, ['awaiting_name', 'awaiting_name_confirmation', 'awaiting_phone'], true)) {
             return null;
         }
 
@@ -105,6 +105,16 @@ class AppointmentSlotOfferService
             return [
                 'pending_patient_info' => true,
                 'reply' => 'Antes de confirmar, ¿a nombre de quién registramos la cita?',
+            ];
+        }
+
+        $patientName = $this->getPatientName($comment);
+        if ($patientName && ! ($offer->metadata['patient_name_confirmed'] ?? false)) {
+            $this->savePendingSelection($offer, $option['index'], 'awaiting_name_confirmation');
+
+            return [
+                'pending_patient_info' => true,
+                'reply' => "La cita quedará a nombre de {$patientName}. ¿Está correcto o deseas cambiarlo?\n\nResponde *sí* para mantenerlo o escribe el nombre correcto.",
             ];
         }
 
@@ -126,7 +136,7 @@ class AppointmentSlotOfferService
 
         $state = $offer->metadata['patient_info_state'] ?? null;
 
-        if (in_array($state, ['awaiting_name', 'awaiting_phone'], true)) {
+        if (in_array($state, ['awaiting_name', 'awaiting_name_confirmation', 'awaiting_phone'], true)) {
             return $offer;
         }
 
@@ -173,6 +183,29 @@ class AppointmentSlotOfferService
 
             $this->clearPendingInfo($offer);
             $appointment = $this->confirmOption($offer, $option);
+
+            return [
+                'appointment' => $appointment,
+                'reply' => app(WhatsappService::class)->buildAppointmentCreatedReply($appointment),
+            ];
+        }
+
+        if ($state === 'awaiting_name_confirmation') {
+            if (blank($body)) {
+                $patientName = $this->getPatientName($comment) ?? 'el nombre registrado';
+
+                return [
+                    'pending_patient_info' => true,
+                    'reply' => "La cita quedará a nombre de {$patientName}. ¿Está correcto o deseas cambiarlo?\n\nResponde *sí* para mantenerlo o escribe el nombre correcto.",
+                ];
+            }
+
+            if (! $this->isConfirmResponse($body)) {
+                $this->savePatientName($comment, $body);
+            }
+
+            $this->clearPendingInfo($offer, true);
+            $appointment = $this->confirmOption($offer->refresh(), $option);
 
             return [
                 'appointment' => $appointment,
@@ -486,10 +519,13 @@ class AppointmentSlotOfferService
         $offer->updateQuietly(['metadata' => $metadata]);
     }
 
-    private function clearPendingInfo(AppointmentSlotOffer $offer): void
+    private function clearPendingInfo(AppointmentSlotOffer $offer, bool $nameConfirmed = false): void
     {
         $metadata = $offer->metadata;
         unset($metadata['patient_info_state'], $metadata['pending_option_index']);
+        if ($nameConfirmed) {
+            $metadata['patient_name_confirmed'] = true;
+        }
         $offer->updateQuietly(['metadata' => $metadata]);
     }
 
