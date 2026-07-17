@@ -62,6 +62,21 @@ class WhatsappSalesAgentServiceTest extends TestCase
         Event::assertDispatched(ClosingOpportunityDetected::class);
     }
 
+    public function test_local_language_pattern_detects_ready_to_book_message(): void
+    {
+        config(['services.ai.provider' => 'local']);
+
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $comment = $this->socialComment($procedure);
+        $message = $this->whatsappMessage('Tiene chance este jueves en la tardecita?');
+
+        $response = app(WhatsappSalesAgentService::class)->respond($comment, $message);
+
+        $this->assertSame('appointment_interest', $response['intent']);
+        $this->assertTrue($response['appointment_candidate']['wants_appointment']);
+        $this->assertSame('afternoon', $response['appointment_candidate']['preferred_period']);
+    }
+
     public function test_ai_response_is_validated_and_persisted(): void
     {
         $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);

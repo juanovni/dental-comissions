@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AppointmentStatus;
+use App\Enums\LocalLanguagePatternType;
 use App\Enums\SocialCommentActionType;
 use App\Enums\SocialConversionStatus;
 use App\Enums\SocialPipelineStage;
@@ -188,6 +189,21 @@ class BookingConfirmationService
                     return 'modified';
                 }
             }
+        }
+
+        $languagePattern = app(LocalLanguagePatternService::class)->matches($body, [
+            LocalLanguagePatternType::Confirmation,
+            LocalLanguagePatternType::Cancellation,
+            LocalLanguagePatternType::Reschedule,
+        ])[0] ?? null;
+
+        if ($languagePattern) {
+            return match ($languagePattern['type']) {
+                LocalLanguagePatternType::Confirmation->value => 'confirmed',
+                LocalLanguagePatternType::Cancellation->value => 'rejected',
+                LocalLanguagePatternType::Reschedule->value => 'modified',
+                default => 'not_booking_response',
+            };
         }
 
         if (in_array($lower, ['👍', '👌', '✅', '✔', '🙌', '🔥'], true)) {

@@ -6,6 +6,7 @@ use App\Enums\SocialCommentActionType;
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialReputationRisk;
+use App\Enums\WhatsappMessageDirection;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Models\Procedure;
 use App\Models\SocialComment;
@@ -156,7 +157,9 @@ class SocialInbox extends Page
             ->limit(6)
             ->get()
             ->map(fn ($event): array => [
-                'label' => SocialLinkEventMapper::label($event->event_type),
+                'label' => $event->event_type === 'section_click' && filled($event->metadata['label'] ?? null)
+                    ? 'Exploro: '.$event->metadata['label']
+                    : SocialLinkEventMapper::label($event->event_type),
                 'type' => $event->event_type,
                 'icon' => SocialLinkEventMapper::icon($event->event_type),
                 'color' => SocialLinkEventMapper::color($event->event_type),
@@ -172,29 +175,31 @@ class SocialInbox extends Page
     {
         $events = [];
 
-        // 1. Original comment
-        $events[] = [
-            'platform' => $comment->platform?->value ?? 'comment',
-            'channel' => $comment->platform?->value ?? 'social',
-            'color' => match ($comment->platform?->value) {
-                'instagram' => 'indigo',
-                default => 'blue',
-            },
-            'channel_label' => $comment->platform?->label() ?? 'Social',
-            'channel_class' => match ($comment->platform?->value) {
-                'instagram' => 'hot',
-                default => 'info',
-            },
-            'author' => $comment->author_name ?: $comment->author_username ?: 'Anónimo',
-            'kind_label' => 'Comentario en publicación',
-            'message' => $comment->comment_text,
-            'date' => $this->formatConversationDate($comment->created_at),
-            'time' => $this->formatConversationTime($comment->created_at),
-            'short_date' => $this->formatConversationShortDate($comment->created_at),
-            'is_automated' => false,
-            'rule_label' => null,
-            'created_at' => $comment->created_at,
-        ];
+        // 1. Original social comment. WhatsApp-first leads render from whatsapp_messages below.
+        if ($comment->platform?->value !== 'whatsapp') {
+            $events[] = [
+                'platform' => $comment->platform?->value ?? 'comment',
+                'channel' => $comment->platform?->value ?? 'social',
+                'color' => match ($comment->platform?->value) {
+                    'instagram' => 'indigo',
+                    default => 'blue',
+                },
+                'channel_label' => $comment->platform?->label() ?? 'Social',
+                'channel_class' => match ($comment->platform?->value) {
+                    'instagram' => 'hot',
+                    default => 'info',
+                },
+                'author' => $comment->author_name ?: $comment->author_username ?: 'Anónimo',
+                'kind_label' => 'Comentario en publicación',
+                'message' => $comment->comment_text,
+                'date' => $this->formatConversationDate($comment->created_at),
+                'time' => $this->formatConversationTime($comment->created_at),
+                'short_date' => $this->formatConversationShortDate($comment->created_at),
+                'is_automated' => false,
+                'rule_label' => null,
+                'created_at' => $comment->created_at,
+            ];
+        }
 
         // 2. Social media replies
         foreach ($comment->replies as $reply) {
@@ -203,11 +208,13 @@ class SocialInbox extends Page
                 'channel' => $reply->platform?->value ?? 'social',
                 'color' => match ($reply->platform?->value) {
                     'instagram' => 'indigo',
+                    'whatsapp' => 'green',
                     default => 'blue',
                 },
                 'channel_label' => $reply->platform?->label() ?? 'Social',
                 'channel_class' => match ($reply->platform?->value) {
                     'instagram' => 'hot',
+                    'whatsapp' => 'success',
                     default => 'info',
                 },
                 'author' => $reply->author_name ?: $reply->author_username ?: 'Anónimo',
@@ -222,30 +229,34 @@ class SocialInbox extends Page
             ];
         }
 
-        // 3. WhatsApp messages via tracking token
-        if ($comment->tracking_token) {
-            $whatsappMessages = WhatsappMessage::where('message_body', 'like', '%'.$comment->tracking_token.'%')
-                ->orderBy('created_at')
-                ->get();
+        // 3. WhatsApp messages linked to the lead, with token fallback for older records.
+        $whatsappMessages = WhatsappMessage::query()
+            ->where(function (Builder $query) use ($comment): void {
+                $query->where('social_comment_id', $comment->id)
+                    ->when($comment->tracking_token, function (Builder $query) use ($comment): void {
+                        $query->orWhere('message_body', 'like', '%'.$comment->tracking_token.'%');
+                    });
+            })
+            ->orderBy('created_at')
+            ->get();
 
-            foreach ($whatsappMessages as $msg) {
-                $events[] = [
-                    'platform' => 'whatsapp',
-                    'channel' => 'whatsapp',
-                    'color' => 'green',
-                    'channel_label' => 'WhatsApp',
-                    'channel_class' => 'success',
-                    'author' => $msg->direction?->value === 'incoming' ? 'Cliente' : 'Clinica',
-                    'kind_label' => 'Mensaje directo',
-                    'message' => $msg->message_body,
-                    'date' => $this->formatConversationDate($msg->created_at),
-                    'time' => $this->formatConversationTime($msg->created_at),
-                    'short_date' => $this->formatConversationShortDate($msg->created_at),
-                    'is_automated' => false,
-                    'rule_label' => null,
-                    'created_at' => $msg->created_at,
-                ];
-            }
+        foreach ($whatsappMessages as $msg) {
+            $events[] = [
+                'platform' => 'whatsapp',
+                'channel' => 'whatsapp',
+                'color' => 'green',
+                'channel_label' => 'WhatsApp',
+                'channel_class' => 'success',
+                'author' => $msg->direction?->value === 'incoming' ? 'Cliente' : 'Clinica',
+                'kind_label' => 'Mensaje directo',
+                'message' => $msg->message_body,
+                'date' => $this->formatConversationDate($msg->created_at),
+                'time' => $this->formatConversationTime($msg->created_at),
+                'short_date' => $this->formatConversationShortDate($msg->created_at),
+                'is_automated' => false,
+                'rule_label' => null,
+                'created_at' => $msg->created_at,
+            ];
         }
 
         // 4. Key actions
@@ -260,6 +271,12 @@ class SocialInbox extends Page
             ->oldest('created_at')
             ->get()
             ->each(function ($action) use (&$events, $comment): void {
+                if ($action->action === SocialCommentActionType::WhatsappSalesAgent
+                    && $this->hasOutgoingWhatsappMessageForAction($comment, $action)
+                ) {
+                    return;
+                }
+
                 $isAiAction = in_array($action->action, [
                     SocialCommentActionType::AutoReplySent,
                     SocialCommentActionType::WhatsappSalesAgent,
@@ -278,6 +295,7 @@ class SocialInbox extends Page
                     'channel_label' => $isWhatsappAgent ? 'WhatsApp' : ($isAiAction ? ($comment->platform?->label() ?? 'Social') : 'Sistema'),
                     'channel_class' => $isWhatsappAgent ? 'success' : ($isAiAction ? match ($comment->platform?->value) {
                         'instagram' => 'hot',
+                        'whatsapp' => 'success',
                         default => 'info',
                     } : 'neutral'),
                     'author' => $isAiAction ? 'Asistente IA' : $action->action->label(),
@@ -295,6 +313,22 @@ class SocialInbox extends Page
         usort($events, fn ($a, $b) => ($a['created_at']?->timestamp ?? 0) <=> ($b['created_at']?->timestamp ?? 0));
 
         return $events;
+    }
+
+    private function hasOutgoingWhatsappMessageForAction(SocialComment $comment, $action): bool
+    {
+        if (! $action->created_at) {
+            return false;
+        }
+
+        return WhatsappMessage::query()
+            ->where('social_comment_id', $comment->id)
+            ->where('direction', WhatsappMessageDirection::Outgoing)
+            ->whereBetween('created_at', [
+                $action->created_at->copy()->subMinutes(2),
+                $action->created_at->copy()->addMinutes(2),
+            ])
+            ->exists();
     }
 
     private function formatConversationDate($date): string

@@ -62,6 +62,31 @@ class SocialCrmSettingsService
         return (int) $this->get('social_score_token_generated', 30);
     }
 
+    public function whatsappFirstLeadsEnabled(): bool
+    {
+        return (bool) $this->get('social_whatsapp_first_leads_enabled', true);
+    }
+
+    public function scoreForWhatsappFirstMessage(): int
+    {
+        return (int) $this->get('social_score_whatsapp_first_message', 20);
+    }
+
+    public function scoreForWhatsappTreatmentInterest(): int
+    {
+        return (int) $this->get('social_score_whatsapp_treatment_interest', 15);
+    }
+
+    public function scoreForWhatsappAppointmentIntent(): int
+    {
+        return (int) $this->get('social_score_whatsapp_appointment_intent', 30);
+    }
+
+    public function scoreForWhatsappSlotSelected(): int
+    {
+        return (int) $this->get('social_score_whatsapp_slot_selected', 20);
+    }
+
     public function scoreForSmartLinkClick(): int
     {
         return (int) $this->get('social_score_smart_link_click', 15);
@@ -387,6 +412,11 @@ class SocialCrmSettingsService
     public function appointmentProposeSlots(): bool
     {
         return (bool) $this->get('social_appointment_propose_slots', false);
+    }
+
+    public function clinicTimezone(): string
+    {
+        return (string) $this->get('social_appointment_clinic_timezone', 'America/Guayaquil');
     }
 
     public function clearCache(): void

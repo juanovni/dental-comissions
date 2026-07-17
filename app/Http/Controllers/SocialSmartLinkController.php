@@ -46,7 +46,7 @@ class SocialSmartLinkController extends Controller
     {
         $comment = $this->findComment($trackingToken);
         $data = $request->validate([
-            'event_type' => ['required', 'string', 'in:view,revisit,duration_threshold,video_start,video_25,video_50,video_75,video_complete,whatsapp_click,button_click,video_play_seconds'],
+            'event_type' => ['required', 'string', 'in:view,revisit,duration_threshold,video_start,video_25,video_50,video_75,video_complete,whatsapp_click,button_click,section_click,video_play_seconds'],
             'session_id' => ['nullable', 'string', 'max:80'],
             'duration_seconds' => ['nullable', 'integer', 'min:0', 'max:86400'],
             'metadata' => ['nullable', 'array'],
@@ -188,7 +188,7 @@ class SocialSmartLinkController extends Controller
         $visitorName = $this->visitorName($comment);
 
         if ($visitorName) {
-            $subtitle = "Hola, {$visitorName}. {$subtitle}";
+            $subtitle = "Hola, <strong>{$visitorName}</strong>. {$subtitle}";
         }
 
         return [
@@ -294,9 +294,9 @@ class SocialSmartLinkController extends Controller
                 'title' => 'Camino claro para alinear tu sonrisa',
                 'text' => "Con tu codigo {$comment->tracking_token}, el equipo sabra que buscas ortodoncia o alineadores. La cita se enfoca en revisar viabilidad, tiempos y comodidad.",
                 'steps' => [
-                    ['label' => 'Revision de mordida', 'text' => 'Evaluamos alineacion, espacio y objetivos.'],
-                    ['label' => 'Simulacion o plan', 'text' => 'Te mostramos el camino probable antes de iniciar.'],
-                    ['label' => 'Opciones claras', 'text' => 'Comparas alternativas, tiempos y costos sin sorpresas.'],
+                    ['label' => 'Recepción VIP', 'text' => 'Te recibiremos con una breve entrevista para conocer tus expectativas y resolver dudas iniciales.'],
+                    ['label' => 'Escaneo Digital', 'text' => 'Utilizamos tecnología iTero para crear un mapa 3D de tu boca. Adiós a los moldes incómodos.'],
+                    ['label' => 'Plan Maestro', 'text' => 'El doctor diseñará tu plan final y te mostraremos una simulación de cómo quedará tu sonrisa.'],
                 ],
             ];
         }

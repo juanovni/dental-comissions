@@ -247,10 +247,21 @@ class MetaSocialService
         $since = now()->subDays($this->config()['sync_days'])->timestamp;
 
         if ($account->platform === SocialPlatform::Instagram) {
-            return $this->getAllPages("/{$account->external_account_id}/media", [
+            $posts = $this->getAllPages("/{$account->external_account_id}/media", [
                 'fields' => 'id,caption,media_url,permalink,timestamp',
                 'since' => $since,
             ], $account);
+
+            if ($posts !== []) {
+                return $posts;
+            }
+
+            $fallback = $this->get("/{$account->external_account_id}/media", [
+                'fields' => 'id,caption,media_url,permalink,timestamp',
+                'limit' => 25,
+            ], $account);
+
+            return $fallback['data'] ?? [];
         }
 
         return $this->getAllPages("/{$account->page_id}/posts", [

@@ -185,6 +185,89 @@ class AppointmentAvailabilityService
         return app(GoogleCalendarService::class)->isClinicSlotAvailable($start, $end, $doctor);
     }
 
+    public function availabilityWindow(?Carbon $preferredDate = null, int $maxDaysWithSlots = 5, int $maxDaysToScan = 21): array
+    {
+        $settings = app(SocialCrmSettingsService::class);
+        $duration = $settings->appointmentSlotDuration();
+        $openMinutes = $this->timeToMinutes($settings->appointmentClinicOpen());
+        $closeMinutes = $this->timeToMinutes($settings->appointmentClinicClose());
+        $clinicDays = $settings->appointmentClinicDays();
+        $leadTimeHours = $settings->appointmentLeadTimeHours();
+        $googleService = app(GoogleCalendarService::class);
+
+        $startFrom = now()->addHours($leadTimeHours)->startOfMinute();
+        $cursor = $preferredDate?->copy()->startOfDay()->max($startFrom) ?? $startFrom;
+
+        $days = [];
+        $preferredDateFull = false;
+        $firstAvailableDay = null;
+        $daysWithSlots = 0;
+        $scanned = 0;
+
+        while ($daysWithSlots < $maxDaysWithSlots && $scanned < $maxDaysToScan) {
+            $scanned++;
+            $date = $cursor->copy()->startOfDay();
+            $dayOfWeek = (int) $date->format('w');
+
+            if (! in_array($dayOfWeek, $clinicDays, true)) {
+                $cursor->addDay();
+                continue;
+            }
+
+            $startMinute = $date->isToday()
+                ? max($openMinutes, (int) (ceil(($startFrom->hour * 60 + $startFrom->minute) / $duration) * $duration))
+                : $openMinutes;
+
+            $daySlots = [];
+
+            for ($minutes = $startMinute; $minutes + $duration <= $closeMinutes; $minutes += $duration) {
+                $slotStart = $date->copy()->addMinutes($minutes);
+                $slotEnd = $slotStart->copy()->addMinutes($duration);
+
+                $available = ! $this->hasAppointmentConflict(null, $slotStart, $slotEnd)
+                    && ! $this->hasActiveHoldConflict(null, $slotStart, $slotEnd)
+                    && $googleService->isClinicSlotAvailable($slotStart, $slotEnd);
+
+                if ($available) {
+                    $daySlots[] = $slotStart;
+                }
+            }
+
+            $isFull = empty($daySlots);
+
+            if (! $isFull) {
+                $daysWithSlots++;
+            }
+
+            if ($isFull && $preferredDate && $date->isSameDay($preferredDate)) {
+                $preferredDateFull = true;
+            }
+
+            if (! $isFull && ! $firstAvailableDay) {
+                $firstAvailableDay = $date;
+            }
+
+            $days[] = [
+                'date' => $date,
+                'label' => $date->isoFormat('ddd D MMM'),
+                'long_label' => $date->isoFormat('dddd D [de] MMMM [del] YYYY'),
+                'slots' => $daySlots,
+                'slot_count' => count($daySlots),
+                'is_full' => $isFull,
+                'is_today' => $date->isToday(),
+                'is_preferred' => $preferredDate && $date->isSameDay($preferredDate),
+            ];
+
+            $cursor->addDay();
+        }
+
+        return [
+            'days' => $days,
+            'preferred_date_full' => $preferredDateFull,
+            'first_available_day' => $firstAvailableDay,
+        ];
+    }
+
     public function formatSlotsForPrompt(array $slots): string
     {
         if (empty($slots)) {

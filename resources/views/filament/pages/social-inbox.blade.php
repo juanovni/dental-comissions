@@ -465,6 +465,9 @@
             margin-top: .45rem;
             padding: .7rem;
             white-space: pre-line;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            max-width: 100%;
         }
 
         .smart-conversation-summary {

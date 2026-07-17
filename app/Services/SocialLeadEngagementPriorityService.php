@@ -13,6 +13,7 @@ class SocialLeadEngagementPriorityService
         'whatsapp_click' => 40,
         'video_complete' => 30,
         'button_click' => 25,
+        'section_click' => 18,
         'video_75' => 22,
         'duration_threshold' => 20,
         'revisit' => 15,
@@ -77,6 +78,7 @@ class SocialLeadEngagementPriorityService
             'whatsapp_click',
             'video_complete',
             'button_click',
+            'section_click',
             'duration_threshold',
             'revisit',
         ], true)) ?? $events->first();

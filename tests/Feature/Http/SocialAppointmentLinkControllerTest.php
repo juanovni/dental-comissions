@@ -5,6 +5,8 @@ namespace Tests\Feature\Http;
 use App\Enums\AppointmentStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
+use App\Enums\WhatsappMessageDirection;
+use App\Enums\WhatsappMessageStatus;
 use App\Models\Appointment;
 use App\Models\AppointmentSlotOffer;
 use App\Models\Procedure;
@@ -14,21 +16,28 @@ use App\Models\SocialComment;
 use App\Models\SocialCrmSetting;
 use App\Models\SocialIdentity;
 use App\Models\SocialPost;
+use App\Models\WhatsappMessage;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SocialAppointmentLinkControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_appointment_link_shows_context_and_valid_slots(): void
+    public function test_appointment_link_shows_context_and_calendar(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
 
         $this->setting('social_appointment_show_doctor', true, 'boolean');
         $this->setting('social_appointment_slot_duration', 45, 'integer');
         $this->setting('social_appointment_lead_time_hours', 2, 'integer');
+        $this->setting('social_appointment_clinic_days', [1, 2, 3, 4, 5], 'array');
+        $this->setting('social_appointment_clinic_open', '09:00', 'string');
+        $this->setting('social_appointment_clinic_close', '18:00', 'string');
+
+        \Illuminate\Support\Facades\Cache::forget('social_crm_settings.active');
 
         $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
         $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Ana Morales']);
@@ -42,9 +51,11 @@ class SocialAppointmentLinkControllerTest extends TestCase
             ->assertOk()
             ->assertSee('Ortodoncia invisible')
             ->assertSee('Dra. Ana Morales')
-            ->assertSee('10:00 AM')
-            ->assertSee('11:15 AM')
-            ->assertSee('Confirmar cita');
+            ->assertSee('Confirmar cita')
+            ->assertSee('day-pill')
+            ->assertSee('slot-btn')
+            ->assertDontSee('Te ofrecimos por WhatsApp')
+            ->assertSee('11:15');
 
         Carbon::setTestNow();
     }
@@ -54,6 +65,13 @@ class SocialAppointmentLinkControllerTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
 
         $this->setting('social_appointment_show_doctor', false, 'boolean');
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_lead_time_hours', 2, 'integer');
+        $this->setting('social_appointment_clinic_days', [1, 2, 3, 4, 5], 'array');
+        $this->setting('social_appointment_clinic_open', '09:00', 'string');
+        $this->setting('social_appointment_clinic_close', '18:00', 'string');
+
+        \Illuminate\Support\Facades\Cache::forget('social_crm_settings.active');
 
         $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
         $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Ana Morales']);
@@ -70,12 +88,18 @@ class SocialAppointmentLinkControllerTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_appointment_link_filters_occupied_slots(): void
+    public function test_appointment_link_shows_calendar_with_availability(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
 
         $this->setting('social_appointment_show_doctor', true, 'boolean');
         $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_lead_time_hours', 2, 'integer');
+        $this->setting('social_appointment_clinic_days', [1, 2, 3, 4, 5], 'array');
+        $this->setting('social_appointment_clinic_open', '09:00', 'string');
+        $this->setting('social_appointment_clinic_close', '18:00', 'string');
+
+        \Illuminate\Support\Facades\Cache::forget('social_crm_settings.active');
 
         $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
         $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Ana Morales']);
@@ -95,8 +119,106 @@ class SocialAppointmentLinkControllerTest extends TestCase
 
         $this->get(route('social-appointments.show', ['token' => $offer->token]))
             ->assertOk()
-            ->assertDontSee('10:00 AM')
-            ->assertSee('11:15 AM');
+            ->assertSee('Ortodoncia invisible')
+            ->assertSee('day-pill')
+            ->assertSee('slot-btn')
+            ->assertSee('11:15');
+
+        Carbon::setTestNow();
+    }
+
+    public function test_confirming_from_link_sends_whatsapp_confirmation(): void
+    {
+        $this->withoutMiddleware();
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+        config([
+            'services.whatsapp.phone_number_id' => 'phone-number-id',
+            'services.whatsapp.access_token' => 'test-token',
+        ]);
+        Http::fake(fn () => Http::response([
+            'messages' => [['id' => 'wamid.confirmation']]],
+        ));
+
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Ana Morales']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->socialIdentity->update(['phone' => '+593985925100']);
+        $incoming = WhatsappMessage::create([
+            'social_comment_id' => $comment->id,
+            'direction' => WhatsappMessageDirection::Incoming,
+            'status' => WhatsappMessageStatus::Received,
+            'from_phone' => '+593985925100',
+            'to_phone' => 'phone-number-id',
+            'message_body' => 'Quiero una cita',
+            'message_sid' => 'wamid.incoming',
+        ]);
+        $offer = $this->offer($comment, [
+            ['index' => 1, 'datetime' => '2026-07-15 10:00:00', 'doctor_id' => $doctor->id],
+        ]);
+        $offer->update(['whatsapp_message_id' => $incoming->id]);
+
+        $this->post(route('social-appointments.confirm', ['token' => $offer->token]), ['option' => 1])
+            ->assertRedirect(route('social-appointments.show', ['token' => $offer->token]));
+
+        $this->assertDatabaseHas('whatsapp_messages', [
+            'social_comment_id' => $comment->id,
+            'direction' => WhatsappMessageDirection::Outgoing->value,
+            'status' => WhatsappMessageStatus::Sent->value,
+            'to_phone' => '+593985925100',
+        ]);
+        Http::assertSent(fn ($request): bool => $request['to'] === '+593985925100'
+            && str_contains($request['text']['body'], 'cita')
+            && str_contains($request['text']['body'], '15 de julio'));
+
+        $this->get(route('social-appointments.show', ['token' => $offer->token]))
+            ->assertOk()
+            ->assertSee('¡Tu cita quedó registrada!')
+            ->assertSee('Cita confirmada')
+            ->assertSee('Agregar al calendario')
+            ->assertSee('Compartir por WhatsApp')
+            ->assertSee('Copiar resumen')
+            ->assertSee('¿Necesitas reagendar?')
+            ->assertSee('Ortodoncia invisible')
+            ->assertSee('10:00')
+            ->assertDontSee('Clínica Dental')
+            ->assertDontSee('Confirmar cita');
+
+        Carbon::setTestNow();
+    }
+
+    public function test_confirmed_appointment_can_be_downloaded_as_ics(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Ana Morales']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $appointment = Appointment::factory()->create([
+            'social_comment_id' => $comment->id,
+            'procedure_id' => $procedure->id,
+            'doctor_id' => $doctor->id,
+            'scheduled_at' => '2026-07-15 10:00:00',
+            'duration_minutes' => 45,
+            'status' => AppointmentStatus::PendingConfirmation,
+        ]);
+        $offer = $this->offer($comment, [
+            ['index' => 1, 'datetime' => '2026-07-15 10:00:00', 'doctor_id' => $doctor->id],
+        ]);
+        $offer->update([
+            'appointment_id' => $appointment->id,
+            'status' => 'selected',
+            'selected_option_index' => 1,
+        ]);
+
+        $this->get(route('social-appointments.calendar', ['token' => $offer->token]))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/calendar; charset=utf-8')
+            ->assertHeader('Content-Disposition', 'attachment; filename="cita-dental.ics"')
+            ->assertSee('BEGIN:VCALENDAR', false)
+            ->assertSee('SUMMARY:Cita dental - Ortodoncia invisible', false)
+            ->assertSee('DTSTART;TZID='.config('app.timezone').':20260715T100000', false)
+            ->assertSee('DTEND;TZID='.config('app.timezone').':20260715T104500', false);
 
         Carbon::setTestNow();
     }

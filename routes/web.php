@@ -28,6 +28,7 @@ Route::get('/auth/google/callback', [GoogleCalendarAuthController::class, 'callb
 Route::get('/v/{trackingToken}', [SocialSmartLinkController::class, 'show'])->name('social-smart-link.show');
 Route::post('/v/{trackingToken}/event', [SocialSmartLinkController::class, 'track'])->name('social-smart-link.track');
 Route::get('/social/appointments/{token}', [SocialAppointmentLinkController::class, 'show'])->name('social-appointments.show');
+Route::get('/social/appointments/{token}/calendar', [SocialAppointmentLinkController::class, 'calendar'])->name('social-appointments.calendar');
 Route::post('/social/appointments/{token}/confirm', [SocialAppointmentLinkController::class, 'confirm'])->name('social-appointments.confirm');
 
 if (app()->environment('local', 'testing')) {

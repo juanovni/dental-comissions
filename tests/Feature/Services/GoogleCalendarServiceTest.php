@@ -359,17 +359,15 @@ class GoogleCalendarServiceTest extends TestCase
 
         $event = $this->service->buildCalendarEvent($appointment);
 
-        $this->assertStringContainsString('Juan Perez', $event->getSummary());
-        $this->assertSame(
-            $appointment->scheduled_at->toRfc3339String(),
-            $event->getStart()->getDateTime(),
-        );
+        $clinicTz = app(\App\Services\SocialCrmSettingsService::class)->clinicTimezone();
+        $localStart = $appointment->scheduled_at->copy()->setTimezone($clinicTz);
+        $localEnd = $appointment->scheduled_at->copy()->addMinutes(60)->setTimezone($clinicTz);
 
-        $expectedEnd = $appointment->scheduled_at->copy()->addMinutes(60);
-        $this->assertSame(
-            $expectedEnd->toRfc3339String(),
-            $event->getEnd()->getDateTime(),
-        );
+        $this->assertStringContainsString('Juan Perez', $event->getSummary());
+        $this->assertSame($localStart->format('Y-m-d\TH:i:s'), $event->getStart()->getDateTime());
+        $this->assertSame($clinicTz, $event->getStart()->getTimeZone());
+        $this->assertSame($localEnd->format('Y-m-d\TH:i:s'), $event->getEnd()->getDateTime());
+        $this->assertSame($clinicTz, $event->getEnd()->getTimeZone());
     }
 
     public function test_create_or_update_event_creates_new_when_no_external_id(): void

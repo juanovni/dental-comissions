@@ -2,8 +2,13 @@
 
 namespace Tests\Feature\Services;
 
+use App\Enums\AppointmentStatus;
+use App\Enums\SocialConversionStatus;
+use App\Enums\SocialPlatform;
 use App\Enums\WhatsappMessageStatus;
 use App\Models\ActivityRecord;
+use App\Models\Appointment;
+use App\Models\AppointmentSlotOffer;
 use App\Models\DoctorAssistantAssignment;
 use App\Models\PaymentMethod;
 use App\Models\PaymentMethodCommissionRate;
@@ -11,9 +16,11 @@ use App\Models\Procedure;
 use App\Models\Professional;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
+use App\Models\SocialCrmSetting;
 use App\Models\SocialPost;
 use App\Models\WhatsappMessage;
 use App\Services\WhatsappService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -81,7 +88,90 @@ class WhatsappServiceTest extends TestCase
 
         $this->assertNotNull($result);
         $this->assertNull($result->professional_id);
-        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertEquals(WhatsappMessageStatus::Processed, $result->status);
+        $this->assertNotNull($result->social_comment_id);
+        $this->assertDatabaseHas('social_comments', [
+            'id' => $result->social_comment_id,
+            'platform' => SocialPlatform::Whatsapp->value,
+            'pipeline_stage' => 'new',
+            'interest_score' => 20,
+        ]);
+    }
+
+    public function test_whatsapp_first_availability_message_detects_procedure_and_offers_slots(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_max_slots_offer', 3, 'integer');
+        $this->setting('social_appointment_clinic_open', '08:00', 'string');
+        $this->setting('social_appointment_clinic_close', '18:00', 'string');
+        $this->setting('social_appointment_afternoon_start', '13:00', 'string');
+        $this->setting('social_appointment_afternoon_end', '18:00', 'string');
+
+        $procedure = Procedure::factory()->create([
+            'name' => 'Ortodoncia invisible',
+            'code' => 'ORTODONCIA_INVISIBLE',
+            'category' => 'ortodoncia_invisible',
+            'is_active' => true,
+        ]);
+        Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+
+        $result = $this->whatsappService->processIncomingMessage($this->buildPayload(
+            '593985925100',
+            'Hola buenas tardes tiene disponibilidad para odontología invisible es jueves en la tarde?',
+        ));
+
+        $comment = $result->socialComment;
+        $offer = AppointmentSlotOffer::where('social_comment_id', $comment->id)->first();
+
+        $this->assertNotNull($result);
+        $this->assertSame($procedure->id, $comment->suggested_procedure_id);
+        $this->assertSame('appointment_interest', $comment->ai_intent);
+        $this->assertSame('2026-07-16 15:00:00', $comment->appointment_scheduled_at->format('Y-m-d H:i:s'));
+        $this->assertNotNull($offer);
+        $this->assertSame('afternoon', $offer->metadata['requested_period']);
+        $this->assertSame('2026-07-16', $offer->metadata['requested_date']);
+        $this->assertStringContainsString('Ortodoncia invisible', WhatsappMessage::where('direction', 'outgoing')->latest('id')->value('message_body'));
+        $this->assertStringNotContainsString('No especificado', WhatsappMessage::where('direction', 'outgoing')->latest('id')->value('message_body'));
+
+        Carbon::setTestNow();
+    }
+
+    public function test_whatsapp_first_confirmation_reuses_lead_after_appointment_created_status(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $procedure = Procedure::factory()->create(['name' => 'Valoracion dental', 'is_active' => true]);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dr. Demo']);
+
+        $firstMessage = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Hola quiero una cita'),
+        );
+        $comment = $firstMessage->socialComment;
+        $comment->update([
+            'suggested_procedure_id' => $procedure->id,
+            'suggested_doctor_id' => $doctor->id,
+            'conversion_status' => SocialConversionStatus::AppointmentCreated,
+        ]);
+        $appointment = Appointment::factory()->create([
+            'social_comment_id' => $comment->id,
+            'social_identity_id' => $comment->social_identity_id,
+            'procedure_id' => $procedure->id,
+            'doctor_id' => $doctor->id,
+            'scheduled_at' => '2026-07-16 15:45:00',
+            'duration_minutes' => 45,
+            'status' => AppointmentStatus::PendingConfirmation,
+        ]);
+
+        $confirmation = $this->whatsappService->processIncomingMessage(
+            $this->buildPayload('593985925100', 'Si'),
+        );
+
+        $this->assertSame($comment->id, $confirmation->social_comment_id);
+        $this->assertSame(AppointmentStatus::Confirmed, $appointment->refresh()->status);
+        $this->assertStringContainsString('confirmada', WhatsappMessage::where('direction', 'outgoing')->latest('id')->value('message_body'));
+
+        Carbon::setTestNow();
     }
 
     public function test_duplicate_message_is_not_processed_twice(): void
@@ -426,7 +516,7 @@ class WhatsappServiceTest extends TestCase
         $this->assertNotNull($comment->refresh()->social_identity_id);
     }
 
-    public function test_unknown_phone_cannot_register_activity_without_tracking_token(): void
+    public function test_unknown_phone_creates_whatsapp_lead_instead_of_activity_without_tracking_token(): void
     {
         Procedure::factory()->create(['name' => 'Extraccion quirurgica', 'is_active' => true]);
 
@@ -436,9 +526,14 @@ class WhatsappServiceTest extends TestCase
 
         $this->assertNotNull($result);
         $this->assertNull($result->professional_id);
-        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
-        $this->assertStringContainsString('Profesional no activo o no autorizado', $result->error_message);
+        $this->assertEquals(WhatsappMessageStatus::Processed, $result->status);
+        $this->assertNotNull($result->social_comment_id);
         $this->assertEquals(0, ActivityRecord::count());
+        $this->assertDatabaseHas('social_comments', [
+            'id' => $result->social_comment_id,
+            'platform' => SocialPlatform::Whatsapp->value,
+            'pipeline_stage' => 'new',
+        ]);
     }
 
     public function test_unknown_phone_with_tracking_token_is_processed_as_social_lead(): void
@@ -555,6 +650,14 @@ class WhatsappServiceTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    private function setting(string $key, mixed $value, string $type): void
+    {
+        SocialCrmSetting::updateOrCreate(
+            ['key' => $key],
+            ['value' => $value, 'value_type' => $type, 'label' => $key, 'is_active' => true],
+        );
     }
 
     private function seedPaymentMethods(): void

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LocalLanguagePatternType;
 use App\Models\SocialComment;
 use App\Models\WhatsappMessage;
 use Carbon\Carbon;
@@ -259,6 +260,23 @@ class AppointmentIntentService
     {
         $result = ['parsed' => null, 'text' => null];
 
+        $localPattern = app(LocalLanguagePatternService::class)->match($text, LocalLanguagePatternType::Period);
+
+        if ($localPattern) {
+            $period = $localPattern['value'];
+            $time = match ($period) {
+                'morning' => '09:00',
+                'night' => '17:00',
+                default => '15:00',
+            };
+
+            return [
+                'parsed' => $time,
+                'text' => $localPattern['phrase'],
+                'period' => $period,
+            ];
+        }
+
         if (preg_match('/a\s*las\s*(\d{1,2})(?:\s*[.:]\s*(\d{2}))?(?:\s*(am|pm|a\.m\.|p\.m\.))?/i', $text, $matches)) {
             $hour = (int) $matches[1];
             $minutes = !empty($matches[2]) ? (int) $matches[2] : 0;
@@ -293,10 +311,17 @@ class AppointmentIntentService
         }
 
         $periods = [
+            'en horas de la mañana' => ['09:00', 'morning'], 'en horas de la manana' => ['09:00', 'morning'],
+            'horas de la mañana' => ['09:00', 'morning'], 'horas de la manana' => ['09:00', 'morning'],
+            'horario de la mañana' => ['09:00', 'morning'], 'horario de la manana' => ['09:00', 'morning'],
             'en la mañana' => ['09:00', 'morning'], 'en la manana' => ['09:00', 'morning'],
             'por la mañana' => ['09:00', 'morning'], 'por la manana' => ['09:00', 'morning'],
-            'en la tarde' => ['15:00', 'afternoon'], 'por la tarde' => ['15:00', 'afternoon'],
-            'en la noche' => ['17:00', 'night'], 'por la noche' => ['17:00', 'night'],
+            'en horas de la tarde' => ['15:00', 'afternoon'], 'horas de la tarde' => ['15:00', 'afternoon'],
+            'horario de la tarde' => ['15:00', 'afternoon'], 'en la tarde' => ['15:00', 'afternoon'],
+            'por la tarde' => ['15:00', 'afternoon'],
+            'en horas de la noche' => ['17:00', 'night'], 'horas de la noche' => ['17:00', 'night'],
+            'horario de la noche' => ['17:00', 'night'], 'en la noche' => ['17:00', 'night'],
+            'por la noche' => ['17:00', 'night'],
         ];
 
         foreach ($periods as $phrase => [$time, $period]) {

@@ -101,7 +101,12 @@ class SocialRoiService
         $appointments = $this->appointmentSummary($filters);
 
         $leadCount = (clone $comments)->whereNotNull('social_identity_id')->count();
-        $whatsappCount = (clone $comments)->whereNotNull('whatsapp_redirected_at')->count();
+        $whatsappCount = (clone $comments)
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('whatsapp_redirected_at')
+                    ->orWhere('platform', SocialPlatform::Whatsapp->value);
+            })
+            ->count();
         $linkedCount = (clone $comments)->whereNotNull('converted_patient_id')->count();
         $activityCount = (clone $socialActivities)->count();
         $revenue = (clone $socialActivities)->sum('internal_rate_snapshot');
@@ -578,6 +583,39 @@ class SocialRoiService
                 $summary['appointment_count'],
                 $summary['activity_count'],
             ],
+        ];
+    }
+
+    public function financialHighlights(?array $filters = null): array
+    {
+        $period = SocialRoiPeriod::resolve($filters);
+
+        $activityQuery = ActivityRecord::query()
+            ->whereBetween('activity_date', [$period['from_date'], $period['until_date']]);
+
+        $totalRevenue = (clone $activityQuery)->sum('internal_rate_snapshot');
+
+        $attributedRevenue = (clone $activityQuery)
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('social_post_id')
+                    ->orWhereNotNull('social_comment_id')
+                    ->orWhereNotNull('social_identity_id');
+            })
+            ->sum('internal_rate_snapshot');
+
+        $wonPipeline = SocialComment::query()
+            ->where('pipeline_stage', SocialPipelineStage::Won->value)
+            ->whereBetween('converted_at', [$period['from'], $period['until']])
+            ->sum('estimated_value');
+
+        $nonAttributed = $totalRevenue - $attributedRevenue;
+
+        return [
+            'total_revenue' => (float) $totalRevenue,
+            'attributed_revenue' => (float) $attributedRevenue,
+            'non_attributed_revenue' => max(0, (float) $nonAttributed),
+            'won_pipeline_value' => (float) $wonPipeline,
+            'attribution_rate' => $totalRevenue > 0 ? round(($attributedRevenue / $totalRevenue) * 100, 1) : 0,
         ];
     }
 
