@@ -1068,10 +1068,10 @@
 
         .smart-badge {
             border-radius: 999px;
-            font-size: .625rem;
+            font-size: .675rem;
             font-weight: 600;
             letter-spacing: .03em;
-            padding: .175rem .4rem;
+            padding: .2rem .55rem;
         }
 
         .smart-badge.danger { background: #fef2f2; color: #b91c1c; }
@@ -1080,6 +1080,8 @@
         .smart-badge.success { background: #ecfdf5; color: #047857; }
         .smart-badge.neutral { background: #f1f5f9; color: #475569; }
         .smart-badge.hot { background: #fff7ed; color: #c2410c; }
+
+        .smart-badge-icon { height: .8rem; width: .8rem; }
 
         .smart-token {
             align-items: center;
@@ -1511,14 +1513,14 @@
             bottom: -.2rem;
             box-shadow: 0 1px 3px rgba(15, 23, 42, .18);
             display: inline-flex;
-            height: 1.05rem;
+            height: 1.35rem;
             justify-content: center;
             position: absolute;
-            right: -.1rem;
-            width: 1.05rem;
+            right: -.15rem;
+            width: 1.35rem;
         }
 
-        .smart-channel-dot svg { height: 1rem; width: 1rem; }
+        .smart-channel-dot svg { height: 1.3rem; width: 1.3rem; }
 
         .smart-row-heading {
             align-items: center;
@@ -2297,7 +2299,23 @@
                                 @if ($phone)
                                     <span class="smart-phone">{{ $phone }}</span>
                                 @endif
-                                <span class="smart-badge {{ $categoryClass }}">{{ $categoryLabel }}</span>
+                                <span class="smart-badge {{ $categoryClass }}">
+                                    @switch($intent)
+                                        @case('lead')
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="smart-badge-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/></svg>
+                                            @break
+                                        @case('crisis')
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="smart-badge-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+                                            @break
+                                        @case('vip')
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="smart-badge-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"/></svg>
+                                            @break
+                                        @case('medical')
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="smart-badge-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
+                                            @break
+                                    @endswitch
+                                    {{ $categoryLabel }}
+                                </span>
                             </div>
                             <div class="smart-message">{{ $comment->comment_text }}</div>
                         </div>
