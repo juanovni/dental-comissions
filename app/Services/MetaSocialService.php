@@ -120,6 +120,11 @@ class MetaSocialService
     public function syncAuthorizedAccounts(): void
     {
         foreach ($this->getPages() as $page) {
+            $existingPageAccount = SocialAccount::query()
+                ->where('platform', SocialPlatform::Facebook->value)
+                ->where('external_account_id', $page['id'])
+                ->first();
+
             $pageAccount = SocialAccount::updateOrCreate(
                 [
                     'platform' => SocialPlatform::Facebook->value,
@@ -130,7 +135,7 @@ class MetaSocialService
                     'page_id' => $page['id'],
                     'access_token' => $page['access_token'] ?? $this->config()['access_token'],
                     'is_active' => true,
-                    'sync_settings' => ['source' => 'meta_pages'],
+                    'sync_settings' => $this->syncSettingsWithConnectedAt($existingPageAccount, 'meta_pages'),
                 ],
             );
 
@@ -139,6 +144,11 @@ class MetaSocialService
             if (! $instagramAccount) {
                 continue;
             }
+
+            $existingInstagramAccount = SocialAccount::query()
+                ->where('platform', SocialPlatform::Instagram->value)
+                ->where('external_account_id', $instagramAccount['id'])
+                ->first();
 
             SocialAccount::updateOrCreate(
                 [
@@ -153,7 +163,7 @@ class MetaSocialService
                     'instagram_business_account_id' => $instagramAccount['id'],
                     'access_token' => $page['access_token'] ?? $this->config()['access_token'],
                     'is_active' => true,
-                    'sync_settings' => ['source' => 'meta_instagram_business_account'],
+                    'sync_settings' => $this->syncSettingsWithConnectedAt($existingInstagramAccount, 'meta_instagram_business_account'),
                 ],
             );
         }
@@ -206,12 +216,17 @@ class MetaSocialService
     {
         $posts = $this->getRecentPosts($account);
         $summary = ['posts' => 0, 'comments' => 0];
+        $syncSince = $this->syncSince($account);
 
         foreach ($posts as $postData) {
             $post = $this->storePost($account, $postData);
             $summary['posts']++;
 
             foreach ($this->getPostComments($post, $account) as $commentData) {
+                if ($this->wasPublishedBefore($commentData['created_time'] ?? $commentData['timestamp'] ?? null, $syncSince)) {
+                    continue;
+                }
+
                 if ($this->isOwnAccountComment($account, $commentData)) {
                     continue;
                 }
@@ -244,7 +259,7 @@ class MetaSocialService
 
     public function getRecentPosts(SocialAccount $account): array
     {
-        $since = now()->subDays($this->config()['sync_days'])->timestamp;
+        $since = $this->syncSince($account)->timestamp;
 
         if ($account->platform === SocialPlatform::Instagram) {
             $posts = $this->getAllPages("/{$account->external_account_id}/media", [
@@ -261,13 +276,48 @@ class MetaSocialService
                 'limit' => 25,
             ], $account);
 
-            return $fallback['data'] ?? [];
+            return collect($fallback['data'] ?? [])
+                ->reject(fn (array $postData): bool => $this->wasPublishedBefore($postData['timestamp'] ?? null, $this->syncSince($account)))
+                ->values()
+                ->all();
         }
 
         return $this->getAllPages("/{$account->page_id}/posts", [
             'fields' => 'id,message,permalink_url,full_picture,created_time',
             'since' => $since,
         ], $account);
+    }
+
+    private function syncSince(SocialAccount $account): Carbon
+    {
+        $connectedAt = $account->sync_settings['connected_at'] ?? null;
+
+        return $connectedAt
+            ? Carbon::parse($connectedAt)
+            : ($account->created_at ?: now());
+    }
+
+    private function wasPublishedBefore(mixed $publishedAt, Carbon $syncSince): bool
+    {
+        if (blank($publishedAt)) {
+            return false;
+        }
+
+        $publishedAt = is_numeric($publishedAt)
+            ? Carbon::createFromTimestamp((int) $publishedAt)
+            : Carbon::parse($publishedAt);
+
+        return $publishedAt->lt($syncSince);
+    }
+
+    private function syncSettingsWithConnectedAt(?SocialAccount $account, string $source): array
+    {
+        $settings = $account?->sync_settings ?? [];
+
+        return array_merge($settings, [
+            'source' => $source,
+            'connected_at' => $settings['connected_at'] ?? now()->toIso8601String(),
+        ]);
     }
 
     public function getPostComments(SocialPost $post, SocialAccount $account): array

@@ -22,7 +22,11 @@ class SocialLeadScoringService
         $newScore = $previousScore + $points;
         $threshold = app(SocialCrmSettingsService::class)->hotLeadThreshold();
 
-        $updates = ['interest_score' => $newScore];
+        $updates = [
+            'interest_score' => $newScore,
+            'recent_engagement_score' => $newScore,
+            'last_engagement_at' => now(),
+        ];
 
         $becameHotLead = $previousScore < $threshold && $newScore >= $threshold && ! $comment->hot_lead_at;
 

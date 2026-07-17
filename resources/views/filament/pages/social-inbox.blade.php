@@ -176,9 +176,7 @@
             color: var(--inbox-accent);
         }
 
-        .smart-channel-icon-instagram { color: #db2777; }
-        .smart-channel-icon-whatsapp { color: #00a884; }
-        .smart-channel-icon-facebook { color: #1877f2; }
+        .smart-channel-dot svg { color: #0f172a; }
 
         .smart-filters {
             align-items: center;
@@ -1586,15 +1584,15 @@
         }
 
         .smart-score-fill {
-            background: #94a3b8;
+            background: #2563eb;
             border-radius: inherit;
             display: block;
             height: 100%;
         }
 
-        .smart-score-fill.temp-warm { background: #d99a00; }
+        .smart-score-fill.temp-warm { background: #f97316; }
         .smart-score-fill.temp-hot,
-        .smart-score-fill.temp-max { background: #009f5b; }
+        .smart-score-fill.temp-max { background: #dc2626; }
 
         .smart-score-value {
             color: #020617;
@@ -2144,13 +2142,13 @@
                         >
                             @switch($channelItem['icon'])
                                 @case('instagram')
-                                    <svg class="smart-channel-icon-instagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.4"/><path d="M17.5 6.5h.01"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><rect width="15" height="15" x="4.5" y="4.5" rx="4" /><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 11.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" /><path stroke-linecap="round" d="M16.75 7.75h.01" /></svg>
                                     @break
                                 @case('whatsapp')
-                                    <svg class="smart-channel-icon-whatsapp" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.1 11.7a8.1 8.1 0 0 1-12 7.1L4 20l1.3-4A8.1 8.1 0 1 1 20.1 11.7Z"/><path d="M9.3 8.7c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.7 1.6c.1.2.1.4-.1.6l-.4.5c-.1.1-.2.3-.1.5.3.6.8 1.2 1.4 1.6.5.4 1 .7 1.6.9.2.1.4 0 .5-.2l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.3.1.4.3.4.5 0 .5-.3 1.3-.7 1.6-.4.3-1.2.5-2.6 0-2.2-.8-4.1-2.5-5.2-4.5-.7-1.3-.7-2.1-.4-2.6Z"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.75 19.25 6 15.6a7 7 0 1 1 2.42 2.35l-3.67 1.3Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.2 8.95c.18-.5.42-.55.74-.55h.43c.22 0 .4.14.49.34l.68 1.52c.08.18.04.39-.1.53l-.47.48c.48.84 1.16 1.52 2 2l.48-.47c.14-.14.35-.18.53-.1l1.52.68c.2.09.34.27.34.49v.43c0 .32-.05.56-.55.74-.4.14-.83.21-1.28.21-2.64 0-5.26-2.62-5.26-5.26 0-.45.07-.88.21-1.28Z" /></svg>
                                     @break
                                 @case('facebook')
-                                    <svg class="smart-channel-icon-facebook" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8.5h2V5.2c-.35-.05-1.55-.15-2.95-.15C10.13 5.05 8.13 6.84 8.13 10.13V13H5v3.7h3.13V24h3.85v-7.3h3.02l.48-3.7h-3.5v-2.5c0-1.07.3-2 2.02-2Z"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7h2.35l.35-2.72h-2.7V9.55c0-.79.22-1.33 1.35-1.33h1.44V5.79c-.25-.03-1.1-.1-2.1-.1-2.08 0-3.5 1.27-3.5 3.6v1.99H8.34V14h2.35v7h2.81Z" /></svg>
                                     @break
                                 @default
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>
@@ -2240,9 +2238,9 @@
                     $score = (int) ($comment->recent_engagement_score ?: ($comment->interest_score ?? 0));
                     $scoreWidth = min($score, 100);
                     $scoreState = match (true) {
-                        $score >= 85 => 'temp-hot',
-                        $score >= 70 => 'temp-max',
-                        $score >= 45 => 'temp-warm',
+                        $score >= 100 => 'temp-max',
+                        $score >= 71 => 'temp-hot',
+                        $score >= 31 => 'temp-warm',
                         default => 'temp-cold',
                     };
                     $updatedAt = $comment->last_engagement_at ?: ($comment->updated_at ?: $comment->created_at);
@@ -2281,13 +2279,13 @@
                             <span class="smart-channel-dot" title="{{ $comment->platform?->label() ?? 'Canal' }}">
                                 @switch($comment->platform?->value)
                                     @case('instagram')
-                                        <svg class="smart-channel-icon-instagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.4"/><path d="M17.5 6.5h.01"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><rect width="15" height="15" x="4.5" y="4.5" rx="4" /><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 11.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" /><path stroke-linecap="round" d="M16.75 7.75h.01" /></svg>
                                         @break
                                     @case('whatsapp')
-                                        <svg class="smart-channel-icon-whatsapp" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.1 11.7a8.1 8.1 0 0 1-12 7.1L4 20l1.3-4A8.1 8.1 0 1 1 20.1 11.7Z"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.75 19.25 6 15.6a7 7 0 1 1 2.42 2.35l-3.67 1.3Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.2 8.95c.18-.5.42-.55.74-.55h.43c.22 0 .4.14.49.34l.68 1.52c.08.18.04.39-.1.53l-.47.48c.48.84 1.16 1.52 2 2l.48-.47c.14-.14.35-.18.53-.1l1.52.68c.2.09.34.27.34.49v.43c0 .32-.05.56-.55.74-.4.14-.83.21-1.28.21-2.64 0-5.26-2.62-5.26-5.26 0-.45.07-.88.21-1.28Z" /></svg>
                                         @break
                                     @case('facebook')
-                                        <svg class="smart-channel-icon-facebook" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8.5h2V5.2c-.35-.05-1.55-.15-2.95-.15C10.13 5.05 8.13 6.84 8.13 10.13V13H5v3.7h3.13V24h3.85v-7.3h3.02l.48-3.7h-3.5v-2.5c0-1.07.3-2 2.02-2Z"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7h2.35l.35-2.72h-2.7V9.55c0-.79.22-1.33 1.35-1.33h1.44V5.79c-.25-.03-1.1-.1-2.1-.1-2.08 0-3.5 1.27-3.5 3.6v1.99H8.34V14h2.35v7h2.81Z" /></svg>
                                         @break
                                 @endswitch
                             </span>

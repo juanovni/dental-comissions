@@ -500,9 +500,8 @@ class SocialInbox extends Page
                 SocialCommentClassification::MedicalSensitive->value,
             ))
             ->orderByRaw("case when reputation_risk = 'critical' then 0 when reputation_risk = 'high' then 1 when hot_lead_at is not null then 2 when requires_human_review then 3 when priority = 'high' then 4 else 5 end")
-            ->orderByDesc('recent_engagement_score')
+            ->orderByRaw('GREATEST(COALESCE(recent_engagement_score, 0), COALESCE(interest_score, 0)) DESC')
             ->orderByDesc('last_engagement_at')
-            ->orderByDesc('interest_score')
             ->latest('created_at')
             ->paginate(8);
     }

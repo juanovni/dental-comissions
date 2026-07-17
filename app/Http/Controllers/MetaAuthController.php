@@ -177,6 +177,10 @@ class MetaAuthController extends Controller
             }
 
             $pageAccessToken = $page['access_token'] ?? $userAccessToken;
+            $existingPageAccount = SocialAccount::query()
+                ->where('platform', SocialPlatform::Facebook->value)
+                ->where('external_account_id', $page['id'])
+                ->first();
 
             $pageAccount = SocialAccount::updateOrCreate(
                 [
@@ -189,7 +193,7 @@ class MetaAuthController extends Controller
                     'access_token' => $pageAccessToken,
                     'token_expires_at' => $expiresAt,
                     'is_active' => true,
-                    'sync_settings' => ['source' => 'meta_oauth'],
+                    'sync_settings' => $this->syncSettingsWithConnectedAt($existingPageAccount, 'meta_oauth'),
                 ],
             );
 
@@ -200,6 +204,11 @@ class MetaAuthController extends Controller
             if (! $instagramAccount) {
                 continue;
             }
+
+            $existingInstagramAccount = SocialAccount::query()
+                ->where('platform', SocialPlatform::Instagram->value)
+                ->where('external_account_id', $instagramAccount['id'])
+                ->first();
 
             SocialAccount::updateOrCreate(
                 [
@@ -215,7 +224,7 @@ class MetaAuthController extends Controller
                     'access_token' => $pageAccessToken,
                     'token_expires_at' => $expiresAt,
                     'is_active' => true,
-                    'sync_settings' => ['source' => 'meta_oauth_instagram_business_account'],
+                    'sync_settings' => $this->syncSettingsWithConnectedAt($existingInstagramAccount, 'meta_oauth_instagram_business_account'),
                 ],
             );
 
@@ -223,6 +232,16 @@ class MetaAuthController extends Controller
         }
 
         return $summary;
+    }
+
+    private function syncSettingsWithConnectedAt(?SocialAccount $account, string $source): array
+    {
+        $settings = $account?->sync_settings ?? [];
+
+        return array_merge($settings, [
+            'source' => $source,
+            'connected_at' => $settings['connected_at'] ?? now()->toIso8601String(),
+        ]);
     }
 
     private function getConfiguredPages(string $userAccessToken): array

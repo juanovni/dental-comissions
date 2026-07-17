@@ -77,6 +77,7 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 - Preferir paleta slate/gray con acento azul o el primary del panel.
 - Evitar combinaciones tipo dashboard futurista si el objetivo es administracion diaria.
 - Usar variables CSS en componentes complejos, por ejemplo `--case-*` o clases reutilizables `mc-*`.
+- Para scores de interes/engagement usar una sola escala visual: `temp-cold` azul `#2563eb` para menos de 31, `temp-warm` naranja `#f97316` desde 31, `temp-hot` rojo `#dc2626` desde 71 y `temp-max` rojo `#dc2626` desde 100. Los scores compactos, termometros y kanban deben compartir estos rangos y colores.
 
 ## Dark Mode
 

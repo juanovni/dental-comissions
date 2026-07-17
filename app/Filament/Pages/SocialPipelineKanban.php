@@ -73,9 +73,8 @@ class SocialPipelineKanban extends Page
                     ->orWhere('author_name', 'ilike', "%{$this->search}%")
                     ->orWhere('author_username', 'ilike', "%{$this->search}%");
             }))
-            ->orderByDesc('recent_engagement_score')
+            ->orderByRaw('GREATEST(COALESCE(recent_engagement_score, 0), COALESCE(interest_score, 0)) DESC')
             ->orderByDesc('last_engagement_at')
-            ->orderByDesc('interest_score')
             ->latest('updated_at')
             ->get();
     }
