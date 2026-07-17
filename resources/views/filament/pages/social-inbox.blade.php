@@ -1518,7 +1518,7 @@
             width: 1.05rem;
         }
 
-        .smart-channel-dot svg { height: .78rem; width: .78rem; }
+        .smart-channel-dot svg { height: 1rem; width: 1rem; }
 
         .smart-row-heading {
             align-items: center;

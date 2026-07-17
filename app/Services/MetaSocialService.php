@@ -41,6 +41,10 @@ class MetaSocialService
 
         SocialAccount::query()
             ->where('is_active', true)
+            ->whereIn('platform', [
+                SocialPlatform::Facebook->value,
+                SocialPlatform::Instagram->value,
+            ])
             ->each(function (SocialAccount $account) use (&$summary): void {
                 $summary['accounts']++;
 
@@ -85,6 +89,15 @@ class MetaSocialService
                     $webhookComment['platform'],
                     $webhookComment['account_id'],
                 );
+
+                if ($this->wasPublishedBefore(
+                    $webhookComment['comment']['created_time'] ?? $webhookComment['comment']['timestamp'] ?? null,
+                    $this->syncSince($account),
+                )) {
+                    $summary['ignored']++;
+
+                    continue;
+                }
 
                 if ($this->isOwnAccountComment($account, $webhookComment['comment'])) {
                     $summary['ignored']++;
@@ -214,23 +227,33 @@ class MetaSocialService
 
     public function syncAccount(SocialAccount $account): array
     {
+        if (! in_array($account->platform, [SocialPlatform::Facebook, SocialPlatform::Instagram], true)) {
+            return ['posts' => 0, 'comments' => 0];
+        }
+
+        if ($account->platform === SocialPlatform::Facebook) {
+            $this->subscribePageWebhook($account);
+        }
+
         $posts = $this->getRecentPosts($account);
         $summary = ['posts' => 0, 'comments' => 0];
         $syncSince = $this->syncSince($account);
 
         foreach ($posts as $postData) {
+            $postPreview = new SocialPost(['external_post_id' => $postData['id']]);
+            $comments = collect($this->getPostComments($postPreview, $account))
+                ->reject(fn (array $commentData): bool => $this->wasPublishedBefore($commentData['created_time'] ?? $commentData['timestamp'] ?? null, $syncSince))
+                ->reject(fn (array $commentData): bool => $this->isOwnAccountComment($account, $commentData))
+                ->values();
+
+            if ($comments->isEmpty() && $this->wasPublishedBefore($postData['created_time'] ?? $postData['timestamp'] ?? null, $syncSince)) {
+                continue;
+            }
+
             $post = $this->storePost($account, $postData);
             $summary['posts']++;
 
-            foreach ($this->getPostComments($post, $account) as $commentData) {
-                if ($this->wasPublishedBefore($commentData['created_time'] ?? $commentData['timestamp'] ?? null, $syncSince)) {
-                    continue;
-                }
-
-                if ($this->isOwnAccountComment($account, $commentData)) {
-                    continue;
-                }
-
+            foreach ($comments as $commentData) {
                 $comment = $this->storeComment($account, $post, $commentData);
 
                 if (! $comment->classification) {
@@ -276,16 +299,49 @@ class MetaSocialService
                 'limit' => 25,
             ], $account);
 
-            return collect($fallback['data'] ?? [])
-                ->reject(fn (array $postData): bool => $this->wasPublishedBefore($postData['timestamp'] ?? null, $this->syncSince($account)))
-                ->values()
-                ->all();
+            return $fallback['data'] ?? [];
         }
 
-        return $this->getAllPages("/{$account->page_id}/posts", [
+        $posts = $this->getAllPages("/{$account->page_id}/feed", [
             'fields' => 'id,message,permalink_url,full_picture,created_time',
             'since' => $since,
         ], $account);
+
+        if ($posts !== []) {
+            return $posts;
+        }
+
+        $fallback = $this->get("/{$account->page_id}/feed", [
+            'fields' => 'id,message,permalink_url,full_picture,created_time',
+            'limit' => 25,
+        ], $account);
+
+        return $fallback['data'] ?? [];
+    }
+
+    private function subscribePageWebhook(SocialAccount $account): void
+    {
+        if (blank($account->page_id)) {
+            return;
+        }
+
+        try {
+            $this->post("/{$account->page_id}/subscribed_apps", [
+                'subscribed_fields' => 'feed',
+            ], $account);
+
+            Log::info('Pagina Facebook suscrita a webhooks Meta.', [
+                'account_id' => $account->id,
+                'page_id' => $account->page_id,
+                'subscribed_fields' => ['feed'],
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo suscribir pagina Facebook a webhooks Meta.', [
+                'account_id' => $account->id,
+                'page_id' => $account->page_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function syncSince(SocialAccount $account): Carbon

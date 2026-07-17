@@ -147,7 +147,7 @@ class MetaAuthController extends Controller
 
     private function storeAuthorizedAccounts(string $userAccessToken, ?int $expiresIn): array
     {
-        $summary = ['pages' => 0, 'instagram' => 0];
+        $summary = ['pages' => 0, 'instagram' => 0, 'facebook_webhooks' => 0];
         $expiresAt = $expiresIn ? now()->addSeconds($expiresIn) : null;
 
         $pages = $this->getAllPages('/me/accounts', [
@@ -198,6 +198,10 @@ class MetaAuthController extends Controller
             );
 
             $summary['pages']++;
+
+            if ($this->subscribePageWebhook($page['id'], $pageAccessToken)) {
+                $summary['facebook_webhooks']++;
+            }
 
             $instagramAccount = $this->getInstagramAccount($page['id'], $pageAccessToken);
 
@@ -319,6 +323,29 @@ class MetaAuthController extends Controller
         return $response['instagram_business_account'] ?? null;
     }
 
+    private function subscribePageWebhook(string $pageId, string $pageAccessToken): bool
+    {
+        try {
+            $this->graphPost("/{$pageId}/subscribed_apps", [
+                'subscribed_fields' => 'feed',
+            ], $pageAccessToken);
+
+            Log::info('Pagina Facebook suscrita a webhooks Meta.', [
+                'page_id' => $pageId,
+                'subscribed_fields' => ['feed'],
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo suscribir pagina Facebook a webhooks Meta.', [
+                'page_id' => $pageId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
     private function getAllPages(string $path, array $params, string $accessToken): array
     {
         $results = [];
@@ -344,6 +371,30 @@ class MetaAuthController extends Controller
         }
 
         $response = $request->get($this->url($path), $params);
+
+        if ($response->failed()) {
+            Log::error('Error OAuth Meta Graph API', [
+                'url' => $this->url($path),
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            $response->throw();
+        }
+
+        return $response->json() ?? [];
+    }
+
+    private function graphPost(string $path, array $params = [], ?string $accessToken = null): array
+    {
+        $request = Http::acceptJson()
+            ->withOptions($this->httpOptions());
+
+        if ($accessToken) {
+            $request = $request->withToken($accessToken);
+        }
+
+        $response = $request->post($this->url($path), $params);
 
         if ($response->failed()) {
             Log::error('Error OAuth Meta Graph API', [

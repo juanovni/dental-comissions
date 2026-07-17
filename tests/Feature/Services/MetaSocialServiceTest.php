@@ -118,6 +118,49 @@ class MetaSocialServiceTest extends TestCase
         ]);
     }
 
+    public function test_process_webhook_payload_ignores_comments_created_before_connected_at(): void
+    {
+        SocialAccount::create([
+            'platform' => SocialPlatform::Facebook,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => 'page_1',
+            'page_id' => 'page_1',
+            'is_active' => true,
+            'sync_settings' => ['connected_at' => now()->toIso8601String()],
+        ]);
+
+        $summary = app(MetaSocialService::class)->processWebhookPayload([
+            'object' => 'page',
+            'entry' => [
+                [
+                    'id' => 'page_1',
+                    'changes' => [
+                        [
+                            'field' => 'feed',
+                            'value' => [
+                                'item' => 'comment',
+                                'verb' => 'add',
+                                'post_id' => 'old_post_1',
+                                'comment_id' => 'old_comment_1',
+                                'message' => 'Comentario anterior a la integracion',
+                                'sender_id' => 'facebook_user_1',
+                                'sender_name' => 'Carlos Cliente',
+                                'created_time' => now()->subMinute()->timestamp,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(0, $summary['comments']);
+        $this->assertSame(1, $summary['ignored']);
+        $this->assertDatabaseMissing('social_comments', [
+            'platform' => SocialPlatform::Facebook->value,
+            'external_comment_id' => 'old_comment_1',
+        ]);
+    }
+
     public function test_process_webhook_payload_dispatches_auto_reply_job_for_sales_lead_when_enabled(): void
     {
         $this->setting('social_auto_reply_enabled', true, 'boolean');
@@ -512,7 +555,7 @@ class MetaSocialServiceTest extends TestCase
         ]);
 
         Http::fake([
-            'https://graph.facebook.com/v25.0/page_1/posts*' => Http::response([
+            'https://graph.facebook.com/v25.0/page_1/feed*' => Http::response([
                 'data' => [
                     [
                         'id' => 'post_sync_1',
@@ -566,7 +609,7 @@ class MetaSocialServiceTest extends TestCase
         ]);
 
         Http::fake([
-            'https://graph.facebook.com/v25.0/page_1/posts*' => Http::response([
+            'https://graph.facebook.com/v25.0/page_1/feed*' => Http::response([
                 'data' => [
                     [
                         'id' => 'post_sync_auto_reply_1',
@@ -595,6 +638,153 @@ class MetaSocialServiceTest extends TestCase
             SendSocialCommentAutoReply::class,
             fn (SendSocialCommentAutoReply $job): bool => $job->socialCommentId === $comment->id,
         );
+    }
+
+    public function test_sync_account_captures_new_comments_on_old_facebook_posts(): void
+    {
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.meta.access_token' => 'test-token',
+            'services.meta.api_url' => 'https://graph.facebook.com/v25.0',
+            'services.gemini.api_key' => null,
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => SocialPlatform::Facebook,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => 'page_1',
+            'page_id' => 'page_1',
+            'access_token' => 'page-token',
+            'is_active' => true,
+            'sync_settings' => ['connected_at' => now()->toIso8601String()],
+        ]);
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/page_1/feed?fields=id%2Cmessage%2Cpermalink_url%2Cfull_picture%2Ccreated_time&since=*' => Http::response(['data' => []]),
+            'https://graph.facebook.com/v25.0/page_1/feed*' => Http::response([
+                'data' => [
+                    [
+                        'id' => 'old_post_1',
+                        'message' => 'Blanqueamiento dental',
+                        'created_time' => now()->subMonth()->toIso8601String(),
+                    ],
+                ],
+            ]),
+            'https://graph.facebook.com/v25.0/old_post_1/comments*' => Http::response([
+                'data' => [
+                    [
+                        'id' => 'new_comment_on_old_post_1',
+                        'message' => 'Me pueden dar informacion del blanqueamiento',
+                        'from' => ['id' => 'fb_user_old_post_1', 'name' => 'Cliente Facebook'],
+                        'created_time' => now()->addMinute()->toIso8601String(),
+                    ],
+                ],
+            ]),
+        ]);
+
+        $summary = app(MetaSocialService::class)->syncAccount($account);
+
+        $this->assertSame(['posts' => 1, 'comments' => 1], $summary);
+        $this->assertDatabaseHas('social_posts', [
+            'platform' => SocialPlatform::Facebook->value,
+            'external_post_id' => 'old_post_1',
+        ]);
+        $this->assertDatabaseHas('social_comments', [
+            'platform' => SocialPlatform::Facebook->value,
+            'external_comment_id' => 'new_comment_on_old_post_1',
+        ]);
+    }
+
+    public function test_sync_account_captures_new_comments_on_old_instagram_posts(): void
+    {
+        config([
+            'services.ai.provider' => 'gemini',
+            'services.meta.access_token' => 'test-token',
+            'services.meta.api_url' => 'https://graph.facebook.com/v25.0',
+            'services.gemini.api_key' => null,
+        ]);
+
+        $account = SocialAccount::create([
+            'platform' => SocialPlatform::Instagram,
+            'account_name' => 'clinica_dental',
+            'external_account_id' => 'ig_1',
+            'page_id' => 'page_1',
+            'instagram_business_account_id' => 'ig_1',
+            'access_token' => 'page-token',
+            'is_active' => true,
+            'sync_settings' => ['connected_at' => now()->toIso8601String()],
+        ]);
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/ig_1/media?fields=id%2Ccaption%2Cmedia_url%2Cpermalink%2Ctimestamp&since=*' => Http::response(['data' => []]),
+            'https://graph.facebook.com/v25.0/ig_1/media*' => Http::response([
+                'data' => [
+                    [
+                        'id' => 'old_ig_media_1',
+                        'caption' => 'Blanqueamiento dental',
+                        'timestamp' => now()->subMonth()->toIso8601String(),
+                    ],
+                ],
+            ]),
+            'https://graph.facebook.com/v25.0/old_ig_media_1/comments*' => Http::response([
+                'data' => [
+                    [
+                        'id' => 'new_comment_on_old_ig_media_1',
+                        'text' => 'Me interesa el blanqueamiento',
+                        'username' => 'cliente_ig',
+                        'timestamp' => now()->addMinute()->toIso8601String(),
+                    ],
+                ],
+            ]),
+        ]);
+
+        $summary = app(MetaSocialService::class)->syncAccount($account);
+
+        $this->assertSame(['posts' => 1, 'comments' => 1], $summary);
+        $this->assertDatabaseHas('social_posts', [
+            'platform' => SocialPlatform::Instagram->value,
+            'external_post_id' => 'old_ig_media_1',
+        ]);
+        $this->assertDatabaseHas('social_comments', [
+            'platform' => SocialPlatform::Instagram->value,
+            'external_comment_id' => 'new_comment_on_old_ig_media_1',
+        ]);
+    }
+
+    public function test_sync_all_ignores_whatsapp_accounts(): void
+    {
+        config([
+            'services.meta.access_token' => 'test-token',
+            'services.meta.api_url' => 'https://graph.facebook.com/v25.0',
+            'services.gemini.api_key' => null,
+        ]);
+
+        SocialAccount::create([
+            'platform' => SocialPlatform::Whatsapp,
+            'account_name' => 'WhatsApp Dental',
+            'external_account_id' => 'whatsapp_1',
+            'access_token' => 'invalid-whatsapp-token',
+            'is_active' => true,
+        ]);
+
+        SocialAccount::create([
+            'platform' => SocialPlatform::Facebook,
+            'account_name' => 'Clinica Dental',
+            'external_account_id' => 'page_1',
+            'page_id' => 'page_1',
+            'access_token' => 'page-token',
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            'https://graph.facebook.com/v25.0/page_1/feed*' => Http::response(['data' => []]),
+        ]);
+
+        $summary = app(MetaSocialService::class)->syncAll();
+
+        $this->assertSame(1, $summary['accounts']);
+        $this->assertSame(0, $summary['errors']);
+        Http::assertNotSent(fn ($request): bool => $request->url() === 'https://graph.facebook.com/v25.0/posts');
     }
 
     public function test_reply_to_comment_posts_facebook_comment_reply(): void
