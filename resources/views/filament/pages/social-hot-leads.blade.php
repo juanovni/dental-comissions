@@ -338,7 +338,7 @@
                     $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $lead]);
                     $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
                     $score = min(100, max(0, (int) $lead->interest_score));
-                    $leadName = $lead->author_username ? '@' . $lead->author_username : ($lead->author_name ?: 'Lead social');
+                    $leadName = $patient?->full_name ?? ($lead->author_username ? '@' . $lead->author_username : ($lead->author_name ?: 'Lead social'));
                 @endphp
 
                 <article @class(['hot-card', 'is-overdue' => $isOverdue])>

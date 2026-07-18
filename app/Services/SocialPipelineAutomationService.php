@@ -26,7 +26,7 @@ class SocialPipelineAutomationService
             );
         }
 
-        if ($this->isNew($comment) && (int) $comment->recent_engagement_score >= $this->qualifyThreshold()) {
+        if ($this->isNew($comment) && max((int) $comment->recent_engagement_score, (int) $comment->interest_score) >= $this->qualifyThreshold()) {
             return app(SocialPipelineTransitionService::class)->toQualified(
                 $comment,
                 null,

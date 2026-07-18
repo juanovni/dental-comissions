@@ -147,7 +147,7 @@ class MetaAuthController extends Controller
 
     private function storeAuthorizedAccounts(string $userAccessToken, ?int $expiresIn): array
     {
-        $summary = ['pages' => 0, 'instagram' => 0];
+        $summary = ['pages' => 0, 'instagram' => 0, 'facebook_webhooks' => 0];
         $expiresAt = $expiresIn ? now()->addSeconds($expiresIn) : null;
 
         $pages = $this->getAllPages('/me/accounts', [
@@ -177,6 +177,10 @@ class MetaAuthController extends Controller
             }
 
             $pageAccessToken = $page['access_token'] ?? $userAccessToken;
+            $existingPageAccount = SocialAccount::query()
+                ->where('platform', SocialPlatform::Facebook->value)
+                ->where('external_account_id', $page['id'])
+                ->first();
 
             $pageAccount = SocialAccount::updateOrCreate(
                 [
@@ -189,17 +193,26 @@ class MetaAuthController extends Controller
                     'access_token' => $pageAccessToken,
                     'token_expires_at' => $expiresAt,
                     'is_active' => true,
-                    'sync_settings' => ['source' => 'meta_oauth'],
+                    'sync_settings' => $this->syncSettingsWithConnectedAt($existingPageAccount, 'meta_oauth'),
                 ],
             );
 
             $summary['pages']++;
+
+            if ($this->subscribePageWebhook($page['id'], $pageAccessToken)) {
+                $summary['facebook_webhooks']++;
+            }
 
             $instagramAccount = $this->getInstagramAccount($page['id'], $pageAccessToken);
 
             if (! $instagramAccount) {
                 continue;
             }
+
+            $existingInstagramAccount = SocialAccount::query()
+                ->where('platform', SocialPlatform::Instagram->value)
+                ->where('external_account_id', $instagramAccount['id'])
+                ->first();
 
             SocialAccount::updateOrCreate(
                 [
@@ -215,7 +228,7 @@ class MetaAuthController extends Controller
                     'access_token' => $pageAccessToken,
                     'token_expires_at' => $expiresAt,
                     'is_active' => true,
-                    'sync_settings' => ['source' => 'meta_oauth_instagram_business_account'],
+                    'sync_settings' => $this->syncSettingsWithConnectedAt($existingInstagramAccount, 'meta_oauth_instagram_business_account'),
                 ],
             );
 
@@ -223,6 +236,16 @@ class MetaAuthController extends Controller
         }
 
         return $summary;
+    }
+
+    private function syncSettingsWithConnectedAt(?SocialAccount $account, string $source): array
+    {
+        $settings = $account?->sync_settings ?? [];
+
+        return array_merge($settings, [
+            'source' => $source,
+            'connected_at' => $settings['connected_at'] ?? now()->toIso8601String(),
+        ]);
     }
 
     private function getConfiguredPages(string $userAccessToken): array
@@ -300,6 +323,29 @@ class MetaAuthController extends Controller
         return $response['instagram_business_account'] ?? null;
     }
 
+    private function subscribePageWebhook(string $pageId, string $pageAccessToken): bool
+    {
+        try {
+            $this->graphPost("/{$pageId}/subscribed_apps", [
+                'subscribed_fields' => 'feed',
+            ], $pageAccessToken);
+
+            Log::info('Pagina Facebook suscrita a webhooks Meta.', [
+                'page_id' => $pageId,
+                'subscribed_fields' => ['feed'],
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo suscribir pagina Facebook a webhooks Meta.', [
+                'page_id' => $pageId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
     private function getAllPages(string $path, array $params, string $accessToken): array
     {
         $results = [];
@@ -325,6 +371,30 @@ class MetaAuthController extends Controller
         }
 
         $response = $request->get($this->url($path), $params);
+
+        if ($response->failed()) {
+            Log::error('Error OAuth Meta Graph API', [
+                'url' => $this->url($path),
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            $response->throw();
+        }
+
+        return $response->json() ?? [];
+    }
+
+    private function graphPost(string $path, array $params = [], ?string $accessToken = null): array
+    {
+        $request = Http::acceptJson()
+            ->withOptions($this->httpOptions());
+
+        if ($accessToken) {
+            $request = $request->withToken($accessToken);
+        }
+
+        $response = $request->post($this->url($path), $params);
 
         if ($response->failed()) {
             Log::error('Error OAuth Meta Graph API', [

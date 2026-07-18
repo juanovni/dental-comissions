@@ -41,6 +41,10 @@ class MetaSocialService
 
         SocialAccount::query()
             ->where('is_active', true)
+            ->whereIn('platform', [
+                SocialPlatform::Facebook->value,
+                SocialPlatform::Instagram->value,
+            ])
             ->each(function (SocialAccount $account) use (&$summary): void {
                 $summary['accounts']++;
 
@@ -86,6 +90,15 @@ class MetaSocialService
                     $webhookComment['account_id'],
                 );
 
+                if ($this->wasPublishedBefore(
+                    $webhookComment['comment']['created_time'] ?? $webhookComment['comment']['timestamp'] ?? null,
+                    $this->syncSince($account),
+                )) {
+                    $summary['ignored']++;
+
+                    continue;
+                }
+
                 if ($this->isOwnAccountComment($account, $webhookComment['comment'])) {
                     $summary['ignored']++;
 
@@ -120,6 +133,11 @@ class MetaSocialService
     public function syncAuthorizedAccounts(): void
     {
         foreach ($this->getPages() as $page) {
+            $existingPageAccount = SocialAccount::query()
+                ->where('platform', SocialPlatform::Facebook->value)
+                ->where('external_account_id', $page['id'])
+                ->first();
+
             $pageAccount = SocialAccount::updateOrCreate(
                 [
                     'platform' => SocialPlatform::Facebook->value,
@@ -130,7 +148,7 @@ class MetaSocialService
                     'page_id' => $page['id'],
                     'access_token' => $page['access_token'] ?? $this->config()['access_token'],
                     'is_active' => true,
-                    'sync_settings' => ['source' => 'meta_pages'],
+                    'sync_settings' => $this->syncSettingsWithConnectedAt($existingPageAccount, 'meta_pages'),
                 ],
             );
 
@@ -139,6 +157,11 @@ class MetaSocialService
             if (! $instagramAccount) {
                 continue;
             }
+
+            $existingInstagramAccount = SocialAccount::query()
+                ->where('platform', SocialPlatform::Instagram->value)
+                ->where('external_account_id', $instagramAccount['id'])
+                ->first();
 
             SocialAccount::updateOrCreate(
                 [
@@ -153,7 +176,7 @@ class MetaSocialService
                     'instagram_business_account_id' => $instagramAccount['id'],
                     'access_token' => $page['access_token'] ?? $this->config()['access_token'],
                     'is_active' => true,
-                    'sync_settings' => ['source' => 'meta_instagram_business_account'],
+                    'sync_settings' => $this->syncSettingsWithConnectedAt($existingInstagramAccount, 'meta_instagram_business_account'),
                 ],
             );
         }
@@ -204,18 +227,33 @@ class MetaSocialService
 
     public function syncAccount(SocialAccount $account): array
     {
+        if (! in_array($account->platform, [SocialPlatform::Facebook, SocialPlatform::Instagram], true)) {
+            return ['posts' => 0, 'comments' => 0];
+        }
+
+        if ($account->platform === SocialPlatform::Facebook) {
+            $this->subscribePageWebhook($account);
+        }
+
         $posts = $this->getRecentPosts($account);
         $summary = ['posts' => 0, 'comments' => 0];
+        $syncSince = $this->syncSince($account);
 
         foreach ($posts as $postData) {
+            $postPreview = new SocialPost(['external_post_id' => $postData['id']]);
+            $comments = collect($this->getPostComments($postPreview, $account))
+                ->reject(fn (array $commentData): bool => $this->wasPublishedBefore($commentData['created_time'] ?? $commentData['timestamp'] ?? null, $syncSince))
+                ->reject(fn (array $commentData): bool => $this->isOwnAccountComment($account, $commentData))
+                ->values();
+
+            if ($comments->isEmpty() && $this->wasPublishedBefore($postData['created_time'] ?? $postData['timestamp'] ?? null, $syncSince)) {
+                continue;
+            }
+
             $post = $this->storePost($account, $postData);
             $summary['posts']++;
 
-            foreach ($this->getPostComments($post, $account) as $commentData) {
-                if ($this->isOwnAccountComment($account, $commentData)) {
-                    continue;
-                }
-
+            foreach ($comments as $commentData) {
                 $comment = $this->storeComment($account, $post, $commentData);
 
                 if (! $comment->classification) {
@@ -244,7 +282,7 @@ class MetaSocialService
 
     public function getRecentPosts(SocialAccount $account): array
     {
-        $since = now()->subDays($this->config()['sync_days'])->timestamp;
+        $since = $this->syncSince($account)->timestamp;
 
         if ($account->platform === SocialPlatform::Instagram) {
             $posts = $this->getAllPages("/{$account->external_account_id}/media", [
@@ -264,10 +302,78 @@ class MetaSocialService
             return $fallback['data'] ?? [];
         }
 
-        return $this->getAllPages("/{$account->page_id}/posts", [
+        $posts = $this->getAllPages("/{$account->page_id}/feed", [
             'fields' => 'id,message,permalink_url,full_picture,created_time',
             'since' => $since,
         ], $account);
+
+        if ($posts !== []) {
+            return $posts;
+        }
+
+        $fallback = $this->get("/{$account->page_id}/feed", [
+            'fields' => 'id,message,permalink_url,full_picture,created_time',
+            'limit' => 25,
+        ], $account);
+
+        return $fallback['data'] ?? [];
+    }
+
+    private function subscribePageWebhook(SocialAccount $account): void
+    {
+        if (blank($account->page_id)) {
+            return;
+        }
+
+        try {
+            $this->post("/{$account->page_id}/subscribed_apps", [
+                'subscribed_fields' => 'feed',
+            ], $account);
+
+            Log::info('Pagina Facebook suscrita a webhooks Meta.', [
+                'account_id' => $account->id,
+                'page_id' => $account->page_id,
+                'subscribed_fields' => ['feed'],
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo suscribir pagina Facebook a webhooks Meta.', [
+                'account_id' => $account->id,
+                'page_id' => $account->page_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function syncSince(SocialAccount $account): Carbon
+    {
+        $connectedAt = $account->sync_settings['connected_at'] ?? null;
+
+        return $connectedAt
+            ? Carbon::parse($connectedAt)
+            : ($account->created_at ?: now());
+    }
+
+    private function wasPublishedBefore(mixed $publishedAt, Carbon $syncSince): bool
+    {
+        if (blank($publishedAt)) {
+            return false;
+        }
+
+        $publishedAt = is_numeric($publishedAt)
+            ? Carbon::createFromTimestamp((int) $publishedAt)
+            : Carbon::parse($publishedAt);
+
+        return $publishedAt->lt($syncSince);
+    }
+
+    private function syncSettingsWithConnectedAt(?SocialAccount $account, string $source): array
+    {
+        $settings = $account?->sync_settings ?? [];
+
+        return array_merge($settings, [
+            'source' => $source,
+            'connected_at' => $settings['connected_at'] ?? now()->toIso8601String(),
+        ]);
     }
 
     public function getPostComments(SocialPost $post, SocialAccount $account): array
