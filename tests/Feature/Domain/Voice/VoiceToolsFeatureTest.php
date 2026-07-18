@@ -75,7 +75,58 @@ class VoiceToolsFeatureTest extends TestCase
             ->postJson('/api/voice/tools/get-available-slots', []);
 
         $response->assertOk()
-            ->assertJson(['slots' => []]);
+            ->assertJson([
+                'procedure_found' => false,
+                'slots' => [],
+                'message' => 'Antes de buscar horarios necesito confirmar el procedimiento o configurar un procedimiento default de valoracion.',
+            ]);
+    }
+
+    public function test_get_available_slots_requires_procedure_before_offering_slots(): void
+    {
+        Professional::factory()->doctor()->create(['is_active' => true]);
+
+        $response = $this->withToken($this->validToken)
+            ->postJson('/api/voice/tools/get-available-slots', [
+                'preferred_date' => now()->next('Monday')->format('Y-m-d'),
+                'preferred_period' => 'afternoon',
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'procedure_found' => false,
+                'slots' => [],
+                'message' => 'Antes de buscar horarios necesito confirmar el procedimiento o configurar un procedimiento default de valoracion.',
+            ]);
+    }
+
+    public function test_get_available_slots_uses_default_procedure_for_generic_booking(): void
+    {
+        $doctor = Professional::factory()->doctor()->create(['is_active' => true]);
+        $procedure = Procedure::factory()->create(['name' => 'Valoracion dental', 'is_active' => true]);
+
+        \App\Models\SocialCrmSetting::updateOrCreate(
+            ['key' => 'social_appointment_default_procedure_id'],
+            ['value' => $procedure->id, 'value_type' => 'integer', 'label' => 'Default procedure', 'is_active' => true],
+        );
+
+        $response = $this->withToken($this->validToken)
+            ->postJson('/api/voice/tools/get-available-slots', [
+                'preferred_date' => now()->next('Monday')->format('Y-m-d'),
+                'preferred_period' => 'afternoon',
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'procedure_found' => true,
+                'procedure_id' => $procedure->id,
+                'procedure_name' => 'Valoracion dental',
+                'is_default_procedure' => true,
+            ]);
+
+        $this->assertNotEmpty($response->json('slots'));
+        $this->assertSame($procedure->id, $response->json('slots.0.procedure_id'));
+        $this->assertSame($doctor->id, $response->json('slots.0.doctor_id'));
     }
 
     public function test_get_available_slots_does_not_return_past_dates(): void

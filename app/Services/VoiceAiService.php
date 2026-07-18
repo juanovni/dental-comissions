@@ -46,6 +46,42 @@ class VoiceAiService
         $call->refresh();
         $this->messages = $this->messagesForCall($call);
 
+        if ($selectedSlot = $this->selectedOfferedSlotFromMessage($call, $userMessage)) {
+            $args = [
+                'slot_datetime' => $selectedSlot['datetime'],
+                'doctor_id' => $selectedSlot['doctor_id'],
+                'procedure_id' => $selectedSlot['procedure_id'],
+            ];
+
+            if (blank($selectedSlot['doctor_id'] ?? null) || blank($selectedSlot['procedure_id'] ?? null)) {
+                $result = ['error' => 'Falta doctor o procedimiento para retener el horario.'];
+                $text = 'Puedo ayudarte con ese horario, pero antes necesito confirmar el procedimiento o motivo de la cita.';
+            } else {
+                $result = $this->executeTool($call, 'hold_slot', $args);
+                $text = isset($result['error'])
+                    ? 'No pude retener ese horario: ' . $result['error']
+                    : $this->buildHeldSlotReply($selectedSlot);
+            }
+
+            $this->sessionService->addToolCall($call, 'hold_slot', $args, $result);
+
+            $this->sessionService->addMessage($call, \App\Enums\VoiceEventType::AssistantMessage, $text);
+
+            $call->refresh();
+
+            return [
+                'message' => $text,
+                'tool_calls' => [[
+                    'tool' => 'hold_slot',
+                    'arguments' => $args,
+                    'result' => $result,
+                ]],
+                'status' => $call->status->value,
+                'handoff' => false,
+                'ended' => false,
+            ];
+        }
+
         $toolResults = [];
 
         for ($i = 0; $i < 5; $i++) {
@@ -470,9 +506,134 @@ class VoiceAiService
             $lines[] = ($index + 1) . '. ' . $label;
         }
 
-        return "He encontrado estos horarios disponibles para {$procedure}:\n\n"
+        $intro = ($result['is_default_procedure'] ?? false)
+            ? "Como aún no tengo un procedimiento específico, puedo ayudarte a agendar una {$procedure} para que el doctor revise tu caso. Estos son los horarios disponibles:"
+            : "He encontrado estos horarios disponibles para {$procedure}:";
+
+        return $intro . "\n\n"
             . implode("\n", $lines)
             . "\n\n¿Cuál de estos horarios prefieres?";
+    }
+
+    private function selectedOfferedSlotFromMessage(\App\Models\VoiceCall $call, string $message): ?array
+    {
+        $slots = $this->latestOfferedSlots($call);
+
+        if ($slots === []) {
+            return null;
+        }
+
+        $index = $this->selectedOptionIndex($message);
+
+        if ($index !== null && isset($slots[$index - 1])) {
+            return $slots[$index - 1];
+        }
+
+        $times = $this->timeCandidatesFromMessage($message);
+
+        if ($times === []) {
+            return null;
+        }
+
+        foreach ($slots as $slot) {
+            $slotTime = \Carbon\Carbon::parse($slot['datetime'])->format('H:i');
+
+            if (in_array($slotTime, $times, true)) {
+                return $slot;
+            }
+        }
+
+        return null;
+    }
+
+    private function latestOfferedSlots(\App\Models\VoiceCall $call): array
+    {
+        $event = $call->events()
+            ->where('type', \App\Enums\VoiceEventType::ToolResult->value)
+            ->latest('id')
+            ->get()
+            ->first(fn (\App\Models\VoiceEvent $event): bool => ($event->payload['tool'] ?? null) === 'get_available_slots');
+
+        return $event ? ($event->payload['result']['slots'] ?? []) : [];
+    }
+
+    private function selectedOptionIndex(string $message): ?int
+    {
+        $normalized = $this->normalizeText($message);
+
+        $words = [
+            'primero' => 1,
+            'primera' => 1,
+            'segundo' => 2,
+            'segunda' => 2,
+            'tercero' => 3,
+            'tercera' => 3,
+        ];
+
+        foreach ($words as $word => $index) {
+            if (str_contains($normalized, $word)) {
+                return $index;
+            }
+        }
+
+        if (preg_match('/^\s*(\d{1,2})\s*$/', $message, $matches)) {
+            return (int) $matches[1];
+        }
+
+        if (preg_match('/\bopci[oó]n\s+(\d{1,2})\b/i', $message, $matches)) {
+            return (int) $matches[1];
+        }
+
+        return null;
+    }
+
+    private function timeCandidatesFromMessage(string $message): array
+    {
+        $normalized = $this->normalizeText($message);
+
+        if (! preg_match('/\b(?:a\s+las\s+)?(\d{1,2})(?:\s*(?::|y)\s*(\d{2}))?\s*(a\s*m|p\s*m|am|pm)?\b/', $normalized, $matches)) {
+            return [];
+        }
+
+        $hour = (int) $matches[1];
+        $minutes = isset($matches[2]) && $matches[2] !== '' ? (int) $matches[2] : 0;
+        $meridiem = isset($matches[3]) ? str_replace(' ', '', $matches[3]) : null;
+
+        if ($hour < 0 || $hour > 23 || $minutes < 0 || $minutes > 59) {
+            return [];
+        }
+
+        if ($meridiem === 'pm' && $hour < 12) {
+            $hour += 12;
+        }
+
+        if ($meridiem === 'am' && $hour === 12) {
+            $hour = 0;
+        }
+
+        $candidates = [sprintf('%02d:%02d', $hour, $minutes)];
+
+        if (! $meridiem && $hour > 0 && $hour < 12) {
+            $candidates[] = sprintf('%02d:%02d', $hour + 12, $minutes);
+        }
+
+        return array_values(array_unique($candidates));
+    }
+
+    private function normalizeText(string $text): string
+    {
+        return str_replace(
+            ['á', 'é', 'í', 'ó', 'ú', 'ü', '.', ','],
+            ['a', 'e', 'i', 'o', 'u', 'u', '', ''],
+            mb_strtolower(trim($text)),
+        );
+    }
+
+    private function buildHeldSlotReply(array $slot): string
+    {
+        $label = $slot['label'] ?? \Carbon\Carbon::parse($slot['datetime'])->isoFormat('dddd D [de] MMMM [a las] h:mm A');
+
+        return "Perfecto, retuve el horario {$label}. Para confirmar la cita, indícame el nombre completo del paciente.";
     }
 
     private function assertToolArgsAllowedByBackendHistory(\App\Models\VoiceCall $call, string $name, array $args): void
@@ -670,6 +831,7 @@ REGLAS:
 5. No pidas otro numero si ya tienes el telefono actual, salvo que el paciente diga que ese numero esta mal.
 6. Si el paciente escribe un numero local ecuatoriano que empieza con 09, interpreta que puede corresponder al telefono actual si los ultimos digitos coinciden.
 7. Antes de crear una cita, confirma: nombre del paciente, procedimiento o especialidad, fecha, hora y doctor cuando corresponda.
+7.1. Antes de consultar disponibilidad, debes tener un procedimiento o motivo claro de cita. Si el paciente dice solo "una cita", pregunta primero el motivo o procedimiento.
 8. Repite fecha y hora antes de confirmar definitivamente.
 9. Usa hold_slot cuando el paciente elija un horario, antes de create_appointment, copiando exactamente el slot_datetime, doctor_id y procedure_id devueltos por get_available_slots.
 10. Usa create_appointment solo despues de que el paciente confirme el horario retenido, copiando exactamente el hold_token devuelto por hold_slot.

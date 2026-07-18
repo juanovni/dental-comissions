@@ -126,10 +126,124 @@ class VoiceAiBackendGuardTest extends TestCase
         $this->assertStringNotContainsString('24 de julio', $reply);
     }
 
+    public function test_available_slots_reply_explains_default_procedure(): void
+    {
+        $method = new ReflectionMethod(VoiceAiService::class, 'buildAvailableSlotsReply');
+        $method->setAccessible(true);
+
+        $reply = $method->invoke(app(VoiceAiService::class), [
+            'procedure_name' => 'Valoracion dental',
+            'is_default_procedure' => true,
+            'slots' => [[
+                'label' => 'lunes 20 de julio a las 1:30 PM',
+                'datetime' => '2026-07-20 13:30:00',
+            ]],
+        ]);
+
+        $this->assertStringContainsString('no tengo un procedimiento específico', $reply);
+        $this->assertStringContainsString('Valoracion dental', $reply);
+    }
+
+    public function test_selects_previously_offered_slot_by_voice_time_format(): void
+    {
+        $call = $this->callWithOfferedSlots();
+
+        $method = new ReflectionMethod(VoiceAiService::class, 'selectedOfferedSlotFromMessage');
+        $method->setAccessible(true);
+
+        $slot = $method->invoke(app(VoiceAiService::class), $call, '9:45 a. m.');
+
+        $this->assertNotNull($slot);
+        $this->assertSame('2026-07-23 09:45:00', $slot['datetime']);
+    }
+
+    public function test_selects_previously_offered_slot_by_spoken_time_format(): void
+    {
+        $call = $this->callWithOfferedSlots();
+
+        $method = new ReflectionMethod(VoiceAiService::class, 'selectedOfferedSlotFromMessage');
+        $method->setAccessible(true);
+
+        $slot = $method->invoke(app(VoiceAiService::class), $call, 'a las 9 y 45');
+
+        $this->assertNotNull($slot);
+        $this->assertSame('2026-07-23 09:45:00', $slot['datetime']);
+    }
+
+    public function test_selects_previously_offered_slot_by_option_number(): void
+    {
+        $call = $this->callWithOfferedSlots();
+
+        $method = new ReflectionMethod(VoiceAiService::class, 'selectedOfferedSlotFromMessage');
+        $method->setAccessible(true);
+
+        $slot = $method->invoke(app(VoiceAiService::class), $call, '2');
+
+        $this->assertNotNull($slot);
+        $this->assertSame('2026-07-23 09:45:00', $slot['datetime']);
+    }
+
+    public function test_selected_incomplete_slot_asks_for_procedure_instead_of_saying_occupied(): void
+    {
+        $service = app(VoiceAiService::class);
+        $call = app(VoiceSessionService::class)->startCall('+593999999999', VoiceChannelType::WebTest);
+
+        app(VoiceSessionService::class)->addToolCall($call, 'get_available_slots', [], [
+            'procedure_found' => null,
+            'procedure_id' => null,
+            'procedure_name' => null,
+            'slots' => [[
+                'datetime' => '2026-07-23 09:45:00',
+                'label' => 'jueves 23 de julio a las 9:45 a. m.',
+                'doctor_id' => 3,
+                'procedure_id' => null,
+            ]],
+        ]);
+
+        $response = $service->sendMessage($call->id, '9:45 a. m.');
+
+        $this->assertStringContainsString('necesito confirmar el procedimiento', $response['message']);
+        $this->assertStringNotContainsString('ocupo', $response['message']);
+        $this->assertStringNotContainsString('ocup', $response['message']);
+    }
+
     private function assertToolArgsAllowed(string $tool, mixed $call, array $args): void
     {
         $method = new ReflectionMethod(VoiceAiService::class, 'assertToolArgsAllowedByBackendHistory');
         $method->setAccessible(true);
         $method->invoke(app(VoiceAiService::class), $call, $tool, $args);
+    }
+
+    private function callWithOfferedSlots(): mixed
+    {
+        $call = app(VoiceSessionService::class)->startCall('+593999999999', VoiceChannelType::WebTest);
+
+        app(VoiceSessionService::class)->addToolCall($call, 'get_available_slots', ['procedure_name' => 'Limpieza'], [
+            'procedure_found' => true,
+            'procedure_id' => 7,
+            'procedure_name' => 'Limpieza',
+            'slots' => [
+                [
+                    'datetime' => '2026-07-23 09:00:00',
+                    'label' => 'jueves 23 de julio a las 9:00 a. m.',
+                    'doctor_id' => 3,
+                    'procedure_id' => 7,
+                ],
+                [
+                    'datetime' => '2026-07-23 09:45:00',
+                    'label' => 'jueves 23 de julio a las 9:45 a. m.',
+                    'doctor_id' => 3,
+                    'procedure_id' => 7,
+                ],
+                [
+                    'datetime' => '2026-07-23 10:30:00',
+                    'label' => 'jueves 23 de julio a las 10:30 a. m.',
+                    'doctor_id' => 3,
+                    'procedure_id' => 7,
+                ],
+            ],
+        ]);
+
+        return $call->refresh();
     }
 }

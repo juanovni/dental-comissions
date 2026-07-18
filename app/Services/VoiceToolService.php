@@ -54,29 +54,25 @@ class VoiceToolService
         ];
 
         $procedureName = $params['procedure_name'] ?? null;
+        $resolved = app(AppointmentProcedureResolver::class)->resolveForBooking($procedureName);
+        $procedure = $resolved['procedure'];
+        $isDefaultProcedure = (bool) $resolved['is_default'];
 
-        if ($procedureName) {
-            $procedure = Procedure::query()
-                ->where(function ($query) use ($procedureName): void {
-                    $query
-                        ->where('name', 'ilike', "%{$procedureName}%")
-                        ->orWhere('code', 'ilike', "%{$procedureName}%");
-                })
-                ->where('is_active', true)
-                ->first();
-
-            if ($procedure) {
-                $request['procedure_id'] = $procedure->id;
-            }
+        if ($procedure) {
+            $request['procedure_id'] = $procedure->id;
         }
 
-        if ($procedureName && ! $procedure) {
+        if (! $procedure) {
+            $message = blank($procedureName)
+                ? 'Antes de buscar horarios necesito confirmar el procedimiento o configurar un procedimiento default de valoracion.'
+                : 'No existe un procedimiento activo con ese nombre. Solicita confirmacion del procedimiento o transfiere a recepcion.';
+
             return [
                 'procedure_found' => false,
                 'procedure_id' => null,
                 'procedure_name' => null,
                 'slots' => [],
-                'message' => 'No existe un procedimiento activo con ese nombre. Solicita confirmacion del procedimiento o transfiere a recepcion.',
+                'message' => $message,
             ];
         }
 
@@ -86,6 +82,7 @@ class VoiceToolService
             'procedure_found' => $procedure ? true : null,
             'procedure_id' => $procedure?->id,
             'procedure_name' => $procedure?->name,
+            'is_default_procedure' => $isDefaultProcedure,
             'slots' => array_map(fn (array $slot): array => [
                 'datetime' => $slot['datetime'],
                 'label' => $slot['label'],
