@@ -51,7 +51,6 @@ class VoiceToolController extends Controller
             'hold_token' => 'required|string',
             'patient_name' => 'required|string|max:255',
             'phone_e164' => 'required|string|max:20',
-            'procedure_id' => 'nullable|integer|exists:procedures,id',
             'notes' => 'nullable|string|max:500',
         ]);
 

@@ -237,7 +237,28 @@ class AppointmentIntentServiceTest extends TestCase
         $this->assertSame('2026-07-16', $result['preferred_date_parsed']);
         $this->assertSame('15:00', $result['preferred_time_parsed']);
         $this->assertSame('afternoon', $result['preferred_period']);
-        $this->assertSame('ai_with_local_fallback', $result['extraction_source']);
+        $this->assertSame('local_with_ai_context', $result['extraction_source']);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_analyze_prefers_local_date_over_ai_hallucinated_date(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-18')); // Saturday
+
+        $comment = $this->createComment();
+        $message = $this->createMessage('Quiero una limpieza dental el proximo lunes en horas de la tarde');
+
+        $result = $this->service->analyze($comment, $message, 'appointment_interest', [
+            'wants_appointment' => true,
+            'preferred_date_text' => 'lunes 24 de julio',
+            'preferred_time_text' => 'en la tarde',
+        ]);
+
+        $this->assertSame('2026-07-20', $result['preferred_date_parsed']);
+        $this->assertSame('15:00', $result['preferred_time_parsed']);
+        $this->assertSame('afternoon', $result['preferred_period']);
+        $this->assertSame('local_with_ai_context', $result['extraction_source']);
 
         Carbon::setTestNow();
     }

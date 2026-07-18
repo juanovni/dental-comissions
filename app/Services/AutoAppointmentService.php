@@ -62,6 +62,16 @@ class AutoAppointmentService
             return null;
         }
 
+        if (! $comment->suggested_doctor_id || ! $comment->suggested_procedure_id) {
+            Log::info('AutoAppointmentService: faltan doctor o procedimiento definidos por backend', [
+                'comment_id' => $comment->id,
+                'doctor_id' => $comment->suggested_doctor_id,
+                'procedure_id' => $comment->suggested_procedure_id,
+            ]);
+
+            return null;
+        }
+
         try {
             $data = [
                 'patient_id' => app(SocialPatientConversionService::class)->ensurePatientForLead($comment)?->id,

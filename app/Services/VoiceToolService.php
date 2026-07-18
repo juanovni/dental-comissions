@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\Appointment;
 use App\Enums\AppointmentSource;
 use App\Enums\AppointmentStatus;
+use App\Enums\ProfessionalRole;
+use App\Enums\VoiceHandoffReason;
+use App\Models\Appointment;
 use App\Models\Procedure;
 use App\Models\Professional;
-use Carbon\Carbon;
 
 class VoiceToolService
 {
@@ -44,6 +45,7 @@ class VoiceToolService
     public function getAvailableSlots(array $params): array
     {
         $search = app(AppointmentSlotSearchService::class);
+        $procedure = null;
 
         $request = [
             'doctor_id' => $params['doctor_id'] ?? null,
@@ -54,8 +56,13 @@ class VoiceToolService
         $procedureName = $params['procedure_name'] ?? null;
 
         if ($procedureName) {
-            $procedure = Procedure::where('name', 'ilike', "%{$procedureName}%")
-                ->orWhere('code', 'ilike', "%{$procedureName}%")
+            $procedure = Procedure::query()
+                ->where(function ($query) use ($procedureName): void {
+                    $query
+                        ->where('name', 'ilike', "%{$procedureName}%")
+                        ->orWhere('code', 'ilike', "%{$procedureName}%");
+                })
+                ->where('is_active', true)
                 ->first();
 
             if ($procedure) {
@@ -63,14 +70,29 @@ class VoiceToolService
             }
         }
 
+        if ($procedureName && ! $procedure) {
+            return [
+                'procedure_found' => false,
+                'procedure_id' => null,
+                'procedure_name' => null,
+                'slots' => [],
+                'message' => 'No existe un procedimiento activo con ese nombre. Solicita confirmacion del procedimiento o transfiere a recepcion.',
+            ];
+        }
+
         $rawSlots = $search->search($request);
 
         return [
+            'procedure_found' => $procedure ? true : null,
+            'procedure_id' => $procedure?->id,
+            'procedure_name' => $procedure?->name,
             'slots' => array_map(fn (array $slot): array => [
                 'datetime' => $slot['datetime'],
                 'label' => $slot['label'],
                 'doctor_id' => $slot['doctor_id'] ?? null,
                 'doctor_name' => $slot['doctor_name'] ?? null,
+                'procedure_id' => $procedure?->id,
+                'procedure_name' => $procedure?->name,
             ], $rawSlots),
         ];
     }
@@ -86,6 +108,17 @@ class VoiceToolService
             throw new \InvalidArgumentException('slot_datetime, doctor_id y procedure_id son requeridos.');
         }
 
+        Procedure::query()
+            ->whereKey((int) $procedureId)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        Professional::query()
+            ->whereKey((int) $doctorId)
+            ->where('role', ProfessionalRole::Doctor->value)
+            ->where('is_active', true)
+            ->firstOrFail();
+
         return $this->holdService->create(
             doctorId: (int) $doctorId,
             procedureId: (int) $procedureId,
@@ -99,7 +132,6 @@ class VoiceToolService
         $holdToken = $params['hold_token'] ?? null;
         $patientName = $params['patient_name'] ?? null;
         $phoneE164 = $params['phone_e164'] ?? null;
-        $procedureId = $params['procedure_id'] ?? null;
         $notes = $params['notes'] ?? 'Agendado por Pity Voice';
 
         if (blank($holdToken) || blank($patientName) || blank($phoneE164)) {
@@ -112,7 +144,7 @@ class VoiceToolService
 
         $appointment = Appointment::create([
             'patient_id' => $patient->id,
-            'procedure_id' => $procedureId ?: $hold->procedure_id,
+            'procedure_id' => $hold->procedure_id,
             'doctor_id' => $hold->doctor_id,
             'scheduled_at' => $hold->starts_at,
             'duration_minutes' => $hold->starts_at?->diffInMinutes($hold->ends_at) ?: null,
@@ -143,6 +175,10 @@ class VoiceToolService
 
         if (blank($reason)) {
             throw new \InvalidArgumentException('reason es requerido.');
+        }
+
+        if (! VoiceHandoffReason::tryFrom((string) $reason)) {
+            throw new \InvalidArgumentException('Motivo de transferencia invalido.');
         }
 
         return [

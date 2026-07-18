@@ -61,17 +61,24 @@ class AppointmentIntentService
                 $result['extraction_source'] = 'ai';
             }
 
-            if (! $result['preferred_date_parsed'] || ! $result['preferred_time_parsed'] || ! $result['preferred_period']) {
-                $localParsed = $this->extractFromText($body);
-                if ($localParsed['date'] || $localParsed['time'] || $localParsed['period']) {
-                    $result['preferred_date_parsed'] ??= $localParsed['date'];
-                    $result['preferred_time_parsed'] ??= $localParsed['time'];
-                    $result['preferred_period'] ??= $localParsed['period'];
-                    $result['preferred_date_text'] ??= $localParsed['date_text'];
-                    $result['preferred_time_text'] ??= $localParsed['time_text'];
-                    $result['confidence'] = max($result['confidence'], 65);
-                    $result['extraction_source'] = $result['extraction_source'] === 'ai' ? 'ai_with_local_fallback' : 'local_fallback';
+            $localParsed = $this->extractFromText($body);
+            if ($localParsed['date'] || $localParsed['time'] || $localParsed['period']) {
+                if ($localParsed['date']) {
+                    $result['preferred_date_parsed'] = $localParsed['date'];
+                    $result['preferred_date_text'] = $localParsed['date_text'];
                 }
+
+                if ($localParsed['time']) {
+                    $result['preferred_time_parsed'] = $localParsed['time'];
+                    $result['preferred_time_text'] = $localParsed['time_text'];
+                }
+
+                if ($localParsed['period']) {
+                    $result['preferred_period'] = $localParsed['period'];
+                }
+
+                $result['confidence'] = max($result['confidence'], 65);
+                $result['extraction_source'] = $result['extraction_source'] === 'ai' ? 'local_with_ai_context' : 'local_fallback';
             }
 
             if (!$result['preferred_date_parsed']) {
@@ -174,8 +181,6 @@ class AppointmentIntentService
                 $diff = ($targetDayOfWeek - $dayOfWeek + 7) % 7;
                 if ($diff === 0) {
                     $diff = $isNext ? 7 : 0;
-                } elseif ($isNext && $diff < 7) {
-                    $diff += 7;
                 }
                 $result['parsed'] = $now->copy()->addDays($diff)->format('Y-m-d');
                 $result['text'] = $matches[0];

@@ -78,6 +78,25 @@ class VoiceToolsFeatureTest extends TestCase
             ->assertJson(['slots' => []]);
     }
 
+    public function test_get_available_slots_does_not_return_past_dates(): void
+    {
+        Professional::factory()->doctor()->create(['is_active' => true]);
+        Procedure::factory()->create(['name' => 'Limpieza dental', 'is_active' => true]);
+
+        $response = $this->withToken($this->validToken)
+            ->postJson('/api/voice/tools/get-available-slots', [
+                'procedure_name' => 'Limpieza',
+                'preferred_date' => '2023-10-30',
+                'preferred_period' => 'afternoon',
+            ]);
+
+        $response->assertOk();
+
+        foreach ($response->json('slots') as $slot) {
+            $this->assertGreaterThanOrEqual(now()->startOfMinute(), \Carbon\Carbon::parse($slot['datetime']));
+        }
+    }
+
     public function test_rejects_request_without_token(): void
     {
         $response = $this->postJson('/api/voice/tools/identify-patient', [

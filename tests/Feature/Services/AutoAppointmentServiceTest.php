@@ -105,7 +105,7 @@ class AutoAppointmentServiceTest extends TestCase
             'closing_opportunity_score' => 90,
             'appointment_candidate' => [
                 'wants_appointment' => true,
-                'preferred_date_parsed' => now()->addDay()->format('Y-m-d'),
+                'preferred_date_parsed' => now()->next('Monday')->format('Y-m-d'),
                 'preferred_time_parsed' => null,
                 'preferred_date_text' => 'mañana',
                 'preferred_time_text' => null,
@@ -124,7 +124,7 @@ class AutoAppointmentServiceTest extends TestCase
 
     public function test_returns_null_when_no_booking_intent(): void
     {
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'information_seeking',
             'closing_opportunity_score' => 30,
@@ -145,7 +145,7 @@ class AutoAppointmentServiceTest extends TestCase
 
     public function test_returns_null_when_no_date_parsed(): void
     {
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'appointment_interest',
             'closing_opportunity_score' => 80,
@@ -168,7 +168,7 @@ class AutoAppointmentServiceTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-07-07'));
 
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'ready_to_book',
             'closing_opportunity_score' => 95,
@@ -196,13 +196,13 @@ class AutoAppointmentServiceTest extends TestCase
             ['value' => true, 'value_type' => 'boolean', 'label' => 'Auto confirm'],
         );
 
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'appointment_interest',
             'closing_opportunity_score' => 85,
             'appointment_candidate' => [
                 'wants_appointment' => true,
-                'preferred_date_parsed' => now()->addDay()->format('Y-m-d'),
+                'preferred_date_parsed' => now()->next('Monday')->format('Y-m-d'),
                 'preferred_time_parsed' => '14:00',
                 'intent_type' => 'appointment_interest',
                 'intent_confidence' => 80,
@@ -227,13 +227,13 @@ class AutoAppointmentServiceTest extends TestCase
 
         $autoService = app(AutoAppointmentService::class);
 
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'appointment_interest',
             'closing_opportunity_score' => 85,
             'appointment_candidate' => [
                 'wants_appointment' => true,
-                'preferred_date_parsed' => now()->addDay()->format('Y-m-d'),
+                'preferred_date_parsed' => now()->next('Monday')->format('Y-m-d'),
                 'preferred_time_parsed' => '10:00',
                 'intent_type' => 'appointment_interest',
                 'intent_confidence' => 80,
