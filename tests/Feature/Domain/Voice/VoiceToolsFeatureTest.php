@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Domain\Voice;
 
+use App\Enums\AppointmentSource;
+use App\Enums\AppointmentStatus;
+use App\Models\Appointment;
 use App\Models\AppointmentSlotHold;
 use App\Models\Patient;
 use App\Models\Procedure;
@@ -218,6 +221,61 @@ class VoiceToolsFeatureTest extends TestCase
                 'status',
                 'confirmation_message',
             ]);
+    }
+
+    public function test_create_appointment_reschedules_existing_future_patient_appointment(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-18 09:00:00'));
+
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dr. Demo']);
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $patient = Patient::factory()->create([
+            'full_name' => 'Juan Constantine',
+            'phone' => '+593999999999',
+        ]);
+
+        $appointment = Appointment::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'procedure_id' => $procedure->id,
+            'scheduled_at' => '2026-07-20 15:00:00',
+            'duration_minutes' => 45,
+            'status' => AppointmentStatus::PendingConfirmation,
+            'source' => AppointmentSource::VoiceCall,
+            'external_provider' => 'google_calendar',
+            'external_appointment_id' => 'google-event-juan-1',
+            'external_calendar_id' => 'primary',
+            'external_status' => 'active',
+        ]);
+
+        $holdResult = app(VoiceAppointmentHoldService::class)->create(
+            doctorId: $doctor->id,
+            procedureId: $procedure->id,
+            startsAt: '2026-07-22 15:00:00',
+            phoneE164: '+593999999999',
+        );
+
+        $response = $this->withToken($this->validToken)
+            ->postJson('/api/voice/tools/create-appointment', [
+                'hold_token' => $holdResult['hold_token'],
+                'patient_name' => 'Juan Constantine',
+                'phone_e164' => '+593999999999',
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'appointment_id' => $appointment->id,
+                'status' => AppointmentStatus::Rescheduled->value,
+                'rescheduled' => true,
+            ]);
+
+        $this->assertSame(1, Appointment::where('patient_id', $patient->id)->count());
+
+        $appointment->refresh();
+        $this->assertSame('2026-07-22 15:00:00', $appointment->scheduled_at->format('Y-m-d H:i:s'));
+        $this->assertSame('google-event-juan-1', $appointment->external_appointment_id);
+
+        Carbon::setTestNow();
     }
 
     public function test_request_handoff(): void

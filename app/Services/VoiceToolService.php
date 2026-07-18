@@ -138,6 +138,34 @@ class VoiceToolService
         $hold = $this->holdService->consume($holdToken);
 
         $patient = $this->patientResolver->findOrCreate($patientName, $phoneE164);
+        $existingAppointment = $this->activeFutureAppointmentForPatient($patient->id);
+
+        if ($existingAppointment) {
+            $existingAppointment->update([
+                'doctor_id' => $hold->doctor_id,
+                'procedure_id' => $hold->procedure_id,
+                'notes' => trim(($existingAppointment->notes ?? '') . "\nReprogramado por Pity Voice. " . $notes),
+            ]);
+
+            $appointment = app(AppointmentWorkflowService::class)->reschedule(
+                $existingAppointment->refresh(),
+                $hold->starts_at,
+                $hold->starts_at?->diffInMinutes($hold->ends_at) ?: null,
+            );
+
+            $hold->update(['appointment_id' => $appointment->id]);
+
+            return [
+                'appointment_id' => $appointment->id,
+                'status' => $appointment->status->value,
+                'rescheduled' => true,
+                'confirmation_message' => sprintf(
+                    'Tu cita fue reprogramada para el %s a las %s.',
+                    $appointment->scheduled_at->isoFormat('dddd D [de] MMMM'),
+                    $appointment->scheduled_at->format('g:i A'),
+                ),
+            ];
+        }
 
         $appointment = Appointment::create([
             'patient_id' => $patient->id,
@@ -157,6 +185,7 @@ class VoiceToolService
         return [
             'appointment_id' => $appointment->id,
             'status' => $appointment->status->value,
+            'rescheduled' => false,
             'confirmation_message' => sprintf(
                 'Tu cita fue agendada para el %s a las %s.',
                 $appointment->scheduled_at->isoFormat('dddd D [de] MMMM'),
@@ -202,5 +231,22 @@ class VoiceToolService
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function activeFutureAppointmentForPatient(int $patientId): ?Appointment
+    {
+        return Appointment::query()
+            ->where('patient_id', $patientId)
+            ->whereNotNull('scheduled_at')
+            ->where('scheduled_at', '>=', now()->startOfDay())
+            ->whereIn('status', [
+                AppointmentStatus::PendingConfirmation->value,
+                AppointmentStatus::Scheduled->value,
+                AppointmentStatus::Confirmed->value,
+                AppointmentStatus::Rescheduled->value,
+            ])
+            ->latest('scheduled_at')
+            ->latest('id')
+            ->first();
     }
 }
