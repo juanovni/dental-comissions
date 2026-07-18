@@ -74,6 +74,10 @@ return [
         'request_timeout' => (int) env('GEMINI_REQUEST_TIMEOUT', 30),
     ],
 
+    'voice' => [
+        'tool_token' => env('VOICE_TOOL_TOKEN'),
+    ],
+
     'google_oauth' => [
         'client_id' => env('GOOGLE_OAUTH_CLIENT_ID'),
         'client_secret' => env('GOOGLE_OAUTH_CLIENT_SECRET'),

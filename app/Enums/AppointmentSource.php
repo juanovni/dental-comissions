@@ -9,6 +9,7 @@ enum AppointmentSource: string
     case SmartLink = 'smart_link';
     case AdminManual = 'admin_manual';
     case ExternalProvider = 'external_provider';
+    case VoiceCall = 'voice_call';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum AppointmentSource: string
             self::SmartLink => 'Smart Link',
             self::AdminManual => 'Manual admin',
             self::ExternalProvider => 'Proveedor externo',
+            self::VoiceCall => 'Llamada de voz',
         };
     }
 }
