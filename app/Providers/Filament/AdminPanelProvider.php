@@ -40,12 +40,12 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->brandLogo(function () {
                 if (request()->routeIs('filament.admin.auth.login')) {
-                    return '/images/logo-odon-crm_2.png';
+                    return '/images/icon-odon-crm_3.png';
                 }
-                return '/images/logo-odon-crm_2.png';
+                return '/images/icon-odon-crm_3.png';
             })
             ->brandLogoHeight(function () {
-                return request()->routeIs('filament.admin.auth.login') ? '2rem' : '1.35rem';
+                return request()->routeIs('filament.admin.auth.login') ? '4rem' : '1.35rem';
             })
             ->colors([
                 'primary' => [
