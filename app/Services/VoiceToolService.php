@@ -78,11 +78,26 @@ class VoiceToolService
 
         $rawSlots = $search->search($request);
 
+        $preferredDate = $params['preferred_date'] ?? null;
+        $requestedDateUnavailable = null;
+
+        if ($preferredDate && ! empty($rawSlots)) {
+            $preferredDay = \Carbon\Carbon::parse($preferredDate)->startOfDay();
+            $hasSlotsOnDate = collect($rawSlots)->contains(
+                fn (array $slot): bool => \Carbon\Carbon::parse($slot['datetime'])->startOfDay()->eq($preferredDay),
+            );
+
+            if (! $hasSlotsOnDate) {
+                $requestedDateUnavailable = $preferredDay->isoFormat('dddd D [de] MMMM');
+            }
+        }
+
         return [
             'procedure_found' => $procedure ? true : null,
             'procedure_id' => $procedure?->id,
             'procedure_name' => $procedure?->name,
             'is_default_procedure' => $isDefaultProcedure,
+            'requested_date_unavailable' => $requestedDateUnavailable,
             'slots' => array_map(fn (array $slot): array => [
                 'datetime' => $slot['datetime'],
                 'label' => $slot['label'],

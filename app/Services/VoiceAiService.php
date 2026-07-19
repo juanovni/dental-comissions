@@ -501,18 +501,28 @@ class VoiceAiService
         $procedure = $result['procedure_name'] ?? 'el procedimiento';
         $lines = [];
 
+        $unavailableDate = $result['requested_date_unavailable'] ?? null;
+
+        $prefix = $unavailableDate
+            ? 'Estos son los horarios disponibles mas cercanos'
+            : 'He encontrado estos horarios disponibles';
+
+        $intro = ($result['is_default_procedure'] ?? false)
+            ? "Como aún no tengo un procedimiento específico, puedo ayudarte a agendar una {$procedure} para que el doctor revise tu caso. {$prefix} para {$procedure}:"
+            : "{$prefix} para {$procedure}:";
+
         foreach (array_slice($result['slots'], 0, 3) as $index => $slot) {
             $label = $slot['label'] ?? \Carbon\Carbon::parse($slot['datetime'])->isoFormat('dddd D [de] MMMM [a las] h:mm A');
             $lines[] = ($index + 1) . '. ' . $label;
         }
 
-        $intro = ($result['is_default_procedure'] ?? false)
-            ? "Como aún no tengo un procedimiento específico, puedo ayudarte a agendar una {$procedure} para que el doctor revise tu caso. Estos son los horarios disponibles:"
-            : "He encontrado estos horarios disponibles para {$procedure}:";
+        $apology = $unavailableDate
+            ? "Lo siento, no tengo disponibilidad para el {$unavailableDate}.\n\n"
+            : '';
 
-        return $intro . "\n\n"
+        return $apology . $intro . "\n\n"
             . implode("\n", $lines)
-            . "\n\n¿Cuál de estos horarios prefieres?";
+            . "\n\n¿Cual de estos horarios prefieres?";
     }
 
     private function selectedOfferedSlotFromMessage(\App\Models\VoiceCall $call, string $message): ?array
