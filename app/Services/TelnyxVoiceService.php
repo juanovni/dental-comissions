@@ -25,6 +25,28 @@ class TelnyxVoiceService
         ]);
     }
 
+    public function speak(string $callControlId, string $text): void
+    {
+        $this->post($callControlId, 'speak', [
+            'payload' => $text,
+            'voice' => (string) config('services.telnyx.voice', 'female'),
+            'language' => (string) config('services.telnyx.language', 'es-MX'),
+        ]);
+    }
+
+    public function startTranscription(string $callControlId): void
+    {
+        $this->post($callControlId, 'transcription_start', [
+            'language' => (string) config('services.telnyx.transcription_language', 'es'),
+            'transcription_engine' => (string) config('services.telnyx.transcription_engine', 'Telnyx'),
+        ]);
+    }
+
+    public function stopTranscription(string $callControlId): void
+    {
+        $this->post($callControlId, 'transcription_stop');
+    }
+
     public function hangup(string $callControlId): void
     {
         $this->post($callControlId, 'hangup');

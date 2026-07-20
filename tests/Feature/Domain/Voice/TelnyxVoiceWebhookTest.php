@@ -5,9 +5,13 @@ namespace Tests\Feature\Domain\Voice;
 use App\Enums\VoiceCallStatus;
 use App\Enums\VoiceChannelType;
 use App\Enums\VoiceEventType;
+use App\Models\VoiceCall;
+use App\Services\VoiceAiService;
+use App\Services\VoiceSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 class TelnyxVoiceWebhookTest extends TestCase
@@ -91,7 +95,7 @@ class TelnyxVoiceWebhookTest extends TestCase
         ]);
     }
 
-    public function test_call_answered_starts_pity_prompt_and_stores_event(): void
+    public function test_call_answered_speaks_pity_prompt_and_stores_event(): void
     {
         config(['services.telnyx.api_key' => 'test-key']);
         Http::fake(['api.telnyx.com/*' => Http::response(['ok' => true])]);
@@ -129,7 +133,160 @@ class TelnyxVoiceWebhookTest extends TestCase
             'provider_event_id' => 'evt-005',
         ]);
 
-        Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-789/actions/gather_using_speak'));
+        Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-789/actions/speak'));
+        Http::assertNotSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-789/actions/transcription_start'));
+    }
+
+    public function test_speak_ended_starts_transcription(): void
+    {
+        config(['services.telnyx.api_key' => 'test-key']);
+        Http::fake(['api.telnyx.com/*' => Http::response(['ok' => true])]);
+
+        $this->postJson('/webhook/telnyx/voice/events', [
+            'data' => [
+                'id' => 'evt-006',
+                'event_type' => 'call.initiated',
+                'payload' => [
+                    'call_control_id' => 'call-control-790',
+                    'from' => '+593999999999',
+                    'to' => '+17866870733',
+                ],
+            ],
+        ]);
+
+        $response = $this->postJson('/webhook/telnyx/voice/events', [
+            'data' => [
+                'id' => 'evt-007',
+                'event_type' => 'call.speak.ended',
+                'payload' => [
+                    'call_control_id' => 'call-control-790',
+                ],
+            ],
+        ]);
+
+        $response->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertDatabaseHas('voice_events', [
+            'type' => VoiceEventType::CallEvent->value,
+            'provider_event_id' => 'evt-007',
+        ]);
+
+        Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-790/actions/transcription_start'));
+    }
+
+    public function test_final_transcription_is_processed_by_voice_ai_and_spoken(): void
+    {
+        config(['services.telnyx.api_key' => 'test-key']);
+        Http::fake(['api.telnyx.com/*' => Http::response(['ok' => true])]);
+
+        $sessions = app(VoiceSessionService::class);
+
+        $this->mock(VoiceAiService::class, function (MockInterface $mock) use ($sessions): void {
+            $mock->shouldReceive('sendMessage')
+                ->once()
+                ->withArgs(fn (int $callId, string $message): bool => $message === 'Quiero una cita para limpieza')
+                ->andReturnUsing(function (int $callId, string $message) use ($sessions): array {
+                    $call = VoiceCall::query()->findOrFail($callId);
+
+                    $sessions->addMessage($call, VoiceEventType::UserMessage, $message);
+                    $sessions->addMessage($call, VoiceEventType::AssistantMessage, 'Claro, te ayudo a buscar disponibilidad.');
+
+                    return [
+                        'message' => 'Claro, te ayudo a buscar disponibilidad.',
+                        'ended' => false,
+                        'handoff' => false,
+                    ];
+                });
+        });
+
+        $this->postJson('/webhook/telnyx/voice/events', [
+            'data' => [
+                'id' => 'evt-040',
+                'event_type' => 'call.initiated',
+                'payload' => [
+                    'call_control_id' => 'call-control-333',
+                    'from' => '+593999999999',
+                    'to' => '+17866870733',
+                ],
+            ],
+        ]);
+
+        $response = $this->postJson('/webhook/telnyx/voice/events', [
+            'data' => [
+                'id' => 'evt-041',
+                'event_type' => 'call.transcription',
+                'payload' => [
+                    'call_control_id' => 'call-control-333',
+                    'transcription_data' => [
+                        'confidence' => 0.97,
+                        'is_final' => true,
+                        'transcript' => 'Quiero una cita para limpieza',
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertDatabaseHas('voice_events', [
+            'type' => VoiceEventType::CallEvent->value,
+            'provider_event_id' => 'evt-041',
+        ]);
+
+        $this->assertDatabaseHas('voice_events', [
+            'type' => VoiceEventType::UserMessage->value,
+        ]);
+
+        Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-333/actions/transcription_stop'));
+        Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-333/actions/speak'));
+    }
+
+    public function test_partial_transcription_is_stored_but_not_processed(): void
+    {
+        config(['services.telnyx.api_key' => 'test-key']);
+        Http::fake(['api.telnyx.com/*' => Http::response(['ok' => true])]);
+
+        $this->postJson('/webhook/telnyx/voice/events', [
+            'data' => [
+                'id' => 'evt-050',
+                'event_type' => 'call.initiated',
+                'payload' => [
+                    'call_control_id' => 'call-control-444',
+                    'from' => '+593999999999',
+                    'to' => '+17866870733',
+                ],
+            ],
+        ]);
+
+        $this->mock(VoiceAiService::class, function (MockInterface $mock): void {
+            $mock->shouldNotReceive('sendMessage');
+        });
+
+        $response = $this->postJson('/webhook/telnyx/voice/events', [
+            'data' => [
+                'id' => 'evt-051',
+                'event_type' => 'call.transcription',
+                'payload' => [
+                    'call_control_id' => 'call-control-444',
+                    'transcription_data' => [
+                        'confidence' => 0.72,
+                        'is_final' => false,
+                        'transcript' => 'Quiero una',
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertDatabaseHas('voice_events', [
+            'type' => VoiceEventType::CallEvent->value,
+            'provider_event_id' => 'evt-051',
+        ]);
+
+        $this->assertDatabaseMissing('voice_events', [
+            'type' => VoiceEventType::UserMessage->value,
+        ]);
     }
 
     public function test_duplicate_event_id_is_rejected(): void

@@ -48,6 +48,8 @@ TELNYX_API_KEY=
 TELNYX_API_URL=https://api.telnyx.com/v2
 TELNYX_LANGUAGE=es-MX
 TELNYX_VOICE=female
+TELNYX_TRANSCRIPTION_LANGUAGE=es
+TELNYX_TRANSCRIPTION_ENGINE=Telnyx
 TELNYX_DEBUG=false
 ```
 
@@ -110,11 +112,11 @@ Opciones STT externas:
 
 ### Tareas
 
-- [ ] Confirmar endpoint/accion Telnyx para iniciar transcripcion real.
-- [ ] Implementar `TelnyxVoiceService::startTranscription()`.
-- [ ] Implementar `TelnyxVoiceService::stopTranscription()` si aplica.
-- [ ] Manejar eventos de transcripcion Telnyx.
-- [ ] Normalizar payload de transcripcion a estructura interna:
+- [x] Confirmar endpoint/accion Telnyx para iniciar transcripcion real.
+- [x] Implementar `TelnyxVoiceService::startTranscription()`.
+- [x] Implementar `TelnyxVoiceService::stopTranscription()` si aplica.
+- [x] Manejar eventos de transcripcion Telnyx.
+- [x] Normalizar payload de transcripcion a estructura interna:
 
 ```php
 [
@@ -125,15 +127,17 @@ Opciones STT externas:
 ]
 ```
 
-- [ ] Ignorar transcripciones parciales si existen.
-- [ ] Deduplicar transcripciones finales.
+- [x] Ignorar transcripciones parciales si existen.
+- [x] Deduplicar transcripciones finales.
+- [x] Iniciar transcripcion despues de `call.speak.ended` para evitar capturar el saludo de Pity.
+- [x] Detener transcripcion antes de responder con `speak`.
 
 ### Criterios De Aceptacion
 
-- Al hablar en la llamada, Laravel recibe texto final.
-- El texto se guarda como `VoiceEventType::UserMessage`.
-- El transcript de `voice_calls` muestra usuario y asistente.
-- No se procesa dos veces la misma frase.
+- [ ] Al hablar en la llamada, Laravel recibe texto final.
+- [x] El texto se guarda como `VoiceEventType::UserMessage`.
+- [x] El transcript de `voice_calls` muestra usuario y asistente.
+- [x] No se procesa dos veces la misma frase.
 
 ## Fase 3 - Turnos Conversacionales
 
@@ -233,9 +237,9 @@ call.hangup
 - [x] `call.initiated` crea `voice_calls`.
 - [x] `call.hangup` completa llamada.
 - [x] `call.answered` reproduce saludo.
-- [ ] Evento de transcripcion final crea mensaje de usuario.
-- [ ] Evento de transcripcion final llama `VoiceAiService`.
-- [ ] `call.speak.ended` reanuda escucha si aplica.
+- [x] Evento de transcripcion final crea mensaje de usuario.
+- [x] Evento de transcripcion final llama `VoiceAiService`.
+- [x] `call.speak.ended` reanuda escucha si aplica.
 - [ ] Eventos duplicados son idempotentes.
 - [ ] Webhook invalido se rechaza en produccion.
 

@@ -49,6 +49,8 @@ class TelnyxVoiceWebhookController extends Controller
             'call.initiated' => $this->recordInitiatedCall($providerCallId, $payload, $eventId),
             'call.answered' => $this->startPityConversation($providerCallId, $payload, $eventId),
             'call.gather.ended' => $this->handleGatherEnded($providerCallId, $payload, $eventId),
+            'call.speak.ended' => $this->handleSpeakEnded($providerCallId, $payload, $eventId),
+            'call.transcription' => $this->handleTranscription($providerCallId, $payload, $eventId),
             'call.hangup' => $this->recordEndedCall($providerCallId, $payload, $eventId),
             default => $this->recordCallEvent($providerCallId, $eventType, $payload, $eventId),
         };
@@ -108,7 +110,7 @@ class TelnyxVoiceWebhookController extends Controller
             ]);
         }
 
-        $this->telnyx->gatherUsingSpeak($callControlId, $greeting);
+        $this->telnyx->speak($callControlId, $greeting);
     }
 
     private function handleGatherEnded(?string $providerCallId, array $payload, ?string $eventId): void
@@ -149,6 +151,56 @@ class TelnyxVoiceWebhookController extends Controller
         }
 
         $this->telnyx->gatherUsingSpeak($callControlId, $reply);
+    }
+
+    private function handleSpeakEnded(?string $providerCallId, array $payload, ?string $eventId): void
+    {
+        $call = $this->findCall($providerCallId, $payload);
+        $callControlId = $this->callControlId($call, $payload);
+
+        if (! $call || ! $callControlId) {
+            return;
+        }
+
+        $this->storeProviderEvent($call, 'call.speak.ended', $payload, $eventId);
+
+        if ($call->status === VoiceCallStatus::Completed) {
+            return;
+        }
+
+        $this->telnyx->startTranscription($callControlId);
+    }
+
+    private function handleTranscription(?string $providerCallId, array $payload, ?string $eventId): void
+    {
+        $call = $this->findCall($providerCallId, $payload);
+        $callControlId = $this->callControlId($call, $payload);
+
+        if (! $call || ! $callControlId) {
+            return;
+        }
+
+        $this->storeProviderEvent($call, 'call.transcription', $payload, $eventId);
+
+        if ($call->status === VoiceCallStatus::Completed) {
+            return;
+        }
+
+        $transcription = $this->transcriptionData($payload);
+
+        if (! $transcription['is_final'] || $transcription['transcript'] === '') {
+            return;
+        }
+
+        $result = $this->voiceAi->sendMessage($call->id, $transcription['transcript']);
+        $reply = trim((string) ($result['message'] ?? ''));
+
+        if ($reply === '') {
+            $reply = 'Disculpa, tuve un problema procesando tu solicitud. Puedes repetirlo?';
+        }
+
+        $this->telnyx->stopTranscription($callControlId);
+        $this->telnyx->speak($callControlId, $reply);
     }
 
     private function recordEndedCall(?string $providerCallId, array $payload, ?string $eventId): void
@@ -250,5 +302,22 @@ class TelnyxVoiceWebhookController extends Controller
         }
 
         return '';
+    }
+
+    private function transcriptionData(array $payload): array
+    {
+        $data = $payload['transcription_data'] ?? [];
+
+        if (! is_array($data)) {
+            $data = [];
+        }
+
+        $transcript = trim((string) ($data['transcript'] ?? $payload['transcript'] ?? ''));
+
+        return [
+            'transcript' => $transcript,
+            'is_final' => (bool) ($data['is_final'] ?? $payload['is_final'] ?? false),
+            'confidence' => $data['confidence'] ?? $payload['confidence'] ?? null,
+        ];
     }
 }
