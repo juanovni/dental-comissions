@@ -6,6 +6,7 @@ use App\Enums\VoiceCallStatus;
 use App\Enums\VoiceChannelType;
 use App\Enums\VoiceEventType;
 use App\Models\VoiceCall;
+use App\Models\VoiceEvent;
 use App\Services\TelnyxVoiceService;
 use App\Services\VoiceAiService;
 use App\Services\VoiceSessionService;
@@ -24,12 +25,19 @@ class TelnyxVoiceWebhookController extends Controller
     public function events(Request $request): JsonResponse
     {
         $eventType = (string) $request->input('data.event_type', $request->input('event_type', 'unknown'));
+        $eventId = $request->input('data.id');
         $payload = $request->input('data.payload', []);
 
-        Log::info('Webhook Telnyx recibido.', [
-            'event_type' => $eventType,
-            'body' => $request->all(),
-        ]);
+        if ($eventId && VoiceEvent::query()->where('provider_event_id', $eventId)->exists()) {
+            return response()->json(['ok' => true, 'duplicate' => true]);
+        }
+
+        if (config('services.telnyx.debug', false)) {
+            Log::info('Webhook Telnyx recibido.', [
+                'event_type' => $eventType,
+                'body' => $request->all(),
+            ]);
+        }
 
         if (! is_array($payload)) {
             $payload = [];
@@ -38,24 +46,24 @@ class TelnyxVoiceWebhookController extends Controller
         $providerCallId = $this->providerCallId($payload, $request->all());
 
         match ($eventType) {
-            'call.initiated' => $this->recordInitiatedCall($providerCallId, $payload, $request->all()),
-            'call.answered' => $this->startPityConversation($providerCallId, $payload),
-            'call.gather.ended' => $this->handleGatherEnded($providerCallId, $payload),
-            'call.hangup' => $this->recordEndedCall($providerCallId, $eventType, $payload),
-            default => $this->recordCallEvent($providerCallId, $eventType, $payload),
+            'call.initiated' => $this->recordInitiatedCall($providerCallId, $payload, $eventId),
+            'call.answered' => $this->startPityConversation($providerCallId, $payload, $eventId),
+            'call.gather.ended' => $this->handleGatherEnded($providerCallId, $payload, $eventId),
+            'call.hangup' => $this->recordEndedCall($providerCallId, $payload, $eventId),
+            default => $this->recordCallEvent($providerCallId, $eventType, $payload, $eventId),
         };
 
         return response()->json(['ok' => true]);
     }
 
-    private function recordInitiatedCall(?string $providerCallId, array $payload, array $rawEvent): void
+    private function recordInitiatedCall(?string $providerCallId, array $payload, ?string $eventId): void
     {
         if (! $providerCallId) {
             Log::warning('Evento Telnyx call.initiated sin call id.', ['payload' => $payload]);
             return;
         }
 
-        VoiceCall::query()->updateOrCreate(
+        $call = VoiceCall::query()->updateOrCreate(
             ['provider_call_id' => $providerCallId],
             [
                 'channel' => VoiceChannelType::Telnyx->value,
@@ -68,10 +76,11 @@ class TelnyxVoiceWebhookController extends Controller
                     'telnyx_call_control_id' => $payload['call_control_id'] ?? null,
                     'telnyx_call_session_id' => $payload['call_session_id'] ?? null,
                     'last_telnyx_event' => 'call.initiated',
-                    'last_telnyx_payload' => $rawEvent,
                 ],
             ],
         );
+
+        $this->storeProviderEvent($call, 'call.initiated', $payload, $eventId);
 
         $callControlId = $payload['call_control_id'] ?? null;
 
@@ -80,7 +89,7 @@ class TelnyxVoiceWebhookController extends Controller
         }
     }
 
-    private function startPityConversation(?string $providerCallId, array $payload): void
+    private function startPityConversation(?string $providerCallId, array $payload, ?string $eventId = null): void
     {
         $call = $this->findCall($providerCallId, $payload);
         $callControlId = $this->callControlId($call, $payload);
@@ -88,6 +97,8 @@ class TelnyxVoiceWebhookController extends Controller
         if (! $call || ! $callControlId) {
             return;
         }
+
+        $this->storeProviderEvent($call, 'call.answered', $payload, $eventId);
 
         $greeting = 'Hola, soy Pity, la recepcionista virtual de OdonCRM. En que puedo ayudarte?';
 
@@ -100,7 +111,7 @@ class TelnyxVoiceWebhookController extends Controller
         $this->telnyx->gatherUsingSpeak($callControlId, $greeting);
     }
 
-    private function handleGatherEnded(?string $providerCallId, array $payload): void
+    private function handleGatherEnded(?string $providerCallId, array $payload, ?string $eventId): void
     {
         $call = $this->findCall($providerCallId, $payload);
         $callControlId = $this->callControlId($call, $payload);
@@ -108,6 +119,8 @@ class TelnyxVoiceWebhookController extends Controller
         if (! $call || ! $callControlId) {
             return;
         }
+
+        $this->storeProviderEvent($call, 'call.gather.ended', $payload, $eventId);
 
         if ($call->status === VoiceCallStatus::Completed || ($payload['status'] ?? null) === 'call_hangup') {
             return;
@@ -138,7 +151,7 @@ class TelnyxVoiceWebhookController extends Controller
         $this->telnyx->gatherUsingSpeak($callControlId, $reply);
     }
 
-    private function recordEndedCall(?string $providerCallId, string $eventType, array $payload): void
+    private function recordEndedCall(?string $providerCallId, array $payload, ?string $eventId): void
     {
         $call = $this->findCall($providerCallId, $payload);
 
@@ -146,19 +159,16 @@ class TelnyxVoiceWebhookController extends Controller
             return;
         }
 
-        $metadata = $call->metadata ?? [];
-        $metadata['last_telnyx_event'] = $eventType;
-        $metadata['last_telnyx_payload'] = $payload;
+        $this->storeProviderEvent($call, 'call.hangup', $payload, $eventId);
 
         $call->update([
             'status' => VoiceCallStatus::Completed->value,
             'ended_at' => now(),
             'duration_seconds' => (int) ($call->started_at?->diffInSeconds(now()) ?? 0),
-            'metadata' => $metadata,
         ]);
     }
 
-    private function recordCallEvent(?string $providerCallId, string $eventType, array $payload): void
+    private function recordCallEvent(?string $providerCallId, string $eventType, array $payload, ?string $eventId): void
     {
         $call = $this->findCall($providerCallId, $payload);
 
@@ -166,11 +176,21 @@ class TelnyxVoiceWebhookController extends Controller
             return;
         }
 
-        $metadata = $call->metadata ?? [];
-        $metadata['last_telnyx_event'] = $eventType;
-        $metadata['last_telnyx_payload'] = $payload;
+        $this->storeProviderEvent($call, $eventType, $payload, $eventId);
+    }
 
-        $call->update(['metadata' => $metadata]);
+    private function storeProviderEvent(VoiceCall $call, string $eventType, array $payload, ?string $eventId): void
+    {
+        $data = ['type' => VoiceEventType::CallEvent, 'payload' => array_merge(
+            ['telnyx_event' => $eventType],
+            $payload,
+        )];
+
+        if ($eventId) {
+            $data['provider_event_id'] = $eventId;
+        }
+
+        $call->events()->create($data);
     }
 
     private function findCall(?string $providerCallId, array $payload): ?VoiceCall

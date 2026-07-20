@@ -12,6 +12,7 @@ enum VoiceEventType: string
     case AppointmentCreated = 'appointment_created';
     case HandoffRequested = 'handoff_requested';
     case SessionEnded = 'session_ended';
+    case CallEvent = 'call_event';
     case Error = 'error';
 
     public function label(): string
@@ -25,6 +26,7 @@ enum VoiceEventType: string
             self::AppointmentCreated => 'Cita creada',
             self::HandoffRequested => 'Transferencia solicitada',
             self::SessionEnded => 'Sesion finalizada',
+            self::CallEvent => 'Evento de llamada',
             self::Error => 'Error',
         };
     }

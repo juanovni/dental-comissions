@@ -70,9 +70,9 @@ Notas:
 - [x] Reproducir saludo en `call.answered`.
 - [x] Finalizar llamada en `call.hangup`.
 - [x] Evitar responder si `call.gather.ended` llega despues de `call.hangup`.
-- [ ] Mover logging completo de payload a flag `TELNYX_DEBUG=true`.
-- [ ] Guardar eventos Telnyx relevantes tambien en `voice_events`, no solo en `metadata`.
-- [ ] Agregar idempotencia por `data.id` del evento Telnyx.
+- [x] Mover logging completo de payload a flag `TELNYX_DEBUG=true`.
+- [x] Guardar eventos Telnyx relevantes tambien en `voice_events`, no solo en `metadata`.
+- [x] Agregar idempotencia por `data.id` del evento Telnyx.
 
 ### Criterios De Aceptacion
 
