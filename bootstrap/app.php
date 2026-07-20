@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'webhook/whatsapp',
             'webhook/meta/social',
+            'webhook/telnyx/voice/events',
             'test/whatsapp',
             'test/meta/comment',
         ]);

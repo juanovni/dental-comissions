@@ -78,6 +78,13 @@ return [
         'tool_token' => env('VOICE_TOOL_TOKEN'),
     ],
 
+    'telnyx' => [
+        'api_key' => env('TELNYX_API_KEY'),
+        'api_url' => env('TELNYX_API_URL', 'https://api.telnyx.com/v2'),
+        'voice' => env('TELNYX_VOICE', 'female'),
+        'language' => env('TELNYX_LANGUAGE', 'es-MX'),
+    ],
+
     'google_oauth' => [
         'client_id' => env('GOOGLE_OAUTH_CLIENT_ID'),
         'client_secret' => env('GOOGLE_OAUTH_CLIENT_SECRET'),
