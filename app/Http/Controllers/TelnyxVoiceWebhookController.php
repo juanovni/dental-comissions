@@ -26,6 +26,11 @@ class TelnyxVoiceWebhookController extends Controller
         $eventType = (string) $request->input('data.event_type', $request->input('event_type', 'unknown'));
         $payload = $request->input('data.payload', []);
 
+        Log::info('Webhook Telnyx recibido.', [
+            'event_type' => $eventType,
+            'body' => $request->all(),
+        ]);
+
         if (! is_array($payload)) {
             $payload = [];
         }
@@ -101,6 +106,10 @@ class TelnyxVoiceWebhookController extends Controller
         $callControlId = $this->callControlId($call, $payload);
 
         if (! $call || ! $callControlId) {
+            return;
+        }
+
+        if ($call->status === VoiceCallStatus::Completed || ($payload['status'] ?? null) === 'call_hangup') {
             return;
         }
 
