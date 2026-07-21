@@ -33,6 +33,8 @@ POST /webhook/telnyx/voice/events
 
 Telnyx solo debe manejar telefonia/audio. Laravel debe mantener la logica de negocio:
 
+- resolver identidad/paciente por telefono o identidad social antes de saludar
+- personalizar el saludo si el paciente ya existe, sin depender del proveedor del canal
 - identificar paciente
 - interpretar fecha/periodo desde mensajes
 - buscar disponibilidad real
@@ -48,6 +50,7 @@ TELNYX_API_KEY=
 TELNYX_API_URL=https://api.telnyx.com/v2
 TELNYX_LANGUAGE=es-MX
 TELNYX_VOICE=female
+TELNYX_PROCESSING_PROMPT="Dame un segundo."
 TELNYX_TRANSCRIPTION_LANGUAGE=es
 TELNYX_TRANSCRIPTION_ENGINE=Telnyx
 TELNYX_DEBUG=false
@@ -131,6 +134,7 @@ Opciones STT externas:
 - [x] Deduplicar transcripciones finales.
 - [x] Iniciar transcripcion despues de `call.speak.ended` para evitar capturar el saludo de Pity.
 - [x] Detener transcripcion antes de responder con `speak`.
+- [x] Reproducir feedback audible corto durante procesamiento (`Dame un segundo.`).
 
 ### Criterios De Aceptacion
 

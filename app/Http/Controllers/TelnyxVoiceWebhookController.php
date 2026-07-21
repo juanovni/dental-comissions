@@ -7,6 +7,7 @@ use App\Enums\VoiceChannelType;
 use App\Enums\VoiceEventType;
 use App\Models\VoiceCall;
 use App\Models\VoiceEvent;
+use App\Services\PatientGreetingService;
 use App\Services\TelnyxVoiceService;
 use App\Services\VoiceAiService;
 use App\Services\VoiceSessionService;
@@ -20,6 +21,7 @@ class TelnyxVoiceWebhookController extends Controller
         private TelnyxVoiceService $telnyx,
         private VoiceAiService $voiceAi,
         private VoiceSessionService $sessions,
+        private PatientGreetingService $greetings,
     ) {}
 
     public function events(Request $request): JsonResponse
@@ -65,12 +67,16 @@ class TelnyxVoiceWebhookController extends Controller
             return;
         }
 
+        $fromPhone = (string) ($payload['from'] ?? 'unknown');
+        $patient = $this->greetings->resolveByPhone($fromPhone);
+
         $call = VoiceCall::query()->updateOrCreate(
             ['provider_call_id' => $providerCallId],
             [
+                'patient_id' => $patient?->id,
                 'channel' => VoiceChannelType::Telnyx->value,
                 'provider' => 'telnyx',
-                'from_phone' => (string) ($payload['from'] ?? 'unknown'),
+                'from_phone' => $fromPhone,
                 'to_phone' => $payload['to'] ?? null,
                 'status' => VoiceCallStatus::Started->value,
                 'started_at' => now(),
@@ -102,7 +108,7 @@ class TelnyxVoiceWebhookController extends Controller
 
         $this->storeProviderEvent($call, 'call.answered', $payload, $eventId);
 
-        $greeting = 'Hola, soy Pity, la recepcionista virtual de OdonCRM. En que puedo ayudarte?';
+        $greeting = $this->greetings->greeting($call->patient);
 
         if (! $call->events()->where('type', VoiceEventType::AssistantMessage->value)->exists()) {
             $this->sessions->addMessage($call, VoiceEventType::AssistantMessage, $greeting, [
@@ -195,6 +201,7 @@ class TelnyxVoiceWebhookController extends Controller
         }
 
         $this->telnyx->stopTranscription($callControlId);
+        $this->speakProcessingPrompt($call, $callControlId);
 
         $result = $this->voiceAi->sendMessage($call->id, $transcription['transcript']);
         $reply = trim((string) ($result['message'] ?? ''));
@@ -214,6 +221,22 @@ class TelnyxVoiceWebhookController extends Controller
         }
 
         $this->telnyx->speak($callControlId, $reply);
+    }
+
+    private function speakProcessingPrompt(VoiceCall $call, string $callControlId): void
+    {
+        $prompt = trim((string) config('services.telnyx.processing_prompt', 'Dame un segundo.'));
+
+        if ($prompt === '') {
+            return;
+        }
+
+        $this->sessions->addMessage($call, VoiceEventType::AssistantMessage, $prompt, [
+            'provider' => 'telnyx',
+            'kind' => 'processing_prompt',
+        ]);
+
+        $this->telnyx->speak($callControlId, $prompt);
     }
 
     private function recordEndedCall(?string $providerCallId, array $payload, ?string $eventId): void

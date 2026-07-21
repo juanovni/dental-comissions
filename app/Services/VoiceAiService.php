@@ -12,11 +12,18 @@ class VoiceAiService
     public function __construct(
         private VoiceToolService $toolService,
         private VoiceSessionService $sessionService,
+        private PatientGreetingService $greetings,
     ) {}
 
     public function startConversation(string $phoneE164, ?string &$callId = null): array
     {
         $call = $this->sessionService->startCall($phoneE164, \App\Enums\VoiceChannelType::WebTest);
+        $patient = $this->greetings->resolveByPhone($phoneE164);
+        $greeting = $this->greetings->greeting($patient);
+
+        if ($patient) {
+            $call->update(['patient_id' => $patient->id]);
+        }
 
         $callId = (string) $call->id;
 
@@ -28,12 +35,12 @@ class VoiceAiService
         $this->sessionService->addMessage(
             $call,
             \App\Enums\VoiceEventType::AssistantMessage,
-            'Hola, soy Pity, la recepcionista virtual de OdonCRM. ¿En qué puedo ayudarte?',
+            $greeting,
         );
 
         return [
             'call_id' => $call->id,
-            'message' => 'Hola, soy Pity, la recepcionista virtual de OdonCRM. ¿En qué puedo ayudarte?',
+            'message' => $greeting,
         ];
     }
 

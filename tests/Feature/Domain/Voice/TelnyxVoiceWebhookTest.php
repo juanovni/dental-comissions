@@ -5,6 +5,7 @@ namespace Tests\Feature\Domain\Voice;
 use App\Enums\VoiceCallStatus;
 use App\Enums\VoiceChannelType;
 use App\Enums\VoiceEventType;
+use App\Models\Patient;
 use App\Models\VoiceCall;
 use App\Services\VoiceAiService;
 use App\Services\VoiceSessionService;
@@ -135,6 +136,51 @@ class TelnyxVoiceWebhookTest extends TestCase
 
         Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-789/actions/speak'));
         Http::assertNotSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-789/actions/transcription_start'));
+    }
+
+    public function test_known_patient_gets_personalized_greeting(): void
+    {
+        config(['services.telnyx.api_key' => 'test-key']);
+        Http::fake(['api.telnyx.com/*' => Http::response(['ok' => true])]);
+
+        $patient = Patient::factory()->create([
+            'full_name' => 'Juan Constantine',
+            'phone' => '+593985925100',
+        ]);
+
+        $this->postJson('/webhook/telnyx/voice/events', [
+            'data' => [
+                'id' => 'evt-known-001',
+                'event_type' => 'call.initiated',
+                'payload' => [
+                    'call_control_id' => 'call-control-known',
+                    'from' => '+593985925100',
+                    'to' => '+17866870733',
+                ],
+            ],
+        ]);
+
+        $response = $this->postJson('/webhook/telnyx/voice/events', [
+            'data' => [
+                'id' => 'evt-known-002',
+                'event_type' => 'call.answered',
+                'payload' => [
+                    'call_control_id' => 'call-control-known',
+                ],
+            ],
+        ]);
+
+        $response->assertOk()->assertJson(['ok' => true]);
+
+        $this->assertDatabaseHas('voice_calls', [
+            'provider_call_id' => 'call-control-known',
+            'patient_id' => $patient->id,
+        ]);
+
+        $this->assertDatabaseHas('voice_events', [
+            'type' => VoiceEventType::AssistantMessage->value,
+            'payload->message' => 'Hola Juan, soy Pity. Que gusto escucharte otra vez. ¿Quieres agendar, confirmar o cambiar una cita?',
+        ]);
     }
 
     public function test_speak_ended_starts_transcription(): void
@@ -312,7 +358,8 @@ class TelnyxVoiceWebhookTest extends TestCase
         ]);
 
         Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-333/actions/transcription_stop'));
-        Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-333/actions/speak'));
+        Http::assertSent(fn (Request $request): bool => $this->telnyxSpeakWithPayload($request, 'call-control-333', 'Dame un segundo.'));
+        Http::assertSent(fn (Request $request): bool => $this->telnyxSpeakWithPayload($request, 'call-control-333', 'Claro, te ayudo a buscar disponibilidad.'));
     }
 
     public function test_partial_transcription_is_stored_but_not_processed(): void
@@ -415,7 +462,8 @@ class TelnyxVoiceWebhookTest extends TestCase
         $response->assertOk()->assertJson(['ok' => true]);
 
         Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-555/actions/transcription_stop'));
-        Http::assertNotSent(fn (Request $request): bool => str_ends_with($request->url(), '/calls/call-control-555/actions/speak'));
+        Http::assertSent(fn (Request $request): bool => $this->telnyxSpeakWithPayload($request, 'call-control-555', 'Dame un segundo.'));
+        Http::assertNotSent(fn (Request $request): bool => $this->telnyxSpeakWithPayload($request, 'call-control-555', 'Encontré horarios disponibles.'));
     }
 
     public function test_duplicate_event_id_is_rejected(): void
@@ -499,5 +547,13 @@ class TelnyxVoiceWebhookTest extends TestCase
 
         $this->assertNotNull($call);
         $this->assertArrayNotHasKey('last_telnyx_payload', $call->metadata ?? []);
+    }
+
+    private function telnyxSpeakWithPayload(Request $request, string $callControlId, string $payload): bool
+    {
+        $body = json_decode($request->body(), true) ?: [];
+
+        return str_ends_with($request->url(), "/calls/{$callControlId}/actions/speak")
+            && ($body['payload'] ?? null) === $payload;
     }
 }

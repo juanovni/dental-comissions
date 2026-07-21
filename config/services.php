@@ -83,6 +83,7 @@ return [
         'api_url' => env('TELNYX_API_URL', 'https://api.telnyx.com/v2'),
         'voice' => env('TELNYX_VOICE', 'female'),
         'language' => env('TELNYX_LANGUAGE', 'es-MX'),
+        'processing_prompt' => env('TELNYX_PROCESSING_PROMPT', 'Dame un segundo.'),
         'transcription_language' => env('TELNYX_TRANSCRIPTION_LANGUAGE', 'es'),
         'transcription_engine' => env('TELNYX_TRANSCRIPTION_ENGINE', 'Telnyx'),
         'debug' => (bool) env('TELNYX_DEBUG', false),
