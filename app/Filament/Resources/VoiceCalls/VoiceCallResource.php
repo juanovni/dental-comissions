@@ -7,10 +7,16 @@ use App\Enums\VoiceChannelType;
 use App\Filament\Resources\VoiceCalls\Pages\ListVoiceCalls;
 use App\Filament\Resources\VoiceCalls\Pages\ViewVoiceCall;
 use App\Models\VoiceCall;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 class VoiceCallResource extends Resource
 {
@@ -87,6 +93,31 @@ class VoiceCallResource extends Resource
                     ->color('danger')
                     ->placeholder('-')
                     ->limit(40),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Estado')
+                    ->options(collect(VoiceCallStatus::cases())->mapWithKeys(fn (VoiceCallStatus $status): array => [$status->value => $status->label()])),
+                SelectFilter::make('provider')
+                    ->label('Proveedor')
+                    ->options(fn (): array => VoiceCall::query()
+                        ->whereNotNull('provider')
+                        ->distinct()
+                        ->orderBy('provider')
+                        ->pluck('provider', 'provider')
+                        ->all()),
+                Filter::make('created_at')
+                    ->label('Rango de fecha')
+                    ->form([
+                        DateTimePicker::make('from')->label('Desde'),
+                        DateTimePicker::make('until')->label('Hasta'),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['from'] ?? null, fn (Builder $q, $from): Builder => $q->where('created_at', '>=', Carbon::parse($from)))
+                        ->when($data['until'] ?? null, fn (Builder $q, $until): Builder => $q->where('created_at', '<=', Carbon::parse($until)))),
+            ])
+            ->recordActions([
+                ViewAction::make(),
             ])
             ->defaultSort('created_at', 'desc')
             ->paginated([15, 30, 50]);

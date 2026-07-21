@@ -23,11 +23,14 @@ POST /webhook/telnyx/voice/events
 - Laravel recibe eventos reales de Telnyx:
   - `call.initiated`
   - `call.answered`
-  - `call.gather.ended`
+  - `call.speak.ended`
+  - `call.transcription`
   - `call.hangup`
 - Laravel contesta la llamada y reproduce saludo.
 - Las llamadas se guardan en `voice_calls`.
-- `gather_using_speak` actual esta capturando DTMF/digitos, no voz libre transcrita.
+- La transcripcion real por Telnyx esta implementada en codigo, procesando solo transcripciones finales.
+- El panel admin de Pity Voice muestra llamadas, transcript, eventos, errores y cita enlazada.
+- Pendiente validar visualmente el panel con datos reales y probar transcripcion en llamada real.
 
 ## Regla De Arquitectura
 
@@ -206,17 +209,27 @@ call.hangup
 
 ### Tareas
 
-- [ ] Mostrar llamadas Telnyx en panel/admin.
-- [ ] Mostrar transcript completo.
-- [ ] Mostrar eventos Telnyx por llamada.
-- [ ] Mostrar errores Telnyx/API.
-- [ ] Mostrar cita enlazada si existe.
-- [ ] Agregar filtros por estado, proveedor y fecha.
+- [x] Mostrar llamadas Telnyx en panel/admin.
+- [x] Mostrar transcript completo.
+- [x] Mostrar eventos Telnyx por llamada.
+- [x] Mostrar errores Telnyx/API.
+- [x] Mostrar cita enlazada si existe.
+- [x] Agregar filtros por estado, proveedor y fecha.
+- [x] Agregar accion de ver detalle desde la tabla.
+
+### Implementacion
+
+- Resource: `app/Filament/Resources/VoiceCalls/VoiceCallResource.php`.
+- Listado: `app/Filament/Resources/VoiceCalls/Pages/ListVoiceCalls.php`.
+- Detalle: `app/Filament/Resources/VoiceCalls/Pages/ViewVoiceCall.php`.
+- Grupo de navegacion: `Pity Voice`.
+- Estado de implementacion: listo en codigo; validacion visual/manual pendiente en `/admin` con datos reales.
 
 ### Criterios De Aceptacion
 
-- Un administrador puede abrir una llamada y entender que paso.
-- Se puede diagnosticar si fallo por STT, TTS, agenda, IA o Telnyx.
+- [x] Un administrador puede abrir una llamada y entender que paso.
+- [x] Se puede diagnosticar si fallo por STT, TTS, agenda, IA o Telnyx.
+- [ ] Validar render visual en navegador con datos reales.
 
 ## Fase 6 - Seguridad
 
