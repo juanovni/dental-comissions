@@ -41,6 +41,14 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
   - Items del menú: igual que `smart-channel-item`: `font-size: .86rem`, `padding: .55rem .65rem`, `gap: .65rem`, `border-radius: .55rem`, `background: transparent`, `cursor: pointer`, sin borde.
   - Hover del item: `background: #eef8f8`, color primary/accent. Evitar `color-mix()` para hovers criticos porque puede verse imperceptible o fallar si la variable de color no resuelve como color valido.
   - Separador entre items: `margin: .35rem 0`.
+- Para menús de acciones (dropdown de "más acciones" por fila), usar el patrón `smart-dropdown-menu`:
+  - Menú: `border-radius: .75rem`, `padding: .375rem 0`, `box-shadow: 0 4px 12px rgba(0, 0, 0, .08)`, `min-width: 12rem`.
+  - Items: `font-size: .8125rem`, `font-weight: 500`, `padding: .5rem .875rem`, `gap: .625rem`, `color: #1f2937`.
+  - Hover normal: `background: #f3f4f6` (sin color primary, es un menú de acciones).
+  - Item danger: `color: #dc2626`.
+  - Hover danger: `background: #fef2f2`.
+  - SVG en item: `color: #9ca3af`.
+  - SVG en item danger: `color: #f87171`.
 - Evitar crear variables CSS locales para bordes/sombras de search o filters; usar valores fijos como `#e5e7eb` y compartir el mismo patrón.
 
 ## Cards y Grids

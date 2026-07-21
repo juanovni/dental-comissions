@@ -144,8 +144,7 @@
             width: 1rem;
         }
 
-        .appointment-filter-menu,
-        .appointment-action-menu {
+        .appointment-filter-menu {
             background: #ffffff;
             border: 1px solid #e5e7eb;
             border-radius: .75rem;
@@ -167,8 +166,7 @@
             padding: .8rem .9rem;
         }
 
-        .appointment-filter-option,
-        .appointment-action-item {
+        .appointment-filter-option {
             align-items: center;
             background: transparent;
             border: 0;
@@ -183,8 +181,7 @@
             width: 100%;
         }
 
-        .appointment-filter-option:hover,
-        .appointment-action-item:hover {
+        .appointment-filter-option:hover {
             background: #eef8f8;
             color: var(--agenda-primary);
         }
@@ -194,20 +191,67 @@
             font-weight: 600;
         }
 
+        .appointment-action-heading {
+            color: #111827;
+            font-size: .8125rem;
+            font-weight: 600;
+            padding: .5rem .875rem .35rem;
+        }
+
+        .appointment-action-menu {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+            min-width: 12rem;
+            padding: .375rem 0;
+            position: absolute;
+            right: 0;
+            z-index: 50;
+            margin-top: .375rem;
+        }
+
+        .appointment-action-item {
+            align-items: center;
+            color: #1f2937;
+            cursor: pointer;
+            display: flex;
+            font-size: .8125rem;
+            font-weight: 500;
+            gap: .625rem;
+            padding: .5rem .875rem;
+            text-decoration: none;
+            transition: background .12s ease;
+            width: 100%;
+        }
+
+        .appointment-action-item:hover {
+            background: #f3f4f6;
+        }
+
         .appointment-action-item svg {
-            width: 1rem;
+            color: #9ca3af;
+            flex-shrink: 0;
             height: 1rem;
-            flex: 0 0 auto;
+            width: 1rem;
         }
 
         .appointment-action-item.danger {
-            color: #e11d48;
+            color: #dc2626;
+        }
+
+        .appointment-action-item.danger:hover {
+            background: #fef2f2;
+        }
+
+        .appointment-action-item.danger svg {
+            color: #f87171;
         }
 
         .appointment-action-separator {
             height: 1px;
             background: #e2e8f0;
-            margin: .35rem 0;
+            margin: .375rem 0;
         }
 
         .appointments-meta-row {
@@ -475,13 +519,46 @@
             height: 1rem;
         }
 
+        .appointment-row-actions {
+            align-items: center;
+            display: flex;
+            gap: .25rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .14s ease;
+        }
+
+        .appointment-row:hover .appointment-row-actions,
+        .appointment-row:focus-within .appointment-row-actions {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .appointment-row-icon-action {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: .45rem;
+            color: #475569;
+            cursor: pointer;
+            display: inline-flex;
+            height: 2rem;
+            justify-content: center;
+            padding: 0;
+            width: 2rem;
+        }
+
+        .appointment-row-icon-action:hover { background: #eef2f7; }
+
+        .appointment-row-icon-action svg {
+            width: 1.05rem;
+            height: 1.05rem;
+        }
+
         .appointments-empty {
             display: grid;
             min-height: 10rem;
             place-items: center;
-            border: 1px dashed #cbd5e1;
-            border-radius: .95rem;
-            background: rgba(255, 255, 255, .72);
             margin-top: .9rem;
             text-align: center;
         }
@@ -743,43 +820,56 @@
                                     <span class="appointment-sync" title="Pendiente de sincronizacion"></span>
                                 @endif
 
-                                <div class="appointment-more" x-data="{ open: false }" @keydown.escape.window="open = false">
-                                    <button class="appointment-more-button" type="button" aria-label="Mas acciones" @click="open = ! open">
-                                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
-                                    </button>
+                                <div class="appointment-row-actions">
 
-                                    <div class="appointment-action-menu" x-cloak x-show="open" x-transition @click.outside="open = false">
-                                        <div class="appointment-filter-heading">Acciones</div>
-                                        <a class="appointment-action-item" href="{{ $viewUrl }}">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
-                                            <span>Ver detalle</span>
-                                        </a>
-                                        <a class="appointment-action-item" href="{{ $editUrl }}">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16.86 4.49 2.65 2.65M4 20h4.5L19.5 9a1.88 1.88 0 0 0 0-2.65L17.65 4.5a1.88 1.88 0 0 0-2.65 0L4 15.5V20Z"/></svg>
-                                            <span>Editar</span>
-                                        </a>
-                                        <a class="appointment-action-item" href="{{ $editUrl }}">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
-                                            <span>Reprogramar</span>
-                                        </a>
+                                    <a class="appointment-row-icon-action" href="{{ $viewUrl }}" title="Ver detalle">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                                    </a>
+                                    <a class="appointment-row-icon-action" href="{{ $editUrl }}" title="Editar">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16.86 4.49 2.65 2.65M4 20h4.5L19.5 9a1.88 1.88 0 0 0 0-2.65L17.65 4.5a1.88 1.88 0 0 0-2.65 0L4 15.5V20Z"/></svg>
+                                    </a>
+                                    <a class="appointment-row-icon-action" href="{{ $editUrl }}" title="Reprogramar">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
+                                    </a>
 
-                                        <div class="appointment-action-separator"></div>
-
-                                        <button class="appointment-action-item" type="button" wire:click="completeAppointment({{ $appointment->id }})" wire:confirm="Marcar esta cita como completada?" @disabled(! $this->canUpdateStatus($appointment))>
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg>
-                                            <span>Marcar completada</span>
-                                        </button>
-                                        <button class="appointment-action-item" type="button" wire:click="markNoShow({{ $appointment->id }})" wire:confirm="Marcar esta cita como no asistio?" @disabled(! $this->canUpdateStatus($appointment))>
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5m0-5-5 5"/></svg>
-                                            <span>Marcar no asistio</span>
+                                    <div class="appointment-more" x-data="{ open: false }" @keydown.escape.window="open = false">
+                                        <button class="appointment-more-button" type="button" aria-label="Mas acciones" @click="open = ! open">
+                                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
                                         </button>
 
-                                        <div class="appointment-action-separator"></div>
+                                        <div class="appointment-action-menu" x-cloak x-show="open" x-transition @click.outside="open = false">
+                                            <div class="appointment-action-heading">Acciones</div>
+                                            <a class="appointment-action-item" href="{{ $viewUrl }}">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                                                <span>Ver detalle</span>
+                                            </a>
+                                            <a class="appointment-action-item" href="{{ $editUrl }}">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16.86 4.49 2.65 2.65M4 20h4.5L19.5 9a1.88 1.88 0 0 0 0-2.65L17.65 4.5a1.88 1.88 0 0 0-2.65 0L4 15.5V20Z"/></svg>
+                                                <span>Editar</span>
+                                            </a>
+                                            <a class="appointment-action-item" href="{{ $editUrl }}">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
+                                                <span>Reprogramar</span>
+                                            </a>
 
-                                        <button class="appointment-action-item danger" type="button" wire:click="cancelAppointment({{ $appointment->id }})" wire:confirm="Cancelar esta cita?" @disabled(! in_array($appointment->status, [\App\Enums\AppointmentStatus::PendingConfirmation, \App\Enums\AppointmentStatus::Scheduled, \App\Enums\AppointmentStatus::Confirmed, \App\Enums\AppointmentStatus::Rescheduled], true))>
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/></svg>
-                                            <span>Cancelar cita</span>
-                                        </button>
+                                            <div class="appointment-action-separator"></div>
+
+                                            <button class="appointment-action-item" type="button" wire:click="completeAppointment({{ $appointment->id }})" wire:confirm="Marcar esta cita como completada?" @disabled(! $this->canUpdateStatus($appointment))>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg>
+                                                <span>Marcar completada</span>
+                                            </button>
+                                            <button class="appointment-action-item" type="button" wire:click="markNoShow({{ $appointment->id }})" wire:confirm="Marcar esta cita como no asistio?" @disabled(! $this->canUpdateStatus($appointment))>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5m0-5-5 5"/></svg>
+                                                <span>Marcar no asistio</span>
+                                            </button>
+
+                                            <div class="appointment-action-separator"></div>
+
+                                            <button class="appointment-action-item danger" type="button" wire:click="cancelAppointment({{ $appointment->id }})" wire:confirm="Cancelar esta cita?" @disabled(! in_array($appointment->status, [\App\Enums\AppointmentStatus::PendingConfirmation, \App\Enums\AppointmentStatus::Scheduled, \App\Enums\AppointmentStatus::Confirmed, \App\Enums\AppointmentStatus::Rescheduled], true))>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/></svg>
+                                                <span>Cancelar cita</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
