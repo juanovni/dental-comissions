@@ -70,30 +70,39 @@
         }
 
         .appointments-search {
-            display: flex;
             align-items: center;
-            gap: .65rem;
-            border: 1px solid var(--agenda-border);
-            border-radius: .7rem;
-            background: var(--agenda-card);
-            box-shadow: var(--agenda-shadow);
-            padding: .7rem .85rem;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .65rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+            color: #64748b;
+            display: flex;
+            gap: .45rem;
+            height: 2.65rem;
+            padding: 0 .75rem;
+        }
+
+        .appointments-search:focus-within {
+            border-color: color-mix(in srgb, var(--agenda-primary) 35%, #e5e7eb);
+            box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
         }
 
         .appointments-search svg {
-            width: 1rem;
-            height: 1rem;
-            color: #64748b;
             flex: 0 0 auto;
+            height: 1.05rem;
+            width: 1.05rem;
         }
 
         .appointments-search input {
-            width: 100%;
-            border: 0;
             background: transparent;
-            color: #334155;
-            font-size: .94rem;
+            border: 0;
+            box-shadow: none;
+            color: var(--agenda-text);
+            font-size: .82rem;
+            height: 100%;
             outline: none;
+            padding: 0;
+            width: 100%;
         }
 
         .appointments-filter-actions {
@@ -108,62 +117,76 @@
         }
 
         .appointment-filter-button {
-            display: inline-flex;
             align-items: center;
-            gap: .45rem;
-            border: 1px solid var(--agenda-border);
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
             border-radius: .65rem;
-            background: #fff;
-            box-shadow: var(--agenda-shadow);
-            color: #0f172a;
-            font-size: .86rem;
-            font-weight: 700;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+            color: #111827;
+            cursor: pointer;
+            display: inline-flex;
+            font-size: .82rem;
+            font-weight: 600;
+            gap: .45rem;
+            height: 2.65rem;
             line-height: 1;
-            padding: .72rem .9rem;
+            padding: 0 .85rem;
+        }
+
+        .appointment-filter-button:hover,
+        .appointment-filter-button:focus-visible {
+            border-color: color-mix(in srgb, var(--agenda-primary) 35%, #e5e7eb);
+            box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
         }
 
         .appointment-filter-button svg {
-            width: .95rem;
-            height: .95rem;
+            height: 1rem;
+            width: 1rem;
         }
 
         .appointment-filter-menu,
         .appointment-action-menu {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .75rem;
+            box-shadow: 0 18px 35px rgba(15, 23, 42, .14);
+            min-width: 14rem;
+            padding: .5rem;
             position: absolute;
-            z-index: 30;
             right: 0;
-            min-width: 15.5rem;
-            margin-top: .45rem;
-            overflow: hidden;
-            border: 1px solid var(--agenda-border);
-            border-radius: .8rem;
-            background: #fff;
-            box-shadow: 0 22px 55px rgba(15, 23, 42, .13), 0 2px 4px rgba(15, 23, 42, .06);
+            z-index: 30;
+            margin-top: .35rem;
         }
 
         .appointment-filter-heading {
-            padding: .8rem .95rem;
-            border-bottom: 1px solid rgba(226, 232, 240, .9);
-            font-weight: 600;
-            color: #1e293b;
+            border-bottom: 1px solid #eef2f7;
+            color: #111827;
+            font-size: .84rem;
+            font-weight: 700;
+            margin: -.5rem -.5rem .35rem;
+            padding: .8rem .9rem;
         }
 
         .appointment-filter-option,
         .appointment-action-item {
-            display: flex;
-            width: 100%;
             align-items: center;
-            gap: .72rem;
-            padding: .74rem .95rem;
-            color: #1e293b;
+            background: transparent;
+            border: 0;
+            border-radius: .55rem;
+            color: #1f2937;
+            cursor: pointer;
+            display: flex;
+            font-size: .86rem;
+            gap: .65rem;
+            padding: .55rem .65rem;
             text-align: left;
-            font-size: .92rem;
-            transition: background .14s ease;
+            width: 100%;
         }
 
         .appointment-filter-option:hover,
         .appointment-action-item:hover {
-            background: #f8fafc;
+            background: #eef8f8;
+            color: var(--agenda-primary);
         }
 
         .appointment-filter-option.active {
@@ -184,6 +207,7 @@
         .appointment-action-separator {
             height: 1px;
             background: #e2e8f0;
+            margin: .35rem 0;
         }
 
         .appointments-meta-row {
@@ -245,7 +269,7 @@
             display: grid;
             grid-template-columns: 5rem 3.8rem minmax(0, 1fr) auto;
             align-items: center;
-            gap: .35rem 1rem;
+            gap: .35rem .85rem;
             min-height: 5.65rem;
             padding: .95rem 1.1rem;
         }
@@ -279,16 +303,42 @@
             height: .78rem;
         }
 
-        .appointment-avatar {
-            display: grid;
-            width: 2.65rem;
-            height: 2.65rem;
-            place-items: center;
+        .appointment-avatar-wrap {
+            height: 2.9rem;
+            position: relative;
+            width: 2.9rem;
+        }
+
+        .appointment-channel-dot {
+            align-items: center;
+            background: #ffffff;
             border-radius: 999px;
-            background: #eff6fb;
+            bottom: -.2rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, .18);
+            display: inline-flex;
+            height: 1.35rem;
+            justify-content: center;
+            position: absolute;
+            right: -.15rem;
+            width: 1.35rem;
+        }
+
+        .appointment-channel-dot svg { height: 1.3rem; width: 1.3rem; }
+
+        .appointment-avatar {
+            align-items: center;
+            background: #eef8f8;
+            border: 1px solid #dbeafe;
+            border-radius: 999px;
             color: #0f172a;
-            font-size: .82rem;
+            display: flex;
+            flex: 0 0 auto;
+            font-size: .76rem;
             font-weight: 600;
+            height: 2.9rem;
+            justify-content: center;
+            text-transform: uppercase;
+            width: 2.9rem;
         }
 
         .appointment-main {
@@ -339,12 +389,6 @@
             color: #475569;
             font-size: .85rem;
             margin-top: .25rem;
-        }
-
-        .appointment-line svg {
-            width: .9rem;
-            height: .9rem;
-            color: #64748b;
         }
 
         .appointment-dot-separator {
@@ -511,7 +555,7 @@
                 padding: 1rem;
             }
 
-            .appointment-avatar {
+            .appointment-avatar-wrap {
                 display: none;
             }
 
@@ -632,20 +676,46 @@
                                 default => 'appointment-status-info',
                             };
                             $sourceClass = $sourceClasses[$appointment->source?->value] ?? 'appointment-source-external';
+                            $platform = $appointment->socialComment?->platform?->value;
+                            $sourceIcon = match (true) {
+                                $platform === 'whatsapp' || in_array($appointment->source?->value, ['whatsapp_ai', 'whatsapp_human']) => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.75 19.25 6 15.6a7 7 0 1 1 2.42 2.35l-3.67 1.3Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.2 8.95c.18-.5.42-.55.74-.55h.43c.22 0 .4.14.49.34l.68 1.52c.08.18.04.39-.1.53l-.47.48c.48.84 1.16 1.52 2 2l.48-.47c.14-.14.35-.18.53-.1l1.52.68c.2.09.34.27.34.49v.43c0 .32-.05.56-.55.74-.4.14-.83.21-1.28.21-2.64 0-5.26-2.62-5.26-5.26 0-.45.07-.88.21-1.28Z" /></svg>',
+                                $platform === 'instagram' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><rect width="15" height="15" x="4.5" y="4.5" rx="4" /><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 11.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" /><path stroke-linecap="round" d="M16.75 7.75h.01" /></svg>',
+                                $platform === 'facebook' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7h2.35l.35-2.72h-2.7V9.55c0-.79.22-1.33 1.35-1.33h1.44V5.79c-.25-.03-1.1-.1-2.1-.1-2.08 0-3.5 1.27-3.5 3.6v1.99H8.34V14h2.35v7h2.81Z" /></svg>',
+                                $appointment->source?->value === 'voice_call' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10.2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v4.2"/><path d="M12 14v6"/><path d="M8 20h8"/><path d="M2 10h20v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-3Z"/></svg>',
+                                $appointment->source?->value === 'smart_link' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+                                default => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+                            };
                             $viewUrl = \App\Filament\Resources\Appointments\AppointmentResource::getUrl('view', ['record' => $appointment]);
                             $editUrl = \App\Filament\Resources\Appointments\AppointmentResource::getUrl('edit', ['record' => $appointment]);
                         @endphp
 
                         <article class="appointment-row" wire:key="appointment-row-{{ $appointment->id }}">
                             <div class="appointment-time">
-                                <div class="appointment-time-main">{{ $appointment->scheduled_at?->format('h:i') }}<br>{{ $appointment->scheduled_at?->format('a') === 'am' ? 'a.m.' : 'p.m.' }}</div>
+                                <div class="appointment-time-main">{{ $appointment->scheduled_at?->format('h:i') }}&nbsp;{{ $appointment->scheduled_at?->format('a') === 'am' ? 'a.m.' : 'p.m.' }}</div>
                                 <div class="appointment-duration">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                                     <span>{{ $appointment->duration_minutes ?? 0 }}m</span>
                                 </div>
                             </div>
 
-                            <div class="appointment-avatar">{{ $initials ?: 'P' }}</div>
+                            <div class="appointment-avatar-wrap">
+                                <div class="appointment-avatar">{{ $initials ?: 'P' }}</div>
+                                @if ($platform)
+                                    <span class="appointment-channel-dot" title="{{ $appointment->socialComment->platform->label() }}">
+                                        @switch($platform)
+                                            @case('instagram')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><rect width="15" height="15" x="4.5" y="4.5" rx="4" /><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 11.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" /><path stroke-linecap="round" d="M16.75 7.75h.01" /></svg>
+                                                @break
+                                            @case('whatsapp')
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.75 19.25 6 15.6a7 7 0 1 1 2.42 2.35l-3.67 1.3Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.2 8.95c.18-.5.42-.55.74-.55h.43c.22 0 .4.14.49.34l.68 1.52c.08.18.04.39-.1.53l-.47.48c.48.84 1.16 1.52 2 2l.48-.47c.14-.14.35-.18.53-.1l1.52.68c.2.09.34.27.34.49v.43c0 .32-.05.56-.55.74-.4.14-.83.21-1.28.21-2.64 0-5.26-2.62-5.26-5.26 0-.45.07-.88.21-1.28Z" /></svg>
+                                                @break
+                                            @case('facebook')
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7h2.35l.35-2.72h-2.7V9.55c0-.79.22-1.33 1.35-1.33h1.44V5.79c-.25-.03-1.1-.1-2.1-.1-2.08 0-3.5 1.27-3.5 3.6v1.99H8.34V14h2.35v7h2.81Z" /></svg>
+                                                @break
+                                        @endswitch
+                                    </span>
+                                @endif
+                            </div>
 
                             <div class="appointment-main">
                                 <div class="appointment-title-row">
@@ -653,7 +723,6 @@
                                     <span class="appointment-status {{ $statusClass }}">{{ $this->statusLabel($appointment->status) }}</span>
                                 </div>
                                 <div class="appointment-line">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11.5a3 3 0 1 0 6 0M6.5 11.5h11M8 5h8M8 19h8"/><path d="M12 2v3M12 19v3"/></svg>
                                     <span>{{ $appointment->procedure?->name ?? 'Sin procedimiento' }}</span>
                                     <span class="appointment-dot-separator"></span>
                                     <span>{{ $appointment->doctor?->name ?? 'Sin doctor' }}</span>
@@ -662,7 +731,7 @@
 
                             <div class="appointment-side">
                                 <span class="appointment-source {{ $sourceClass }}">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 8h10M7 12h7M21 12a8.5 8.5 0 0 1-12.8 7.35L3 21l1.65-5.2A8.5 8.5 0 1 1 21 12Z"/></svg>
+                                    {!! $sourceIcon !!}
                                     <span>{{ $appointment->source?->label() ?? 'Sin origen' }}</span>
                                 </span>
 
@@ -729,4 +798,6 @@
             </div>
         @endforelse
     </section>
+
+    <x-filament-actions::modals />
 </x-filament-panels::page>

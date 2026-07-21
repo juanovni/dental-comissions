@@ -25,7 +25,7 @@
 
     <style>
         .social-inbox-page {
-            --inbox-accent: rgb(var(--primary-600, 8 145 178));
+            --inbox-accent: #0f766e;
             --inbox-ink: #0f172a;
             --inbox-muted: #64748b;
             --inbox-line: rgba(15, 23, 42, .08);
@@ -172,7 +172,7 @@
 
         .smart-channel-item:hover,
         .smart-channel-item.is-active {
-            background: color-mix(in srgb, var(--inbox-accent) 9%, #ffffff);
+            background: #eef8f8;
             color: var(--inbox-accent);
         }
 

@@ -26,6 +26,23 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 - Si el subtitulo necesita ocupar todo el ancho, agregar una clase scoped al Page con `getPageClasses()` y ajustar `.fi-header-subheading` solo dentro de esa pagina.
 - Mantener el titulo del header simple y sin estilos custom salvo necesidad concreta; no crear kickers decorativos encima del titulo.
 
+## Search Bars y Filter Toolbars
+
+- Para barras de búsqueda tipo search-wrap, usar el mismo patrón que `smart-search-wrap` en social-inbox:
+  - Wrap: `height: 2.65rem`, `border-radius: .65rem`, `gap: .45rem`, `padding: 0 .75rem`.
+  - Borde: `1px solid #e5e7eb`, box-shadow: `0 1px 2px rgba(15, 23, 42, .05)`, fondo blanco.
+  - Icono SVG: `1.05rem`, color `#64748b`.
+  - Input: `font-size: .82rem`, `height: 100%`, `padding: 0`, sin borde ni sombra, fondo transparente.
+  - `focus-within`: borde tintado con primary al 35% sobre `#e5e7eb`, sombra elevada.
+- Para botones de filtro dropdown (estado, doctor, etc.), usar el mismo patrón que `smart-channel-trigger`:
+  - Altura `2.65rem`, mismo border/radio/shadow, `font-size: .82rem`, `font-weight: 600`, `padding: 0 .85rem`, `gap: .45rem`.
+  - Menú dropdown: igual que `smart-channel-menu`: border `1px solid #e5e7eb`, `border-radius: .75rem`, padding `.5rem`, `box-shadow: 0 18px 35px rgba(15, 23, 42, .14)`, `min-width: 14rem`, `margin-top: .35rem`.
+  - Título del menú: igual que `smart-channel-title`: `font-size: .84rem`, `font-weight: 700`, `border-bottom: 1px solid #eef2f7`, margin negativo para compensar padding del menú, `padding: .8rem .9rem`.
+  - Items del menú: igual que `smart-channel-item`: `font-size: .86rem`, `padding: .55rem .65rem`, `gap: .65rem`, `border-radius: .55rem`, `background: transparent`, `cursor: pointer`, sin borde.
+  - Hover del item: `background: #eef8f8`, color primary/accent. Evitar `color-mix()` para hovers criticos porque puede verse imperceptible o fallar si la variable de color no resuelve como color valido.
+  - Separador entre items: `margin: .35rem 0`.
+- Evitar crear variables CSS locales para bordes/sombras de search o filters; usar valores fijos como `#e5e7eb` y compartir el mismo patrón.
+
 ## Cards y Grids
 
 - Cards: fondo blanco, borde `#e5e7eb`, `border-radius` entre `.625rem` y `.875rem`, shadow minimo.
