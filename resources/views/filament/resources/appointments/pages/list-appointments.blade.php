@@ -564,10 +564,10 @@
         }
 
         .appointments-empty-icon {
-            width: 2rem;
-            height: 2rem;
-            margin: 0 auto .65rem;
-            color: #64748b;
+            height: 12.25rem;
+            margin: 0 auto 1.1rem;
+            object-fit: contain;
+            width: 12.8rem;
         }
 
         .appointments-empty-title {
@@ -880,7 +880,8 @@
         @empty
             <div class="appointments-empty">
                 <div>
-                    <svg class="appointments-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4M16 2v4M3.5 9.5h17M6 5h12a2.5 2.5 0 0 1 2.5 2.5v10A2.5 2.5 0 0 1 18 20H6a2.5 2.5 0 0 1-2.5-2.5v-10A2.5 2.5 0 0 1 6 5Z"/></svg>
+                    <img class="appointments-empty-icon dark:hidden" src="{{ asset('images/calendar-white.svg') }}" alt="Sin resultados" />
+<img class="appointments-empty-icon hidden dark:block" src="{{ asset('images/calendar-dark.svg') }}" alt="Sin resultados" />
                     <div class="appointments-empty-title">No hay citas con estos filtros</div>
                     <div class="appointments-empty-copy">Prueba a limpiar filtros o crea una nueva cita.</div>
                     <button class="appointments-empty-action" type="button" wire:click="clearFilters">Limpiar filtros</button>
