@@ -164,12 +164,12 @@ call.hangup
 
 ### Tareas
 
-- [ ] Conectar transcripcion final con `VoiceAiService::sendMessage()`.
-- [ ] Reproducir respuesta con `TelnyxVoiceService::speak()`.
-- [ ] Evitar que Pity se escuche a si misma durante TTS.
-- [ ] Si Telnyx transcribe mientras habla Pity, pausar transcripcion antes de `speak` y reanudar en `call.speak.ended`.
-- [ ] Manejar `ended=true` de `VoiceAiService` con despedida y `hangup`.
-- [ ] Manejar `handoff=true` con estado `handoff_required`.
+- [x] Conectar transcripcion final con `VoiceAiService::sendMessage()`.
+- [x] Reproducir respuesta con `TelnyxVoiceService::speak()`.
+- [x] Evitar que Pity se escuche a si misma durante TTS.
+- [x] Si Telnyx transcribe mientras habla Pity, pausar transcripcion antes de `speak` y reanudar en `call.speak.ended`.
+- [x] Manejar `ended=true` de `VoiceAiService` con despedida y `hangup`.
+- [x] Manejar `handoff=true` con estado `handoff_required`.
 
 ### Criterios De Aceptacion
 

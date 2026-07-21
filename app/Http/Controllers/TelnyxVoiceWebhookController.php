@@ -164,7 +164,9 @@ class TelnyxVoiceWebhookController extends Controller
 
         $this->storeProviderEvent($call, 'call.speak.ended', $payload, $eventId);
 
-        if ($call->status === VoiceCallStatus::Completed) {
+        if (in_array($call->status->value, [VoiceCallStatus::Completed->value, VoiceCallStatus::HandoffRequired->value], true)) {
+            $this->telnyx->hangup($callControlId);
+
             return;
         }
 
@@ -192,6 +194,8 @@ class TelnyxVoiceWebhookController extends Controller
             return;
         }
 
+        $this->telnyx->stopTranscription($callControlId);
+
         $result = $this->voiceAi->sendMessage($call->id, $transcription['transcript']);
         $reply = trim((string) ($result['message'] ?? ''));
 
@@ -199,7 +203,16 @@ class TelnyxVoiceWebhookController extends Controller
             $reply = 'Disculpa, tuve un problema procesando tu solicitud. Puedes repetirlo?';
         }
 
-        $this->telnyx->stopTranscription($callControlId);
+        $call->refresh();
+
+        if (
+            ($call->ended_at || $call->status === VoiceCallStatus::Completed)
+            && ! ($result['ended'] ?? false)
+            && ! ($result['handoff'] ?? false)
+        ) {
+            return;
+        }
+
         $this->telnyx->speak($callControlId, $reply);
     }
 
