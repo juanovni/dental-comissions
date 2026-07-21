@@ -31,6 +31,14 @@ class ListAppointments extends ListRecords
 
     public ?int $patientFilter = null;
 
+    public bool $showRescheduleModal = false;
+
+    public ?int $reschedulingAppointmentId = null;
+
+    public ?string $newScheduledAt = null;
+
+    public ?int $newDurationMinutes = null;
+
     public function getTitle(): string
     {
         return 'Citas';
@@ -70,6 +78,72 @@ class ListAppointments extends ListRecords
     public function clearFilters(): void
     {
         $this->reset('search', 'statusFilter', 'doctorFilter', 'patientFilter');
+    }
+
+    public function openRescheduleModal(int $appointmentId): void
+    {
+        $appointment = Appointment::query()->findOrFail($appointmentId);
+        $this->reschedulingAppointmentId = $appointmentId;
+        $this->newScheduledAt = $appointment->scheduled_at?->format('Y-m-d\TH:i');
+        $this->newDurationMinutes = $appointment->duration_minutes ?? 45;
+        $this->showRescheduleModal = true;
+    }
+
+    public function closeRescheduleModal(): void
+    {
+        $this->reset('showRescheduleModal', 'reschedulingAppointmentId', 'newScheduledAt', 'newDurationMinutes');
+    }
+
+    public function saveReschedule(): void
+    {
+        $this->validate([
+            'newScheduledAt' => 'required',
+            'newDurationMinutes' => 'required|integer|min:1',
+        ]);
+
+        $newDate = Carbon::parse($this->newScheduledAt);
+        $duration = (int) $this->newDurationMinutes;
+
+        if ($this->hasRescheduleConflict($this->reschedulingAppointmentId, $newDate, $duration)) {
+            $this->addError('newScheduledAt', 'Ya existe una cita agendada en este horario. Selecciona una fecha y hora diferente.');
+            return;
+        }
+
+        try {
+            $appointment = Appointment::query()->findOrFail($this->reschedulingAppointmentId);
+            app(AppointmentWorkflowService::class)->reschedule($appointment, $newDate, $duration);
+            Notification::make()->title('Cita reprogramada exitosamente')->success()->send();
+            $this->closeRescheduleModal();
+        } catch (\Throwable $e) {
+            Notification::make()->title('Error al reprogramar')->body($e->getMessage())->danger()->send();
+        }
+    }
+
+    private function hasRescheduleConflict(?int $appointmentId, Carbon $newStart, int $durationMinutes): bool
+    {
+        $appointment = Appointment::query()->find($appointmentId);
+
+        if (!$appointment || !$appointment->doctor_id) {
+            return false;
+        }
+
+        $newEnd = (clone $newStart)->addMinutes($durationMinutes);
+
+        return Appointment::query()
+            ->where('id', '!=', $appointmentId)
+            ->where('doctor_id', $appointment->doctor_id)
+            ->whereNotIn('status', [
+                AppointmentStatus::Cancelled,
+                AppointmentStatus::Completed,
+                AppointmentStatus::NoShow,
+            ])
+            ->get()
+            ->contains(function (Appointment $existing) use ($newStart, $newEnd) {
+                $existingStart = $existing->scheduled_at;
+                $existingEnd = (clone $existingStart)->addMinutes($existing->duration_minutes ?? 0);
+
+                return $existingStart->lessThan($newEnd) && $existingEnd->greaterThan($newStart);
+            });
     }
 
     public function completeAppointment(int $appointmentId): void

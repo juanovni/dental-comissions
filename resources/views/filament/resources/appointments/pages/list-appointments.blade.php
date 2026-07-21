@@ -616,6 +616,235 @@
             }
         }
 
+        .reschedule-overlay {
+            align-items: center;
+            background: rgba(15, 23, 42, .48);
+            display: flex;
+            inset: 0;
+            justify-content: center;
+            position: fixed;
+            z-index: 60;
+        }
+
+        .reschedule-card {
+            background: #ffffff;
+            border-radius: .875rem;
+            box-shadow: 0 4px 24px rgba(15, 23, 42, .12);
+            display: grid;
+            gap: .75rem;
+            max-width: 26rem;
+            padding: 1.25rem;
+            position: relative;
+            width: calc(100% - 2rem);
+        }
+
+        .reschedule-close {
+            align-items: center;
+            background: transparent;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            color: #94a3b8;
+            display: inline-flex;
+            font-size: .95rem;
+            font-weight: 600;
+            height: 1.75rem;
+            justify-content: center;
+            line-height: 1;
+            position: absolute;
+            right: .85rem;
+            top: .85rem;
+            transition: .14s ease;
+            width: 1.75rem;
+            cursor: pointer;
+        }
+
+        .reschedule-close:hover {
+            background: #eef2f7;
+            color: #0f172a;
+        }
+
+        .reschedule-header {
+            padding-right: 2.6rem;
+        }
+
+        .reschedule-header h2 {
+            color: #0f172a;
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .reschedule-header-sub {
+            color: #64748b;
+            font-size: .76rem;
+            margin-top: .2rem;
+        }
+
+        .reschedule-field + .reschedule-field {
+            margin-top: .6rem;
+        }
+
+        .reschedule-label {
+            color: #334155;
+            display: block;
+            font-size: .7rem;
+            font-weight: 600;
+            margin-bottom: .25rem;
+        }
+
+        .reschedule-input {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: .5rem;
+            color: #334155;
+            font-size: .78rem;
+            font-weight: 500;
+            line-height: 1.4;
+            padding: .5rem .625rem;
+            width: 100%;
+            height: auto;
+            outline: none;
+            transition: border-color .14s ease;
+        }
+
+        .reschedule-input:focus {
+            border-color: #94a3b8;
+        }
+
+        .reschedule-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: .625rem;
+            color: #dc2626;
+            font-size: .78rem;
+            font-weight: 500;
+            line-height: 1.5;
+            padding: .65rem .75rem;
+        }
+
+        .reschedule-footer {
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: .5rem;
+            padding-top: .75rem;
+        }
+
+        .reschedule-btn {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .45rem;
+            color: #111827;
+            display: inline-flex;
+            font-size: .76rem;
+            font-weight: 500;
+            gap: .35rem;
+            justify-content: center;
+            line-height: 1;
+            min-height: 2rem;
+            padding: .38rem .65rem;
+            text-decoration: none;
+            transition: background-color .14s ease, border-color .14s ease, color .14s ease;
+            cursor: pointer;
+        }
+
+        .reschedule-btn:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            color: #111827;
+        }
+
+        .reschedule-btn.primary {
+            background: #000000;
+            border-color: #000000;
+            color: #ffffff;
+        }
+
+        .reschedule-btn.primary:hover {
+            background: #1a1a1a;
+            border-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .reschedule-btn.primary svg {
+            height: .9rem;
+            width: .9rem;
+        }
+
+        .reschedule-btn:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .dark .reschedule-card {
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, .18);
+        }
+
+        .dark .reschedule-close {
+            border-color: rgba(148, 163, 184, .18);
+            color: #64748b;
+        }
+
+        .dark .reschedule-close:hover {
+            background: rgba(148, 163, 184, .12);
+            color: #e2e8f0;
+        }
+
+        .dark .reschedule-header h2 {
+            color: #f1f5f9;
+        }
+
+        .dark .reschedule-header-sub {
+            color: #94a3b8;
+        }
+
+        .dark .reschedule-label {
+            color: #94a3b8;
+        }
+
+        .dark .reschedule-input {
+            background: rgba(15, 23, 42, .5);
+            border-color: rgba(148, 163, 184, .14);
+            color: #cbd5e1;
+        }
+
+        .dark .reschedule-input:focus {
+            border-color: rgba(148, 163, 184, .35);
+        }
+
+        .dark .reschedule-footer {
+            border-top-color: rgba(148, 163, 184, .14);
+        }
+
+        .dark .reschedule-btn {
+            background: transparent;
+            border-color: rgba(148, 163, 184, .18);
+            color: #cbd5e1;
+        }
+
+        .dark .reschedule-btn:hover {
+            background: rgba(148, 163, 184, .12);
+            border-color: rgba(148, 163, 184, .25);
+            color: #e2e8f0;
+        }
+
+        .dark .reschedule-btn.primary {
+            background: #000000;
+            border-color: #000000;
+            color: #ffffff;
+        }
+
+        .dark .reschedule-btn.primary:hover {
+            background: #1a1a1a;
+            border-color: #1a1a1a;
+        }
+
+        .dark .reschedule-overlay {
+            background: rgba(0, 0, 0, .55);
+        }
+
         @media (max-width: 640px) {
             .appointments-tabs {
                 width: 100%;
@@ -828,9 +1057,9 @@
                                     <a class="appointment-row-icon-action" href="{{ $editUrl }}" title="Editar">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16.86 4.49 2.65 2.65M4 20h4.5L19.5 9a1.88 1.88 0 0 0 0-2.65L17.65 4.5a1.88 1.88 0 0 0-2.65 0L4 15.5V20Z"/></svg>
                                     </a>
-                                    <a class="appointment-row-icon-action" href="{{ $editUrl }}" title="Reprogramar">
+                                    <button class="appointment-row-icon-action" type="button" title="Reprogramar" wire:click="openRescheduleModal({{ $appointment->id }})" @disabled(! in_array($appointment->status, [\App\Enums\AppointmentStatus::PendingConfirmation, \App\Enums\AppointmentStatus::Scheduled, \App\Enums\AppointmentStatus::Confirmed, \App\Enums\AppointmentStatus::Rescheduled], true))>
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
-                                    </a>
+                                    </button>
 
                                     <div class="appointment-more" x-data="{ open: false }" @keydown.escape.window="open = false">
                                         <button class="appointment-more-button" type="button" aria-label="Mas acciones" @click="open = ! open">
@@ -847,10 +1076,10 @@
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16.86 4.49 2.65 2.65M4 20h4.5L19.5 9a1.88 1.88 0 0 0 0-2.65L17.65 4.5a1.88 1.88 0 0 0-2.65 0L4 15.5V20Z"/></svg>
                                                 <span>Editar</span>
                                             </a>
-                                            <a class="appointment-action-item" href="{{ $editUrl }}">
+                                            <button class="appointment-action-item" type="button" wire:click="openRescheduleModal({{ $appointment->id }})" @disabled(! in_array($appointment->status, [\App\Enums\AppointmentStatus::PendingConfirmation, \App\Enums\AppointmentStatus::Scheduled, \App\Enums\AppointmentStatus::Confirmed, \App\Enums\AppointmentStatus::Rescheduled], true))>
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
                                                 <span>Reprogramar</span>
-                                            </a>
+                                            </button>
 
                                             <div class="appointment-action-separator"></div>
 
@@ -889,6 +1118,55 @@
             </div>
         @endforelse
     </section>
+
+    <div
+        x-cloak
+        x-show="$wire.showRescheduleModal"
+        x-transition.opacity.duration.200ms
+        class="reschedule-overlay"
+        @keydown.escape.window="$wire.closeRescheduleModal()"
+    >
+        <div class="reschedule-card" @click.outside="$wire.closeRescheduleModal()">
+            <button class="reschedule-close" type="button" wire:click="closeRescheduleModal" aria-label="Cerrar modal">&times;</button>
+
+            <header class="reschedule-header">
+                <h2>Reprogramar cita</h2>
+                <p class="reschedule-header-sub">Selecciona la nueva fecha y hora disponibles</p>
+            </header>
+
+            @error('newScheduledAt')
+                <div class="reschedule-error">{{ $message }}</div>
+            @enderror
+
+            <div class="reschedule-field">
+                <label class="reschedule-label" for="reschedule-date">Fecha y hora</label>
+                <input
+                    id="reschedule-date"
+                    type="datetime-local"
+                    wire:model="newScheduledAt"
+                    class="reschedule-input"
+                >
+            </div>
+
+            <div class="reschedule-field">
+                <label class="reschedule-label" for="reschedule-duration">Duracion (minutos)</label>
+                <input
+                    id="reschedule-duration"
+                    type="number"
+                    wire:model="newDurationMinutes"
+                    min="1"
+                    class="reschedule-input"
+                >
+            </div>
+
+            <footer class="reschedule-footer">
+                <button type="button" class="reschedule-btn primary" wire:click="saveReschedule" style="width: 100%; justify-content: center; min-height: 2.25rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
+                    Reprogramar
+                </button>
+            </footer>
+        </div>
+    </div>
 
     <x-filament-actions::modals />
 </x-filament-panels::page>
