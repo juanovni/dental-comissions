@@ -1169,6 +1169,7 @@
                 right: auto;
                 min-width: min(17rem, calc(100vw - 2rem));
             }
+
         }
     </style>
 
@@ -1465,6 +1466,8 @@
                     <div class="appointment-drawer-card-row">
                         <span class="appointment-drawer-card-label">Paciente</span>
                         <span class="appointment-drawer-card-value">{{ $sa->patient?->full_name ?? 'Sin paciente asignado' }}</span>
+                        <span class="appointment-drawer-card-label">Telefono</span>
+                        <span class="appointment-drawer-card-value {{ $sa->patient?->phone ? '' : 'placeholder' }}">{{ $sa->patient?->phone ?: '-' }}</span>
                         <span class="appointment-drawer-card-label">Doctor</span>
                         <span class="appointment-drawer-card-value">{{ $sa->doctor?->name ?? 'Sin doctor asignado' }}</span>
                         <span class="appointment-drawer-card-label">Procedimiento</span>
@@ -1473,10 +1476,17 @@
                         <span class="appointment-drawer-card-value">{{ $sa->scheduled_at?->format('d/m/Y h:i a') ?? '-' }}</span>
                         <span class="appointment-drawer-card-label">Duracion</span>
                         <span class="appointment-drawer-card-value">{{ $sa->duration_minutes ? "{$sa->duration_minutes} min" : '-' }}</span>
+                        <span class="appointment-drawer-card-label">Estado</span>
+                        <span class="appointment-drawer-card-value">{{ $this->statusLabel($sa->status) }}</span>
+                        <span class="appointment-drawer-card-label">Sync</span>
+                        <span class="appointment-drawer-card-value">{{ $sa->isSynced() ? 'Sincronizada' : 'Pendiente' }}</span>
                     </div>
-                    @if ($sa->notes)
-                        <div class="appointment-drawer-card-text" style="margin-top: .25rem;">{{ $sa->notes }}</div>
-                    @endif
+                    <div class="appointment-drawer-card-text" style="margin-top: .25rem;">Cita creada desde {{ $sa->source?->label() ?? 'origen no definido' }}.</div>
+                </section>
+
+                <section class="appointment-drawer-card" x-show="tab === 'details'" x-cloak>
+                    <div class="appointment-drawer-card-kicker">Notas y contexto</div>
+                    <div class="appointment-drawer-card-text">{{ $sa->notes ?: 'Sin notas registradas para esta cita.' }}</div>
                 </section>
 
                 <section class="appointment-drawer-card" x-show="tab === 'calendar'" x-cloak>
