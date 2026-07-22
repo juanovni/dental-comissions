@@ -39,6 +39,20 @@ class ListAppointments extends ListRecords
 
     public ?int $newDurationMinutes = null;
 
+    public bool $showNoShowModal = false;
+
+    public ?int $noShowAppointmentId = null;
+
+    public ?string $noShowNotes = null;
+
+    public bool $showCancelModal = false;
+
+    public ?int $cancelAppointmentId = null;
+
+    public ?string $cancelReason = null;
+
+    public ?int $selectedAppointmentId = null;
+
     public function getTitle(): string
     {
         return 'Citas';
@@ -158,28 +172,77 @@ class ListAppointments extends ListRecords
         }
     }
 
-    public function markNoShow(int $appointmentId): void
+    public function openNoShowModal(int $appointmentId): void
     {
         $appointment = Appointment::query()->findOrFail($appointmentId);
+        $this->noShowAppointmentId = $appointmentId;
+        $this->noShowNotes = '';
+        $this->showNoShowModal = true;
+    }
+
+    public function closeNoShowModal(): void
+    {
+        $this->reset('showNoShowModal', 'noShowAppointmentId', 'noShowNotes');
+    }
+
+    public function saveNoShow(): void
+    {
+        $appointment = Appointment::query()->findOrFail($this->noShowAppointmentId);
 
         try {
             app(AppointmentWorkflowService::class)->markNoShow($appointment);
             Notification::make()->title('Marcada como no asistio')->success()->send();
+            $this->closeNoShowModal();
         } catch (\Throwable $e) {
             Notification::make()->title('Error')->body($e->getMessage())->danger()->send();
         }
     }
 
-    public function cancelAppointment(int $appointmentId): void
+    public function openCancelModal(int $appointmentId): void
     {
         $appointment = Appointment::query()->findOrFail($appointmentId);
+        $this->cancelAppointmentId = $appointmentId;
+        $this->cancelReason = '';
+        $this->showCancelModal = true;
+    }
+
+    public function closeCancelModal(): void
+    {
+        $this->reset('showCancelModal', 'cancelAppointmentId', 'cancelReason');
+    }
+
+    public function saveCancel(): void
+    {
+        $appointment = Appointment::query()->findOrFail($this->cancelAppointmentId);
 
         try {
-            app(AppointmentWorkflowService::class)->cancel($appointment);
+            app(AppointmentWorkflowService::class)->cancel($appointment, $this->cancelReason ?: null);
             Notification::make()->title('Cita cancelada')->success()->send();
+            $this->closeCancelModal();
         } catch (\Throwable $e) {
             Notification::make()->title('Error al cancelar')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function selectAppointment(int $appointmentId): void
+    {
+        $this->selectedAppointmentId = $appointmentId;
+    }
+
+    public function closeAppointmentDrawer(): void
+    {
+        $this->selectedAppointmentId = null;
+    }
+
+    public function getSelectedAppointmentProperty(): ?Appointment
+    {
+        if (!$this->selectedAppointmentId) {
+            return null;
+        }
+
+        return Appointment::query()
+            ->with(['patient', 'doctor', 'procedure', 'socialComment', 'socialComment.socialIdentity'])
+            ->find($this->selectedAppointmentId);
     }
 
     public function getGroupedAppointmentsProperty(): array

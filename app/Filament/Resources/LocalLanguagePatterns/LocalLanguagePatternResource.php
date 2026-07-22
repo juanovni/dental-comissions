@@ -31,7 +31,7 @@ class LocalLanguagePatternResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-language';
 
-    protected static ?int $navigationSort = 25;
+    protected static ?int $navigationSort = 26;
 
     protected static ?string $modelLabel = 'patrón de lenguaje local';
 

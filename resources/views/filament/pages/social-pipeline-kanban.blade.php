@@ -758,6 +758,12 @@
             padding: .9rem 1rem;
         }
 
+        .kanban-detail-actions .kanban-detail-btn {
+            flex: 1;
+            justify-content: center;
+            min-height: 2.25rem;
+        }
+
         .kanban-detail-btn {
             align-items: center;
             background: #ffffff;
@@ -769,7 +775,7 @@
             font-weight: 500;
             gap: .35rem;
             justify-content: center;
-            min-height: 2rem;
+            min-height: 2.25rem;
             padding: .38rem .65rem;
             text-decoration: none;
         }
@@ -1146,7 +1152,7 @@
             </div>
 
             <footer class="kanban-detail-actions">
-                <a class="kanban-detail-btn kanban-detail-btn-primary" href="{{ $detailUrl }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Abrir ficha CRM</span></a>
+                <a class="kanban-detail-btn" href="{{ $detailUrl }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Abrir ficha CRM</span></a>
                 @if ($patientUrl)
                     <a class="kanban-detail-btn" href="{{ $patientUrl }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg><span>Ver paciente</span></a>
                 @endif

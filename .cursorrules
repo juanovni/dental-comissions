@@ -107,6 +107,7 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 - Espaciado entre campos: `margin-top: .6rem`.
 - Errores de validacion: `background: #fef2f2; border: 1px solid #fecaca; border-radius: .625rem; color: #dc2626; font-size: .78rem; font-weight: 500; padding: .65rem .75rem;`.
 - Footer de acciones: `border-top: 1px solid #e5e7eb; padding-top: .75rem; display: flex; justify-content: flex-end; gap: .5rem;`.
+- En footers de drawers laterales tipo `smart-drawer-footer`, `appointment-drawer-footer` o `kanban-detail-actions`, los botones deben ocupar el ancho disponible de forma equilibrada: `flex: 1; justify-content: center; min-height: 2.25rem;`. No usar variante `primary` para acciones de navegacion como `Ver caso completo`, `Abrir ficha CRM` o `Editar`; usar el estilo base outline/neutro salvo que sea una accion critica o destructiva.
 - Botones en footer: patron `smart-action`:
   - Base: `display: inline-flex; align-items: center; gap: .35rem; min-height: 2.25rem; padding: .38rem .65rem; border-radius: .45rem; font-size: .76rem; font-weight: 500; line-height: 1; border: 1px solid #e5e7eb; background: #ffffff; color: #111827; cursor: pointer; transition: background-color .14s ease, border-color .14s ease, color .14s ease;`
   - Hover base: `background: #f9fafb; border-color: #d1d5db; color: #111827;`

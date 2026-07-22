@@ -313,6 +313,7 @@
             display: grid;
             grid-template-columns: 5rem 3.8rem minmax(0, 1fr) auto;
             align-items: center;
+            cursor: pointer;
             gap: .35rem .85rem;
             min-height: 5.65rem;
             padding: .95rem 1.1rem;
@@ -397,8 +398,13 @@
         }
 
         .appointment-patient {
+            background: transparent;
+            border: 0;
             color: #020617;
+            cursor: pointer;
             font-weight: 600;
+            padding: 0;
+            text-align: left;
         }
 
         .appointment-status {
@@ -755,6 +761,12 @@
             color: #111827;
         }
 
+        .reschedule-btn svg {
+            flex: 0 0 auto;
+            height: .9rem;
+            width: .9rem;
+        }
+
         .reschedule-btn.primary {
             background: #000000;
             border-color: #000000;
@@ -767,9 +779,15 @@
             color: #ffffff;
         }
 
-        .reschedule-btn.primary svg {
-            height: .9rem;
-            width: .9rem;
+        .reschedule-btn.danger {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: #ffffff;
+        }
+
+        .reschedule-btn.danger:hover {
+            background: #b91c1c;
+            border-color: #b91c1c;
         }
 
         .reschedule-btn:disabled {
@@ -841,8 +859,282 @@
             border-color: #1a1a1a;
         }
 
+        .dark .reschedule-btn.danger {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: #ffffff;
+        }
+
+        .dark .reschedule-btn.danger:hover {
+            background: #b91c1c;
+            border-color: #b91c1c;
+        }
+
         .dark .reschedule-overlay {
             background: rgba(0, 0, 0, .55);
+        }
+
+        .appointment-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 48;
+            background: rgba(15, 23, 42, .22);
+            animation: drawerBackdropIn .14s ease;
+        }
+
+        @keyframes drawerBackdropIn { from { opacity: 0 } to { opacity: 1 } }
+
+        @keyframes drawerSlideIn {
+            from { opacity: .4; transform: translateX(.75rem) }
+            to { opacity: 1; transform: translateX(0) }
+        }
+
+        .appointment-drawer {
+            position: fixed;
+            right: 1rem;
+            top: 1rem;
+            width: min(38rem, calc(100vw - 2rem));
+            max-height: calc(100vh - 2rem);
+            z-index: 49;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: .875rem;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: drawerSlideIn .14s ease;
+        }
+
+        .appointment-drawer-header {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            justify-content: space-between;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            flex: 0 0 auto;
+        }
+
+        .appointment-drawer-header-main {
+            min-width: 0;
+        }
+
+        .appointment-drawer-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            line-height: 1.2;
+            overflow: visible;
+            text-overflow: ellipsis;
+        }
+
+        .appointment-drawer-subtitle {
+            font-size: .76rem;
+            font-weight: 500;
+            color: #64748b;
+            margin-top: .2rem;
+        }
+
+        .appointment-drawer-close {
+            width: 2rem;
+            height: 2rem;
+            border-radius: .45rem;
+            border: 1px solid transparent;
+            color: #64748b;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            flex: 0 0 auto;
+            transition: .14s ease;
+            font-size: 1.15rem;
+            line-height: 1;
+        }
+
+        .appointment-drawer-close:hover {
+            background: #f9fafb;
+            border-color: #e5e7eb;
+            color: #0f172a;
+        }
+
+        .appointment-drawer-tabs {
+            display: flex;
+            gap: .85rem;
+            padding: 0 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            flex: 0 0 auto;
+            overflow-x: auto;
+        }
+
+        .appointment-drawer-tab {
+            font-size: .76rem;
+            font-weight: 500;
+            padding: .7rem 0 .75rem;
+            color: #64748b;
+            cursor: pointer;
+            background: transparent;
+            border: 0;
+            flex: 0 0 auto;
+            white-space: nowrap;
+            transition: color .14s ease;
+        }
+
+        .appointment-drawer-tab:hover {
+            color: #0f172a;
+        }
+
+        .appointment-drawer-tab.is-active {
+            box-shadow: inset 0 -2px 0 #000000;
+            color: #0f172a;
+        }
+
+        .appointment-drawer-body {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            padding: 1rem;
+            display: grid;
+            gap: .8rem;
+            align-content: start;
+        }
+
+        .appointment-drawer-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: .75rem;
+            display: grid;
+            gap: .55rem;
+            padding: .85rem;
+        }
+
+        .appointment-drawer-card-kicker {
+            font-size: .78rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .appointment-drawer-card-text {
+            font-size: .82rem;
+            font-weight: 500;
+            color: #64748b;
+            line-height: 1.45;
+        }
+
+        .appointment-drawer-card-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .35rem .85rem;
+        }
+
+        .appointment-drawer-card-label {
+            font-size: .78rem;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .appointment-drawer-card-value {
+            font-size: .82rem;
+            font-weight: 600;
+            color: #0f172a;
+            text-align: right;
+        }
+
+        .appointment-drawer-card-value.placeholder {
+            font-weight: 400;
+            color: #9ca3af;
+        }
+
+        .appointment-drawer-card .appointment-status {
+            display: inline-flex;
+            width: max-content;
+        }
+
+        .appointment-drawer-footer {
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+            padding: .9rem 1rem;
+            flex: 0 0 auto;
+        }
+
+        .appointment-drawer-footer .reschedule-btn {
+            flex: 1;
+            justify-content: center;
+            min-height: 2.25rem;
+        }
+
+        .dark .appointment-drawer {
+            background: #1e293b;
+            border-color: rgba(148, 163, 184, .18);
+        }
+
+        .dark .appointment-drawer-header {
+            border-color: rgba(148, 163, 184, .14);
+        }
+
+        .dark .appointment-drawer-title {
+            color: #f1f5f9;
+        }
+
+        .dark .appointment-drawer-subtitle {
+            color: #94a3b8;
+        }
+
+        .dark .appointment-drawer-close {
+            color: #94a3b8;
+        }
+
+        .dark .appointment-drawer-close:hover {
+            background: rgba(148, 163, 184, .12);
+            border-color: rgba(148, 163, 184, .18);
+            color: #e2e8f0;
+        }
+
+        .dark .appointment-drawer-tabs {
+            border-color: rgba(148, 163, 184, .14);
+        }
+
+        .dark .appointment-drawer-tab {
+            color: #94a3b8;
+        }
+
+        .dark .appointment-drawer-tab:hover {
+            color: #e2e8f0;
+        }
+
+        .dark .appointment-drawer-tab.is-active {
+            color: #f1f5f9;
+        }
+
+        .dark .appointment-drawer-card {
+            background: rgba(15, 23, 42, .6);
+            border-color: rgba(148, 163, 184, .14);
+        }
+
+        .dark .appointment-drawer-card-kicker {
+            color: #e5e7eb;
+        }
+
+        .dark .appointment-drawer-card-text {
+            color: #94a3b8;
+        }
+
+        .dark .appointment-drawer-card-label {
+            color: #94a3b8;
+        }
+
+        .dark .appointment-drawer-card-value {
+            color: #e2e8f0;
+        }
+
+        .dark .appointment-drawer-card-value.placeholder {
+            color: #64748b;
+        }
+
+        .dark .appointment-drawer-footer {
+            border-color: rgba(148, 163, 184, .14);
         }
 
         @media (max-width: 640px) {
@@ -995,7 +1287,15 @@
                             $editUrl = \App\Filament\Resources\Appointments\AppointmentResource::getUrl('edit', ['record' => $appointment]);
                         @endphp
 
-                        <article class="appointment-row" wire:key="appointment-row-{{ $appointment->id }}">
+                        <article
+                            class="appointment-row"
+                            wire:key="appointment-row-{{ $appointment->id }}"
+                            wire:click="selectAppointment({{ $appointment->id }})"
+                            wire:keydown.enter="selectAppointment({{ $appointment->id }})"
+                            wire:keydown.space="selectAppointment({{ $appointment->id }})"
+                            role="button"
+                            tabindex="0"
+                        >
                             <div class="appointment-time">
                                 <div class="appointment-time-main">{{ $appointment->scheduled_at?->format('h:i') }}&nbsp;{{ $appointment->scheduled_at?->format('a') === 'am' ? 'a.m.' : 'p.m.' }}</div>
                                 <div class="appointment-duration">
@@ -1025,7 +1325,7 @@
 
                             <div class="appointment-main">
                                 <div class="appointment-title-row">
-                                    <a class="appointment-patient" href="{{ $viewUrl }}">{{ $patientName }}</a>
+                                    <button class="appointment-patient" type="button">{{ $patientName }}</button>
                                     <span class="appointment-status {{ $statusClass }}">{{ $this->statusLabel($appointment->status) }}</span>
                                 </div>
                                 <div class="appointment-line">
@@ -1049,11 +1349,11 @@
                                     <span class="appointment-sync" title="Pendiente de sincronizacion"></span>
                                 @endif
 
-                                <div class="appointment-row-actions">
+                                <div class="appointment-row-actions" @click.stop>
 
-                                    <a class="appointment-row-icon-action" href="{{ $viewUrl }}" title="Ver detalle">
+                                    <button class="appointment-row-icon-action" type="button" title="Ver detalle" wire:click="selectAppointment({{ $appointment->id }})">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
-                                    </a>
+                                    </button>
                                     <a class="appointment-row-icon-action" href="{{ $editUrl }}" title="Editar">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16.86 4.49 2.65 2.65M4 20h4.5L19.5 9a1.88 1.88 0 0 0 0-2.65L17.65 4.5a1.88 1.88 0 0 0-2.65 0L4 15.5V20Z"/></svg>
                                     </a>
@@ -1068,10 +1368,10 @@
 
                                         <div class="appointment-action-menu" x-cloak x-show="open" x-transition @click.outside="open = false">
                                             <div class="appointment-action-heading">Acciones</div>
-                                            <a class="appointment-action-item" href="{{ $viewUrl }}">
+                                            <button class="appointment-action-item" type="button" wire:click="selectAppointment({{ $appointment->id }})">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
                                                 <span>Ver detalle</span>
-                                            </a>
+                                            </button>
                                             <a class="appointment-action-item" href="{{ $editUrl }}">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16.86 4.49 2.65 2.65M4 20h4.5L19.5 9a1.88 1.88 0 0 0 0-2.65L17.65 4.5a1.88 1.88 0 0 0-2.65 0L4 15.5V20Z"/></svg>
                                                 <span>Editar</span>
@@ -1087,14 +1387,14 @@
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg>
                                                 <span>Marcar completada</span>
                                             </button>
-                                            <button class="appointment-action-item" type="button" wire:click="markNoShow({{ $appointment->id }})" wire:confirm="Marcar esta cita como no asistio?" @disabled(! $this->canUpdateStatus($appointment))>
+                                            <button class="appointment-action-item" type="button" wire:click="openNoShowModal({{ $appointment->id }})" @disabled(! $this->canUpdateStatus($appointment))>
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5m0-5-5 5"/></svg>
                                                 <span>Marcar no asistio</span>
                                             </button>
 
                                             <div class="appointment-action-separator"></div>
 
-                                            <button class="appointment-action-item danger" type="button" wire:click="cancelAppointment({{ $appointment->id }})" wire:confirm="Cancelar esta cita?" @disabled(! in_array($appointment->status, [\App\Enums\AppointmentStatus::PendingConfirmation, \App\Enums\AppointmentStatus::Scheduled, \App\Enums\AppointmentStatus::Confirmed, \App\Enums\AppointmentStatus::Rescheduled], true))>
+                                            <button class="appointment-action-item danger" type="button" wire:click="openCancelModal({{ $appointment->id }})" @disabled(! in_array($appointment->status, [\App\Enums\AppointmentStatus::PendingConfirmation, \App\Enums\AppointmentStatus::Scheduled, \App\Enums\AppointmentStatus::Confirmed, \App\Enums\AppointmentStatus::Rescheduled], true))>
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/></svg>
                                                 <span>Cancelar cita</span>
                                             </button>
@@ -1118,6 +1418,121 @@
             </div>
         @endforelse
     </section>
+
+    @php
+        $selectedAppointment = $this->selectedAppointment;
+    @endphp
+
+    @if ($selectedAppointment)
+        @php
+            $sa = $selectedAppointment;
+            $drawerViewUrl = \App\Filament\Resources\Appointments\AppointmentResource::getUrl('view', ['record' => $sa]);
+            $drawerEditUrl = \App\Filament\Resources\Appointments\AppointmentResource::getUrl('edit', ['record' => $sa]);
+            $statusColor = $sa->status->color();
+            $statusClass = match ($statusColor) {
+                'success' => 'appointment-status-success',
+                'warning' => 'appointment-status-warning',
+                'info' => 'appointment-status-info',
+                'danger' => 'appointment-status-danger',
+                default => 'appointment-status-info',
+            };
+        @endphp
+
+        <div class="appointment-drawer-backdrop" wire:click="closeAppointmentDrawer"></div>
+
+        <aside class="appointment-drawer" x-data="{ tab: 'details' }" @keydown.escape.window="$wire.closeAppointmentDrawer()">
+            <div class="appointment-drawer-header">
+                <div class="appointment-drawer-header-main">
+                    <div class="appointment-drawer-title">{{ $sa->patient?->full_name ?? 'Paciente sin nombre' }}</div>
+                    <div class="appointment-drawer-subtitle">
+                        <span class="appointment-status {{ $statusClass }}">{{ $this->statusLabel($sa->status) }}</span>
+                        &middot; {{ $sa->source?->label() ?? 'Sin origen' }}
+                    </div>
+                </div>
+                <button class="appointment-drawer-close" type="button" wire:click="closeAppointmentDrawer" aria-label="Cerrar detalle">&times;</button>
+            </div>
+
+            <nav class="appointment-drawer-tabs" aria-label="Secciones de la cita">
+                <button class="appointment-drawer-tab" type="button" :class="{ 'is-active': tab === 'details' }" @click="tab = 'details'">Detalle</button>
+                <button class="appointment-drawer-tab" type="button" :class="{ 'is-active': tab === 'calendar' }" @click="tab = 'calendar'">Calendario</button>
+                <button class="appointment-drawer-tab" type="button" :class="{ 'is-active': tab === 'social' }" @click="tab = 'social'">Origen social</button>
+                <button class="appointment-drawer-tab" type="button" :class="{ 'is-active': tab === 'timeline' }" @click="tab = 'timeline'">Linea de tiempo</button>
+            </nav>
+
+            <div class="appointment-drawer-body">
+                <section class="appointment-drawer-card" x-show="tab === 'details'" x-cloak>
+                    <div class="appointment-drawer-card-kicker">Detalle de la cita</div>
+                    <div class="appointment-drawer-card-row">
+                        <span class="appointment-drawer-card-label">Paciente</span>
+                        <span class="appointment-drawer-card-value">{{ $sa->patient?->full_name ?? 'Sin paciente asignado' }}</span>
+                        <span class="appointment-drawer-card-label">Doctor</span>
+                        <span class="appointment-drawer-card-value">{{ $sa->doctor?->name ?? 'Sin doctor asignado' }}</span>
+                        <span class="appointment-drawer-card-label">Procedimiento</span>
+                        <span class="appointment-drawer-card-value">{{ $sa->procedure?->name ?? 'Sin procedimiento' }}</span>
+                        <span class="appointment-drawer-card-label">Fecha y hora</span>
+                        <span class="appointment-drawer-card-value">{{ $sa->scheduled_at?->format('d/m/Y h:i a') ?? '-' }}</span>
+                        <span class="appointment-drawer-card-label">Duracion</span>
+                        <span class="appointment-drawer-card-value">{{ $sa->duration_minutes ? "{$sa->duration_minutes} min" : '-' }}</span>
+                    </div>
+                    @if ($sa->notes)
+                        <div class="appointment-drawer-card-text" style="margin-top: .25rem;">{{ $sa->notes }}</div>
+                    @endif
+                </section>
+
+                <section class="appointment-drawer-card" x-show="tab === 'calendar'" x-cloak>
+                    <div class="appointment-drawer-card-kicker">Integracion con calendario</div>
+                    <div class="appointment-drawer-card-row">
+                        <span class="appointment-drawer-card-label">Sincronizada</span>
+                        <span class="appointment-drawer-card-value">{{ $sa->isSynced() ? 'Si' : 'No' }}</span>
+                        <span class="appointment-drawer-card-label">ID evento Google</span>
+                        <span class="appointment-drawer-card-value {{ $sa->external_appointment_id ? '' : 'placeholder' }}">{{ $sa->external_appointment_id ?: 'No sincronizado' }}</span>
+                        <span class="appointment-drawer-card-label">Ultima sincronizacion</span>
+                        <span class="appointment-drawer-card-value {{ $sa->last_synced_at ? '' : 'placeholder' }}">{{ $sa->last_synced_at?->format('d/m/Y h:i a') ?: 'Nunca' }}</span>
+                        <span class="appointment-drawer-card-label">Error de sync</span>
+                        <span class="appointment-drawer-card-value {{ $sa->sync_error ? '' : 'placeholder' }}">{{ $sa->sync_error ?: 'Sin errores' }}</span>
+                    </div>
+                </section>
+
+                <section class="appointment-drawer-card" x-show="tab === 'social'" x-cloak>
+                    <div class="appointment-drawer-card-kicker">Origen social</div>
+                    <div class="appointment-drawer-card-row">
+                        <span class="appointment-drawer-card-label">Nombre del lead</span>
+                        <span class="appointment-drawer-card-value {{ $sa->socialComment?->socialIdentity?->display_name ? '' : 'placeholder' }}">{{ $sa->socialComment?->socialIdentity?->display_name ?: 'Sin lead' }}</span>
+                        <span class="appointment-drawer-card-label">Telefono del lead</span>
+                        <span class="appointment-drawer-card-value {{ $sa->socialComment?->socialIdentity?->phone ? '' : 'placeholder' }}">{{ $sa->socialComment?->socialIdentity?->phone ?: '-' }}</span>
+                    </div>
+                    @if ($sa->socialComment?->comment_text)
+                        <div class="appointment-drawer-card-text" style="margin-top: .25rem;">{{ $sa->socialComment->comment_text }}</div>
+                    @endif
+                </section>
+
+                <section class="appointment-drawer-card" x-show="tab === 'timeline'" x-cloak>
+                    <div class="appointment-drawer-card-kicker">Linea de tiempo</div>
+                    <div class="appointment-drawer-card-row">
+                        <span class="appointment-drawer-card-label">Creada</span>
+                        <span class="appointment-drawer-card-value">{{ $sa->created_at?->format('d/m/Y h:i a') ?? '-' }}</span>
+                        <span class="appointment-drawer-card-label">Confirmada</span>
+                        <span class="appointment-drawer-card-value {{ $sa->confirmed_at ? '' : 'placeholder' }}">{{ $sa->confirmed_at?->format('d/m/Y h:i a') ?: 'Aun no confirmada' }}</span>
+                        <span class="appointment-drawer-card-label">Completada</span>
+                        <span class="appointment-drawer-card-value {{ $sa->completed_at ? '' : 'placeholder' }}">{{ $sa->completed_at?->format('d/m/Y h:i a') ?: 'Aun no completada' }}</span>
+                        <span class="appointment-drawer-card-label">Cancelada</span>
+                        <span class="appointment-drawer-card-value {{ $sa->cancelled_at ? '' : 'placeholder' }}">{{ $sa->cancelled_at?->format('d/m/Y h:i a') ?: 'No cancelada' }}</span>
+                    </div>
+                </section>
+            </div>
+
+            <footer class="appointment-drawer-footer">
+                <a class="reschedule-btn" href="{{ $drawerViewUrl }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: .9rem; height: .9rem;"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                    Ver caso completo
+                </a>
+                <a class="reschedule-btn" href="{{ $drawerEditUrl }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: .9rem; height: .9rem;"><path d="m16.86 4.49 2.65 2.65M4 20h4.5L19.5 9a1.88 1.88 0 0 0 0-2.65L17.65 4.5a1.88 1.88 0 0 0-2.65 0L4 15.5V20Z"/></svg>
+                    Editar cita
+                </a>
+            </footer>
+        </aside>
+    @endif
 
     <div
         x-cloak
@@ -1163,6 +1578,76 @@
                 <button type="button" class="reschedule-btn primary" wire:click="saveReschedule" style="width: 100%; justify-content: center; min-height: 2.25rem;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/></svg>
                     Reprogramar
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <div
+        x-cloak
+        x-show="$wire.showNoShowModal"
+        x-transition.opacity.duration.200ms
+        class="reschedule-overlay"
+        @keydown.escape.window="$wire.closeNoShowModal()"
+    >
+        <div class="reschedule-card" @click.outside="$wire.closeNoShowModal()">
+            <button class="reschedule-close" type="button" wire:click="closeNoShowModal" aria-label="Cerrar modal">&times;</button>
+
+            <header class="reschedule-header">
+                <h2>Marcar como no asistio</h2>
+                <p class="reschedule-header-sub">La cita se marcara como no asistida y se eliminara del calendario si aplica.</p>
+            </header>
+
+            <div class="reschedule-field">
+                <label class="reschedule-label" for="noshow-notes">Observaciones (opcional)</label>
+                <textarea
+                    id="noshow-notes"
+                    wire:model="noShowNotes"
+                    class="reschedule-input"
+                    rows="3"
+                    style="resize: vertical; min-height: auto;"
+                ></textarea>
+            </div>
+
+            <footer class="reschedule-footer">
+                <button type="button" class="reschedule-btn danger" wire:click="saveNoShow" style="width: 100%; justify-content: center; min-height: 2.25rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5m0-5-5 5"/></svg>
+                    Marcar no asistio
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <div
+        x-cloak
+        x-show="$wire.showCancelModal"
+        x-transition.opacity.duration.200ms
+        class="reschedule-overlay"
+        @keydown.escape.window="$wire.closeCancelModal()"
+    >
+        <div class="reschedule-card" @click.outside="$wire.closeCancelModal()">
+            <button class="reschedule-close" type="button" wire:click="closeCancelModal" aria-label="Cerrar modal">&times;</button>
+
+            <header class="reschedule-header">
+                <h2>Cancelar cita</h2>
+                <p class="reschedule-header-sub">La cita se cancelara y se eliminara del calendario si aplica.</p>
+            </header>
+
+            <div class="reschedule-field">
+                <label class="reschedule-label" for="cancel-reason">Motivo de cancelacion</label>
+                <textarea
+                    id="cancel-reason"
+                    wire:model="cancelReason"
+                    class="reschedule-input"
+                    rows="3"
+                    style="resize: vertical; min-height: auto;"
+                ></textarea>
+            </div>
+
+            <footer class="reschedule-footer">
+                <button type="button" class="reschedule-btn danger" wire:click="saveCancel" style="width: 100%; justify-content: center; min-height: 2.25rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/></svg>
+                    Cancelar cita
                 </button>
             </footer>
         </div>
