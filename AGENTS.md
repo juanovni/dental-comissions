@@ -54,6 +54,56 @@ administrador revisa y aprueba antes de generar pagos semanales.
 - WeeklyReport: draft, approved, paid
 - Professional: is_active, can_register_via_whatsapp
 
+## Patient Flow Management (feature/patient-flow-management)
+Sistema de flujo operativo de pacientes. Extiende `Appointment` con estados operativos:
+- `on_the_way` (En camino), `waiting` (En espera), `in_consultation` (En consulta)
+- Timestamps: `checked_in_at`, `on_the_way_at`, `consultation_started_at`, `consultation_finished_at`
+- `room` (consultorio), `waiting_time_minutes` (cronometro calculado)
+- `AppointmentEvent` para event sourcing (auditoria de cada transicion de estado)
+
+### Archivos nuevos
+- `app/Services/PatientFlowService.php` - logica de transiciones y KPIs
+- `app/Services/WhatsappCheckInService.php` - deteccion "LLEGUE" en WhatsApp
+- `app/Models/AppointmentEvent.php` - modelo de eventos
+- `app/Http/Controllers/PatientCheckInController.php` - check-in publico por QR
+- `app/Filament/Pages/ReceptionDashboard.php` - monitor de recepcion
+- `app/Filament/Pages/DoctorDashboard.php` - cola por doctor
+- `app/Filament/Pages/ManagerialDashboard.php` - KPIs gerenciales
+- `resources/views/patient-checkin/*.blade.php` - vistas QR publicas
+- `resources/views/filament/pages/reception-dashboard.blade.php`
+- `resources/views/filament/pages/doctor-dashboard.blade.php`
+- `resources/views/filament/pages/managerial-dashboard.blade.php`
+- Migrations: `2026_07_23_003921_*`, `2026_07_23_003922_*`
+
+### Estados AppointmentStatus extendidos
+- `pending_confirmation` (Pre-reservada), `scheduled` (Agendada), `confirmed` (Confirmada)
+- `rescheduled` (Reprogramada), `on_the_way` (En camino), `waiting` (En espera)
+- `in_consultation` (En consulta), `completed` (Finalizada), `cancelled` (Cancelada), `no_show` (No asistio)
+- Metodos helpers: `isActive()`, `isOperational()`, `isTerminal()`
+
+### Acciones en AppointmentResource
+- `on_the_way` (Confirmada -> En camino)
+- `check_in` (Confirmada/En camino -> En espera)
+- `start_consultation` (En espera -> En consulta, con campo consultorio)
+- `finish_consultation` (En consulta -> Finalizada)
+
+### Dashboards
+- `/admin/reception-dashboard` - tabla con semaforo de espera, botones de accion
+- `/admin/doctor-dashboard` - cola por doctor con proximo paciente destacado
+- `/admin/managerial-dashboard` - KPIs: citas, no shows, tiempos promedio, doctores
+
+### Check-in publico
+- `GET /checkin/{token}` - pagina QR con boton "Ya llegue"
+- `POST /checkin/{token}/confirm` - registra llegada
+- `GET /checkin/{token}/done` - confirmacion
+
+### WhatsApp check-in
+- `WhatsappCheckInService::isCheckInRequest()` detecta "Llegue", "Ya llegue", "Estoy aqui"
+- `WhatsappCheckInService::processCheckIn()` busca paciente por telefono y hace check-in
+
+### Tests
+- `PatientFlowServiceTest` - 7 tests (transiciones + KPIs + deteccion)
+
 ## Comandos Utiles (sin Docker)
 - composer install
 - composer install --ignore-platform-req=ext-xml --ignore-platform-req=ext-dom --ignore-platform-req=ext-xmlwriter --ignore-platform-req=ext-xmlreader --ignore-platform-req=ext-intl --ignore-platform-req=ext-zip

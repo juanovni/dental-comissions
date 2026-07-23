@@ -4,8 +4,10 @@ use App\Http\Controllers\GoogleCalendarAuthController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MetaAuthController;
 use App\Http\Controllers\MetaSocialWebhookController;
+use App\Http\Controllers\PatientCheckInController;
 use App\Http\Controllers\SocialAppointmentLinkController;
 use App\Http\Controllers\SocialSmartLinkController;
+use App\Http\Controllers\TelnyxVoiceWebhookController;
 use App\Http\Controllers\TestMetaSocialController;
 use App\Http\Controllers\TestWhatsappController;
 use App\Http\Controllers\WebhookController;
@@ -27,6 +29,10 @@ Route::get('/auth/meta/callback', [MetaAuthController::class, 'callback'])->name
 Route::get('/auth/google/callback', [GoogleCalendarAuthController::class, 'callback'])->name('google.oauth.callback');
 Route::get('/v/{trackingToken}', [SocialSmartLinkController::class, 'show'])->name('social-smart-link.show');
 Route::post('/v/{trackingToken}/event', [SocialSmartLinkController::class, 'track'])->name('social-smart-link.track');
+Route::get('/checkin/{token}', [PatientCheckInController::class, 'show'])->name('patient-checkin.show');
+Route::post('/checkin/{token}/confirm', [PatientCheckInController::class, 'confirm'])->name('patient-checkin.confirm');
+Route::get('/checkin/{token}/done', [PatientCheckInController::class, 'done'])->name('patient-checkin.done');
+
 Route::get('/social/appointments/{token}', [SocialAppointmentLinkController::class, 'show'])->name('social-appointments.show');
 Route::get('/social/appointments/{token}/calendar', [SocialAppointmentLinkController::class, 'calendar'])->name('social-appointments.calendar');
 Route::post('/social/appointments/{token}/confirm', [SocialAppointmentLinkController::class, 'confirm'])->name('social-appointments.confirm');

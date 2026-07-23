@@ -11,6 +11,7 @@ use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Professional;
+use App\Services\PatientFlowService;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\Action;
@@ -85,6 +86,10 @@ class AppointmentResource extends Resource
                 ->label('Origen')
                 ->options(collect(AppointmentSource::cases())->mapWithKeys(fn (AppointmentSource $s): array => [$s->value => $s->label()]))
                 ->required(),
+            \Filament\Forms\Components\TextInput::make('room')
+                ->label('Consultorio')
+                ->maxLength(80)
+                ->nullable(),
             Textarea::make('notes')
                 ->label('Notas')
                 ->rows(3)
@@ -132,6 +137,18 @@ class AppointmentResource extends Resource
                     ->label('Sync')
                     ->state(fn (Appointment $record): bool => $record->isSynced())
                     ->boolean(),
+                TextColumn::make('room')
+                    ->label('Consultorio')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('checked_in_at')
+                    ->label('Llegada')
+                    ->dateTime()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('-'),
+                TextColumn::make('waiting_time_minutes')
+                    ->label('Espera (min)')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('-'),
                 TextColumn::make('created_at')
                     ->label('Creada')
                     ->dateTime()
@@ -314,6 +331,53 @@ class AppointmentResource extends Resource
                     } catch (\Throwable $e) {
                         Notification::make()->title('Error de sincronizacion')->body($e->getMessage())->danger()->send();
                     }
+                }),
+            Action::make('on_the_way')
+                ->label('En camino')
+                ->icon('heroicon-o-map-pin')
+                ->color('primary')
+                ->visible(fn (Appointment $record): bool => in_array($record->status, [
+                    AppointmentStatus::Confirmed,
+                ], true))
+                ->action(function (Appointment $record): void {
+                    app(PatientFlowService::class)->markOnTheWay($record);
+                    Notification::make()->title('Paciente marcado como en camino')->success()->send();
+                }),
+            Action::make('check_in')
+                ->label('Registrar llegada')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->visible(fn (Appointment $record): bool => in_array($record->status, [
+                    AppointmentStatus::Confirmed,
+                    AppointmentStatus::OnTheWay,
+                ], true))
+                ->action(function (Appointment $record): void {
+                    app(PatientFlowService::class)->checkIn($record);
+                    Notification::make()->title('Llegada registrada')->success()->send();
+                }),
+            Action::make('start_consultation')
+                ->label('Iniciar consulta')
+                ->icon('heroicon-o-play')
+                ->color('info')
+                ->form([
+                    \Filament\Forms\Components\TextInput::make('room')
+                        ->label('Consultorio')
+                        ->nullable()
+                        ->maxLength(80),
+                ])
+                ->visible(fn (Appointment $record): bool => $record->status === AppointmentStatus::Waiting)
+                ->action(function (Appointment $record, array $data): void {
+                    app(PatientFlowService::class)->startConsultation($record, $data['room'] ?? null);
+                    Notification::make()->title('Consulta iniciada')->success()->send();
+                }),
+            Action::make('finish_consultation')
+                ->label('Finalizar consulta')
+                ->icon('heroicon-o-check')
+                ->color('success')
+                ->visible(fn (Appointment $record): bool => $record->status === AppointmentStatus::InConsultation)
+                ->action(function (Appointment $record): void {
+                    app(PatientFlowService::class)->finishConsultation($record);
+                    Notification::make()->title('Consulta finalizada')->success()->send();
                 }),
         ];
     }
