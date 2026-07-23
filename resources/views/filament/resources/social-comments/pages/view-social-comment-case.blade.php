@@ -475,6 +475,45 @@
         gap: .8rem;
     }
 
+    .social-case-activity-timeline .social-case-timeline-item {
+        padding-bottom: 1rem;
+        position: relative;
+    }
+
+    .social-case-activity-timeline .social-case-timeline-item:not(:last-child)::before {
+        background: #e5e7eb;
+        bottom: -.1rem;
+        content: '';
+        left: 1rem;
+        position: absolute;
+        top: 2rem;
+        width: 1px;
+    }
+
+    .social-case-activity-timeline .social-case-activity-icon {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        color: #000000;
+        position: relative;
+        z-index: 1;
+    }
+
+    .social-case-activity-timeline .social-case-activity-icon.green,
+    .social-case-activity-timeline .social-case-activity-icon.orange,
+    .social-case-activity-timeline .social-case-activity-icon.blue,
+    .social-case-activity-timeline .social-case-activity-icon.indigo,
+    .social-case-activity-timeline .social-case-activity-icon.cyan,
+    .social-case-activity-timeline .social-case-activity-icon.teal,
+    .social-case-activity-timeline .social-case-activity-icon.emerald {
+        background: #ffffff;
+        border-color: #e5e7eb;
+        color: #000000;
+    }
+
+    .social-case-activity-timeline .social-case-activity-icon svg {
+        color: #000000;
+    }
+
     .social-case-timeline-item {
         align-items: start;
         display: grid;
@@ -506,6 +545,33 @@
     .social-case-activity-icon svg {
         height: 1rem;
         width: 1rem;
+    }
+
+    .social-case-activity-progress {
+        align-items: center;
+        display: flex;
+        gap: .5rem;
+        margin-top: .45rem;
+    }
+
+    .social-case-activity-progress-track {
+        background: #eef2f7;
+        border-radius: 999px;
+        flex: 1;
+        height: .25rem;
+        overflow: hidden;
+    }
+
+    .social-case-activity-progress-fill {
+        background: #28a79d;
+        display: block;
+        height: 100%;
+    }
+
+    .social-case-activity-progress span:last-child {
+        color: #64748b;
+        font-size: .7rem;
+        font-weight: 500;
     }
 
     .social-case-conversation-head {
@@ -695,16 +761,23 @@
     .dark .social-case-conversation-summary,
     .dark .social-case-conversation-metrics,
     .dark .social-case-conversation-metric:not(:last-child),
+    .dark .social-case-activity-timeline .social-case-activity-icon,
     .dark .social-case-conversation-timeline .social-case-activity-icon {
         border-color: rgba(148, 163, 184, .18);
     }
 
     .dark .social-case-conversation-summary,
+    .dark .social-case-activity-timeline .social-case-activity-icon,
     .dark .social-case-conversation-timeline .social-case-activity-icon {
         background: rgba(15, 23, 42, .86);
     }
 
+    .dark .social-case-activity-timeline .social-case-timeline-item:not(:last-child)::before,
     .dark .social-case-conversation-timeline .social-case-timeline-item:not(:last-child)::before {
+        background: rgba(148, 163, 184, .18);
+    }
+
+    .dark .social-case-activity-progress-track {
         background: rgba(148, 163, 184, .18);
     }
 
@@ -959,16 +1032,69 @@
                     <section class="social-case-card">
                         <div class="social-case-card-title"><span class="social-case-card-title-main">Actividad</span></div>
                         <div class="social-case-card-body">
-                            <div class="social-case-timeline">
+                            <div class="social-case-timeline social-case-activity-timeline">
                                 @forelse ($case['activity'] as $event)
                                     <div class="social-case-timeline-item">
                                         <span class="social-case-activity-icon {{ $event['color'] }}">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 6v6h4.5"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                                            @switch($event['icon'])
+                                                @case('eye')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                                                    @break
+                                                @case('arrow-path')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M21.015 4.356v4.992m0 0h-4.992m4.992 0-3.181-3.183a8.25 8.25 0 0 0-13.803 3.7" /></svg>
+                                                    @break
+                                                @case('clock')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                                    @break
+                                                @case('fire')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 0 0 2.648-6.402 4.5 4.5 0 0 1-2.647-1.359 4.5 4.5 0 0 0-2.648 1.359A3.75 3.75 0 0 0 12 18Z" /></svg>
+                                                    @break
+                                                @case('cursor-arrow-rays')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m15.042 21.672-3.684-7.377m0 0-3.684 7.377m3.684-7.377L21 3 3 10.671l8.358 3.624Z" /></svg>
+                                                    @break
+                                                @case('play')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" /></svg>
+                                                    @break
+                                                @case('check-circle')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                                    @break
+                                                @case('chat-bubble-left')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" /></svg>
+                                                    @break
+                                                @default
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
+                                            @endswitch
                                         </span>
                                         <div>
                                             <div class="social-case-activity-title">{{ $event['label'] }}</div>
                                             <div class="social-case-activity-meta">{{ $event['date'] ?: 'Fecha no registrada' }}{{ $event['duration'] ? ' / '.$event['duration'].'s de actividad' : '' }}</div>
-                                            <p class="social-case-activity-note">Evento registrado en el flujo digital del lead.</p>
+                                            <p class="social-case-activity-note">
+                                                @switch($event['group'])
+                                                    @case('conversion')
+                                                        El lead avanzó hacia WhatsApp desde el Smart Link.
+                                                        @break
+                                                    @case('video')
+                                                        Interacción con el contenido visual del tratamiento.
+                                                        @break
+                                                    @case('engagement')
+                                                        Señal de interés durante la visita a la landing.
+                                                        @break
+                                                    @case('navigation')
+                                                        Visita registrada en el Smart Link rastreable.
+                                                        @break
+                                                    @default
+                                                        Evento registrado en el flujo digital del lead.
+                                                @endswitch
+                                            </p>
+
+                                            @if ($event['progress'])
+                                                <div class="social-case-activity-progress" aria-label="Progreso {{ $event['progress'] }}%">
+                                                    <span class="social-case-activity-progress-track">
+                                                        <span class="social-case-activity-progress-fill" style="width: {{ $event['progress'] }}%"></span>
+                                                    </span>
+                                                    <span>{{ $event['progress'] }}%</span>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 @empty
