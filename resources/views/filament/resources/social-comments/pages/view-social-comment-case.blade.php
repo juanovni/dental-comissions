@@ -37,6 +37,10 @@
 @endphp
 
 <style>
+    .social-comment-case-page .fi-header {
+        display: none !important;
+    }
+
     .social-case {
         --case-accent: #009f8b;
         --case-card: #ffffff;
@@ -158,6 +162,24 @@
         color: #00856f;
     }
 
+    .social-case-badge.info {
+        background: #ecfeff;
+        border-color: #cffafe;
+        color: #0e7490;
+    }
+
+    .social-case-badge.hot {
+        background: #fff7ed;
+        border-color: #ffedd5;
+        color: #c2410c;
+    }
+
+    .social-case-badge.neutral {
+        background: #f1f5f9;
+        border-color: #e2e8f0;
+        color: #475569;
+    }
+
     .social-case-badge.warning {
         background: #fff7ed;
         border-color: #fed7aa;
@@ -236,10 +258,16 @@
     }
 
     .social-case-tabs {
+        background: #ffffff;
         border-bottom: 1px solid var(--case-line);
         display: flex;
-        gap: 1rem;
+        gap: 2rem;
+        margin: 0 -1rem;
         overflow-x: auto;
+        padding: 0 1rem;
+        position: sticky;
+        top: 3rem;
+        z-index: 40;
     }
 
     .social-case-tab {
@@ -292,21 +320,19 @@
 
     .social-case-card-title {
         align-items: center;
-        border-bottom: 1px solid var(--case-line);
-        color: #475569;
+        border-bottom: 1px solid #e5e7eb;
         display: flex;
-        font-size: .78rem;
-        font-weight: 700;
         gap: .45rem;
         justify-content: space-between;
-        min-height: 2.65rem;
-        padding: .7rem .85rem;
-        text-transform: uppercase;
+        padding: .75rem 1rem;
     }
 
     .social-case-card-title-main {
         align-items: center;
+        color: #111827;
         display: inline-flex;
+        font-size: .875rem;
+        font-weight: 500;
         gap: .45rem;
     }
 
@@ -380,6 +406,20 @@
         .social-case-metrics {
             grid-template-columns: repeat(3, minmax(0, 1fr));
         }
+    }
+
+    .social-case-pulse-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (min-width: 760px) {
+        .social-case-pulse-metrics {
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+        }
+    }
+
+    .social-case-pulse-metrics .social-case-metric {
+        text-align: center;
     }
 
     .social-case-metric {
@@ -466,10 +506,104 @@
         gap: .75rem;
     }
 
-    .social-case-activity-title {
+    .social-case-conversation-summary {
+        background: #ffffff;
+        border: 1px solid #eef2f7;
+        border-radius: .75rem;
+        overflow: hidden;
+    }
+
+    .social-case-conversation-route {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+        justify-content: space-between;
+        padding: .65rem .75rem;
+    }
+
+    .social-case-conversation-route-main {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+    }
+
+    .social-case-conversation-summary-date,
+    .social-case-conversation-route-arrow {
+        color: #64748b;
+        font-size: .78rem;
+    }
+
+    .social-case-conversation-metrics {
+        border-top: 1px solid #eef2f7;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .social-case-conversation-metric {
+        padding: .65rem .75rem;
+    }
+
+    .social-case-conversation-metric:not(:last-child) {
+        border-right: 1px solid #eef2f7;
+    }
+
+    .social-case-conversation-metric span {
+        color: #64748b;
+        display: block;
+        font-size: .72rem;
+    }
+
+    .social-case-conversation-metric strong {
         color: #0f172a;
+        display: block;
+        font-size: .94rem;
+        line-height: 1.25;
+        margin-top: .1rem;
+    }
+
+    .social-case-conversation-timeline {
+        position: relative;
+    }
+
+    .social-case-conversation-timeline .social-case-timeline-item {
+        padding-bottom: 1rem;
+        position: relative;
+    }
+
+    .social-case-conversation-timeline .social-case-timeline-item:not(:last-child)::before {
+        background: #e5e7eb;
+        bottom: -.1rem;
+        content: '';
+        left: 1rem;
+        position: absolute;
+        top: 2rem;
+        width: 1px;
+    }
+
+    .social-case-conversation-timeline .social-case-activity-icon {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        color: #64748b;
+        position: relative;
+        z-index: 1;
+    }
+
+    .social-case-conversation-timeline .social-case-activity-icon svg {
+        color: #000000;
+        height: .95rem;
+        width: .95rem;
+    }
+
+    .social-case-activity-title {
+        align-items: center;
+        color: #0f172a;
+        display: flex;
         font-size: .84rem;
-        font-weight: 700;
+        font-weight: 500;
+        gap: .4rem;
+        line-height: 1.35;
     }
 
     .social-case-conversation-kind,
@@ -544,6 +678,44 @@
         --case-line: rgba(148, 163, 184, .18);
         --case-muted: #94a3b8;
         --case-soft: #0f172a;
+    }
+
+    .dark .social-case-tabs {
+        background: #0f172a;
+    }
+
+    .dark .social-case-card-title {
+        border-bottom-color: #374151;
+    }
+
+    .dark .social-case-conversation-summary,
+    .dark .social-case-conversation-metrics,
+    .dark .social-case-conversation-metric:not(:last-child),
+    .dark .social-case-conversation-timeline .social-case-activity-icon {
+        border-color: rgba(148, 163, 184, .18);
+    }
+
+    .dark .social-case-conversation-summary,
+    .dark .social-case-conversation-timeline .social-case-activity-icon {
+        background: rgba(15, 23, 42, .86);
+    }
+
+    .dark .social-case-conversation-timeline .social-case-timeline-item:not(:last-child)::before {
+        background: rgba(148, 163, 184, .18);
+    }
+
+    .dark .social-case-conversation-metric strong {
+        color: #e2e8f0;
+    }
+
+    .dark .social-case-conversation-metric span,
+    .dark .social-case-conversation-summary-date,
+    .dark .social-case-conversation-route-arrow {
+        color: #94a3b8;
+    }
+
+    .dark .social-case-card-title-main {
+        color: #ffffff;
     }
 
     .dark .social-case-handle,
@@ -676,7 +848,7 @@
                     <section class="social-case-card">
                         <div class="social-case-card-title"><span class="social-case-card-title-main">Pulso del cliente</span></div>
                         <div class="social-case-card-body">
-                            <div class="social-case-metrics">
+                            <div class="social-case-metrics social-case-pulse-metrics">
                                 @foreach ($case['pulse'] as $metric)
                                     <div class="social-case-metric"><strong>{{ $metric['value'] }}</strong><span>{{ $metric['label'] }}</span></div>
                                 @endforeach
@@ -687,21 +859,66 @@
                     <section class="social-case-card">
                         <div class="social-case-card-title"><span class="social-case-card-title-main">Hilo de conversación</span></div>
                         <div class="social-case-card-body">
-                            <div class="social-case-metrics">
-                                <div class="social-case-metric"><strong>{{ $case['conversation_metrics']['response_time'] }}</strong><span>Respuesta prom.</span></div>
-                                <div class="social-case-metric"><strong>{{ $case['conversation_metrics']['message_count'] }}</strong><span>Mensajes</span></div>
-                                <div class="social-case-metric"><strong>{{ $case['conversation_metrics']['automation_rate'] }}%</strong><span>Automatización</span></div>
-                            </div>
-                            <div class="social-case-timeline">
+                            @php
+                                $conversationCollection = collect($case['conversation']);
+                                $conversationChannels = $conversationCollection->where('channel', '!=', 'system')->values();
+                                $firstConversationChannel = $conversationChannels->first();
+                                $lastConversationChannel = $conversationChannels->last();
+                            @endphp
+
+                            @if ($conversationCollection->isNotEmpty())
+                                <div class="social-case-conversation-summary">
+                                    <div class="social-case-conversation-route">
+                                        <div class="social-case-conversation-route-main">
+                                            @if ($firstConversationChannel)
+                                                <span class="social-case-muted">Canales:</span>
+                                                <span class="social-case-badge {{ $firstConversationChannel['channel_class'] }}">{{ $firstConversationChannel['channel_label'] }}</span>
+                                            @endif
+                                            @if ($firstConversationChannel && $lastConversationChannel && $firstConversationChannel['channel'] !== $lastConversationChannel['channel'])
+                                                <span class="social-case-conversation-route-arrow">→</span>
+                                                <span class="social-case-badge {{ $lastConversationChannel['channel_class'] }}">{{ $lastConversationChannel['channel_label'] }}</span>
+                                            @endif
+                                        </div>
+                                        <span class="social-case-conversation-summary-date">{{ $conversationCollection->first()['short_date'] ?? 'Fecha no registrada' }}</span>
+                                    </div>
+                                    <div class="social-case-conversation-metrics">
+                                        <div class="social-case-conversation-metric"><span>Respuesta prom.</span><strong>{{ $case['conversation_metrics']['response_time'] }}</strong></div>
+                                        <div class="social-case-conversation-metric"><span>Mensajes</span><strong>{{ $case['conversation_metrics']['message_count'] }}</strong></div>
+                                        <div class="social-case-conversation-metric"><span>Automatización</span><strong>{{ $case['conversation_metrics']['automation_rate'] }}%</strong></div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="social-case-timeline social-case-conversation-timeline">
                                 @forelse ($case['conversation'] as $event)
                                     <div class="social-case-timeline-item">
                                         <span class="social-case-activity-icon {{ $event['color'] }}">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/></svg>
+                                            @switch($event['platform'])
+                                                @case('facebook')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7h2.35l.35-2.72h-2.7V9.55c0-.79.22-1.33 1.35-1.33h1.44V5.79c-.25-.03-1.1-.1-2.1-.1-2.08 0-3.5 1.27-3.5 3.6v1.99H8.34V14h2.35v7h2.81Z" /></svg>
+                                                    @break
+                                                @case('instagram')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor"><rect width="15" height="15" x="4.5" y="4.5" rx="4" /><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 11.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" /><path stroke-linecap="round" d="M16.75 7.75h.01" /></svg>
+                                                    @break
+                                                @case('whatsapp')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.75 19.25 6 15.6a7 7 0 1 1 2.42 2.35l-3.67 1.3Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.2 8.95c.18-.5.42-.55.74-.55h.43c.22 0 .4.14.49.34l.68 1.52c.08.18.04.39-.1.53l-.47.48c.48.84 1.16 1.52 2 2l.48-.47c.14-.14.35-.18.53-.1l1.52.68c.2.09.34.27.34.49v.43c0 .32-.05.56-.55.74-.4.14-.83.21-1.28.21-2.64 0-5.26-2.62-5.26-5.26 0-.45.07-.88.21-1.28Z" /></svg>
+                                                    @break
+                                                @case('action')
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+                                                    @break
+                                                @default
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/></svg>
+                                            @endswitch
                                         </span>
                                         <div>
                                             <div class="social-case-conversation-head">
                                                 <div>
-                                                    <div class="social-case-activity-title">{{ $event['author'] }}</div>
+                                                    <div class="social-case-activity-title">
+                                                        {{ $event['author'] }}
+                                                        @unless ($event['is_automated'])
+                                                            <span class="social-case-badge {{ $event['channel_class'] }}">{{ $event['channel_label'] }}</span>
+                                                        @endunless
+                                                    </div>
                                                     <div class="social-case-conversation-kind">{{ $event['kind_label'] }}</div>
                                                 </div>
                                                 <span class="social-case-muted">{{ $event['time'] }}</span>

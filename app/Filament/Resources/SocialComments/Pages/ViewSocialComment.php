@@ -8,7 +8,6 @@ use Filament\Actions\Action;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
-use Illuminate\Contracts\View\View;
 
 class ViewSocialComment extends ViewRecord
 {
@@ -23,9 +22,9 @@ class ViewSocialComment extends ViewRecord
             : 'resumen';
     }
 
-    public function getHeader(): ?View
+    public function getPageClasses(): array
     {
-        return null;
+        return ['social-comment-case-page'];
     }
 
     public function infolist(Schema $schema): Schema
