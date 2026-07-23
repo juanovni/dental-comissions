@@ -8,7 +8,6 @@ enum UserPermission: string
     case PatientsView = 'patients.view';
     case ProceduresView = 'procedures.view';
     case DoctorAssistantAssignmentsView = 'doctor_assistant_assignments.view';
-    case ActivityRecordsView = 'activity_records.view';
     case AppointmentsView = 'appointments.view';
     case WhatsappMessagesView = 'whatsapp_messages.view';
     case SocialAccountsView = 'social_accounts.view';
@@ -26,7 +25,6 @@ enum UserPermission: string
             self::PatientsView => 'Ver contactos/pacientes',
             self::ProceduresView => 'Ver procedimientos',
             self::DoctorAssistantAssignmentsView => 'Ver asignaciones doctor-asistente',
-            self::ActivityRecordsView => 'Ver actividades clinicas',
             self::AppointmentsView => 'Ver agenda/citas',
             self::WhatsappMessagesView => 'Ver mensajes WhatsApp',
             self::SocialAccountsView => 'Ver cuentas sociales',
@@ -47,7 +45,6 @@ enum UserPermission: string
             self::DoctorAssistantAssignmentsView => 'Configuracion operativa',
             self::PatientsView,
             self::AppointmentsView,
-            self::ActivityRecordsView,
             self::WhatsappMessagesView => 'Operacion clinica',
             self::SocialAccountsView,
             self::SocialCommentsView,

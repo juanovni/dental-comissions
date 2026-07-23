@@ -255,7 +255,7 @@ class WhatsappServiceTest extends TestCase
         $this->assertEquals(WhatsappMessageStatus::NeedsReview, $original->status);
     }
 
-    public function test_assistant_with_one_assigned_doctor_registers_activity_for_that_doctor(): void
+    public function test_assistant_with_one_assigned_doctor_does_not_register_activity(): void
     {
         $this->seedPaymentMethods();
 
@@ -293,16 +293,14 @@ class WhatsappServiceTest extends TestCase
             $this->buildPayload('+573001112233', 'Paciente: Maria Perez Procedimiento: Limpieza dental Pago: efectivo'),
         );
 
-        $activity = ActivityRecord::first();
-
         $this->assertNotNull($result);
-        $this->assertNotNull($activity);
         $this->assertEquals($assistant->id, $result->professional_id);
-        $this->assertEquals($doctor->id, $activity->doctor_id);
-        $this->assertTrue($activity->assistants()->whereKey($assistant->id)->exists());
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertEquals(0, ActivityRecord::count());
+        $this->assertStringContainsString('ya no registra actividades clinicas', WhatsappMessage::where('direction', 'outgoing')->latest('id')->value('message_body'));
     }
 
-    public function test_assistant_with_multiple_doctors_uses_labeled_doctor(): void
+    public function test_assistant_with_multiple_doctors_labeled_message_does_not_register_activity(): void
     {
         $this->seedPaymentMethods();
 
@@ -343,18 +341,16 @@ class WhatsappServiceTest extends TestCase
             'review_notes' => '',
         ]);
 
-        $this->whatsappService->processIncomingMessage(
+        $result = $this->whatsappService->processIncomingMessage(
             $this->buildPayload('+573001112233', 'Doctor: Laura Torres, Paciente: Maria Perez, Procedimiento: Limpieza dental, Pago: efectivo'),
         );
 
-        $activity = ActivityRecord::first();
-
-        $this->assertNotNull($activity);
-        $this->assertEquals($secondDoctor->id, $activity->doctor_id);
-        $this->assertTrue($activity->assistants()->whereKey($assistant->id)->exists());
+        $this->assertNotNull($result);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertEquals(0, ActivityRecord::count());
     }
 
-    public function test_assistant_with_multiple_doctors_uses_doctor_mentioned_at_message_start(): void
+    public function test_assistant_with_multiple_doctors_start_mention_does_not_register_activity(): void
     {
         $this->seedPaymentMethods();
 
@@ -395,15 +391,13 @@ class WhatsappServiceTest extends TestCase
             'review_notes' => '',
         ]);
 
-        $this->whatsappService->processIncomingMessage(
+        $result = $this->whatsappService->processIncomingMessage(
             $this->buildPayload('+573007778899', 'Dr. Juan Constantine, limpieza dental para Roberto Gomez, pago efectivo'),
         );
 
-        $activity = ActivityRecord::first();
-
-        $this->assertNotNull($activity);
-        $this->assertEquals($secondDoctor->id, $activity->doctor_id);
-        $this->assertTrue($activity->assistants()->whereKey($assistant->id)->exists());
+        $this->assertNotNull($result);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertEquals(0, ActivityRecord::count());
     }
 
     public function test_assistant_partial_doctor_name_is_rejected_when_ambiguous(): void

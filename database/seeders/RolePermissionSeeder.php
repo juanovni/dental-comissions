@@ -17,7 +17,6 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::PatientsView,
                 UserPermission::ProceduresView,
                 UserPermission::DoctorAssistantAssignmentsView,
-                UserPermission::ActivityRecordsView,
                 UserPermission::AppointmentsView,
                 UserPermission::WhatsappMessagesView,
                 UserPermission::SocialAccountsView,
@@ -30,7 +29,6 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::PatientsView,
                 UserPermission::ProceduresView,
                 UserPermission::DoctorAssistantAssignmentsView,
-                UserPermission::ActivityRecordsView,
                 UserPermission::AppointmentsView,
                 UserPermission::WhatsappMessagesView,
             ],
@@ -39,7 +37,6 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::PatientsView,
                 UserPermission::ProceduresView,
                 UserPermission::DoctorAssistantAssignmentsView,
-                UserPermission::ActivityRecordsView,
                 UserPermission::AppointmentsView,
                 UserPermission::WhatsappMessagesView,
             ],
@@ -51,6 +48,10 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::SocialCommentsView,
             ],
         ];
+
+        RolePermission::query()
+            ->whereNotIn('permission', collect(UserPermission::cases())->map->value)
+            ->delete();
 
         foreach (UserRole::cases() as $role) {
             foreach (UserPermission::cases() as $permission) {

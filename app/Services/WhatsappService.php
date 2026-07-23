@@ -5,12 +5,10 @@ namespace App\Services;
 use App\Enums\ProfessionalRole;
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
-use App\Models\ActivityRecord;
 use App\Models\DoctorAssistantAssignment;
 use App\Models\Professional;
 use App\Models\SocialComment;
 use App\Models\WhatsappMessage;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -178,37 +176,11 @@ class WhatsappService
             return;
         }
 
-        $aiService = app(AiParsingService::class);
-        $creationService = app(ActivityCreationService::class);
-
-        $parsedData = $aiService->parseMessage($message->message_body, $doctor);
-        $parsedData = $this->appendSenderAssistant($parsedData, $sender);
-
-        $activity = $creationService->create($parsedData, $doctor, $message);
-
-        if ($activity) {
-            $summary = $this->buildActivitySummary($activity, $parsedData);
-            $this->sendMessage($message->from_phone, $summary);
-            $message->markAsParsed($parsedData);
-        } else {
-            $message->refresh();
-            $error = $message->error_message ?: 'Error al crear actividad desde IA';
-
-            if (str_contains(strtolower($error), 'falta metodo de pago')) {
-                $this->sendMessage(
-                    $message->from_phone,
-                    'No pudimos registrar la actividad porque falta el metodo de pago. Envia nuevamente el mensaje indicando efectivo, transferencia, credito o debito.',
-                );
-
-                return;
-            }
-
-            $this->sendMessage($message->from_phone, 'No pudimos procesar tu mensaje. El administrador lo revisara.');
-
-            if (! $message->error_message) {
-                $message->markAsNeedsReview($error);
-            }
-        }
+        $message->markAsFailed('El registro de actividades clinicas por WhatsApp fue retirado de OdonCRM.');
+        $this->sendMessage(
+            $message->from_phone,
+            'OdonCRM ya no registra actividades clinicas por WhatsApp. Si necesitas gestionar una cita o un paciente, usa los modulos operativos correspondientes.',
+        );
     }
 
     private function resolveDoctorForSender(Professional $sender, string $messageBody): ?Professional
@@ -345,37 +317,6 @@ class WhatsappService
             ->toString();
     }
 
-    private function buildActivitySummary($activity, array $parsedData): string
-    {
-        $patientName = $activity->patient->full_name ?? $parsedData['patient_name'] ?? 'N/A';
-        $procedureName = $activity->procedure->name ?? 'N/A';
-        $paymentMethodName = $activity->paymentMethod->name ?? $parsedData['payment_method'] ?? 'N/A';
-        $date = Carbon::parse($parsedData['date'] ?? $activity->activity_date)->format('d/m/Y');
-        $doctorCommission = number_format($activity->doctor_commission_amount ?? 0, 2);
-        $assistantCount = count($parsedData['assistants'] ?? []);
-
-        $summary = "*Actividad pre-registrada:*\n";
-        $summary .= "Paciente: {$patientName}\n";
-        $summary .= "Procedimiento: {$procedureName}\n";
-        $summary .= "Metodo de pago: {$paymentMethodName}\n";
-        $summary .= "Fecha: {$date}\n";
-        $summary .= "Comision doctor: \${$doctorCommission}\n";
-
-        if ($assistantCount > 0) {
-            $summary .= 'Auxiliares: '.implode(', ', $parsedData['assistants'])."\n";
-        }
-
-        if ($parsedData['needs_review'] ?? false) {
-            $summary .= "\n*Nota:* Este registro requiere revision del administrador.\n";
-            $summary .= "Motivo: {$parsedData['review_notes']}\n";
-        }
-
-        $summary .= "\nResponde *OK* para confirmar y guardar definitivamente, "
-            .'o *CORREGIR* [cambio] para enviarla a revision.';
-
-        return $summary;
-    }
-
     public function buildAppointmentCreatedReply(\App\Models\Appointment $appointment): string
     {
         $appointment->loadMissing(['doctor', 'procedure']);
@@ -431,30 +372,18 @@ class WhatsappService
     public function processReply(WhatsappMessage $reply, WhatsappMessage $original): void
     {
         $text = strtolower(trim($reply->message_body));
-        $activity = $this->findActivityForMessage($original);
-
         if ($text === 'ok') {
-            $activity?->approve();
             $original->markAsConfirmed();
             $reply->markAsConfirmed();
-            $this->sendMessage($reply->from_phone, 'Confirmado! Tu actividad ha sido guardada definitivamente.');
+            $this->sendMessage($reply->from_phone, 'Confirmado.');
         } elseif (str_starts_with($text, 'corregir')) {
             $notes = trim(substr($reply->message_body, 8));
-            $activity?->requestCorrection($notes ?: 'Solicitud de correccion sin detalles');
             $original->markAsNeedsReview($notes ?: 'Solicitud de correccion sin detalles');
             $reply->markAsNeedsReview($notes);
-            $this->sendMessage($reply->from_phone, 'Recibido. Tu registro ha sido enviado a revision. El administrador lo revisara.');
+            $this->sendMessage($reply->from_phone, 'Recibido. El mensaje ha sido enviado a revision.');
         } else {
             $this->sendMessage($reply->from_phone, 'No entendimos tu respuesta. Responde *OK* para confirmar o *CORREGIR* [cambio].');
         }
-    }
-
-    private function findActivityForMessage(WhatsappMessage $message): ?ActivityRecord
-    {
-        return ActivityRecord::query()
-            ->where('notes', 'like', '%Msg ID: '.$message->message_sid.'%')
-            ->latest('id')
-            ->first();
     }
 
     private function handleSocialLeadMessage(SocialComment $comment, WhatsappMessage $message, string $fromPhone): WhatsappMessage
