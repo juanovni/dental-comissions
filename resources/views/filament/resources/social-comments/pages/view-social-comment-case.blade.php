@@ -24,8 +24,14 @@
     $commentDate = $record->published_at ?: $record->created_at;
     $commentDateLabel = $commentDate?->translatedFormat('M. d, Y · H:i') ?? 'Sin fecha';
     $processedAt = $record->processed_at?->translatedFormat('M. d, Y · H:i') ?? 'Pendiente';
-    $score = (int) ($record->recent_engagement_score ?: $record->interest_score ?: 0);
+    $score = (int) $record->recent_engagement_score;
     $scoreWidth = min($score, 100);
+    $engagementState = match (true) {
+        $score >= 100 => ['label' => 'Alta prioridad', 'class' => 'temp-max'],
+        $score >= 71 => ['label' => 'Caliente', 'class' => 'temp-hot'],
+        $score >= 31 => ['label' => 'Tibio', 'class' => 'temp-warm'],
+        default => ['label' => 'Frío', 'class' => 'temp-cold'],
+    };
     $tabs = [
         'resumen' => ['label' => 'Resumen', 'icon' => 'sparkles'],
         'conversacion' => ['label' => 'Conversación', 'icon' => 'chat'],
@@ -98,7 +104,7 @@
         color: #db2777;
         display: inline-flex;
         font-size: .58rem;
-        font-weight: 700;
+        font-weight: 600;
         height: 1.05rem;
         justify-content: center;
         position: absolute;
@@ -117,7 +123,7 @@
     .social-case-handle {
         color: #111827;
         font-size: 1.02rem;
-        font-weight: 700;
+        font-weight: 600;
     }
 
     .social-case-meta {
@@ -195,7 +201,7 @@
         cursor: pointer;
         display: inline-flex;
         font-size: .78rem;
-        font-weight: 600;
+        font-weight: 500;
         gap: .35rem;
         min-height: 2.2rem;
         padding: .4rem .7rem;
@@ -341,7 +347,7 @@
         color: #111827;
         display: inline-flex;
         font-size: .875rem;
-        font-weight: 500;
+        font-weight: 600;
         gap: .45rem;
     }
 
@@ -441,7 +447,7 @@
         color: #020617;
         display: block;
         font-size: .98rem;
-        font-weight: 700;
+        font-weight: 600;
     }
 
     .social-case-metric span {
@@ -467,7 +473,7 @@
         color: #111827;
         display: block;
         font-size: .9rem;
-        font-weight: 700;
+        font-weight: 600;
     }
 
     .social-case-timeline {
@@ -709,10 +715,64 @@
     }
 
     .social-case-meter span {
-        background: #d99a00;
         border-radius: inherit;
         display: block;
         height: 100%;
+    }
+
+    .social-case-meter span.temp-cold {
+        background: #2563eb;
+    }
+
+    .social-case-meter span.temp-warm {
+        background: #f97316;
+    }
+
+    .social-case-meter span.temp-hot,
+    .social-case-meter span.temp-max {
+        background: #dc2626;
+    }
+
+    .social-case-thermo-state {
+        align-items: center;
+        color: #64748b;
+        display: inline-flex;
+        font-size: .78rem;
+        font-weight: 500;
+        gap: .35rem;
+    }
+
+    .social-case-thermo-state::before {
+        border-radius: 999px;
+        content: '';
+        height: .45rem;
+        width: .45rem;
+    }
+
+    .social-case-thermo-state.temp-cold {
+        color: #1d4ed8;
+    }
+
+    .social-case-thermo-state.temp-warm {
+        color: #c2410c;
+    }
+
+    .social-case-thermo-state.temp-hot,
+    .social-case-thermo-state.temp-max {
+        color: #b91c1c;
+    }
+
+    .social-case-thermo-state.temp-cold::before {
+        background: #3b82f6;
+    }
+
+    .social-case-thermo-state.temp-warm::before {
+        background: #f59e0b;
+    }
+
+    .social-case-thermo-state.temp-hot::before,
+    .social-case-thermo-state.temp-max::before {
+        background: #ef4444;
     }
 
     .social-case-post-preview {
@@ -1110,9 +1170,15 @@
                         <div class="social-case-card-title">
                             <span class="social-case-card-title-main">Contexto clínico 360</span>
                             @if ($patientUrl)
-                                <a class="social-case-action primary" href="{{ $patientUrl }}">Ver ficha</a>
+                                <a class="social-case-action primary" href="{{ $patientUrl }}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                                    Ver ficha
+                                </a>
                             @else
-                                <button class="social-case-action primary" type="button" wire:click="mountAction('link_existing_patient')">Vincular ficha</button>
+                                <button class="social-case-action primary" type="button" wire:click="mountAction('link_existing_patient')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3"></path><path d="M12.75 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 12.75 0Z"></path><path d="M3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109"></path></svg>
+                                    Vincular ficha
+                                </button>
                             @endif
                         </div>
                         <div class="social-case-card-body">
@@ -1152,8 +1218,8 @@
                             <strong style="font-size:1.15rem">{{ $riskLabel }}</strong>
                             <span class="social-case-muted">Score {{ $score }}/100</span>
                         </div>
-                        <div class="social-case-meter"><span style="width: {{ $scoreWidth }}%"></span></div>
-                        <div class="social-case-muted">Termómetro de interés · {{ strtolower($classificationLabel) }}</div>
+                        <div class="social-case-meter"><span class="{{ $engagementState['class'] }}" style="width: {{ $scoreWidth }}%"></span></div>
+                        <div class="social-case-thermo-state {{ $engagementState['class'] }}">Termómetro de interés · {{ strtolower($engagementState['label']) }}</div>
                     </div>
                 </section>
 
