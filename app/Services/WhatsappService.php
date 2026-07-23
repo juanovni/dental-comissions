@@ -528,9 +528,26 @@ class WhatsappService
 
         $appointment = app(AutoAppointmentService::class)->createFromDetectedIntent($comment, $agentResponse);
 
-        $this->sendAndMarkIncoming($message, $fromPhone, $appointment ? $this->buildAppointmentCreatedReply($appointment) : $agentResponse['reply']);
+        if ($appointment) {
+            $reply = $this->buildAppointmentCreatedReply($appointment);
+        } elseif ($this->isAppointmentIntentResponse($agentResponse)) {
+            $reply = 'Sí, con gusto te ayudamos a agendar tu cita. Estoy revisando la disponibilidad real de la clínica; por favor indícanos el día y horario que prefieres para confirmarte opciones.';
+        } else {
+            $reply = $agentResponse['reply'];
+        }
+
+        $this->sendAndMarkIncoming($message, $fromPhone, $reply);
 
         return $message;
+    }
+
+    private function isAppointmentIntentResponse(array $agentResponse): bool
+    {
+        $candidate = $agentResponse['appointment_candidate'] ?? [];
+
+        return in_array($agentResponse['intent'] ?? null, ['appointment_interest', 'ready_to_book'], true)
+            || in_array($candidate['intent_type'] ?? null, ['appointment_interest', 'ready_to_book'], true)
+            || (bool) ($candidate['wants_appointment'] ?? false);
     }
 
     private function scoreAgentResponse(SocialComment $comment, array $agentResponse): void

@@ -227,9 +227,12 @@ class WhatsappSalesAgentService
     public function buildLeadContext(SocialComment $comment, WhatsappMessage $message): array
     {
         $procedure = $comment->suggestedProcedure;
+        $clinicTimezone = app(SocialCrmSettingsService::class)->clinicTimezone();
 
         $context = [
             'tipo_mensaje' => 'whatsapp',
+            'fecha_actual_clinica' => now($clinicTimezone)->isoFormat('dddd D [de] MMMM [de] YYYY'),
+            'timezone_clinica' => $clinicTimezone,
             'nombre_paciente' => $comment->author_name ?? $comment->author_username ?? 'Paciente',
             'username' => $comment->author_username ?? '',
             'procedimiento_de_interes' => $procedure?->name ?? 'valoracion dental',
@@ -395,6 +398,8 @@ Eres un asistente de ventas para una clinica dental. Debes responder preguntas s
 Importante: NUNCA debes proporcionar diagnosticos clinicos ni recomendar tratamientos especificos. Siempre debes sugerir una valoracion presencial con un especialista.
 
 Contexto del lead:
+- Fecha actual de la clinica: {$context['fecha_actual_clinica']}
+- Zona horaria de la clinica: {$context['timezone_clinica']}
 - Nombre del paciente: {$context['nombre_paciente']}
 - Username: {$context['username']}
 - Procedimiento de interes: {$context['procedimiento_de_interes']}
@@ -408,6 +413,12 @@ Mensaje del paciente: {$context['mensaje_usuario']}
 Historial de la conversacion:
 {$history}
 {$bookingInstruction}
+Reglas de agenda:
+- NO inventes fechas exactas, dias de semana ni horarios disponibles.
+- NO listes opciones numeradas de horarios en tu campo "reply".
+- Si el paciente pide disponibilidad, extrae solo preferred_date_text y preferred_time_text desde su mensaje. Laravel consultara la agenda real y enviara las opciones.
+- Si mencionas una fecha relativa como "proximo lunes", no la conviertas a una fecha exacta en el reply.
+
 Responde SOLO con un JSON valido con esta estructura exacta:
 {
     "reply": "tu respuesta amigable y profesional aqui",

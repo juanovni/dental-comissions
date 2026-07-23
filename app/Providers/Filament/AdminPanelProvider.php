@@ -70,6 +70,8 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(false),
                 NavigationGroup::make('CRM de Ventas')
                     ->icon('heroicon-o-briefcase'),
+                NavigationGroup::make('Pity Voice')
+                    ->icon('heroicon-o-phone'),
                 NavigationGroup::make('Configuración')
                     ->icon('heroicon-o-cog-6-tooth'),
             ])

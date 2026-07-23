@@ -353,20 +353,18 @@ class GoogleCalendarServiceTest extends TestCase
         $patient = Patient::factory()->create(['full_name' => 'Juan Perez']);
         $appointment = Appointment::factory()->create([
             'patient_id' => $patient->id,
-            'scheduled_at' => now()->addDay()->setHour(10)->setMinute(0),
-            'duration_minutes' => 60,
+            'scheduled_at' => '2026-07-20 14:15:00',
+            'duration_minutes' => 45,
         ]);
 
         $event = $this->service->buildCalendarEvent($appointment);
 
         $clinicTz = app(\App\Services\SocialCrmSettingsService::class)->clinicTimezone();
-        $localStart = $appointment->scheduled_at->copy()->setTimezone($clinicTz);
-        $localEnd = $appointment->scheduled_at->copy()->addMinutes(60)->setTimezone($clinicTz);
 
         $this->assertStringContainsString('Juan Perez', $event->getSummary());
-        $this->assertSame($localStart->format('Y-m-d\TH:i:s'), $event->getStart()->getDateTime());
+        $this->assertSame('2026-07-20T14:15:00', $event->getStart()->getDateTime());
         $this->assertSame($clinicTz, $event->getStart()->getTimeZone());
-        $this->assertSame($localEnd->format('Y-m-d\TH:i:s'), $event->getEnd()->getDateTime());
+        $this->assertSame('2026-07-20T15:00:00', $event->getEnd()->getDateTime());
         $this->assertSame($clinicTz, $event->getEnd()->getTimeZone());
     }
 

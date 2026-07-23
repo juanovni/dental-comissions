@@ -62,13 +62,30 @@ class AutoAppointmentService
             return null;
         }
 
+        $procedure = $comment->suggestedProcedure ?: app(AppointmentProcedureResolver::class)->defaultProcedure();
+
+        if (! $comment->suggested_doctor_id || ! $procedure) {
+            Log::info('AutoAppointmentService: faltan doctor o procedimiento definidos por backend', [
+                'comment_id' => $comment->id,
+                'doctor_id' => $comment->suggested_doctor_id,
+                'procedure_id' => $procedure?->id,
+            ]);
+
+            return null;
+        }
+
+        if (! $comment->suggested_procedure_id) {
+            $comment->forceFill(['suggested_procedure_id' => $procedure->id])->save();
+            $comment->setRelation('suggestedProcedure', $procedure);
+        }
+
         try {
             $data = [
                 'patient_id' => app(SocialPatientConversionService::class)->ensurePatientForLead($comment)?->id,
                 'scheduled_at' => $scheduledAt,
                 'duration_minutes' => $duration,
                 'doctor_id' => $comment->suggested_doctor_id,
-                'procedure_id' => $comment->suggested_procedure_id,
+                'procedure_id' => $procedure->id,
                 'status' => $autoConfirm ? AppointmentStatus::Confirmed : AppointmentStatus::PendingConfirmation,
                 'source' => AppointmentSource::WhatsappAi,
                 'notes' => 'Cita creada automaticamente desde WhatsApp. Intencion: ' . $intentType,
@@ -94,7 +111,7 @@ class AutoAppointmentService
                     'appointment_id' => $appointment->id,
                     'scheduled_at' => $scheduledAt->toISOString(),
                     'doctor_id' => $comment->suggested_doctor_id,
-                    'procedure_id' => $comment->suggested_procedure_id,
+                    'procedure_id' => $procedure->id,
                     'auto_confirm' => $autoConfirm,
                 ],
             ]);

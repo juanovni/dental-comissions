@@ -25,7 +25,7 @@
 
     <style>
         .social-inbox-page {
-            --inbox-accent: rgb(var(--primary-600, 8 145 178));
+            --inbox-accent: #0f766e;
             --inbox-ink: #0f172a;
             --inbox-muted: #64748b;
             --inbox-line: rgba(15, 23, 42, .08);
@@ -172,7 +172,7 @@
 
         .smart-channel-item:hover,
         .smart-channel-item.is-active {
-            background: color-mix(in srgb, var(--inbox-accent) 9%, #ffffff);
+            background: #eef8f8;
             color: var(--inbox-accent);
         }
 
@@ -404,6 +404,12 @@
             padding: .9rem 1rem;
         }
 
+        .smart-drawer-footer .smart-action {
+            flex: 1;
+            justify-content: center;
+            min-height: 2.25rem;
+        }
+
         .smart-drawer-tabs {
             border-bottom: 1px solid #e5e7eb;
             display: flex;
@@ -482,6 +488,25 @@
             line-height: 1.45;
             margin: 0;
             white-space: pre-line;
+        }
+
+        .smart-drawer-card-row {
+            display: grid;
+            gap: .35rem .85rem;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .smart-drawer-card-label {
+            color: #64748b;
+            font-size: .78rem;
+            font-weight: 500;
+        }
+
+        .smart-drawer-card-value {
+            color: #0f172a;
+            font-size: .82rem;
+            font-weight: 600;
+            text-align: right;
         }
 
         .smart-drawer-muted {
@@ -858,6 +883,14 @@
 
         .dark .smart-drawer-card-text {
             color: #cbd5e1;
+        }
+
+        .dark .smart-drawer-card-label {
+            color: #94a3b8;
+        }
+
+        .dark .smart-drawer-card-value {
+            color: #e2e8f0;
         }
 
         .dark .smart-drawer-card.is-ai {
@@ -2342,6 +2375,9 @@
 
                     <div class="smart-row-actions" wire:click.stop>
                         @if ($isLead || blank($comment->tracking_token))
+                            <a class="smart-row-icon-action" href="{{ $detailUrl }}" title="Ver">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                            </a>
                             <button class="smart-row-icon-action" type="button" wire:click="routeToWhatsapp({{ $comment->id }})" title="{{ $isDerived ? 'Ver texto de seguimiento' : 'Derivar' }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>
                             </button>
@@ -2723,10 +2759,11 @@
                             @endforelse
                         </div>
                     </section>
+
                 </div>
 
                 <footer class="smart-drawer-footer">
-                    <a class="smart-action primary" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Ver caso completo</span></a>
+                    <a class="smart-action" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Ver caso completo</span></a>
                     @if ($drawerPatient)
                         <a class="smart-action" href="{{ \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $drawerPatient]) }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><span>Ver ficha</span></a>
                     @else
@@ -2866,7 +2903,7 @@
                     </div>
 
                     <footer class="smart-modal-footer">
-                        <button class="smart-action primary" type="button" wire:click="confirmWhatsappRouting">
+                        <button class="smart-action primary" type="button" wire:click="confirmWhatsappRouting" style="min-height: 2.25rem;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"/></svg>
                             <span>{{ $whatsappGenerated ? 'Actualizar seguimiento' : 'Generar seguimiento' }}</span>
                         </button>

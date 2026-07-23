@@ -10,6 +10,7 @@ use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
 use App\Models\Appointment;
+use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Professional;
 use App\Models\SocialAccount;
@@ -105,7 +106,7 @@ class AutoAppointmentServiceTest extends TestCase
             'closing_opportunity_score' => 90,
             'appointment_candidate' => [
                 'wants_appointment' => true,
-                'preferred_date_parsed' => now()->addDay()->format('Y-m-d'),
+                'preferred_date_parsed' => now()->next('Monday')->format('Y-m-d'),
                 'preferred_time_parsed' => null,
                 'preferred_date_text' => 'mañana',
                 'preferred_time_text' => null,
@@ -124,7 +125,7 @@ class AutoAppointmentServiceTest extends TestCase
 
     public function test_returns_null_when_no_booking_intent(): void
     {
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'information_seeking',
             'closing_opportunity_score' => 30,
@@ -145,7 +146,7 @@ class AutoAppointmentServiceTest extends TestCase
 
     public function test_returns_null_when_no_date_parsed(): void
     {
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'appointment_interest',
             'closing_opportunity_score' => 80,
@@ -168,7 +169,7 @@ class AutoAppointmentServiceTest extends TestCase
     {
         Carbon::setTestNow(Carbon::parse('2026-07-07'));
 
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'ready_to_book',
             'closing_opportunity_score' => 95,
@@ -196,13 +197,13 @@ class AutoAppointmentServiceTest extends TestCase
             ['value' => true, 'value_type' => 'boolean', 'label' => 'Auto confirm'],
         );
 
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'appointment_interest',
             'closing_opportunity_score' => 85,
             'appointment_candidate' => [
                 'wants_appointment' => true,
-                'preferred_date_parsed' => now()->addDay()->format('Y-m-d'),
+                'preferred_date_parsed' => now()->next('Monday')->format('Y-m-d'),
                 'preferred_time_parsed' => '14:00',
                 'intent_type' => 'appointment_interest',
                 'intent_confidence' => 80,
@@ -216,6 +217,61 @@ class AutoAppointmentServiceTest extends TestCase
         $this->assertSame(AppointmentStatus::Confirmed, $appointment->status);
     }
 
+    public function test_reuses_existing_future_patient_appointment_instead_of_creating_duplicate(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-07 09:00:00'));
+
+        $procedure = Procedure::factory()->create(['name' => 'Limpieza dental']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dr. Test']);
+        $patient = Patient::factory()->create([
+            'full_name' => 'Juan Constantine',
+            'phone' => '+593999999999',
+        ]);
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->update(['converted_patient_id' => $patient->id]);
+
+        $existing = Appointment::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'procedure_id' => $procedure->id,
+            'scheduled_at' => '2026-07-20 15:00:00',
+            'duration_minutes' => 45,
+            'status' => AppointmentStatus::PendingConfirmation,
+            'source' => AppointmentSource::WhatsappAi,
+            'external_provider' => 'google_calendar',
+            'external_appointment_id' => 'google-event-whatsapp-juan-1',
+            'external_calendar_id' => 'primary',
+            'external_status' => 'active',
+        ]);
+
+        $agentResponse = [
+            'intent' => 'appointment_interest',
+            'closing_opportunity_score' => 85,
+            'appointment_candidate' => [
+                'wants_appointment' => true,
+                'preferred_date_parsed' => '2026-07-22',
+                'preferred_time_parsed' => '15:00',
+                'intent_type' => 'appointment_interest',
+                'intent_confidence' => 80,
+                'extraction_source' => 'local_fallback',
+            ],
+        ];
+
+        $appointment = $this->service->createFromDetectedIntent($comment, $agentResponse);
+
+        $this->assertNotNull($appointment);
+        $this->assertSame($existing->id, $appointment->id);
+        $this->assertSame(AppointmentStatus::Rescheduled, $appointment->status);
+        $this->assertSame('2026-07-22 15:00:00', $appointment->scheduled_at->format('Y-m-d H:i:s'));
+        $this->assertSame('google-event-whatsapp-juan-1', $appointment->external_appointment_id);
+        $this->assertSame(1, Appointment::where('patient_id', $patient->id)->count());
+
+        $action = $comment->actions()->where('action', SocialCommentActionType::AppointmentCreated)->latest()->first();
+        $this->assertTrue($action->external_response['rescheduled']);
+
+        Carbon::setTestNow();
+    }
+
     public function test_logs_error_when_appointment_creation_throws(): void
     {
         $mockCreation = $this->createMock(AppointmentCreationService::class);
@@ -227,13 +283,13 @@ class AutoAppointmentServiceTest extends TestCase
 
         $autoService = app(AutoAppointmentService::class);
 
-        $comment = $this->socialComment(Procedure::factory()->create());
+        $comment = $this->socialComment(Procedure::factory()->create(), Professional::factory()->doctor()->create());
         $agentResponse = [
             'intent' => 'appointment_interest',
             'closing_opportunity_score' => 85,
             'appointment_candidate' => [
                 'wants_appointment' => true,
-                'preferred_date_parsed' => now()->addDay()->format('Y-m-d'),
+                'preferred_date_parsed' => now()->next('Monday')->format('Y-m-d'),
                 'preferred_time_parsed' => '10:00',
                 'intent_type' => 'appointment_interest',
                 'intent_confidence' => 80,

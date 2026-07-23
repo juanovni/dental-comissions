@@ -65,6 +65,43 @@ class AppointmentSlotOfferServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_generic_booking_uses_default_procedure_for_offer(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+
+        $defaultProcedure = Procedure::factory()->create(['name' => 'Valoracion dental']);
+        $this->setting('social_appointment_default_procedure_id', $defaultProcedure->id, 'integer');
+
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+        $comment = $this->socialComment($defaultProcedure, $doctor);
+        $comment->forceFill(['suggested_procedure_id' => null])->save();
+        $comment->unsetRelation('suggestedProcedure');
+        $message = $this->message($comment, 'Quiero una cita el lunes en la tarde');
+
+        $offer = app(AppointmentSlotOfferService::class)->createFromAgentResponse($comment, $message, [
+            'intent' => 'appointment_interest',
+            'appointment_candidate' => [
+                'wants_appointment' => true,
+                'preferred_date_parsed' => '2026-07-20',
+                'preferred_time_parsed' => null,
+                'preferred_period' => 'afternoon',
+                'intent_type' => 'appointment_interest',
+            ],
+        ]);
+
+        $this->assertInstanceOf(AppointmentSlotOffer::class, $offer);
+        $this->assertTrue($offer->metadata['is_default_procedure']);
+        $this->assertSame($defaultProcedure->id, $offer->metadata['procedure_id']);
+        $this->assertSame($defaultProcedure->id, $offer->metadata['options'][0]['procedure_id']);
+        $this->assertStringContainsString('no tenemos un procedimiento específico', app(AppointmentSlotOfferService::class)->buildOfferReply($offer));
+        $this->assertSame($defaultProcedure->id, $comment->refresh()->suggested_procedure_id);
+
+        Carbon::setTestNow();
+    }
+
     public function test_new_time_question_does_not_select_third_option(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));

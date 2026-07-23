@@ -26,6 +26,31 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 - Si el subtitulo necesita ocupar todo el ancho, agregar una clase scoped al Page con `getPageClasses()` y ajustar `.fi-header-subheading` solo dentro de esa pagina.
 - Mantener el titulo del header simple y sin estilos custom salvo necesidad concreta; no crear kickers decorativos encima del titulo.
 
+## Search Bars y Filter Toolbars
+
+- Para barras de búsqueda tipo search-wrap, usar el mismo patrón que `smart-search-wrap` en social-inbox:
+  - Wrap: `height: 2.65rem`, `border-radius: .65rem`, `gap: .45rem`, `padding: 0 .75rem`.
+  - Borde: `1px solid #e5e7eb`, box-shadow: `0 1px 2px rgba(15, 23, 42, .05)`, fondo blanco.
+  - Icono SVG: `1.05rem`, color `#64748b`.
+  - Input: `font-size: .82rem`, `height: 100%`, `padding: 0`, sin borde ni sombra, fondo transparente.
+  - `focus-within`: borde tintado con primary al 35% sobre `#e5e7eb`, sombra elevada.
+- Para botones de filtro dropdown (estado, doctor, etc.), usar el mismo patrón que `smart-channel-trigger`:
+  - Altura `2.65rem`, mismo border/radio/shadow, `font-size: .82rem`, `font-weight: 600`, `padding: 0 .85rem`, `gap: .45rem`.
+  - Menú dropdown: igual que `smart-channel-menu`: border `1px solid #e5e7eb`, `border-radius: .75rem`, padding `.5rem`, `box-shadow: 0 18px 35px rgba(15, 23, 42, .14)`, `min-width: 14rem`, `margin-top: .35rem`.
+  - Título del menú: igual que `smart-channel-title`: `font-size: .84rem`, `font-weight: 700`, `border-bottom: 1px solid #eef2f7`, margin negativo para compensar padding del menú, `padding: .8rem .9rem`.
+  - Items del menú: igual que `smart-channel-item`: `font-size: .86rem`, `padding: .55rem .65rem`, `gap: .65rem`, `border-radius: .55rem`, `background: transparent`, `cursor: pointer`, sin borde.
+  - Hover del item: `background: #eef8f8`, color primary/accent. Evitar `color-mix()` para hovers criticos porque puede verse imperceptible o fallar si la variable de color no resuelve como color valido.
+  - Separador entre items: `margin: .35rem 0`.
+- Para menús de acciones (dropdown de "más acciones" por fila), usar el patrón `smart-dropdown-menu`:
+  - Menú: `border-radius: .75rem`, `padding: .375rem 0`, `box-shadow: 0 4px 12px rgba(0, 0, 0, .08)`, `min-width: 12rem`.
+  - Items: `font-size: .8125rem`, `font-weight: 500`, `padding: .5rem .875rem`, `gap: .625rem`, `color: #1f2937`.
+  - Hover normal: `background: #f3f4f6` (sin color primary, es un menú de acciones).
+  - Item danger: `color: #dc2626`.
+  - Hover danger: `background: #fef2f2`.
+  - SVG en item: `color: #9ca3af`.
+  - SVG en item danger: `color: #f87171`.
+- Evitar crear variables CSS locales para bordes/sombras de search o filters; usar valores fijos como `#e5e7eb` y compartir el mismo patrón.
+
 ## Cards y Grids
 
 - Cards: fondo blanco, borde `#e5e7eb`, `border-radius` entre `.625rem` y `.875rem`, shadow minimo.
@@ -66,11 +91,41 @@ Para todas las vistas y componentes administrativos con Filament y Blade, manten
 
 ## Modales y Drawers
 
-- Todo modal, drawer o panel flotante debe tener un boton de cierre visible en el header, normalmente en la esquina superior derecha.
-- El boton de cierre debe ser compacto, accesible y consistente: `type="button"`, `aria-label="Cerrar"` o equivalente, icono `×` o Heroicon, `width/height` cerca de `2rem`, borde sutil o transparente.
-- No depender solo de backdrop, tecla Escape o boton de footer para cerrar un modal; esos comportamientos pueden existir, pero no reemplazan el boton visible del header.
-- Si el modal tiene acciones en footer, no duplicar un boton `Cerrar` si ya existe cierre visible en el header; usar `Cancelar` solo cuando sea parte semantica del flujo (por ejemplo, descartar una accion destructiva).
-- Mantener el header con titulo claro, subtitulo opcional y boton de cierre alineado; evitar headers sin cierre visible.
+- Todo modal debe usar el patron `smart-modal`: backdrop fijo con overlay semitransparente, card centrada con padding `1.25rem`, `border-radius: .875rem`, `box-shadow: 0 4px 24px rgba(15, 23, 42, .12)`.
+- Backdrop: `position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, .48);`.
+- Card contenedor: `background: #ffffff; border-radius: .875rem; padding: 1.25rem; position: relative;` con `display: grid; gap: .75rem;` para el layout interno.
+- El modal debe mostrar el contenido en orden: header, errores (si aplica), campos del formulario, footer de acciones.
+- El boton de cierre debe ser el primer elemento dentro de la card, usando el patron `smart-modal-close`:
+  - `position: absolute; right: .85rem; top: .85rem;`
+  - `width: 1.75rem; height: 1.75rem; border-radius: 999px; border: 1px solid #e5e7eb;`
+  - Icono `×` (`&times;`) en HTML, `font-size: .95rem; font-weight: 600; color: #94a3b8;`
+  - Hover: `background: #eef2f7; color: #0f172a;`
+  - `aria-label="Cerrar modal"`
+- Header: `padding-right: 2.6rem` (para no solaparse con el boton de cierre). Titulo `h2` con `font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;`. Subtitulo opcional con `font-size: .76rem; color: #64748b; margin-top: .2rem;`.
+- Labels de campos: patron `smart-field-label`: `font-size: .7rem; font-weight: 600; color: #334155; display: block; margin-bottom: .25rem;`.
+- Inputs y textareas: patron `smart-copy-field`: `background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .78rem; font-weight: 500; color: #334155; padding: .5rem .625rem; width: 100%; outline: none;`. Focus: `border-color: #94a3b8`.
+- Espaciado entre campos: `margin-top: .6rem`.
+- Errores de validacion: `background: #fef2f2; border: 1px solid #fecaca; border-radius: .625rem; color: #dc2626; font-size: .78rem; font-weight: 500; padding: .65rem .75rem;`.
+- Footer de acciones: `border-top: 1px solid #e5e7eb; padding-top: .75rem; display: flex; justify-content: flex-end; gap: .5rem;`.
+- En footers de drawers laterales tipo `smart-drawer-footer`, `appointment-drawer-footer` o `kanban-detail-actions`, los botones deben ocupar el ancho disponible de forma equilibrada: `flex: 1; justify-content: center; min-height: 2.25rem;`. No usar variante `primary` para acciones de navegacion como `Ver caso completo`, `Abrir ficha CRM` o `Editar`; usar el estilo base outline/neutro salvo que sea una accion critica o destructiva.
+- En tabs, subtabs, drawers y modales con cards de detalle o metadata (`smart-drawer-card`, `appointment-drawer-card`, `kanban-detail-card` o equivalentes), las filas informativas deben seguir el patron label/value: label a la izquierda, value a la derecha. Usar una fila con `display: grid; grid-template-columns: 1fr 1fr; gap: .35rem .85rem;`, label muted (`#64748b`, `.78rem`, `font-weight: 500`) y value principal alineado a la derecha (`#0f172a`, `.82rem`, `font-weight: 600`, `text-align: right`).
+- Si se agrega markup tipo `*-card-row`, `*-card-label` y `*-card-value`, verificar que esas clases tengan CSS definido en esa vista o en el stylesheet compartido antes de terminar. No asumir que el nombre de clase ya existe. Incluir dark mode para label/value (`label #94a3b8`, value `#e2e8f0`) cuando la vista tenga soporte `.dark`.
+- Botones en footer: patron `smart-action`:
+  - Base: `display: inline-flex; align-items: center; gap: .35rem; min-height: 2.25rem; padding: .38rem .65rem; border-radius: .45rem; font-size: .76rem; font-weight: 500; line-height: 1; border: 1px solid #e5e7eb; background: #ffffff; color: #111827; cursor: pointer; transition: background-color .14s ease, border-color .14s ease, color .14s ease;`
+  - Hover base: `background: #f9fafb; border-color: #d1d5db; color: #111827;`
+  - Primary (accion principal): `background: #000000; border-color: #000000; color: #ffffff;`
+  - Hover primary: `background: #1a1a1a; border-color: #1a1a1a; color: #ffffff;`
+  - Icono SVG en boton primary: `height: .9rem; width: .9rem;`
+- Dark mode:
+  - Card: `background: #1e293b; border: 1px solid rgba(148, 163, 184, .18);`
+  - Close button: `border-color: rgba(148, 163, 184, .18); color: #64748b;` hover: `background: rgba(148, 163, 184, .12); color: #e2e8f0;`
+  - Header `h2`: `color: #f1f5f9;`
+  - Header sub: `color: #94a3b8;`
+  - Labels: `color: #94a3b8;`
+  - Inputs: `background: rgba(15, 23, 42, .5); border-color: rgba(148, 163, 184, .14); color: #cbd5e1;`
+  - Footer: `border-top-color: rgba(148, 163, 184, .14);`
+  - Boton base: `background: transparent; border-color: rgba(148, 163, 184, .18); color: #cbd5e1;` hover: `background: rgba(148, 163, 184, .12); color: #e2e8f0;`
+  - Boton primary: mantiene `background: #000000; color: #ffffff;`
 
 ## Colores
 
