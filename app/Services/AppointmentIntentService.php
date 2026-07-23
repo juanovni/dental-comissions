@@ -120,7 +120,7 @@ class AppointmentIntentService
             'period' => null,
         ];
 
-        $now = Carbon::now()->startOfDay();
+        $now = $this->clinicNow()->startOfDay();
 
         $dateResult = $this->extractDate($normalized, $now);
         $timeResult = $this->extractTime($normalized);
@@ -377,7 +377,7 @@ class AppointmentIntentService
         $result = ['date' => null, 'time' => null, 'period' => null];
 
         if ($dateText) {
-            $parsed = $this->extractDate(mb_strtolower($dateText), Carbon::now()->startOfDay());
+            $parsed = $this->extractDate(mb_strtolower($dateText), $this->clinicNow()->startOfDay());
             $result['date'] = $parsed['parsed'];
 
             $timeParsedFromDateText = $this->extractTime(mb_strtolower($dateText));
@@ -407,5 +407,10 @@ class AppointmentIntentService
         }
 
         return $this->extractFromText(trim($fullText));
+    }
+
+    private function clinicNow(): Carbon
+    {
+        return Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone());
     }
 }

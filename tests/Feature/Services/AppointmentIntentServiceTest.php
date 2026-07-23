@@ -13,6 +13,7 @@ use App\Models\WhatsappMessage;
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
 use App\Services\AppointmentIntentService;
+use App\Services\SocialCrmSettingsService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -33,15 +34,26 @@ class AppointmentIntentServiceTest extends TestCase
     {
         $result = $this->service->extractFromText('Quiero agendar para mañana');
 
-        $expected = Carbon::now()->addDay()->format('Y-m-d');
+        $expected = Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone())->addDay()->format('Y-m-d');
         $this->assertSame($expected, $result['date']);
+    }
+
+    public function test_extract_manana_uses_clinic_timezone(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-23 01:10:00', 'UTC'));
+
+        $result = $this->service->extractFromText('Hola me pueden ayudar agendando una cita para manana');
+
+        $this->assertSame('2026-07-23', $result['date']);
+
+        Carbon::setTestNow();
     }
 
     public function test_extract_hoy_date(): void
     {
         $result = $this->service->extractFromText('Puedo hoy a las 3pm');
 
-        $expected = Carbon::now()->format('Y-m-d');
+        $expected = Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone())->format('Y-m-d');
         $this->assertSame($expected, $result['date']);
     }
 
@@ -49,13 +61,13 @@ class AppointmentIntentServiceTest extends TestCase
     {
         $result = $this->service->extractFromText('Pasado mañana en la tarde');
 
-        $expected = Carbon::now()->addDays(2)->format('Y-m-d');
+        $expected = Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone())->addDays(2)->format('Y-m-d');
         $this->assertSame($expected, $result['date']);
     }
 
     public function test_extract_day_of_week(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-07-07')); // Tuesday
+        Carbon::setTestNow(Carbon::parse('2026-07-07 12:00:00', 'America/Guayaquil')); // Tuesday
 
         $result = $this->service->extractFromText('El viernes en la mañana');
 
@@ -67,7 +79,7 @@ class AppointmentIntentServiceTest extends TestCase
 
     public function test_extract_next_week_day(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-07-07')); // Tuesday
+        Carbon::setTestNow(Carbon::parse('2026-07-07 12:00:00', 'America/Guayaquil')); // Tuesday
 
         $result = $this->service->extractFromText('El próximo lunes');
 
@@ -258,6 +270,25 @@ class AppointmentIntentServiceTest extends TestCase
         $this->assertSame('2026-07-20', $result['preferred_date_parsed']);
         $this->assertSame('15:00', $result['preferred_time_parsed']);
         $this->assertSame('afternoon', $result['preferred_period']);
+        $this->assertSame('local_with_ai_context', $result['extraction_source']);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_analyze_corrects_ai_friday_when_user_says_manana_in_clinic_timezone(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-23 01:10:00', 'UTC'));
+
+        $comment = $this->createComment();
+        $message = $this->createMessage('Hola me pueden ayudar agendando una cita para manana');
+
+        $result = $this->service->analyze($comment, $message, 'appointment_interest', [
+            'wants_appointment' => true,
+            'preferred_date_text' => 'viernes 24 de julio',
+            'preferred_time_text' => null,
+        ]);
+
+        $this->assertSame('2026-07-23', $result['preferred_date_parsed']);
         $this->assertSame('local_with_ai_context', $result['extraction_source']);
 
         Carbon::setTestNow();
