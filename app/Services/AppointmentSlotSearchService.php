@@ -74,6 +74,18 @@ class AppointmentSlotSearchService
     {
         [$from, $until] = $this->periodRange($date, $period);
 
+        $earliest = now()
+            ->addHours(app(SocialCrmSettingsService::class)->appointmentLeadTimeHours())
+            ->startOfMinute();
+
+        if ($until->lessThanOrEqualTo($earliest)) {
+            return [];
+        }
+
+        if ($from->lessThan($earliest)) {
+            $from = $earliest;
+        }
+
         if (! $from || ! $until || $from->greaterThanOrEqualTo($until)) {
             return [];
         }
@@ -207,7 +219,13 @@ class AppointmentSlotSearchService
         }
 
         try {
-            return Carbon::parse($date)->startOfDay();
+            $parsed = Carbon::parse($date)->startOfDay();
+
+            if ($parsed->lessThan(now()->startOfDay())) {
+                return null;
+            }
+
+            return $parsed;
         } catch (\Throwable) {
             return null;
         }

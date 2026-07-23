@@ -61,17 +61,24 @@ class AppointmentIntentService
                 $result['extraction_source'] = 'ai';
             }
 
-            if (! $result['preferred_date_parsed'] || ! $result['preferred_time_parsed'] || ! $result['preferred_period']) {
-                $localParsed = $this->extractFromText($body);
-                if ($localParsed['date'] || $localParsed['time'] || $localParsed['period']) {
-                    $result['preferred_date_parsed'] ??= $localParsed['date'];
-                    $result['preferred_time_parsed'] ??= $localParsed['time'];
-                    $result['preferred_period'] ??= $localParsed['period'];
-                    $result['preferred_date_text'] ??= $localParsed['date_text'];
-                    $result['preferred_time_text'] ??= $localParsed['time_text'];
-                    $result['confidence'] = max($result['confidence'], 65);
-                    $result['extraction_source'] = $result['extraction_source'] === 'ai' ? 'ai_with_local_fallback' : 'local_fallback';
+            $localParsed = $this->extractFromText($body);
+            if ($localParsed['date'] || $localParsed['time'] || $localParsed['period']) {
+                if ($localParsed['date']) {
+                    $result['preferred_date_parsed'] = $localParsed['date'];
+                    $result['preferred_date_text'] = $localParsed['date_text'];
                 }
+
+                if ($localParsed['time']) {
+                    $result['preferred_time_parsed'] = $localParsed['time'];
+                    $result['preferred_time_text'] = $localParsed['time_text'];
+                }
+
+                if ($localParsed['period']) {
+                    $result['preferred_period'] = $localParsed['period'];
+                }
+
+                $result['confidence'] = max($result['confidence'], 65);
+                $result['extraction_source'] = $result['extraction_source'] === 'ai' ? 'local_with_ai_context' : 'local_fallback';
             }
 
             if (!$result['preferred_date_parsed']) {
@@ -174,8 +181,6 @@ class AppointmentIntentService
                 $diff = ($targetDayOfWeek - $dayOfWeek + 7) % 7;
                 if ($diff === 0) {
                     $diff = $isNext ? 7 : 0;
-                } elseif ($isNext && $diff < 7) {
-                    $diff += 7;
                 }
                 $result['parsed'] = $now->copy()->addDays($diff)->format('Y-m-d');
                 $result['text'] = $matches[0];
@@ -319,9 +324,40 @@ class AppointmentIntentService
             'en horas de la tarde' => ['15:00', 'afternoon'], 'horas de la tarde' => ['15:00', 'afternoon'],
             'horario de la tarde' => ['15:00', 'afternoon'], 'en la tarde' => ['15:00', 'afternoon'],
             'por la tarde' => ['15:00', 'afternoon'],
+            'despues del almuerzo' => ['15:00', 'afternoon'], 'después del almuerzo' => ['15:00', 'afternoon'],
+            'despues de almorzar' => ['15:00', 'afternoon'], 'después de almorzar' => ['15:00', 'afternoon'],
+            'luego del almuerzo' => ['15:00', 'afternoon'], 'luego de almorzar' => ['15:00', 'afternoon'],
+            'despues de comer' => ['15:00', 'afternoon'], 'después de comer' => ['15:00', 'afternoon'],
             'en horas de la noche' => ['17:00', 'night'], 'horas de la noche' => ['17:00', 'night'],
             'horario de la noche' => ['17:00', 'night'], 'en la noche' => ['17:00', 'night'],
             'por la noche' => ['17:00', 'night'],
+            'temprano' => ['08:00', 'early_morning'],
+            'muy temprano' => ['08:00', 'early_morning'],
+            'primeras horas' => ['08:00', 'early_morning'],
+            'a primera hora' => ['08:00', 'early_morning'],
+            'primera hora' => ['08:00', 'early_morning'],
+            'tempranito' => ['08:00', 'early_morning'],
+            'antes del almuerzo' => ['10:30', 'morning'],
+            'antes de almorzar' => ['10:30', 'morning'],
+            'media mañana' => ['10:00', 'morning'],
+            'media manana' => ['10:00', 'morning'],
+            'al mediodia' => ['12:00', 'noon'],
+            'al mediodía' => ['12:00', 'noon'],
+            'mediodia' => ['12:00', 'noon'],
+            'mediodía' => ['12:00', 'noon'],
+            'cuando salga de almorzar' => ['15:00', 'afternoon'],
+            'tipo tres' => ['15:00', 'afternoon'],
+            'tipo 3' => ['15:00', 'afternoon'],
+            'tipo cuatro' => ['16:00', 'afternoon'],
+            'tipo 4' => ['16:00', 'afternoon'],
+            'en la tardecita' => ['16:00', 'afternoon'],
+            'tardecita' => ['16:00', 'afternoon'],
+            'despues del trabajo' => ['17:30', 'night'],
+            'después del trabajo' => ['17:30', 'night'],
+            'al salir del trabajo' => ['17:30', 'night'],
+            'cuando salga del trabajo' => ['17:30', 'night'],
+            'noche' => ['18:00', 'night'],
+            'ya de noche' => ['19:00', 'night'],
         ];
 
         foreach ($periods as $phrase => [$time, $period]) {

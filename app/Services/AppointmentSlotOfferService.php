@@ -30,12 +30,25 @@ class AppointmentSlotOfferService
             return null;
         }
 
+        $isDefaultProcedure = ! (bool) $comment->suggested_procedure_id;
+        $resolvedProcedure = $comment->suggestedProcedure
+            ?: app(AppointmentProcedureResolver::class)->defaultProcedure();
+
+        if (! $resolvedProcedure) {
+            return null;
+        }
+
+        if (! $comment->suggested_procedure_id) {
+            $comment->forceFill(['suggested_procedure_id' => $resolvedProcedure->id])->save();
+            $comment->setRelation('suggestedProcedure', $resolvedProcedure);
+        }
+
         $slots = app(AppointmentSlotSearchService::class)->search([
             'date' => $candidate['preferred_date_parsed'] ?? null,
             'time' => $candidate['preferred_time_parsed'] ?? null,
             'period' => $candidate['preferred_period'] ?? null,
             'doctor_id' => $comment->suggested_doctor_id,
-            'procedure_id' => $comment->suggested_procedure_id,
+            'procedure_id' => $resolvedProcedure->id,
         ]);
 
         if ($slots === []) {
@@ -52,9 +65,10 @@ class AppointmentSlotOfferService
                 'requested_date' => $candidate['preferred_date_parsed'] ?? null,
                 'requested_time' => $candidate['preferred_time_parsed'] ?? null,
                 'requested_period' => $candidate['preferred_period'] ?? null,
-                'procedure_id' => $comment->suggested_procedure_id,
+                'procedure_id' => $resolvedProcedure->id,
+                'is_default_procedure' => $isDefaultProcedure,
                 'doctor_id' => $comment->suggested_doctor_id,
-                'options' => $this->indexedOptions($slots, $comment),
+                'options' => $this->indexedOptions($slots, $comment, $resolvedProcedure->id),
             ],
         ]);
 
@@ -253,8 +267,11 @@ class AppointmentSlotOfferService
 
         $calendarLink = route('social-appointments.show', ['token' => $offer->token]);
         $requested = $period ? "para el {$dateText} en la {$period}" : "para {$dateText}";
+        $intro = ($offer->metadata['is_default_procedure'] ?? false)
+            ? "Como aún no tenemos un procedimiento específico, podemos ayudarte a agendar una {$procedure} para que el doctor revise tu caso."
+            : "Sí, con gusto te ayudamos a agendar tu cita para {$procedure}.";
 
-        return "Sí, con gusto te ayudamos a agendar tu cita para {$procedure}.\n\n".
+        return $intro."\n\n".
             "Estas son las opciones disponibles {$requested}:\n\n".
             implode("\n", $lines).
             "\n\nResponde con el número de la opción o abre este enlace para ver más horarios:\n{$calendarLink}";
@@ -414,15 +431,15 @@ class AppointmentSlotOfferService
         return null;
     }
 
-    private function indexedOptions(array $slots, SocialComment $comment): array
+    private function indexedOptions(array $slots, SocialComment $comment, int $procedureId): array
     {
-        return array_values(array_map(function (array $slot, int $i) use ($comment): array {
+        return array_values(array_map(function (array $slot, int $i) use ($comment, $procedureId): array {
             $doctor = $this->doctorForOption($slot, $comment);
 
             return array_merge($slot, [
                 'index' => $i + 1,
                 'doctor_id' => $doctor?->id,
-                'procedure_id' => $comment->suggested_procedure_id,
+                'procedure_id' => $procedureId,
             ]);
         }, $slots, array_keys($slots)));
     }

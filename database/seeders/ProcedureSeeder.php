@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Procedure;
+use App\Models\SocialCrmSetting;
 use Illuminate\Database\Seeder;
 
 class ProcedureSeeder extends Seeder
@@ -10,6 +11,7 @@ class ProcedureSeeder extends Seeder
     public function run(): void
     {
         $procedures = [
+            ['name' => 'Valoración odontológica', 'code' => 'VAL001', 'category' => 'Diagnostico', 'internal_rate' => 0.00],
             ['name' => 'Limpieza dental', 'code' => 'LIMP001', 'category' => 'Preventiva', 'internal_rate' => 50.00],
             ['name' => 'Extracción simple', 'code' => 'EXT001', 'category' => 'Cirugia', 'internal_rate' => 80.00],
             ['name' => 'Endodoncia', 'code' => 'END001', 'category' => 'Endodoncia', 'internal_rate' => 200.00],
@@ -22,6 +24,22 @@ class ProcedureSeeder extends Seeder
             Procedure::updateOrCreate(
                 ['code' => $procedure['code']],
                 $procedure
+            );
+        }
+
+        $defaultProcedure = Procedure::where('code', 'VAL001')->first();
+
+        if ($defaultProcedure) {
+            SocialCrmSetting::firstOrCreate(
+                ['key' => 'social_appointment_default_procedure_id'],
+                [
+                    'setting_group' => 'appointments',
+                    'label' => 'Procedimiento default para citas genéricas',
+                    'value_type' => 'integer',
+                    'value' => $defaultProcedure->id,
+                    'notes' => 'Usado cuando el paciente pide una cita sin especificar procedimiento. En Ecuador suena natural ofrecer una valoración odontológica.',
+                    'is_active' => true,
+                ],
             );
         }
     }

@@ -490,13 +490,13 @@ class GoogleCalendarService
         $clinicTz = app(SocialCrmSettingsService::class)->clinicTimezone();
 
         $start = new EventDateTime();
-        $localStart = $appointment->scheduled_at->copy()->setTimezone($clinicTz);
+        $localStart = $appointment->scheduled_at->copy();
         $start->setDateTime($localStart->format('Y-m-d\TH:i:s'));
         $start->setTimeZone($clinicTz);
         $event->setStart($start);
 
         $end = new EventDateTime();
-        $localEnd = $appointment->scheduled_at->copy()->addMinutes($appointment->duration_minutes ?? 60)->setTimezone($clinicTz);
+        $localEnd = $appointment->scheduled_at->copy()->addMinutes($appointment->duration_minutes ?? 60);
         $end->setDateTime($localEnd->format('Y-m-d\TH:i:s'));
         $end->setTimeZone($clinicTz);
         $event->setEnd($end);

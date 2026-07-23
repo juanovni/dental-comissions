@@ -38,7 +38,7 @@ class AppointmentResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = 'Reputacion Digital';
 
-    protected static ?string $navigationLabel = 'Citas CRM';
+    protected static ?string $navigationLabel = 'Citas';
 
     protected static ?int $navigationSort = 25;
 

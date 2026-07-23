@@ -74,6 +74,21 @@ return [
         'request_timeout' => (int) env('GEMINI_REQUEST_TIMEOUT', 30),
     ],
 
+    'voice' => [
+        'tool_token' => env('VOICE_TOOL_TOKEN'),
+    ],
+
+    'telnyx' => [
+        'api_key' => env('TELNYX_API_KEY'),
+        'api_url' => env('TELNYX_API_URL', 'https://api.telnyx.com/v2'),
+        'voice' => env('TELNYX_VOICE', 'female'),
+        'language' => env('TELNYX_LANGUAGE', 'es-MX'),
+        'processing_prompt' => env('TELNYX_PROCESSING_PROMPT', 'Dame un segundo.'),
+        'transcription_language' => env('TELNYX_TRANSCRIPTION_LANGUAGE', 'es'),
+        'transcription_engine' => env('TELNYX_TRANSCRIPTION_ENGINE', 'Telnyx'),
+        'debug' => (bool) env('TELNYX_DEBUG', false),
+    ],
+
     'google_oauth' => [
         'client_id' => env('GOOGLE_OAUTH_CLIENT_ID'),
         'client_secret' => env('GOOGLE_OAUTH_CLIENT_SECRET'),
