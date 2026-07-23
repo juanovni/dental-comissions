@@ -2461,12 +2461,6 @@
                     $engagementScore >= 31 => ['label' => 'Tibio', 'class' => 'temp-warm'],
                     default => ['label' => 'Frio', 'class' => 'temp-cold'],
                 };
-                $socialIdentity = $selectedComment->socialIdentity;
-                $socialHistoryCount = $socialIdentity
-                    ? \App\Models\SocialComment::query()->where('social_identity_id', $socialIdentity->id)->count()
-                    : 0;
-                $previousSocialCount = max(0, $socialHistoryCount - 1);
-                $socialCampaignName = $selectedComment->socialPost?->campaign_name;
             @endphp
             <div class="smart-drawer-backdrop" wire:click="closeCommentDrawer"></div>
 
@@ -2488,7 +2482,6 @@
                     <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'summary' }" @click="tab = 'summary'">Resumen</button>
                     <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'conversation' }" @click="tab = 'conversation'">Conversacion</button>
                     <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'activity' }" @click="tab = 'activity'">Actividad</button>
-                    <button class="smart-drawer-tab" type="button" :class="{ 'is-active': tab === 'history' }" @click="tab = 'history'">Historial Social</button>
                 </nav>
 
                 <div class="smart-drawer-body">
@@ -2767,21 +2760,6 @@
                         </div>
                     </section>
 
-                    <section class="smart-drawer-card" x-show="tab === 'history'" x-cloak>
-                        <div class="smart-drawer-card-kicker">Historial Social</div>
-                        <div class="smart-drawer-card-row">
-                            <span class="smart-drawer-card-label">Interacciones</span>
-                            <span class="smart-drawer-card-value">{{ $socialHistoryCount }} comentario(s) vinculados</span>
-                        </div>
-                        <div class="smart-drawer-card-row">
-                            <span class="smart-drawer-card-label">Previos</span>
-                            <span class="smart-drawer-card-value">{{ $previousSocialCount }} comentario(s) antes de este caso.</span>
-                        </div>
-                        <div class="smart-drawer-card-row">
-                            <span class="smart-drawer-card-label">Origen</span>
-                            <span class="smart-drawer-card-value">{{ $socialCampaignName ?: 'Sin campana asignada' }}</span>
-                        </div>
-                    </section>
                 </div>
 
                 <footer class="smart-drawer-footer">
