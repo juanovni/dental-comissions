@@ -311,6 +311,15 @@
         gap: .85rem;
     }
 
+    .social-case-tab-panel {
+        display: grid;
+        gap: .85rem;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
     .social-case-card {
         background: var(--case-card);
         border: 1px solid var(--case-line);
@@ -626,11 +635,6 @@
         padding: .7rem;
     }
 
-    .social-case-conversation-bubble.is-auto {
-        background: #f0fdfa;
-        border-color: #ccfbf1;
-    }
-
     .social-case-meter {
         background: #eef2f7;
         border-radius: 999px;
@@ -732,7 +736,19 @@
 </style>
 
 <div class="social-case">
-    <div class="social-case-shell">
+    <div
+        class="social-case-shell"
+        x-data="{
+            tab: @js($activeTab),
+            setTab(value) {
+                this.tab = value;
+                const url = new URL(window.location.href);
+                url.searchParams.set('tab', value);
+                window.history.pushState({}, '', url);
+            },
+        }"
+        x-init="window.addEventListener('popstate', () => { tab = new URL(window.location.href).searchParams.get('tab') || 'resumen' })"
+    >
         <header class="social-case-header">
             <div class="social-case-identity">
                 <div class="social-case-avatar-wrap">
@@ -787,7 +803,7 @@
 
         <nav class="social-case-tabs" aria-label="Secciones del caso social">
             @foreach ($tabs as $tabKey => $tab)
-                <a class="social-case-tab {{ $activeTab === $tabKey ? 'is-active' : '' }}" href="{{ request()->fullUrlWithQuery(['tab' => $tabKey]) }}">
+                <a class="social-case-tab" href="{{ request()->fullUrlWithQuery(['tab' => $tabKey]) }}" :class="{ 'is-active': tab === '{{ $tabKey }}' }" @click.prevent="setTab('{{ $tabKey }}')">
                     @switch($tab['icon'])
                         @case('chat')
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/></svg>
@@ -808,7 +824,7 @@
 
         <div class="social-case-grid">
             <main class="social-case-main">
-                @if ($activeTab === 'resumen')
+                <div class="social-case-tab-panel" x-show="tab === 'resumen'" x-cloak>
                     <section class="social-case-card">
                         <div class="social-case-card-title"><span class="social-case-card-title-main">Comentario recibido</span></div>
                         <div class="social-case-card-body">
@@ -855,7 +871,9 @@
                             </div>
                         </div>
                     </section>
-                @elseif ($activeTab === 'conversacion')
+                </div>
+
+                <div class="social-case-tab-panel" x-show="tab === 'conversacion'" x-cloak>
                     <section class="social-case-card">
                         <div class="social-case-card-title"><span class="social-case-card-title-main">Hilo de conversación</span></div>
                         <div class="social-case-card-body">
@@ -923,7 +941,7 @@
                                                 </div>
                                                 <span class="social-case-muted">{{ $event['time'] }}</span>
                                             </div>
-                                            <div class="social-case-conversation-bubble {{ $event['is_automated'] ? 'is-auto' : '' }}">{{ $event['message'] }}</div>
+                                            <div class="social-case-conversation-bubble">{{ $event['message'] }}</div>
                                             @if (filled($event['rule_label']))
                                                 <div class="social-case-muted" style="margin-top:.25rem">{{ $event['rule_label'] }}</div>
                                             @endif
@@ -935,7 +953,9 @@
                             </div>
                         </div>
                     </section>
-                @elseif ($activeTab === 'actividad')
+                </div>
+
+                <div class="social-case-tab-panel" x-show="tab === 'actividad'" x-cloak>
                     <section class="social-case-card">
                         <div class="social-case-card-title"><span class="social-case-card-title-main">Actividad</span></div>
                         <div class="social-case-card-body">
@@ -957,7 +977,9 @@
                             </div>
                         </div>
                     </section>
-                @else
+                </div>
+
+                <div class="social-case-tab-panel" x-show="tab === 'contexto-clinico'" x-cloak>
                     <section class="social-case-card">
                         <div class="social-case-card-title">
                             <span class="social-case-card-title-main">Contexto clínico 360</span>
@@ -993,7 +1015,7 @@
                             </div>
                         </div>
                     </section>
-                @endif
+                </div>
             </main>
 
             <aside class="social-case-aside">
