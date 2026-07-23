@@ -17,6 +17,7 @@ use App\Enums\SocialSuggestedAction;
 use App\Filament\Resources\SocialComments\Pages\EditSocialComment;
 use App\Filament\Resources\SocialComments\Pages\ListSocialComments;
 use App\Filament\Resources\SocialComments\Pages\ViewSocialComment;
+use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Professional;
@@ -30,11 +31,13 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -451,56 +454,61 @@ class SocialCommentResource extends Resource
                         ->send();
                 }),
             Action::make('create_appointment')
-                ->label('Crear cita')
+                ->label(fn (SocialComment $record): string => self::hasActiveFutureAppointment($record) ? 'Reprogramar cita' : 'Crear cita')
                 ->icon('heroicon-o-calendar-days')
                 ->color('primary')
-                ->modalHeading('Crear cita desde lead social')
-                ->modalSubmitActionLabel('Crear cita')
+                ->modalHeading(fn (SocialComment $record): string => self::hasActiveFutureAppointment($record) ? 'Reprogramar cita CRM' : 'Crear cita CRM')
+                ->modalSubmitAction(false)
+                ->extraModalFooterActions(fn (Action $action, SocialComment $record): array => [
+                    $action->makeModalSubmitAction('saveCrmAppointment')
+                        ->label(self::hasActiveFutureAppointment($record) ? 'Reprogramar cita CRM' : 'Crear cita CRM')
+                        ->icon('heroicon-o-calendar-days')
+                        ->color('primary'),
+                ])
                 ->form(fn (SocialComment $record): array => [
-                    Select::make('patient_id')
-                        ->label('Paciente')
-                        ->default($record->socialIdentity?->patient_id ?? $record->converted_patient_id)
-                        ->options(fn (): array => Patient::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
-                        ->searchable()
-                        ->nullable()
-                        ->helperText('Opcional si la ficha aun no existe.'),
-                    Select::make('procedure_id')
-                        ->label('Procedimiento de interes')
-                        ->default($record->suggested_procedure_id ?? $record->socialPost?->procedure_id)
-                        ->options(fn (): array => Procedure::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable()
-                        ->preload()
-                        ->nullable(),
-                    Select::make('doctor_id')
-                        ->label('Doctor')
-                        ->options(fn (): array => Professional::query()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable()
-                        ->preload()
-                        ->helperText('Selecciona el doctor que realizara el procedimiento.'),
-                    TextInput::make('scheduled_at')
-                        ->label('Fecha y hora')
-                        ->placeholder('YYYY-MM-DD HH:MM')
-                        ->helperText('Ejemplo: '.now()->addDay()->format('Y-m-d H:i'))
-                        ->required(),
-                    TextInput::make('duration_minutes')
-                        ->label('Duracion en minutos')
-                        ->numeric()
-                        ->minValue(1)
-                        ->default(45),
-                    Select::make('status')
-                        ->label('Estado')
-                        ->options(self::enumOptions(AppointmentStatus::cases()))
-                        ->default(AppointmentStatus::Scheduled->value)
-                        ->required(),
-                    Select::make('source')
-                        ->label('Origen')
-                        ->options(self::enumOptions(AppointmentSource::cases()))
-                        ->default(AppointmentSource::AdminManual->value)
-                        ->required(),
-                    Textarea::make('notes')
-                        ->label('Notas')
-                        ->rows(3)
-                        ->columnSpanFull(),
+                    Grid::make(2)
+                        ->schema([
+                            Select::make('patient_id')
+                                ->label('Paciente')
+                                ->default($record->socialIdentity?->patient_id ?? $record->converted_patient_id)
+                                ->options(fn (): array => Patient::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
+                                ->searchable()
+                                ->nullable(),
+                            Select::make('doctor_id')
+                                ->label('Doctor')
+                                ->options(fn (): array => Professional::query()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
+                                ->searchable()
+                                ->preload()
+                                ->nullable(),
+                            Select::make('procedure_id')
+                                ->label('Procedimiento')
+                                ->default($record->suggested_procedure_id ?? $record->socialPost?->procedure_id)
+                                ->options(fn (): array => Procedure::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                                ->searchable()
+                                ->nullable(),
+                            DateTimePicker::make('scheduled_at')
+                                ->label('Fecha y hora')
+                                ->required(),
+                            TextInput::make('duration_minutes')
+                                ->label('Duracion (min)')
+                                ->numeric()
+                                ->minValue(1)
+                                ->default(45),
+                            Select::make('status')
+                                ->label('Estado')
+                                ->options(self::enumOptions(AppointmentStatus::cases()))
+                                ->default(AppointmentStatus::Scheduled->value)
+                                ->required(),
+                            Select::make('source')
+                                ->label('Origen')
+                                ->options(self::enumOptions(AppointmentSource::cases()))
+                                ->default(AppointmentSource::AdminManual->value)
+                                ->required(),
+                            Textarea::make('notes')
+                                ->label('Notas')
+                                ->rows(3)
+                                ->columnSpanFull(),
+                        ]),
                 ])
                 ->action(function (SocialComment $record, array $data): void {
                     app(AppointmentCreationService::class)->createFromSocialLead($record, [
@@ -570,6 +578,29 @@ class SocialCommentResource extends Resource
         return collect($cases)
             ->mapWithKeys(fn ($case) => [$case->value => $case->label()])
             ->all();
+    }
+
+    private static function hasActiveFutureAppointment(SocialComment $record): bool
+    {
+        $patientId = $record->socialIdentity?->patient_id ?? $record->converted_patient_id;
+
+        return Appointment::query()
+            ->whereNotNull('scheduled_at')
+            ->where('scheduled_at', '>=', now()->startOfDay())
+            ->whereIn('status', [
+                AppointmentStatus::PendingConfirmation->value,
+                AppointmentStatus::Scheduled->value,
+                AppointmentStatus::Confirmed->value,
+                AppointmentStatus::Rescheduled->value,
+            ])
+            ->where(function (Builder $query) use ($record, $patientId): void {
+                $query->where('social_comment_id', $record->id);
+
+                if ($patientId) {
+                    $query->orWhere('patient_id', $patientId);
+                }
+            })
+            ->exists();
     }
 
     private static function autoReplyStatusLabel(SocialComment $record): string

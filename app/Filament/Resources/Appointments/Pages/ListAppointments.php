@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Professional;
 use App\Services\AppointmentWorkflowService;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
@@ -73,7 +74,11 @@ class ListAppointments extends ListRecords
         return [
             CreateAction::make()
                 ->label('Crear cita')
-                ->icon('heroicon-o-plus'),
+                ->icon('heroicon-o-plus')
+                ->createAnother(false)
+                ->modalSubmitAction(fn (Action $action): Action => $action
+                    ->label('Crear cita')
+                    ->icon('heroicon-o-calendar-days')),
         ];
     }
 
