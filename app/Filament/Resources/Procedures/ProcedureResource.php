@@ -20,7 +20,10 @@ use Filament\Tables\Table;
 
 class ProcedureResource extends Resource
 {
-    protected static ?string $model = Procedure::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('procedures.view') ?? false; }
+
+        protected static ?string $model = Procedure::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Configuración';
 

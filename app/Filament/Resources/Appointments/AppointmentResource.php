@@ -31,7 +31,10 @@ use Illuminate\Support\Carbon;
 
 class AppointmentResource extends Resource
 {
-    protected static ?string $model = Appointment::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('appointments.view') ?? false; }
+
+        protected static ?string $model = Appointment::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
 

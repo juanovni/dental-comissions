@@ -20,7 +20,10 @@ use Illuminate\Support\Str;
 
 class PatientResource extends Resource
 {
-    protected static ?string $model = Patient::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('patients.view') ?? false; }
+
+        protected static ?string $model = Patient::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'CRM de Ventas';
 

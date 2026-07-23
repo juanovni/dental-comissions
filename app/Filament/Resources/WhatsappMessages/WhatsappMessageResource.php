@@ -14,7 +14,10 @@ use Filament\Tables\Table;
 
 class WhatsappMessageResource extends Resource
 {
-    protected static ?string $model = WhatsappMessage::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('whatsapp_messages.view') ?? false; }
+
+        protected static ?string $model = WhatsappMessage::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'CRM de Ventas';
 

@@ -21,7 +21,10 @@ use Filament\Tables\Table;
 
 class PaymentMethodResource extends Resource
 {
-    protected static ?string $model = PaymentMethod::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('payment_methods.view') ?? false; }
+
+        protected static ?string $model = PaymentMethod::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Comisiones y Pagos';
 
@@ -31,7 +34,7 @@ class PaymentMethodResource extends Resource
 
     protected static ?string $pluralModelLabel = 'metodos de pago';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?int $navigationSort = 12;
 

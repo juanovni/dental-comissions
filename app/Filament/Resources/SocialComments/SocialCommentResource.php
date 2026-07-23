@@ -48,7 +48,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 class SocialCommentResource extends Resource
 {
-    protected static ?string $model = SocialComment::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('social_comments.view') ?? false; }
+
+        protected static ?string $model = SocialComment::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
@@ -56,7 +59,7 @@ class SocialCommentResource extends Resource
 
     protected static ?string $navigationLabel = 'Comentarios';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?string $modelLabel = 'comentario social';
 

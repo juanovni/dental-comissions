@@ -33,7 +33,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ActivityRecordResource extends Resource
 {
-    protected static ?string $model = ActivityRecord::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('activity_records.view') ?? false; }
+
+        protected static ?string $model = ActivityRecord::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Operación Clínica';
 
@@ -43,7 +46,7 @@ class ActivityRecordResource extends Resource
 
     protected static ?string $pluralModelLabel = 'actividades';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?int $navigationSort = 6;
 

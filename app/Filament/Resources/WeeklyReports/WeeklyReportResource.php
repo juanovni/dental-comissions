@@ -27,7 +27,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 class WeeklyReportResource extends Resource
 {
-    protected static ?string $model = WeeklyReport::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('weekly_reports.view') ?? false; }
+
+        protected static ?string $model = WeeklyReport::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Comisiones y Pagos';
 
@@ -37,7 +40,7 @@ class WeeklyReportResource extends Resource
 
     protected static ?string $pluralModelLabel = 'reportes semanales';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?int $navigationSort = 10;
 

@@ -22,7 +22,10 @@ use Filament\Tables\Table;
 
 class SocialCrmSettingResource extends Resource
 {
-    protected static ?string $model = SocialCrmSetting::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('social_crm_settings.view') ?? false; }
+
+        protected static ?string $model = SocialCrmSetting::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Configuración';
 
@@ -34,7 +37,7 @@ class SocialCrmSettingResource extends Resource
 
     protected static ?string $pluralModelLabel = 'configuraciones CRM social';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?int $navigationSort = 24;
 

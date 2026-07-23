@@ -20,7 +20,10 @@ use Illuminate\Support\Carbon;
 
 class VoiceCallResource extends Resource
 {
-    protected static ?string $model = VoiceCall::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('voice_calls.view') ?? false; }
+
+        protected static ?string $model = VoiceCall::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Pity Voice';
 

@@ -23,7 +23,10 @@ use Filament\Tables\Table;
 
 class LocalLanguagePatternResource extends Resource
 {
-    protected static ?string $model = LocalLanguagePattern::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->isSuperAdmin(); }
+
+        protected static ?string $model = LocalLanguagePattern::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Configuración';
 
