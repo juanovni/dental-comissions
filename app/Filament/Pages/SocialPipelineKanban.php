@@ -33,6 +33,11 @@ class SocialPipelineKanban extends Page
 
     protected string $view = 'filament.pages.social-pipeline-kanban';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRolePermission('social_pipeline.view') ?? false;
+    }
+
     public string $search = '';
 
     public ?int $lostModalCommentId = null;

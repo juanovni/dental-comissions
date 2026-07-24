@@ -22,15 +22,18 @@ use Filament\Tables\Table;
 
 class DoctorAssistantAssignmentResource extends Resource
 {
-    protected static ?string $model = DoctorAssistantAssignment::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clínica';
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('doctor_assistant_assignments.view') ?? false; }
+
+        protected static ?string $model = DoctorAssistantAssignment::class;
+
+    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clinica';
 
     protected static ?string $navigationLabel = 'Asignaciones';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $modelLabel = 'asignacion';
 

@@ -20,15 +20,18 @@ use Filament\Tables\Table;
 
 class ProcedureResource extends Resource
 {
-    protected static ?string $model = Procedure::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Configuración';
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('procedures.view') ?? false; }
+
+        protected static ?string $model = Procedure::class;
+
+    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clinica';
 
     protected static ?string $navigationLabel = 'Procedimientos';
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static ?int $navigationSort = 23;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $modelLabel = 'procedimiento';
 

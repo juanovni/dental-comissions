@@ -2,8 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Enums\UserRole;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\DashboardRoiSocial;
+use App\Filament\Resources\Appointments\AppointmentResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -36,7 +38,13 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->homeUrl(fn (): string => DashboardRoiSocial::getUrl())
+            ->homeUrl(function (): string {
+                $role = auth()->user()?->role;
+
+                return in_array($role, [UserRole::SuperAdmin, UserRole::Admin], true)
+                    ? DashboardRoiSocial::getUrl()
+                    : AppointmentResource::getUrl();
+            })
             ->login()
             ->brandLogo(function () {
                 if (request()->routeIs('filament.admin.auth.login')) {
@@ -68,8 +76,8 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-chart-bar-square'),
                 NavigationGroup::make('Reputacion Digital')
                     ->collapsible(false),
-                NavigationGroup::make('CRM de Ventas')
-                    ->icon('heroicon-o-briefcase'),
+                NavigationGroup::make('Operación Clinica')
+                    ->icon('heroicon-o-clipboard-document-list'),
                 NavigationGroup::make('Pity Voice')
                     ->icon('heroicon-o-phone'),
                 NavigationGroup::make('Configuración')

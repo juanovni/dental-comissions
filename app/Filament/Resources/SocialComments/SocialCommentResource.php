@@ -14,8 +14,7 @@ use App\Enums\SocialReputationRisk;
 use App\Enums\SocialResponseChannel;
 use App\Enums\SocialSentiment;
 use App\Enums\SocialSuggestedAction;
-use App\Filament\Resources\SocialComments\Pages\EditSocialComment;
-use App\Filament\Resources\SocialComments\Pages\ListSocialComments;
+use App\Filament\Pages\SocialInbox;
 use App\Filament\Resources\SocialComments\Pages\ViewSocialComment;
 use App\Models\Appointment;
 use App\Models\Patient;
@@ -48,7 +47,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 class SocialCommentResource extends Resource
 {
-    protected static ?string $model = SocialComment::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('social_comments.view') ?? false; }
+
+        protected static ?string $model = SocialComment::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
@@ -68,6 +70,11 @@ class SocialCommentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->with(['convertedPatient', 'socialAccount', 'socialIdentity.patient', 'socialPost', 'suggestedProcedure']);
+    }
+
+    public static function getIndexUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?\Illuminate\Database\Eloquent\Model $tenant = null, bool $shouldGuessMissingParameters = false): string
+    {
+        return SocialInbox::getUrl(isAbsolute: $isAbsolute, panel: $panel, tenant: $tenant, shouldGuessMissingParameters: $shouldGuessMissingParameters);
     }
 
     public static function form(Schema $schema): Schema
@@ -535,9 +542,7 @@ class SocialCommentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListSocialComments::route('/'),
             'view' => ViewSocialComment::route('/{record}'),
-            'edit' => EditSocialComment::route('/{record}/edit'),
         ];
     }
 

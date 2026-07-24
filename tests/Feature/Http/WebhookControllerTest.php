@@ -2,8 +2,6 @@
 
 namespace Tests\Feature\Http;
 
-use App\Models\PaymentMethod;
-use App\Models\PaymentMethodCommissionRate;
 use App\Models\Procedure;
 use App\Models\Professional;
 use App\Models\SocialAccount;
@@ -218,7 +216,6 @@ class WebhookControllerTest extends TestCase
 
         $this->assertNotNull($message);
         $this->assertSame('processed', $message->status->value);
-        $this->assertDatabaseCount('activity_records', 0);
         $this->assertNotNull($comment->refresh()->social_identity_id);
     }
 
@@ -236,19 +233,6 @@ class WebhookControllerTest extends TestCase
             'code' => 'OD001',
             'description' => 'Limpieza dental completa',
             'internal_rate' => 50.00,
-            'is_active' => true,
-        ]);
-
-        $paymentMethod = PaymentMethod::create([
-            'name' => 'Efectivo',
-            'code' => 'EFECTIVO',
-            'aliases' => ['efectivo'],
-            'is_active' => true,
-        ]);
-
-        PaymentMethodCommissionRate::create([
-            'payment_method_id' => $paymentMethod->id,
-            'amount' => 1.25,
             'is_active' => true,
         ]);
 

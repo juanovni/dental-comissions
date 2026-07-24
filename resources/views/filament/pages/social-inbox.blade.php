@@ -2239,7 +2239,7 @@
                     $risk = $comment->reputation_risk?->value ?? 'low';
                     $classification = $comment->classification;
                     $patient = $comment->socialIdentity?->patient ?: $comment->convertedPatient;
-                    $lastActivity = $patient?->activityRecords?->sortByDesc('activity_date')->sortByDesc('id')->first();
+                    $lastAppointment = $patient?->appointments?->sortByDesc('scheduled_at')->sortByDesc('id')->first();
                     $isLead = in_array($classification, [
                         \App\Enums\SocialCommentClassification::SalesLead,
                         \App\Enums\SocialCommentClassification::CommercialQuestion,
@@ -2250,7 +2250,7 @@
                         \App\Enums\SocialCommentClassification::LegalSensitive,
                     ], true);
                     $isMedical = $classification === \App\Enums\SocialCommentClassification::MedicalSensitive;
-                    $isVip = filled($patient) && ($patient->activityRecords?->count() ?? 0) > 0;
+                    $isVip = filled($patient) && ($patient->appointments?->count() ?? 0) > 0;
                     $isDerived = $comment->conversion_status === \App\Enums\SocialConversionStatus::TokenGenerated;
                     $isHotLead = filled($comment->hot_lead_at);
                     $isReheated = filled($comment->reheated_at);

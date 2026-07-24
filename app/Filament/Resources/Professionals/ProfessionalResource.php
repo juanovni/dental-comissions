@@ -23,15 +23,18 @@ use Filament\Tables\Table;
 
 class ProfessionalResource extends Resource
 {
-    protected static ?string $model = Professional::class;
+
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('professionals.view') ?? false; }
+
+        protected static ?string $model = Professional::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Configuración';
+    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clinica';
 
     protected static ?string $navigationLabel = 'Profesionales';
 
-    protected static ?int $navigationSort = 25;
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $modelLabel = 'profesional';
 

@@ -2,12 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Widgets\ApexActivityStatusChart;
-use App\Filament\Widgets\ApexPaymentMethodCommissionsChart;
-use App\Filament\Widgets\ApexTopDoctorsChart;
-use App\Filament\Widgets\ApexTopProceduresChart;
-use App\Filament\Widgets\DashboardStatsWidget;
-use App\Filament\Widgets\DoctorCommissionsTable;
 use App\Filament\Widgets\WhatsappIssuesTable;
 use Filament\Pages\Dashboard as BaseDashboard;
 
@@ -45,12 +39,6 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            DashboardStatsWidget::class,
-            ApexTopProceduresChart::class,
-            ApexActivityStatusChart::class,
-            ApexPaymentMethodCommissionsChart::class,
-            ApexTopDoctorsChart::class,
-            DoctorCommissionsTable::class,
             WhatsappIssuesTable::class,
         ];
     }

@@ -6,12 +6,9 @@ use App\Enums\AppointmentStatus;
 use App\Enums\SocialConversionStatus;
 use App\Enums\SocialPlatform;
 use App\Enums\WhatsappMessageStatus;
-use App\Models\ActivityRecord;
 use App\Models\Appointment;
 use App\Models\AppointmentSlotOffer;
 use App\Models\DoctorAssistantAssignment;
-use App\Models\PaymentMethod;
-use App\Models\PaymentMethodCommissionRate;
 use App\Models\Procedure;
 use App\Models\Professional;
 use App\Models\SocialAccount;
@@ -255,10 +252,8 @@ class WhatsappServiceTest extends TestCase
         $this->assertEquals(WhatsappMessageStatus::NeedsReview, $original->status);
     }
 
-    public function test_assistant_with_one_assigned_doctor_registers_activity_for_that_doctor(): void
+    public function test_assistant_with_one_assigned_doctor_does_not_register_activity(): void
     {
-        $this->seedPaymentMethods();
-
         $doctor = Professional::factory()->create([
             'role' => 'doctor',
             'name' => 'Dr. Carlos Ramirez',
@@ -293,19 +288,14 @@ class WhatsappServiceTest extends TestCase
             $this->buildPayload('+573001112233', 'Paciente: Maria Perez Procedimiento: Limpieza dental Pago: efectivo'),
         );
 
-        $activity = ActivityRecord::first();
-
         $this->assertNotNull($result);
-        $this->assertNotNull($activity);
         $this->assertEquals($assistant->id, $result->professional_id);
-        $this->assertEquals($doctor->id, $activity->doctor_id);
-        $this->assertTrue($activity->assistants()->whereKey($assistant->id)->exists());
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
+        $this->assertStringContainsString('ya no registra actividades clinicas', WhatsappMessage::where('direction', 'outgoing')->latest('id')->value('message_body'));
     }
 
-    public function test_assistant_with_multiple_doctors_uses_labeled_doctor(): void
+    public function test_assistant_with_multiple_doctors_labeled_message_does_not_register_activity(): void
     {
-        $this->seedPaymentMethods();
-
         $firstDoctor = Professional::factory()->create([
             'role' => 'doctor',
             'name' => 'Dr. Carlos Ramirez',
@@ -343,21 +333,16 @@ class WhatsappServiceTest extends TestCase
             'review_notes' => '',
         ]);
 
-        $this->whatsappService->processIncomingMessage(
+        $result = $this->whatsappService->processIncomingMessage(
             $this->buildPayload('+573001112233', 'Doctor: Laura Torres, Paciente: Maria Perez, Procedimiento: Limpieza dental, Pago: efectivo'),
         );
 
-        $activity = ActivityRecord::first();
-
-        $this->assertNotNull($activity);
-        $this->assertEquals($secondDoctor->id, $activity->doctor_id);
-        $this->assertTrue($activity->assistants()->whereKey($assistant->id)->exists());
+        $this->assertNotNull($result);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
     }
 
-    public function test_assistant_with_multiple_doctors_uses_doctor_mentioned_at_message_start(): void
+    public function test_assistant_with_multiple_doctors_start_mention_does_not_register_activity(): void
     {
-        $this->seedPaymentMethods();
-
         $firstDoctor = Professional::factory()->create([
             'role' => 'doctor',
             'name' => 'Dr. Carlos Ramirez',
@@ -395,15 +380,12 @@ class WhatsappServiceTest extends TestCase
             'review_notes' => '',
         ]);
 
-        $this->whatsappService->processIncomingMessage(
+        $result = $this->whatsappService->processIncomingMessage(
             $this->buildPayload('+573007778899', 'Dr. Juan Constantine, limpieza dental para Roberto Gomez, pago efectivo'),
         );
 
-        $activity = ActivityRecord::first();
-
-        $this->assertNotNull($activity);
-        $this->assertEquals($secondDoctor->id, $activity->doctor_id);
-        $this->assertTrue($activity->assistants()->whereKey($assistant->id)->exists());
+        $this->assertNotNull($result);
+        $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
     }
 
     public function test_assistant_partial_doctor_name_is_rejected_when_ambiguous(): void
@@ -440,7 +422,6 @@ class WhatsappServiceTest extends TestCase
 
         $this->assertNotNull($result);
         $this->assertEquals(WhatsappMessageStatus::NeedsReview, $result->status);
-        $this->assertEquals(0, ActivityRecord::count());
     }
 
     public function test_assistant_with_multiple_doctors_without_doctor_label_needs_review(): void
@@ -469,7 +450,6 @@ class WhatsappServiceTest extends TestCase
         $this->assertNotNull($result);
         $this->assertEquals(WhatsappMessageStatus::NeedsReview, $result->status);
         $this->assertStringContainsString('perteneces a varios doctores', $result->error_message);
-        $this->assertEquals(0, ActivityRecord::count());
     }
 
     public function test_social_tracking_token_takes_precedence_over_professional_activity_flow(): void
@@ -512,7 +492,6 @@ class WhatsappServiceTest extends TestCase
         $this->assertNotNull($result);
         $this->assertEquals($professional->id, $result->professional_id);
         $this->assertEquals(WhatsappMessageStatus::Processed, $result->status);
-        $this->assertEquals(0, ActivityRecord::count());
         $this->assertNotNull($comment->refresh()->social_identity_id);
     }
 
@@ -528,7 +507,6 @@ class WhatsappServiceTest extends TestCase
         $this->assertNull($result->professional_id);
         $this->assertEquals(WhatsappMessageStatus::Processed, $result->status);
         $this->assertNotNull($result->social_comment_id);
-        $this->assertEquals(0, ActivityRecord::count());
         $this->assertDatabaseHas('social_comments', [
             'id' => $result->social_comment_id,
             'platform' => SocialPlatform::Whatsapp->value,
@@ -569,7 +547,6 @@ class WhatsappServiceTest extends TestCase
         $this->assertNotNull($result);
         $this->assertNull($result->professional_id);
         $this->assertEquals(WhatsappMessageStatus::Processed, $result->status);
-        $this->assertEquals(0, ActivityRecord::count());
         $this->assertNotNull($comment->refresh()->social_identity_id);
     }
 
@@ -589,7 +566,6 @@ class WhatsappServiceTest extends TestCase
         $this->assertNotNull($result);
         $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
         $this->assertStringContainsString('Codigo de lead no encontrado: DNT-FMNPQ', $result->error_message);
-        $this->assertEquals(0, ActivityRecord::count());
     }
 
     public function test_malformed_tracking_token_from_professional_does_not_fall_back_to_activity_flow(): void
@@ -609,7 +585,6 @@ class WhatsappServiceTest extends TestCase
         $this->assertEquals($doctor->id, $result->professional_id);
         $this->assertEquals(WhatsappMessageStatus::Failed, $result->status);
         $this->assertStringContainsString('Codigo de lead incompleto o invalido', $result->error_message);
-        $this->assertEquals(0, ActivityRecord::count());
     }
 
     private function fakeGemini(?array $content = null): void
@@ -660,19 +635,4 @@ class WhatsappServiceTest extends TestCase
         );
     }
 
-    private function seedPaymentMethods(): void
-    {
-        $paymentMethod = PaymentMethod::create([
-            'name' => 'Efectivo',
-            'code' => 'EFECTIVO',
-            'aliases' => ['efectivo', 'efe'],
-            'is_active' => true,
-        ]);
-
-        PaymentMethodCommissionRate::create([
-            'payment_method_id' => $paymentMethod->id,
-            'amount' => 1.25,
-            'is_active' => true,
-        ]);
-    }
 }
