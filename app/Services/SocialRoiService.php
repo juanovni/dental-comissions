@@ -9,7 +9,6 @@ use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
 use App\Enums\AppointmentStatus;
-use App\Models\ActivityRecord;
 use App\Models\Appointment;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
@@ -24,70 +23,24 @@ use Illuminate\Support\Facades\DB;
 
 class SocialRoiService
 {
-    public function attributeActivity(ActivityRecord $activity): ?ActivityRecord
-    {
-        if ($activity->social_comment_id || ! $activity->patient_id) {
-            return $activity->social_comment_id ? $activity : null;
-        }
-
-        $identity = SocialIdentity::query()
-            ->where('patient_id', $activity->patient_id)
-            ->latest('linked_at')
-            ->latest('last_seen_at')
-            ->first();
-
-        if (! $identity) {
-            return null;
-        }
-
-        $comment = SocialComment::query()
-            ->where('social_identity_id', $identity->id)
-            ->whereNotNull('social_post_id')
-            ->latest('converted_at')
-            ->latest('whatsapp_redirected_at')
-            ->latest('created_at')
-            ->first();
-
-        if (! $comment) {
-            return null;
-        }
-
-        $activity->update([
-            'social_comment_id' => $comment->id,
-            'social_identity_id' => $identity->id,
-            'social_post_id' => $comment->social_post_id,
-            'social_attributed_at' => now(),
-        ]);
-
-        $comment->update([
-            'conversion_status' => SocialConversionStatus::Converted,
-            'converted_patient_id' => $activity->patient_id,
-            'converted_at' => $comment->converted_at ?: now(),
-        ]);
-
-        $identity->update([
-            'status' => SocialIdentityStatus::Converted,
-            'last_seen_at' => now(),
-        ]);
-
-        $this->refreshPostMetrics($comment->socialPost);
-
-        return $activity->refresh();
-    }
-
     public function refreshPostMetrics(?SocialPost $post): void
     {
         if (! $post) {
             return;
         }
 
-        $metrics = ActivityRecord::query()
+        $metrics = Appointment::query()
             ->where('social_post_id', $post->id)
-            ->selectRaw('COALESCE(SUM(internal_rate_snapshot), 0) as revenue, COUNT(*) as conversions')
+            ->selectRaw('COUNT(*) as conversions')
             ->first();
 
+        $revenue = SocialComment::query()
+            ->where('social_post_id', $post->id)
+            ->where('pipeline_stage', SocialPipelineStage::Won->value)
+            ->sum('estimated_value');
+
         $post->update([
-            'revenue_generated' => (float) ($metrics->revenue ?? 0),
+            'revenue_generated' => (float) $revenue,
             'conversion_count' => (int) ($metrics->conversions ?? 0),
         ]);
     }
@@ -95,7 +48,6 @@ class SocialRoiService
     public function summary(?array $filters = null): array
     {
         $period = SocialRoiPeriod::resolve($filters);
-        $socialActivities = $this->socialActivitiesQuery($period);
         $comments = $this->commentsQuery($period);
         $commercial = $this->commercialSummary($filters);
         $appointments = $this->appointmentSummary($filters);
@@ -108,8 +60,8 @@ class SocialRoiService
             })
             ->count();
         $linkedCount = (clone $comments)->whereNotNull('converted_patient_id')->count();
-        $activityCount = (clone $socialActivities)->count();
-        $revenue = (clone $socialActivities)->sum('internal_rate_snapshot');
+        $activityCount = $appointments['appointment_completed_count'];
+        $revenue = $commercial['won_value_month'];
         $leakageCount = $this->leakageQuery($filters)->count();
 
         return [
@@ -153,7 +105,7 @@ class SocialRoiService
             'appointment_leakage_count' => $appointmentLeakageCount,
             'lead_to_appointment_rate' => $leadCount > 0 ? round(($appointmentCount / $leadCount) * 100, 1) : 0,
             'whatsapp_to_appointment_rate' => $whatsappCount > 0 ? round(($appointmentCount / $whatsappCount) * 100, 1) : 0,
-            'appointment_to_activity_rate' => $appointmentCount > 0 ? round(((clone $this->socialActivitiesQuery($period))->count() / $appointmentCount) * 100, 1) : 0,
+            'appointment_to_activity_rate' => $appointmentCount > 0 ? round(($completedCount / $appointmentCount) * 100, 1) : 0,
         ];
     }
 
@@ -194,15 +146,18 @@ class SocialRoiService
         return SocialPost::query()
             ->with('socialAccount')
             ->join('appointments', 'appointments.social_post_id', '=', 'social_posts.id')
-            ->leftJoin('activity_records', 'activity_records.social_post_id', '=', 'social_posts.id')
+            ->leftJoin('social_comments', 'social_comments.social_post_id', '=', 'social_posts.id')
             ->whereBetween('appointments.created_at', [$period['from'], $period['until']])
             ->select('social_posts.*')
             ->selectRaw('COUNT(DISTINCT appointments.id) as appointment_count')
-            ->selectRaw('COUNT(DISTINCT activity_records.id) as conversion_count')
-            ->selectRaw('COALESCE(SUM(DISTINCT activity_records.internal_rate_snapshot), 0) as revenue_generated')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN appointments.status in (?, ?) THEN appointments.id END) as conversion_count', [
+                AppointmentStatus::Confirmed->value,
+                AppointmentStatus::Completed->value,
+            ])
+            ->selectRaw('COALESCE(SUM(DISTINCT CASE WHEN social_comments.pipeline_stage = ? THEN social_comments.estimated_value ELSE 0 END), 0) as revenue_generated', [SocialPipelineStage::Won->value])
             ->groupBy('social_posts.id')
             ->orderByDesc(DB::raw('COUNT(DISTINCT appointments.id)'))
-            ->orderByDesc(DB::raw('COALESCE(SUM(DISTINCT activity_records.internal_rate_snapshot), 0)'))
+            ->orderByDesc(DB::raw('COALESCE(SUM(DISTINCT CASE WHEN social_comments.pipeline_stage = '.DB::getPdo()->quote(SocialPipelineStage::Won->value).' THEN social_comments.estimated_value ELSE 0 END), 0)'))
             ->limit($limit)
             ->get();
     }
@@ -273,19 +228,11 @@ class SocialRoiService
             ->get()
             ->keyBy('platform');
 
-        $revenueRows = ActivityRecord::query()
-            ->leftJoin('social_posts', 'social_posts.id', '=', 'activity_records.social_post_id')
-            ->leftJoin('social_comments', 'social_comments.id', '=', 'activity_records.social_comment_id')
-            ->leftJoin('social_identities', 'social_identities.id', '=', 'activity_records.social_identity_id')
-            ->where(function (Builder $query): void {
-                $query->whereNotNull('activity_records.social_post_id')
-                    ->orWhereNotNull('activity_records.social_comment_id')
-                    ->orWhereNotNull('activity_records.social_identity_id');
-            })
-            ->whereBetween('activity_records.activity_date', [$period['from_date'], $period['until_date']])
-            ->selectRaw('COALESCE(social_posts.platform, social_comments.platform, social_identities.platform) as platform')
-            ->selectRaw('COALESCE(SUM(activity_records.internal_rate_snapshot), 0) as revenue')
-            ->groupByRaw('COALESCE(social_posts.platform, social_comments.platform, social_identities.platform)')
+        $revenueRows = $this->commentsQuery($period)
+            ->where('pipeline_stage', SocialPipelineStage::Won->value)
+            ->selectRaw('platform')
+            ->selectRaw('COALESCE(SUM(estimated_value), 0) as revenue')
+            ->groupBy('platform')
             ->pluck('revenue', 'platform');
 
         return [
@@ -302,13 +249,13 @@ class SocialRoiService
 
         $rows = $this->commentsQuery($period)
             ->leftJoin('procedures', 'procedures.id', '=', 'social_comments.suggested_procedure_id')
-            ->leftJoin('activity_records', function ($join) use ($period): void {
-                $join->on('activity_records.social_comment_id', '=', 'social_comments.id')
-                    ->whereBetween('activity_records.activity_date', [$period['from_date'], $period['until_date']]);
+            ->leftJoin('appointments', function ($join) use ($period): void {
+                $join->on('appointments.social_comment_id', '=', 'social_comments.id')
+                    ->whereBetween('appointments.created_at', [$period['from'], $period['until']]);
             })
             ->selectRaw("COALESCE(procedures.name, 'Consulta General/Otros') as label")
             ->selectRaw('COUNT(DISTINCT social_comments.id) as comments_count')
-            ->selectRaw('COUNT(DISTINCT activity_records.id) as conversions_count')
+            ->selectRaw('COUNT(DISTINCT appointments.id) as conversions_count')
             ->groupByRaw("COALESCE(procedures.name, 'Consulta General/Otros')")
             ->orderByDesc('comments_count')
             ->limit($limit)
@@ -363,10 +310,10 @@ class SocialRoiService
                 ->selectRaw('AVG(EXTRACT(EPOCH FROM (first_actions.first_action_at::timestamp - social_comments.created_at::timestamp)) / 60) as average_minutes')
                 ->value('average_minutes');
 
-            $weekRevenue = ActivityRecord::query()
-                ->whereNotNull('social_attributed_at')
-                ->whereBetween('activity_date', [$bucketStart->toDateString(), $bucketEnd->toDateString()])
-                ->sum('internal_rate_snapshot');
+            $weekRevenue = SocialComment::query()
+                ->where('pipeline_stage', SocialPipelineStage::Won->value)
+                ->whereBetween('converted_at', [$bucketStart, $bucketEnd])
+                ->sum('estimated_value');
 
             $labels[] = 'Sem '.$weekStart->isoWeek();
             $responseMinutes[] = round((float) ($averageMinutes ?? 0), 1);
@@ -386,14 +333,14 @@ class SocialRoiService
 
         return SocialPost::query()
             ->with('socialAccount')
-            ->join('activity_records', 'activity_records.social_post_id', '=', 'social_posts.id')
-            ->whereBetween('activity_records.activity_date', [$period['from_date'], $period['until_date']])
+            ->join('appointments', 'appointments.social_post_id', '=', 'social_posts.id')
+            ->leftJoin('social_comments', 'social_comments.social_post_id', '=', 'social_posts.id')
+            ->whereBetween('appointments.created_at', [$period['from'], $period['until']])
             ->select('social_posts.*')
-            ->selectRaw('COALESCE(SUM(activity_records.internal_rate_snapshot), 0) as revenue_generated')
-            ->selectRaw('COUNT(activity_records.id) as conversion_count')
+            ->selectRaw('COALESCE(SUM(CASE WHEN social_comments.pipeline_stage = ? THEN social_comments.estimated_value ELSE 0 END), 0) as revenue_generated', [SocialPipelineStage::Won->value])
+            ->selectRaw('COUNT(DISTINCT appointments.id) as conversion_count')
             ->groupBy('social_posts.id')
-            ->orderByDesc(DB::raw('COALESCE(SUM(activity_records.internal_rate_snapshot), 0)'))
-            ->orderByDesc(DB::raw('COUNT(activity_records.id)'))
+            ->orderByDesc(DB::raw('COUNT(DISTINCT appointments.id)'))
             ->limit($limit)
             ->get();
     }
@@ -563,11 +510,7 @@ class SocialRoiService
                 AppointmentStatus::Scheduled->value,
                 AppointmentStatus::Confirmed->value,
             ])
-            ->whereNotExists(function ($query): void {
-                $query->selectRaw('1')
-                    ->from('activity_records')
-                    ->whereColumn('activity_records.social_comment_id', 'appointments.social_comment_id');
-            });
+            ;
     }
 
     public function funnelData(?array $filters = null): array
@@ -575,7 +518,7 @@ class SocialRoiService
         $summary = $this->summary($filters);
 
         return [
-            'labels' => ['Comentarios', 'WhatsApp', 'Ficha', 'Citas', 'Actividad'],
+            'labels' => ['Comentarios', 'WhatsApp', 'Ficha', 'Citas', 'Completadas'],
             'values' => [
                 $summary['lead_count'],
                 $summary['whatsapp_count'],
@@ -589,33 +532,17 @@ class SocialRoiService
     public function financialHighlights(?array $filters = null): array
     {
         $period = SocialRoiPeriod::resolve($filters);
-
-        $activityQuery = ActivityRecord::query()
-            ->whereBetween('activity_date', [$period['from_date'], $period['until_date']]);
-
-        $totalRevenue = (clone $activityQuery)->sum('internal_rate_snapshot');
-
-        $attributedRevenue = (clone $activityQuery)
-            ->where(function (Builder $query): void {
-                $query->whereNotNull('social_post_id')
-                    ->orWhereNotNull('social_comment_id')
-                    ->orWhereNotNull('social_identity_id');
-            })
-            ->sum('internal_rate_snapshot');
-
         $wonPipeline = SocialComment::query()
             ->where('pipeline_stage', SocialPipelineStage::Won->value)
             ->whereBetween('converted_at', [$period['from'], $period['until']])
             ->sum('estimated_value');
 
-        $nonAttributed = $totalRevenue - $attributedRevenue;
-
         return [
-            'total_revenue' => (float) $totalRevenue,
-            'attributed_revenue' => (float) $attributedRevenue,
-            'non_attributed_revenue' => max(0, (float) $nonAttributed),
+            'total_revenue' => (float) $wonPipeline,
+            'attributed_revenue' => (float) $wonPipeline,
+            'non_attributed_revenue' => 0,
             'won_pipeline_value' => (float) $wonPipeline,
-            'attribution_rate' => $totalRevenue > 0 ? round(($attributedRevenue / $totalRevenue) * 100, 1) : 0,
+            'attribution_rate' => $wonPipeline > 0 ? 100 : 0,
         ];
     }
 
@@ -623,13 +550,6 @@ class SocialRoiService
     {
         return SocialComment::query()
             ->whereBetween('social_comments.created_at', [$period['from'], $period['until']]);
-    }
-
-    private function socialActivitiesQuery(array $period): Builder
-    {
-        return ActivityRecord::query()
-            ->whereNotNull('social_post_id')
-            ->whereBetween('activity_date', [$period['from_date'], $period['until_date']]);
     }
 
     private function appointmentsQuery(array $period): Builder

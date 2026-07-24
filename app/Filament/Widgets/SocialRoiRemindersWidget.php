@@ -40,11 +40,6 @@ class SocialRoiRemindersWidget extends Widget
                 AppointmentStatus::Scheduled->value,
                 AppointmentStatus::Confirmed->value,
             ])
-            ->whereNotExists(function ($query): void {
-                $query->selectRaw('1')
-                    ->from('activity_records')
-                    ->whereColumn('activity_records.social_comment_id', 'appointments.social_comment_id');
-            })
             ->count();
 
         $hotLeads = SocialComment::query()
@@ -75,11 +70,11 @@ class SocialRoiRemindersWidget extends Widget
 
         return collect([
             [
-                'label' => 'Citas vencidas sin actividad',
+                'label' => 'Citas vencidas',
                 'value' => $appointmentLeakage,
                 'description' => $appointmentLeakage > 0
                     ? 'Requieren seguimiento para evitar perdida del paciente'
-                    : 'Sin citas pendientes de actividad',
+                    : 'Sin citas vencidas pendientes',
                 'priority' => $appointmentLeakage > 3 ? 'danger' : ($appointmentLeakage > 0 ? 'warning' : 'success'),
                 'icon' => 'heroicon-o-calendar-days',
             ],

@@ -58,11 +58,6 @@ class SocialPost extends Model
         return $this->hasMany(SocialComment::class);
     }
 
-    public function activityRecords(): HasMany
-    {
-        return $this->hasMany(ActivityRecord::class);
-    }
-
     public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class);

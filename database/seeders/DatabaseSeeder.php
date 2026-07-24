@@ -21,8 +21,6 @@ class DatabaseSeeder extends Seeder
             SuperAdminUserSeeder::class,
             RolePermissionSeeder::class,
             DemoDoctorSeeder::class,
-            PaymentMethodSeeder::class,
-            PaymentMethodCommissionRateSeeder::class,
         ]);
     }
 }

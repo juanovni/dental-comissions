@@ -14,9 +14,6 @@ enum UserPermission: string
     case SocialCommentsView = 'social_comments.view';
     case VoiceCallsView = 'voice_calls.view';
     case SocialCrmSettingsView = 'social_crm_settings.view';
-    case PaymentMethodsView = 'payment_methods.view';
-    case PaymentMethodCommissionRatesView = 'payment_method_commission_rates.view';
-    case WeeklyReportsView = 'weekly_reports.view';
 
     public function label(): string
     {
@@ -28,12 +25,9 @@ enum UserPermission: string
             self::AppointmentsView => 'Ver agenda/citas',
             self::WhatsappMessagesView => 'Ver mensajes WhatsApp',
             self::SocialAccountsView => 'Ver cuentas sociales',
-            self::SocialCommentsView => 'Ver comentarios sociales',
+            self::SocialCommentsView => 'Ver casos sociales',
             self::VoiceCallsView => 'Ver llamadas de voz',
             self::SocialCrmSettingsView => 'Ver configuracion CRM social',
-            self::PaymentMethodsView => 'Ver metodos de pago',
-            self::PaymentMethodCommissionRatesView => 'Ver tarifas por metodo de pago',
-            self::WeeklyReportsView => 'Ver reportes semanales',
         };
     }
 
@@ -50,9 +44,6 @@ enum UserPermission: string
             self::SocialCommentsView,
             self::SocialCrmSettingsView => 'CRM social',
             self::VoiceCallsView => 'Pity Voice',
-            self::PaymentMethodsView,
-            self::PaymentMethodCommissionRatesView,
-            self::WeeklyReportsView => 'Finanzas heredadas',
         };
     }
 

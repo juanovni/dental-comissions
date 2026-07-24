@@ -494,7 +494,7 @@ class SocialInbox extends Page
             ]))
             ->when($this->filter === 'vip', fn (Builder $query): Builder => $query
                 ->whereHas('socialIdentity.patient')
-                ->whereHas('socialIdentity.patient.activityRecords'))
+                ->whereHas('socialIdentity.patient.appointments'))
             ->when($this->filter === 'medical', fn (Builder $query): Builder => $query->where(
                 'classification',
                 SocialCommentClassification::MedicalSensitive->value,
@@ -516,7 +516,7 @@ class SocialInbox extends Page
             ])->count(),
             'crisis' => $this->applyCrisisQuery($this->applyActiveQuery(SocialComment::query()))->count(),
             'vip' => $this->applyActiveQuery(SocialComment::query())->whereHas('socialIdentity.patient')
-                ->whereHas('socialIdentity.patient.activityRecords')
+                ->whereHas('socialIdentity.patient.appointments')
                 ->count(),
             'medical' => $this->applyActiveQuery(SocialComment::query())->where('classification', SocialCommentClassification::MedicalSensitive->value)->count(),
             'all' => $this->applyActiveQuery(SocialComment::query())->count(),
@@ -810,11 +810,11 @@ class SocialInbox extends Page
             ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
             ->with([
                 'convertedPatient',
-                'convertedPatient.activityRecords.doctor',
-                'convertedPatient.activityRecords.procedure',
+                'convertedPatient.appointments.doctor',
+                'convertedPatient.appointments.procedure',
                 'socialAccount',
-                'socialIdentity.patient.activityRecords.doctor',
-                'socialIdentity.patient.activityRecords.procedure',
+                'socialIdentity.patient.appointments.doctor',
+                'socialIdentity.patient.appointments.procedure',
                 'socialPost',
                 'suggestedProcedure',
             ])

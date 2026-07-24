@@ -27,13 +27,13 @@ class DoctorAssistantAssignmentResource extends Resource
 
         protected static ?string $model = DoctorAssistantAssignment::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clínica';
+    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clinica';
 
     protected static ?string $navigationLabel = 'Asignaciones';
 
     protected static bool $shouldRegisterNavigation = true;
 
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $modelLabel = 'asignacion';
 

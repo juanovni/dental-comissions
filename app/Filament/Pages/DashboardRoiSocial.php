@@ -38,7 +38,7 @@ class DashboardRoiSocial extends BaseDashboard
 
         return new HtmlString(<<<HTML
 <span class="text-sm font-normal text-muted-foreground">
-    Atribucion desde comentario social hasta actividad clinica.
+    Atribucion desde comentario social hasta cita y pipeline comercial.
     <span class="social-roi-period-chip" tabindex="0">
         {$badgeLabel}
         <span class="social-roi-period-info">i</span>

@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\SocialCommentActionType;
 use App\Enums\WhatsappMessageDirection;
 use App\Filament\Resources\Patients\PatientResource;
-use App\Models\ActivityRecord;
+use App\Models\Appointment;
 use App\Models\SocialComment;
 use App\Models\WhatsappMessage;
 use Illuminate\Support\Collection;
@@ -27,11 +27,11 @@ class SocialCommentCasePresenter
 
         $identity = $comment->socialIdentity;
         $patient = $identity?->patient ?: $comment->convertedPatient;
-        $lastActivity = $patient
-            ? ActivityRecord::query()
+        $lastAppointment = $patient
+            ? Appointment::query()
                 ->with(['doctor', 'procedure'])
                 ->where('patient_id', $patient->id)
-                ->latest('activity_date')
+                ->latest('scheduled_at')
                 ->latest('id')
                 ->first()
             : null;
@@ -47,7 +47,7 @@ class SocialCommentCasePresenter
             'conversation' => $conversation->all(),
             'conversation_metrics' => $this->conversationMetrics($conversation),
             'identity' => $identity,
-            'last_activity' => $lastActivity,
+            'last_activity' => $lastAppointment,
             'patient' => $patient,
             'patient_url' => $patient ? PatientResource::getUrl('edit', ['record' => $patient]) : null,
             'post' => $comment->socialPost,
@@ -58,9 +58,9 @@ class SocialCommentCasePresenter
                 'origin' => $comment->socialPost?->campaign_name ?: 'Sin campana asignada',
             ],
             'clinical' => [
-                'last_appointment' => $lastActivity?->activity_date?->diffForHumans() ?? 'Sin citas registradas',
-                'procedure' => $lastActivity?->procedure?->name ?: ($comment->suggestedProcedure?->name ?: 'Sin procedimiento registrado'),
-                'doctor' => $lastActivity?->doctor?->name ?: 'Sin asignar',
+                'last_appointment' => $lastAppointment?->scheduled_at?->diffForHumans() ?? 'Sin citas registradas',
+                'procedure' => $lastAppointment?->procedure?->name ?: ($comment->suggestedProcedure?->name ?: 'Sin procedimiento registrado'),
+                'doctor' => $lastAppointment?->doctor?->name ?: 'Sin asignar',
                 'alerts' => ($comment->leadAlerts?->whereNull('resolved_at')->count() ?: 0).' abiertas',
             ],
         ];
