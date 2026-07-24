@@ -58,7 +58,7 @@ class SocialCommentResource extends Resource
 
     protected static ?string $navigationLabel = 'Comentarios';
 
-    protected static bool $shouldRegisterNavigation = true;
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $modelLabel = 'comentario social';
 

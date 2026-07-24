@@ -25,7 +25,7 @@ class PatientResource extends Resource
 
         protected static ?string $model = Patient::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'CRM de Ventas';
+    protected static string | \UnitEnum | null $navigationGroup = 'Operación Clinica';
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
 

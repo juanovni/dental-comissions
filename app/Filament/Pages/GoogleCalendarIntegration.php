@@ -26,6 +26,11 @@ class GoogleCalendarIntegration extends Page
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRolePermission('integrations.view') ?? false;
+    }
+
     protected string $view = 'filament.pages.google-calendar-integration';
 
     public function mount(): void

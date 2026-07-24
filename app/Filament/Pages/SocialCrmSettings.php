@@ -36,6 +36,11 @@ class SocialCrmSettings extends Page
 
     protected static ?int $navigationSort = 22;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRolePermission('social_crm_settings.view') ?? false;
+    }
+
     public ?array $data = [];
 
     public function getSubheading(): HtmlString

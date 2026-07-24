@@ -31,6 +31,11 @@ class DashboardRoiSocial extends BaseDashboard
         return 'heroicon-o-presentation-chart-line';
     }
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRolePermission('dashboard_roi_social.view') ?? false;
+    }
+
     public function getSubheading(): string|Htmlable|null
     {
         $period = SocialRoiPeriod::resolve(['period' => '3_months']);

@@ -25,6 +25,11 @@ class Integrations extends Page
 
     protected string $view = 'filament.pages.integrations';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRolePermission('integrations.view') ?? false;
+    }
+
     public function metaStats(): array
     {
         $accounts = SocialAccount::query()

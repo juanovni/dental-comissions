@@ -23,6 +23,11 @@ class VoiceTestSimulator extends Page implements HasForms
 
     protected string $view = 'filament.pages.voice-test-simulator';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRolePermission('voice_test_simulator.view') ?? false;
+    }
+
     public ?string $phone = '';
     public ?string $message = '';
     public array $conversation = [];

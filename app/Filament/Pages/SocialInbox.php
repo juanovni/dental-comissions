@@ -42,6 +42,11 @@ class SocialInbox extends Page
 
     protected string $view = 'filament.pages.social-inbox';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRolePermission('social_inbox.view') ?? false;
+    }
+
     public static function getNavigationBadge(): ?string
     {
         $archivedStatuses = app(SocialCrmSettingsService::class)->archivedConversionStatuses();

@@ -31,6 +31,11 @@ class SocialHotLeads extends Page
 
     protected string $view = 'filament.pages.social-hot-leads';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRolePermission('social_inbox.view') ?? false;
+    }
+
     public function leads(): LengthAwarePaginator
     {
         return app(SocialLeadOperationsService::class)
