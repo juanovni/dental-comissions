@@ -24,7 +24,7 @@ use Filament\Tables\Table;
 class LocalLanguagePatternResource extends Resource
 {
 
-    public static function canViewAny(): bool { return auth()->user()?->isSuperAdmin(); }
+    public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('local_language_patterns.view') ?? false; }
 
         protected static ?string $model = LocalLanguagePattern::class;
 

@@ -31,7 +31,7 @@ class SocialCrmSettingResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-adjustments-horizontal';
 
-    protected static ?string $navigationLabel = 'Configuracion CRM';
+    protected static ?string $navigationLabel = 'Clinica';
 
     protected static ?string $modelLabel = 'configuracion CRM social';
 

@@ -24,10 +24,8 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::DoctorAssistantAssignmentsView,
                 UserPermission::AppointmentsView,
                 UserPermission::SocialAccountsView,
-                UserPermission::SocialCommentsView,
-                UserPermission::VoiceCallsView,
-                UserPermission::VoiceTestSimulatorView,
                 UserPermission::SocialCrmSettingsView,
+                UserPermission::LocalLanguagePatternsView,
             ],
             UserRole::Doctor->value => [
                 UserPermission::DashboardRoiSocialView,
@@ -39,10 +37,7 @@ class RolePermissionSeeder extends Seeder
             ],
             UserRole::Assistant->value => [
                 UserPermission::DashboardRoiSocialView,
-                UserPermission::ProfessionalsView,
                 UserPermission::PatientsView,
-                UserPermission::ProceduresView,
-                UserPermission::DoctorAssistantAssignmentsView,
                 UserPermission::AppointmentsView,
             ],
             UserRole::Receptionist->value => [
@@ -50,9 +45,10 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::SocialInboxView,
                 UserPermission::SocialPipelineView,
                 UserPermission::PatientsView,
+                UserPermission::ProfessionalsView,
                 UserPermission::ProceduresView,
+                UserPermission::DoctorAssistantAssignmentsView,
                 UserPermission::AppointmentsView,
-                UserPermission::SocialCommentsView,
             ],
         ];
 

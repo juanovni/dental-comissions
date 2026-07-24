@@ -18,6 +18,7 @@ enum UserPermission: string
     case VoiceCallsView = 'voice_calls.view';
     case VoiceTestSimulatorView = 'voice_test_simulator.view';
     case SocialCrmSettingsView = 'social_crm_settings.view';
+    case LocalLanguagePatternsView = 'local_language_patterns.view';
 
     public function label(): string
     {
@@ -36,6 +37,7 @@ enum UserPermission: string
             self::VoiceCallsView => 'Ver llamadas de voz',
             self::VoiceTestSimulatorView => 'Ver simulador de llamada',
             self::SocialCrmSettingsView => 'Ver configuracion CRM social',
+            self::LocalLanguagePatternsView => 'Ver lenguaje local',
         };
     }
 
@@ -54,6 +56,7 @@ enum UserPermission: string
             self::SocialInboxView,
             self::SocialPipelineView,
             self::SocialCrmSettingsView => 'CRM social',
+            self::LocalLanguagePatternsView => 'Configuracion',
             self::VoiceCallsView,
             self::VoiceTestSimulatorView => 'Pity Voice',
         };
