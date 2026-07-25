@@ -511,7 +511,19 @@ Comunicacion:
 
 ### Administracion
 
-Debe enfocarse en indicadores operativos diarios e historicos.
+Debe enfocarse en gestion y analitica operativa. Esta pantalla es nueva y debe agregarse para roles Admin y Super Admin. No reemplaza `Recepcion`, no reemplaza `Citas` y no debe servir para mover pacientes entre estados.
+
+Nombre sugerido:
+
+- `Operacion clinica`.
+
+Objetivo:
+
+- Mostrar como esta funcionando la clinica en el dia.
+- Detectar saturacion por doctor.
+- Medir tiempos de espera y consulta.
+- Identificar no-show, cancelaciones y retrasos.
+- Dar visibilidad administrativa para tomar decisiones operativas.
 
 Formato visual sugerido:
 
@@ -519,6 +531,73 @@ Formato visual sugerido:
 - Cards de indicadores.
 - Graficos ApexCharts.
 - Tablas solo para auditoria, historico o exportacion.
+- Filas resumen tipo card para productividad o saturacion por doctor.
+- Botones compactos con icono para `Umbrales` y `Exportar`.
+- Estilo limpio tipo Metronic siguiendo `.cursorrules`.
+- Reutilizar `mc-card`, `mc-badge`, `mc-btn`, `mc-facts` y patrones existentes cuando aplique.
+
+Mini cards superiores:
+
+- `Agendadas`.
+- `Confirmadas`.
+- `Atendidas`.
+- `Canceladas`.
+- `No Show`.
+- `Espera prom`.
+- `Consulta prom`.
+- `Puntualidad`.
+
+Agrupacion conceptual:
+
+- Volumen: agendadas, confirmadas, atendidas.
+- Incidencias: canceladas, no-show.
+- Tiempos: espera promedio, consulta promedio, puntualidad.
+
+Secciones principales:
+
+- `Estado actual de la clinica`: distribucion en vivo por estado operativo.
+- `Alertas operativas`: eventos que requieren atencion administrativa.
+- `Productividad y saturacion por doctor`: carga, atendidas, pacientes en espera y saturacion.
+
+Estado actual de la clinica:
+
+- En espera.
+- En preparacion.
+- Listo para doctor.
+- En consulta.
+- Finalizada.
+
+Alertas operativas sugeridas:
+
+- Doctor con varios pacientes acumulados.
+- Tiempo promedio de espera por encima del umbral.
+- Posible no-show sin confirmar.
+- Paciente listo para doctor hace mas de N minutos.
+- Paciente en espera hace mas de N minutos.
+
+Productividad y saturacion por doctor:
+
+- Doctor.
+- Citas del dia.
+- Citas atendidas.
+- Pacientes en espera.
+- Saturacion estimada.
+- Futuro: espera promedio por doctor.
+- Futuro: consulta promedio por doctor.
+
+Acciones administrativas:
+
+- `Umbrales`: configurar limites de espera, retraso, no-show y saturacion.
+- `Exportar`: descargar reporte del periodo.
+- Filtros futuros: hoy, semana, mes, doctor, sede.
+
+Restricciones:
+
+- No debe permitir mover pacientes entre estados.
+- No debe reemplazar el panel `Recepcion`.
+- No debe convertirse en una tabla densa.
+- No debe mostrar datos clinicos sensibles innecesarios.
+- Solo Admin y Super Admin deben ver exportacion y configuracion de umbrales.
 
 Indicadores sugeridos:
 
