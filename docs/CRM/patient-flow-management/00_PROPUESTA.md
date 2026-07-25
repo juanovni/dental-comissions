@@ -6,6 +6,49 @@ Evolucionar el modulo actual de citas de OdonCRM hacia un sistema de Patient Flo
 
 El sistema debe ayudar a reducir tiempos de espera, disminuir ausencias, mejorar la experiencia del paciente y entregar informacion operativa en tiempo real para recepcionistas, doctores y administradores.
 
+Este modulo debe entenderse como una expansion de OdonCRM hacia Operacion Clinica, no como reemplazo del CRM ni como historia clinica completa.
+
+Flujo conceptual:
+
+```text
+CRM / Pipeline -> Cita -> Patient Flow -> Metricas operativas -> Seguimiento CRM
+```
+
+## Limites del Modulo
+
+Patient Flow debe cubrir recepcion, espera, preparacion, consulta, finalizacion y analitica operativa. No debe convertirse en un sistema hospitalario completo ni en historia clinica.
+
+Incluye:
+
+- Check-in.
+- Estados operativos de cita.
+- Cronometro de espera y consulta.
+- Panel de recepcion.
+- Cola de asistente.
+- Mi cola del doctor.
+- Notas operativas.
+- Eventos e historial del flujo.
+- Dashboard administrativo de operacion clinica.
+- Automatizaciones relacionadas con asistencia, recordatorios y reseñas.
+
+No incluye en MVP:
+
+- Historia clinica formal.
+- Diagnosticos clinicos.
+- Consentimientos complejos.
+- Facturacion medica.
+- Inventario clinico.
+- Gestion avanzada de consultorios.
+- Tratamientos clinicos profundos.
+- Modulo hospitalario HIS/EMR.
+
+Regla de separacion:
+
+- Pipeline gestiona oportunidades y conversion comercial.
+- Citas gestiona agenda y administracion de citas.
+- Patient Flow gestiona operacion del dia.
+- Administracion ve analitica y configuracion, no opera pacientes en vivo.
+
 ## Principio de Implementacion
 
 No se debe reemplazar de golpe el modulo actual de citas.
@@ -44,28 +87,37 @@ Integraciones necesarias:
 
 ## Flujo de Estados Propuesto
 
-Estados principales:
+Para ejecucion inicial, conviene separar estados persistidos de estados derivados. No todo lo que se ve en la interfaz debe guardarse como estado real en base de datos.
+
+Estados persistidos recomendados:
 
 - `pending_confirmation`: Pendiente de confirmacion.
-- `pre_reserved`: Pre-reservada.
 - `confirmed`: Confirmada.
-- `on_the_way`: En camino.
 - `checked_in`: En espera.
+- `preparing`: En preparacion.
 - `ready_for_doctor`: Listo para doctor.
 - `in_consultation`: En consulta.
 - `completed`: Finalizada.
-
-Estados alternativos:
-
 - `cancelled`: Cancelada.
 - `rescheduled`: Reprogramada.
 - `no_show`: No Show.
 
+Estados derivados para UI y alertas:
+
+- `Por llegar`: cita de hoy pendiente o confirmada, sin check-in.
+- `Retrasado`: cita cuya hora programada ya paso y no tiene check-in.
+- `Espera critica`: cita en espera que supera el umbral configurado.
+- `Listo demorado`: paciente listo para doctor hace mas de N minutos.
+
+Estados futuros:
+
+- `on_the_way`: En camino. Debe reservarse para una fase posterior con WhatsApp/Pity Voice, cuando el paciente confirme que viene en camino.
+
 Notas:
 
-- `on_the_way` puede ser opcional en la primera version.
-- `ready_for_doctor` permite separar llegada del paciente de disponibilidad real para consulta. Por ejemplo, cuando falta completar datos, consentimiento, pago inicial o preparacion previa.
-- Cada cambio de estado debe registrarse en historial.
+- No persistir `Por llegar` ni `Retrasado` como estados reales en MVP.
+- `ready_for_doctor` permite separar llegada/preparacion de disponibilidad real para consulta.
+- Cada cambio de estado persistido debe registrarse en historial.
 
 ## Historial de Eventos
 
@@ -106,8 +158,8 @@ Campos sugeridos para `appointments`:
 - `status`
 - `scheduled_at`
 - `confirmed_at`
-- `on_the_way_at`
 - `checked_in_at`
+- `preparation_started_at`
 - `ready_for_doctor_at`
 - `consultation_started_at`
 - `consultation_finished_at`
@@ -120,12 +172,21 @@ Campos sugeridos para `appointments`:
 - `delay_reason`
 - `room_id` futuro
 
-Tablas nuevas sugeridas:
+Tabla nueva recomendada para MVP:
 
 - `appointment_events`: historial de transiciones y eventos.
+
+Tablas futuras, no obligatorias para MVP:
+
 - `appointment_check_ins`: intentos y detalles de check-in por canal.
 - `appointment_reminders`: recordatorios enviados y respuestas.
 - `appointment_feedback_requests`: solicitudes de resena o satisfaccion.
+- `appointment_notes`: notas operativas si se decide separarlas de eventos.
+
+Regla de alcance:
+
+- No crear tablas futuras hasta que exista un caso de uso implementado que las necesite.
+- Para MVP, priorizar `appointments` + `appointment_events` y, si hace falta, notas simples asociadas a la cita.
 
 Los tiempos deben calcularse preferiblemente desde timestamps:
 
@@ -146,10 +207,17 @@ Canales propuestos:
 Orden recomendado de implementacion:
 
 1. Boton de recepcion.
-2. QR en recepcion.
-3. WhatsApp.
-4. Pity Voice.
-5. NFC o geolocalizacion.
+2. Acciones manuales internas: preparar, listo para doctor, iniciar consulta y finalizar consulta.
+3. Paneles internos: recepcion, asistente y doctor.
+4. QR en recepcion.
+5. WhatsApp.
+6. Pity Voice.
+7. NFC o geolocalizacion.
+
+Regla de prioridad:
+
+- Primero estabilizar el flujo manual interno.
+- Despues agregar canales externos como QR, WhatsApp y Pity Voice.
 
 Reglas esperadas:
 
@@ -411,7 +479,7 @@ Ejemplos a evitar:
 - Marcar nota como importante.
 - Plantillas rapidas futuras: ansioso, prioritario, con acompanante, dolor, movilidad reducida, primera visita.
 
-### Fase recomendada
+### Implementacion recomendada
 
 - MVP: incluir boton `Nota`, textarea simple, guardado con autor/hora y visualizacion en card/drawer.
 - Fase posterior: plantillas, visibilidad avanzada, notas fijadas y conversion a nota permanente del paciente.
@@ -890,19 +958,25 @@ Permisos nuevos posibles:
 - `patient_flow_reception.view`: ver panel operativo de recepcion.
 - `patient_flow_doctor.view`: ver cola del doctor.
 - `patient_flow_assistant.view`: ver cola clinica del asistente.
+- `patient_flow_admin.view`: ver dashboard administrativo de operacion clinica.
+- `appointment_flow.manage`: ejecutar transiciones operativas permitidas.
+- `appointment_notes.manage`: crear notas operativas.
+- `appointment_metrics.view`: ver metricas operativas.
+- `appointment_events.view`: ver historial de eventos.
+
+Permisos finos futuros si se necesita mas control:
+
 - `appointment_check_in.manage`: realizar check-in.
 - `appointment_consultation.manage`: iniciar y finalizar consulta.
 - `appointment_status_transition.manage`: cambiar estados operativos.
-- `appointment_metrics.view`: ver metricas operativas.
-- `appointment_events.view`: ver historial de eventos.
 
 Asignacion recomendada:
 
 - Super Admin: todos los permisos.
 - Admin: todos los permisos operativos y analiticos.
-- Recepcionista: `patient_flow_reception.view`, `appointment_check_in.manage`, `appointment_status_transition.manage` limitado, `appointment_events.view` limitado.
-- Doctor: `patient_flow_doctor.view`, `appointment_consultation.manage`, `appointment_events.view` limitado.
-- Asistente: `patient_flow_assistant.view`, `appointment_status_transition.manage` limitado, `appointment_events.view` limitado.
+- Recepcionista: `patient_flow_reception.view`, `appointment_flow.manage` limitado, `appointment_notes.manage`, `appointment_events.view` limitado.
+- Doctor: `patient_flow_doctor.view`, `appointment_flow.manage` limitado, `appointment_notes.manage`, `appointment_events.view` limitado.
+- Asistente: `patient_flow_assistant.view`, `appointment_flow.manage` limitado, `appointment_notes.manage`, `appointment_events.view` limitado.
 
 Notas:
 
@@ -923,8 +997,8 @@ Antes de la cita:
 
 Durante el dia:
 
-- Preguntar si el paciente viene en camino.
-- Marcar `on_the_way` si confirma.
+- Futuro: preguntar si el paciente viene en camino.
+- Futuro: marcar `on_the_way` si confirma.
 - Alertar a recepcion si el paciente llega tarde.
 - Avisar al paciente si la clinica tiene retraso.
 
@@ -1088,54 +1162,121 @@ Criterio de salida:
 - Las transiciones no dependen de logica duplicada en Filament.
 - Las citas existentes pueden seguir visualizandose.
 
-### Fase 2: Check-in y cronometro de espera
+### Fase 2: Flujo manual interno y cronometro
 
-Objetivo: medir llegada, espera, inicio y fin de atencion.
+Objetivo: estabilizar el flujo manual interno antes de agregar QR, WhatsApp o automatizaciones.
 
 Alcance:
 
 1. Agregar accion de recepcion `Check-in`.
 2. Guardar `checked_in_at` y `check_in_source`.
-3. Agregar accion `Iniciar consulta`.
-4. Guardar `consultation_started_at`.
-5. Agregar accion `Finalizar consulta`.
-6. Guardar `consultation_finished_at` y `completed_at`.
-7. Calcular tiempo esperando y tiempo de consulta desde timestamps.
-8. Mostrar semaforo de espera en la lista o vista operativa.
+3. Agregar accion `Preparar paciente`.
+4. Guardar `preparation_started_at`.
+5. Agregar accion `Listo para doctor`.
+6. Guardar `ready_for_doctor_at`.
+7. Agregar accion `Iniciar consulta`.
+8. Guardar `consultation_started_at`.
+9. Agregar accion `Finalizar consulta`.
+10. Guardar `consultation_finished_at` y `completed_at`.
+11. Calcular tiempo esperando y tiempo de consulta desde timestamps.
+12. Mostrar semaforo de espera en la vista operativa.
 
 Criterio de salida:
 
 - Recepcion puede marcar llegada.
+- Asistente puede preparar y marcar listo para doctor.
 - Doctor puede iniciar y finalizar consulta.
 - El sistema calcula tiempos reales de espera y atencion.
 
-### Fase 3: Dashboard de recepcion y doctor
+### Fase 3: Panel de recepcion
 
-Objetivo: crear pantallas operativas simples por rol.
+Objetivo: crear la torre de control diaria de recepcion.
 
-Alcance recepcion:
+Alcance:
 
 1. Pacientes por llegar.
 2. Pacientes en espera.
 3. Pacientes retrasados.
-4. Pacientes en consulta.
-5. Semaforo de prioridad.
-6. Acciones rapidas por cita.
+4. Pacientes en preparacion.
+5. Pacientes listos para doctor.
+6. Pacientes en consulta.
+7. Semaforo de prioridad.
+8. Drawer lateral con transiciones validas.
+9. Acciones rapidas por cita.
+
+Criterio de salida:
+
+- Recepcion puede operar el flujo diario sin depender de tablas largas.
+- `Por llegar` y `Retrasado` funcionan como estados derivados.
+- Las transiciones se ejecutan desde servicios, no desde logica duplicada en la vista.
+
+### Fase 4: Cola clinica del asistente y Mi cola del doctor
+
+Objetivo: crear pantallas operativas enfocadas para asistente y doctor.
+
+Alcance asistente:
+
+1. Cola clinica sin columna `Por llegar`.
+2. En espera.
+3. En preparacion.
+4. Listo para doctor.
+5. En consulta.
+6. Filtro por doctores asignados.
 
 Alcance doctor:
 
 1. Proximo paciente.
-2. Pacientes esperando por doctor.
-3. Tiempo de espera.
-4. Motivo o procedimiento.
-5. Botones iniciar/finalizar consulta.
+2. Pacientes listos.
+3. Pacientes en preparacion o espera como informacion secundaria.
+4. Panel de consulta actual.
+5. Comunicacion con recepcion/asistente.
+6. Botones iniciar/finalizar consulta segun estado.
 
 Criterio de salida:
 
-- Recepcion y doctor pueden operar el flujo diario sin depender de tablas largas.
-- La interfaz muestra informacion relevante por rol.
+- Asistente opera preparacion y listo para doctor.
+- Doctor tiene una vista enfocada en la siguiente decision clinica.
+- Ninguna de estas vistas usa kanban completo para doctor ni tablas administrativas.
 
-### Fase 4: Check-in QR y WhatsApp
+### Fase 5: Notas operativas
+
+Objetivo: permitir contexto operativo por paciente y cita.
+
+Alcance:
+
+1. Boton `Nota` desde drawer.
+2. Textarea simple.
+3. Guardar autor y hora.
+4. Mostrar ultima nota relevante en card.
+5. Mostrar historial de notas en drawer.
+6. Mantener notas como operativas, no historia clinica.
+
+Criterio de salida:
+
+- Recepcion, asistente y doctor pueden compartir contexto operativo.
+- Las notas quedan asociadas a la cita.
+- Se evita lenguaje clinico/diagnostico formal.
+
+### Fase 6: Dashboard administrativo de operacion clinica
+
+Objetivo: convertir eventos y timestamps en indicadores de gestion para Admin y Super Admin.
+
+Alcance:
+
+1. Mini cards administrativas.
+2. Estado actual de la clinica.
+3. Alertas operativas.
+4. Productividad y saturacion por doctor.
+5. Umbrales configurables.
+6. Exportacion de reportes.
+
+Criterio de salida:
+
+- Administracion puede detectar cuellos de botella.
+- El dashboard no permite mover pacientes entre estados.
+- Las metricas se calculan desde eventos y timestamps auditables.
+
+### Fase 7: Check-in QR y WhatsApp
 
 Objetivo: permitir llegada autoservicio desde canales externos.
 
@@ -1152,7 +1293,7 @@ Criterio de salida:
 - Paciente puede registrarse sin intervencion manual.
 - Recepcion recibe estado actualizado en tiempo real o casi real.
 
-### Fase 5: Automatizaciones con WhatsApp y Pity Voice
+### Fase 8: Automatizaciones con WhatsApp y Pity Voice
 
 Objetivo: reducir no-shows y mejorar comunicacion operacional.
 
@@ -1170,26 +1311,7 @@ Criterio de salida:
 - Las automatizaciones generan eventos trazables.
 - El equipo puede ver que se envio, cuando y por que canal.
 
-### Fase 6: Analitica administrativa
-
-Objetivo: convertir los eventos en indicadores de gestion.
-
-Alcance:
-
-1. Dashboard administrativo diario.
-2. Tiempo promedio de espera.
-3. Tiempo promedio de consulta.
-4. No-show por doctor, horario y canal.
-5. Productividad por doctor.
-6. Puntualidad.
-7. Utilizacion de consultorios cuando exista `room_id`.
-
-Criterio de salida:
-
-- Administracion puede detectar cuellos de botella.
-- Las metricas se calculan desde eventos y timestamps auditables.
-
-### Fase 7: Inteligencia predictiva y diferenciadores
+### Fase 9: Inteligencia predictiva y diferenciadores
 
 Objetivo: posicionar OdonCRM como plataforma inteligente, no solo operativa.
 
@@ -1231,6 +1353,8 @@ Filament:
 Componentes visuales:
 
 - Reutilizar clases existentes `mc-*` cuando aplique, especialmente `mc-card`, `mc-badge`, `mc-btn`, `mc-btn-soft`, `mc-btn-primary`, `mc-facts` y `mc-grid-main`.
+- Las cards de Patient Flow deben verse como parte del sistema actual, no como una interfaz externa generada desde cero.
+- Reutilizar patrones visuales de `Citas` y `Social Inbox`: cards limpias, drawer lateral, badges sobrios, acciones compactas y estructura clara.
 - Para cards usar fondo blanco, borde `#e5e7eb`, radio entre `.625rem` y `.875rem` y sombra minima.
 - Para buscadores y filtros seguir el patron actual de `smart-search-wrap` y `smart-channel-trigger`.
 - Para modales seguir el patron `smart-modal`.
