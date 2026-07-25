@@ -14,6 +14,8 @@ enum UserPermission: string
     case DoctorAssistantAssignmentsView = 'doctor_assistant_assignments.view';
     case AppointmentsView = 'appointments.view';
     case PatientFlowReceptionView = 'patient_flow_reception.view';
+    case PatientFlowAssistantView = 'patient_flow_assistant.view';
+    case PatientFlowDoctorView = 'patient_flow_doctor.view';
     case SocialAccountsView = 'social_accounts.view';
     case SocialCommentsView = 'social_comments.view';
     case VoiceCallsView = 'voice_calls.view';
@@ -34,6 +36,8 @@ enum UserPermission: string
             self::DoctorAssistantAssignmentsView => 'Ver asignaciones doctor-asistente',
             self::AppointmentsView => 'Ver agenda/citas',
             self::PatientFlowReceptionView => 'Ver panel de recepcion',
+            self::PatientFlowAssistantView => 'Ver cola clinica',
+            self::PatientFlowDoctorView => 'Ver mi cola de atencion',
             self::SocialAccountsView => 'Ver cuentas sociales',
             self::SocialCommentsView => 'Ver casos sociales',
             self::VoiceCallsView => 'Ver llamadas de voz',
@@ -52,7 +56,9 @@ enum UserPermission: string
             self::DoctorAssistantAssignmentsView => 'Configuracion operativa',
             self::PatientsView,
             self::AppointmentsView,
-            self::PatientFlowReceptionView => 'Operacion clinica',
+            self::PatientFlowReceptionView,
+            self::PatientFlowAssistantView,
+            self::PatientFlowDoctorView => 'Operacion clinica',
             self::SocialAccountsView,
             self::SocialCommentsView,
             self::IntegrationsView,

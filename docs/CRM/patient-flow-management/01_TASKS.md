@@ -131,32 +131,32 @@ Objetivo: crear pantallas operativas enfocadas por rol.
 
 ### Asistente
 
-- [ ] Crear pagina `Cola clinica`.
-- [ ] Agregar permiso `patient_flow_assistant.view`.
-- [ ] Filtrar pacientes por doctores asignados.
-- [ ] Mostrar columnas: `En espera`, `En preparacion`, `Listo para doctor`, `En consulta`.
-- [ ] No mostrar columna `Por llegar`.
-- [ ] Agregar acciones: preparar, marcar listo, avisar doctor, nota.
-- [ ] Mostrar notas relevantes en card/drawer.
+- [x] Crear pagina `Cola clinica`.
+- [x] Agregar permiso `patient_flow_assistant.view`.
+- [x] Filtrar pacientes por doctores asignados.
+- [x] Mostrar columnas: `En espera`, `En preparacion`, `Listo para doctor`, `En consulta`.
+- [x] No mostrar columna `Por llegar`.
+- [~] Agregar acciones: preparar, marcar listo, avisar doctor, nota.
+- [x] Mostrar notas relevantes en card/drawer.
 
 ### Doctor
 
-- [ ] Crear pagina `Mi cola`.
-- [ ] Agregar permiso `patient_flow_doctor.view`.
-- [ ] No usar kanban completo.
-- [ ] Mostrar card principal de proximo paciente accionable.
-- [ ] Priorizar `Listo para doctor` como proximo paciente.
-- [ ] Mostrar panel `En consulta`.
-- [ ] Mostrar duracion de consulta actual.
-- [ ] Mostrar comunicacion: mensaje a recepcion, solicitar asistente.
-- [ ] Mostrar accion principal segun estado.
-- [ ] Mostrar lista secundaria de pacientes pendientes.
+- [x] Crear pagina `Mi cola`.
+- [x] Agregar permiso `patient_flow_doctor.view`.
+- [x] No usar kanban completo.
+- [x] Mostrar card principal de proximo paciente accionable.
+- [x] Priorizar `Listo para doctor` como proximo paciente.
+- [x] Mostrar panel `En consulta`.
+- [x] Mostrar duracion de consulta actual.
+- [~] Mostrar comunicacion: mensaje a recepcion, solicitar asistente.
+- [x] Mostrar accion principal segun estado.
+- [x] Mostrar lista secundaria de pacientes pendientes.
 
 Criterio de salida:
 
-- [ ] Asistente mueve pacientes entre espera, preparacion y listo.
-- [ ] Doctor ve la siguiente decision clinica sin administrar kanban.
-- [ ] Ambas vistas usan UI limpia del sistema.
+- [x] Asistente mueve pacientes entre espera, preparacion y listo.
+- [x] Doctor ve la siguiente decision clinica sin administrar kanban.
+- [~] Ambas vistas usan UI limpia del sistema.
 
 ## Fase 5: Notas operativas
 
