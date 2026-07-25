@@ -117,22 +117,54 @@ class PublicCheckInController extends Controller
             return collect();
         }
 
+        $phoneVariants = $this->phoneSearchVariants($digits);
+
         return Appointment::query()
             ->with(['patient', 'doctor'])
             ->whereDate('scheduled_at', today())
-            ->where(function ($query) use ($identifier, $digits): void {
+            ->where(function ($query) use ($identifier, $phoneVariants): void {
                 if (ctype_digit($identifier)) {
                     $query->orWhere('id', (int) $identifier);
                 }
 
-                if ($digits !== '') {
-                    $query->orWhereHas('patient', function ($query) use ($digits): void {
-                        $query->whereRaw("regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g') like ?", ['%'.$digits]);
+                if ($phoneVariants !== []) {
+                    $query->orWhereHas('patient', function ($query) use ($phoneVariants): void {
+                        $query->where(function ($query) use ($phoneVariants): void {
+                            foreach ($phoneVariants as $variant) {
+                                $query->orWhereRaw("regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g') like ?", ['%'.$variant]);
+                            }
+                        });
                     });
                 }
             })
             ->orderBy('scheduled_at')
             ->get();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function phoneSearchVariants(string $digits): array
+    {
+        if ($digits === '') {
+            return [];
+        }
+
+        $variants = [$digits];
+
+        if (str_starts_with($digits, '593') && strlen($digits) > 3) {
+            $variants[] = '0'.substr($digits, 3);
+        }
+
+        if (str_starts_with($digits, '0') && strlen($digits) > 1) {
+            $variants[] = '593'.substr($digits, 1);
+        }
+
+        if (strlen($digits) >= 9) {
+            $variants[] = substr($digits, -9);
+        }
+
+        return array_values(array_unique($variants));
     }
 
     private function successStatus(string $message, Appointment $appointment): array

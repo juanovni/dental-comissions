@@ -36,29 +36,44 @@
         .cq-column { min-height: 32rem; overflow: hidden; }
         .cq-column-head { border-bottom: 1px solid #e5e7eb; padding: .75rem .85rem; }
         .cq-count { background: #f1f5f9; border-radius: 999px; color: #334155; font-size: .75rem; padding: .1rem .45rem; }
-        .cq-card-list { display: grid; gap: .55rem; padding: .65rem; }
+        .cq-card-list { display: grid; gap: .55rem; padding: .65rem .65rem .65rem 1.35rem; }
+        .cq-card-shell { position: relative; }
         .cq-card { cursor: pointer; display: grid; gap: .55rem; padding: .7rem; text-align: left; width: 100%; }
         .cq-card:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .cq-quick-action { align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: .55rem; box-shadow: 0 8px 18px rgba(15, 23, 42, .1); color: #0f172a; display: inline-flex; height: 2.35rem; justify-content: center; left: -1rem; opacity: 0; pointer-events: none; position: absolute; top: .75rem; transform: translateX(.25rem); transition: opacity .14s ease, transform .14s ease, background .14s ease, border-color .14s ease; width: 2.35rem; z-index: 2; }
+        .cq-quick-action svg { height: 1rem; width: 1rem; }
+        .cq-card-shell:hover .cq-quick-action, .cq-card-shell:focus-within .cq-quick-action { opacity: 1; pointer-events: auto; transform: translateX(0); }
+        .cq-quick-action:hover { background: #f9fafb; border-color: #d1d5db; }
         .cq-card-head { align-items: start; display: grid; gap: .6rem; grid-template-columns: auto 1fr; }
+        .cq-card-body { display: grid; gap: .18rem; }
+        .cq-card-time { align-items: center; display: flex; gap: .3rem; }
+        .cq-card-time svg { height: .9rem; width: .9rem; }
         .cq-avatar { align-items: center; background: #f1f5f9; border-radius: 999px; color: #0f172a; display: inline-flex; font-size: .75rem; font-weight: 600; height: 2.25rem; justify-content: center; width: 2.25rem; }
         .cq-name { font-size: .9rem; font-weight: 650; }
         .cq-meta { color: #64748b; font-size: .78rem; line-height: 1.45; }
         .cq-badge { background: #ecfdf5; border-radius: .4rem; color: #047857; display: inline-flex; font-size: .72rem; font-weight: 600; padding: .2rem .45rem; width: fit-content; }
-        .cq-wait { color: #b45309; font-size: .75rem; font-weight: 600; justify-self: end; }
+        .cq-wait { align-items: center; color: #b45309; display: inline-flex; font-size: .75rem; font-weight: 600; gap: .25rem; justify-self: end; }
+        .cq-wait svg { height: .85rem; width: .85rem; }
         .cq-card-foot { align-items: center; display: flex; justify-content: space-between; }
-        .cq-drawer { background: rgba(15, 23, 42, .45); inset: 0; position: fixed; z-index: 60; }
-        .cq-drawer-panel { background: #fff; border-left: 1px solid #e5e7eb; display: grid; gap: .85rem; height: 100%; margin-left: auto; overflow-y: auto; padding: 1rem; width: min(100%, 28rem); }
-        .cq-drawer-head { align-items: start; display: flex; gap: .75rem; justify-content: space-between; }
-        .cq-close { border: 1px solid #e5e7eb; border-radius: 999px; color: #64748b; height: 1.85rem; width: 1.85rem; }
-        .cq-detail-card { display: grid; gap: .55rem; padding: .85rem; }
+        .cq-drawer { background: rgba(15, 23, 42, .22); inset: 0; position: fixed; z-index: 60; }
+        .cq-drawer-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: .875rem; box-shadow: 0 8px 20px rgba(15, 23, 42, .08); color: #0f172a; display: flex; flex-direction: column; max-height: calc(100vh - 2rem); overflow: hidden; position: fixed; right: 1rem; top: 1rem; width: min(38rem, calc(100vw - 2rem)); }
+        .cq-drawer-head { align-items: flex-start; border-bottom: 1px solid #e5e7eb; display: flex; flex: 0 0 auto; gap: .75rem; justify-content: space-between; padding: 1rem; }
+        .cq-drawer-body { align-content: start; display: grid; flex: 1 1 auto; gap: .8rem; overflow-y: auto; padding: 1rem; }
+        .cq-drawer-footer { border-top: 1px solid #e5e7eb; display: flex; flex-wrap: wrap; gap: .45rem; padding: .9rem 1rem; }
+        .cq-drawer-footer .cq-action { flex: 1; justify-content: center; min-height: 2.25rem; }
+        .cq-close { align-items: center; background: transparent; border: 1px solid transparent; border-radius: .45rem; color: #64748b; cursor: pointer; display: inline-flex; flex: 0 0 auto; font-size: 1rem; font-weight: 500; height: 2rem; justify-content: center; line-height: 1; transition: .14s ease; width: 2rem; }
+        .cq-close:hover { background: #f9fafb; border-color: #e5e7eb; color: #0f172a; }
+        .cq-detail-card { background: #fff; border: 1px solid #e5e7eb; border-radius: .75rem; display: grid; gap: .55rem; padding: .85rem; }
         .cq-fact { display: grid; gap: .75rem; grid-template-columns: 1fr 1fr; }
         .cq-fact span:first-child { color: #64748b; font-size: .8rem; }
         .cq-fact span:last-child { font-size: .82rem; font-weight: 600; text-align: right; }
-        .cq-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-        .cq-action { background: #fff; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .78rem; font-weight: 600; min-height: 2.15rem; padding: .45rem .65rem; }
-        .cq-action-primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+        .cq-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .5rem; }
+        .cq-action { align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: .45rem; color: #111827; display: inline-flex; font-size: .76rem; font-weight: 500; gap: .35rem; justify-content: center; line-height: 1; min-height: 2rem; padding: .38rem .65rem; text-decoration: none; transition: background-color .14s ease, border-color .14s ease, color .14s ease; }
+        .cq-action:hover { background: #f9fafb; border-color: #d1d5db; color: #111827; }
+        .cq-action-primary { background: #000; border-color: #000; color: #fff; }
+        .cq-action-primary:hover { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
         .cq-note-preview { background: #f8fafc; border-radius: .5rem; color: #475569; font-size: .76rem; padding: .45rem .55rem; }
-        .cq-modal-card { background: #fff; border-radius: .875rem; display: grid; gap: .75rem; padding: 1.25rem; width: min(100%, 30rem); }
+        .cq-modal-card { background: #fff; border: 1px solid #e5e7eb; border-radius: .875rem; box-shadow: 0 8px 20px rgba(15, 23, 42, .08); display: grid; gap: .8rem; padding: 1rem; width: min(100%, 30rem); }
         .cq-textarea { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .82rem; min-height: 7rem; padding: .65rem; width: 100%; }
         @media (max-width: 900px) { .cq-toolbar { margin-top: 0; } .cq-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cq-board { grid-template-columns: repeat(4, 16rem); } }
     </style>
@@ -85,11 +100,32 @@
                     <div class="cq-column-head cq-title"><span>{{ $label }}</span><span class="cq-count">{{ $cards->count() }}</span></div>
                     <div class="cq-card-list">
                         @forelse ($cards as $appointment)
-                            <button type="button" class="cq-card" wire:click="selectAppointment({{ $appointment->id }})">
-                                <span class="cq-card-head"><span class="cq-avatar">{{ str($appointment->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span><span><span class="cq-name">{{ $appointment->patient?->full_name ?? 'Paciente sin nombre' }}</span><span class="cq-meta">{{ $appointment->scheduled_at?->format('h:i a') }} · {{ $appointment->doctor?->name ?? 'Sin doctor' }}</span><span class="cq-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }}</span></span></span>
-                                <span class="cq-card-foot"><span class="cq-badge">{{ $appointment->status->label() }}</span>@if ($appointment->waitingMinutes() !== null)<span class="cq-wait">{{ $appointment->waitingMinutes() }} min</span>@endif</span>
-                                @if ($appointment->latestAppointmentNote)<span class="cq-note-preview">{{ str($appointment->latestAppointmentNote->note)->limit(70) }}</span>@endif
-                            </button>
+                            @php($nextTransitions = $this->availableTransitions($appointment))
+                            @php($nextStatus = array_key_first($nextTransitions))
+                            <div class="cq-card-shell">
+                                @if ($nextStatus)
+                                    <button type="button" class="cq-quick-action" title="{{ $nextTransitions[$nextStatus] }}" aria-label="{{ $nextTransitions[$nextStatus] }}" wire:click="transition({{ $appointment->id }}, '{{ $nextStatus }}')">
+                                        @switch($nextStatus)
+                                            @case(\App\Enums\AppointmentStatus::Preparing->value)
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg>
+                                                @break
+                                            @case(\App\Enums\AppointmentStatus::ReadyForDoctor->value)
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>
+                                                @break
+                                            @case(\App\Enums\AppointmentStatus::CheckedIn->value)
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>
+                                                @break
+                                            @default
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path></svg>
+                                        @endswitch
+                                    </button>
+                                @endif
+                                <button type="button" class="cq-card" wire:click="selectAppointment({{ $appointment->id }})">
+                                    <span class="cq-card-head"><span class="cq-avatar">{{ str($appointment->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span><span class="cq-card-body"><span class="cq-name">{{ $appointment->patient?->full_name ?? 'Paciente sin nombre' }}</span><span class="cq-meta cq-card-time"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $appointment->scheduled_at?->format('h:i a') }} · {{ $appointment->doctor?->name ?? 'Sin doctor' }}</span><span class="cq-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }}</span></span></span>
+                                    <span class="cq-card-foot"><span class="cq-badge">{{ $appointment->status->label() }}</span>@if ($appointment->waitingMinutes() !== null)<span class="cq-wait"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $appointment->waitingMinutes() }} min</span>@endif</span>
+                                    @if ($appointment->latestAppointmentNote)<span class="cq-note-preview">{{ str($appointment->latestAppointmentNote->note)->limit(70) }}</span>@endif
+                                </button>
+                            </div>
                         @empty
                             <div class="cq-meta" style="padding: .8rem; text-align: center;">Sin pacientes.</div>
                         @endforelse
@@ -100,14 +136,32 @@
     </div>
 
     @if ($selected)
-        <div class="cq-drawer" wire:click.self="closeDetail"><aside class="cq-drawer-panel">
-            <div class="cq-drawer-head"><div style="display: flex; gap: .75rem;"><span class="cq-avatar">{{ str($selected->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span><div><div class="cq-name">{{ $selected->patient?->full_name ?? 'Paciente sin nombre' }}</div><div class="cq-meta">{{ $selected->patient?->phone ?? 'Sin telefono' }}</div><span class="cq-badge" style="margin-top: .35rem;">{{ $selected->status->label() }}</span></div></div><button type="button" class="cq-close" wire:click="closeDetail">×</button></div>
-            <div class="cq-detail-card"><div class="cq-title">Cita</div><div class="cq-fact"><span>Hora</span><span>{{ $selected->scheduled_at?->format('h:i a') ?? '-' }}</span></div><div class="cq-fact"><span>Doctor</span><span>{{ $selected->doctor?->name ?? '-' }}</span></div><div class="cq-fact"><span>Procedimiento</span><span>{{ $selected->procedure?->name ?? '-' }}</span></div><div class="cq-fact"><span>Esperando</span><span>{{ $selected->waitingMinutes() !== null ? $selected->waitingMinutes().' min' : '-' }}</span></div></div>
-            @if ($selected->notes)<div class="cq-detail-card"><div class="cq-title">Nota</div><div class="cq-meta">{{ $selected->notes }}</div></div>@endif
-            @if ($selected->latestAppointmentNote)<div class="cq-detail-card"><div class="cq-title">Ultima nota operativa</div><div class="cq-meta">{{ $selected->latestAppointmentNote->note }}</div></div>@endif
-            <div class="cq-detail-card"><div class="cq-title">Siguiente paso</div><div class="cq-actions">@foreach ($this->availableTransitions($selected) as $status => $label)<button type="button" class="cq-action @if ($loop->first) cq-action-primary @endif" wire:click="transition({{ $selected->id }}, '{{ $status }}')">{{ $label }}</button>@endforeach</div></div>
-            <button type="button" class="cq-action" wire:click="openNoteModal({{ $selected->id }})">Nota</button>
-        </aside></div>
+        <div class="cq-drawer" wire:click.self="closeDetail">
+            <aside class="cq-drawer-panel">
+                <div class="cq-drawer-head">
+                    <div style="display: flex; gap: .75rem;">
+                        <span class="cq-avatar">{{ str($selected->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span>
+                        <div>
+                            <div class="cq-name">{{ $selected->patient?->full_name ?? 'Paciente sin nombre' }}</div>
+                            <div class="cq-meta">{{ $selected->patient?->phone ?? 'Sin telefono' }}</div>
+                            <span class="cq-badge" style="margin-top: .35rem;">{{ $selected->status->label() }}</span>
+                        </div>
+                    </div>
+                    <button type="button" class="cq-close" wire:click="closeDetail">×</button>
+                </div>
+
+                <div class="cq-drawer-body">
+                    <div class="cq-detail-card"><div class="cq-title">Cita</div><div class="cq-fact"><span>Hora</span><span>{{ $selected->scheduled_at?->format('h:i a') ?? '-' }}</span></div><div class="cq-fact"><span>Doctor</span><span>{{ $selected->doctor?->name ?? '-' }}</span></div><div class="cq-fact"><span>Procedimiento</span><span>{{ $selected->procedure?->name ?? '-' }}</span></div><div class="cq-fact"><span>Esperando</span><span>{{ $selected->waitingMinutes() !== null ? $selected->waitingMinutes().' min' : '-' }}</span></div></div>
+                    @if ($selected->notes)<div class="cq-detail-card"><div class="cq-title">Nota</div><div class="cq-meta">{{ $selected->notes }}</div></div>@endif
+                    @if ($selected->latestAppointmentNote)<div class="cq-detail-card"><div class="cq-title">Ultima nota operativa</div><div class="cq-meta">{{ $selected->latestAppointmentNote->note }}</div></div>@endif
+                    <div class="cq-detail-card"><div class="cq-title">Siguiente paso</div><div class="cq-actions">@foreach ($this->availableTransitions($selected) as $status => $label)<button type="button" class="cq-action @if ($loop->first) cq-action-primary @endif" wire:click="transition({{ $selected->id }}, '{{ $status }}')">{{ $label }}</button>@endforeach</div></div>
+                </div>
+
+                <div class="cq-drawer-footer">
+                    <button type="button" class="cq-action" wire:click="openNoteModal({{ $selected->id }})">Agregar nota</button>
+                </div>
+            </aside>
+        </div>
     @endif
 
     @if ($noteAppointmentId)

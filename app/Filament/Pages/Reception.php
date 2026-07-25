@@ -99,7 +99,7 @@ class Reception extends Page
                 ->filter(fn (Appointment $appointment): bool => ($appointment->waitingMinutes() ?? 0) >= 20)
                 ->map(fn (Appointment $appointment): string => ($appointment->patient?->full_name ?? 'Paciente').' lleva '.$appointment->waitingMinutes().' min en espera'))
             ->merge($this->overdueAppointments()
-                ->map(fn (Appointment $appointment): string => ($appointment->patient?->full_name ?? 'Paciente').' esta retrasado'))
+                ->map(fn (Appointment $appointment): string => 'La cita de '.($appointment->patient?->full_name ?? 'Paciente').' tiene retraso'))
             ->values();
     }
 

@@ -35,29 +35,44 @@
         .reception-column { min-height: 32rem; overflow: hidden; }
         .reception-column-title { border-bottom: 1px solid #e5e7eb; padding: .75rem .85rem; }
         .reception-count { background: #f1f5f9; border-radius: 999px; color: #334155; font-size: .75rem; padding: .1rem .45rem; }
-        .reception-card-list { display: grid; gap: .55rem; padding: .65rem; }
+        .reception-card-list { display: grid; gap: .55rem; padding: .65rem .65rem .65rem 1.35rem; }
+        .reception-card-shell { position: relative; }
         .reception-card { cursor: pointer; display: grid; gap: .55rem; padding: .7rem; text-align: left; transition: border-color .14s ease, background .14s ease; width: 100%; }
         .reception-card:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .reception-quick-action { align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: .55rem; box-shadow: 0 8px 18px rgba(15, 23, 42, .1); color: #0f172a; display: inline-flex; height: 2.35rem; justify-content: center; left: -1rem; opacity: 0; pointer-events: none; position: absolute; top: .75rem; transform: translateX(.25rem); transition: opacity .14s ease, transform .14s ease, background .14s ease, border-color .14s ease; width: 2.35rem; z-index: 2; }
+        .reception-quick-action svg { height: 1rem; width: 1rem; }
+        .reception-card-shell:hover .reception-quick-action, .reception-card-shell:focus-within .reception-quick-action { opacity: 1; pointer-events: auto; transform: translateX(0); }
+        .reception-quick-action:hover { background: #f9fafb; border-color: #d1d5db; }
         .reception-card-head { align-items: start; display: grid; gap: .6rem; grid-template-columns: auto 1fr; }
+        .reception-card-body { display: grid; gap: .18rem; }
+        .reception-card-time { align-items: center; display: flex; gap: .3rem; }
+        .reception-card-time svg { height: .9rem; width: .9rem; }
         .reception-avatar { align-items: center; background: #f1f5f9; border-radius: 999px; color: #0f172a; display: inline-flex; font-size: .75rem; font-weight: 600; height: 2.25rem; justify-content: center; width: 2.25rem; }
         .reception-name { font-size: .9rem; font-weight: 650; }
         .reception-meta { color: #64748b; font-size: .78rem; line-height: 1.45; }
         .reception-badge { background: #ecfdf5; border-radius: .4rem; color: #047857; display: inline-flex; font-size: .72rem; font-weight: 600; padding: .2rem .45rem; width: fit-content; }
-        .reception-wait { color: #b45309; font-size: .75rem; font-weight: 600; justify-self: end; }
+        .reception-wait { align-items: center; color: #b45309; display: inline-flex; font-size: .75rem; font-weight: 600; gap: .25rem; justify-self: end; }
+        .reception-wait svg { height: .85rem; width: .85rem; }
         .reception-card-foot { align-items: center; display: flex; justify-content: space-between; }
-        .reception-drawer { background: rgba(15, 23, 42, .45); inset: 0; position: fixed; z-index: 60; }
-        .reception-drawer-panel { background: #fff; border-left: 1px solid #e5e7eb; display: grid; gap: .85rem; height: 100%; margin-left: auto; overflow-y: auto; padding: 1rem; width: min(100%, 28rem); }
-        .reception-drawer-head { align-items: start; display: flex; gap: .75rem; justify-content: space-between; }
-        .reception-close { border: 1px solid #e5e7eb; border-radius: 999px; color: #64748b; height: 1.85rem; width: 1.85rem; }
-        .reception-detail-card { display: grid; gap: .55rem; padding: .85rem; }
+        .reception-drawer { background: rgba(15, 23, 42, .22); inset: 0; position: fixed; z-index: 60; }
+        .reception-drawer-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: .875rem; box-shadow: 0 8px 20px rgba(15, 23, 42, .08); color: #0f172a; display: flex; flex-direction: column; max-height: calc(100vh - 2rem); overflow: hidden; position: fixed; right: 1rem; top: 1rem; width: min(38rem, calc(100vw - 2rem)); }
+        .reception-drawer-head { align-items: flex-start; border-bottom: 1px solid #e5e7eb; display: flex; flex: 0 0 auto; gap: .75rem; justify-content: space-between; padding: 1rem; }
+        .reception-drawer-body { align-content: start; display: grid; flex: 1 1 auto; gap: .8rem; overflow-y: auto; padding: 1rem; }
+        .reception-drawer-footer { border-top: 1px solid #e5e7eb; display: flex; flex-wrap: wrap; gap: .45rem; padding: .9rem 1rem; }
+        .reception-drawer-footer .reception-action { flex: 1; justify-content: center; min-height: 2.25rem; }
+        .reception-close { align-items: center; background: transparent; border: 1px solid transparent; border-radius: .45rem; color: #64748b; cursor: pointer; display: inline-flex; flex: 0 0 auto; font-size: 1rem; font-weight: 500; height: 2rem; justify-content: center; line-height: 1; transition: .14s ease; width: 2rem; }
+        .reception-close:hover { background: #f9fafb; border-color: #e5e7eb; color: #0f172a; }
+        .reception-detail-card { background: #fff; border: 1px solid #e5e7eb; border-radius: .75rem; display: grid; gap: .55rem; padding: .85rem; }
         .reception-fact { display: grid; gap: .75rem; grid-template-columns: 1fr 1fr; }
         .reception-fact span:first-child { color: #64748b; font-size: .8rem; }
         .reception-fact span:last-child { font-size: .82rem; font-weight: 600; text-align: right; }
-        .reception-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-        .reception-action { background: #fff; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .78rem; font-weight: 600; min-height: 2.15rem; padding: .45rem .65rem; }
-        .reception-action-primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+        .reception-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .5rem; }
+        .reception-action { align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: .45rem; color: #111827; display: inline-flex; font-size: .76rem; font-weight: 500; gap: .35rem; justify-content: center; line-height: 1; min-height: 2rem; padding: .38rem .65rem; text-decoration: none; transition: background-color .14s ease, border-color .14s ease, color .14s ease; }
+        .reception-action:hover { background: #f9fafb; border-color: #d1d5db; color: #111827; }
+        .reception-action-primary { background: #000; border-color: #000; color: #fff; }
+        .reception-action-primary:hover { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
         .reception-note-preview { background: #f8fafc; border-radius: .5rem; color: #475569; font-size: .76rem; padding: .45rem .55rem; }
-        .reception-modal-card { background: #fff; border-radius: .875rem; display: grid; gap: .75rem; padding: 1.25rem; width: min(100%, 30rem); }
+        .reception-modal-card { background: #fff; border: 1px solid #e5e7eb; border-radius: .875rem; box-shadow: 0 8px 20px rgba(15, 23, 42, .08); display: grid; gap: .8rem; padding: 1rem; width: min(100%, 30rem); }
         .reception-textarea { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .82rem; min-height: 7rem; padding: .65rem; width: 100%; }
         @media (max-width: 900px) { .reception-toolbar { margin-top: 0; } .reception-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .reception-board { grid-template-columns: repeat(5, 16rem); } }
     </style>
@@ -94,25 +109,50 @@
                     <div class="reception-column-title"><span>{{ $label }}</span><span class="reception-count">{{ $cards->count() }}</span></div>
                     <div class="reception-card-list">
                         @forelse ($cards as $appointment)
-                            <button type="button" class="reception-card" wire:click="selectAppointment({{ $appointment->id }})">
-                                <span class="reception-card-head">
-                                    <span class="reception-avatar">{{ str($appointment->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span>
-                                    <span>
-                                        <span class="reception-name">{{ $appointment->patient?->full_name ?? 'Paciente sin nombre' }}</span>
-                                        <span class="reception-meta">{{ $appointment->scheduled_at?->format('h:i a') }} · {{ $appointment->doctor?->name ?? 'Sin doctor' }}</span>
-                                        <span class="reception-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }}</span>
-                                    </span>
-                                </span>
-                                <span class="reception-card-foot">
-                                    <span class="reception-badge">{{ $appointment->status->label() }}</span>
-                                    @if ($appointment->waitingMinutes() !== null)
-                                        <span class="reception-wait">{{ $appointment->waitingMinutes() }} min</span>
-                                    @endif
-                                </span>
-                                @if ($appointment->latestAppointmentNote)
-                                    <span class="reception-note-preview">{{ str($appointment->latestAppointmentNote->note)->limit(70) }}</span>
+                            @php($nextTransitions = $this->availableTransitions($appointment))
+                            @php($nextStatus = array_key_first($nextTransitions))
+                            <div class="reception-card-shell">
+                                @if ($nextStatus)
+                                    <button type="button" class="reception-quick-action" title="{{ $nextTransitions[$nextStatus] }}" aria-label="{{ $nextTransitions[$nextStatus] }}" wire:click="transition({{ $appointment->id }}, '{{ $nextStatus }}')">
+                                        @switch($nextStatus)
+                                            @case(\App\Enums\AppointmentStatus::CheckedIn->value)
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a3 3 0 1 1-5.714 0"></path></svg>
+                                                @break
+                                            @case(\App\Enums\AppointmentStatus::Preparing->value)
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg>
+                                                @break
+                                            @case(\App\Enums\AppointmentStatus::ReadyForDoctor->value)
+                                            @case(\App\Enums\AppointmentStatus::Completed->value)
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>
+                                                @break
+                                            @case(\App\Enums\AppointmentStatus::InConsultation->value)
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"></path></svg>
+                                                @break
+                                            @default
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path></svg>
+                                        @endswitch
+                                    </button>
                                 @endif
-                            </button>
+                                <button type="button" class="reception-card" wire:click="selectAppointment({{ $appointment->id }})">
+                                    <span class="reception-card-head">
+                                        <span class="reception-avatar">{{ str($appointment->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span>
+                                        <span class="reception-card-body">
+                                            <span class="reception-name">{{ $appointment->patient?->full_name ?? 'Paciente sin nombre' }}</span>
+                                            <span class="reception-meta reception-card-time"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $appointment->scheduled_at?->format('h:i a') }} · {{ $appointment->doctor?->name ?? 'Sin doctor' }}</span>
+                                            <span class="reception-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }}</span>
+                                        </span>
+                                    </span>
+                                    <span class="reception-card-foot">
+                                        <span class="reception-badge">{{ $appointment->status->label() }}</span>
+                                        @if ($appointment->waitingMinutes() !== null)
+                                            <span class="reception-wait"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $appointment->waitingMinutes() }} min</span>
+                                        @endif
+                                    </span>
+                                    @if ($appointment->latestAppointmentNote)
+                                        <span class="reception-note-preview">{{ str($appointment->latestAppointmentNote->note)->limit(70) }}</span>
+                                    @endif
+                                </button>
+                            </div>
                         @empty
                             <div class="reception-meta" style="padding: .8rem; text-align: center;">Sin pacientes.</div>
                         @endforelse
@@ -137,46 +177,47 @@
                     <button type="button" class="reception-close" wire:click="closeDetail">×</button>
                 </div>
 
-                <div class="reception-detail-card">
-                    <div class="reception-alert-title">Cita</div>
-                    <div class="reception-fact"><span>Hora</span><span>{{ $selected->scheduled_at?->format('h:i a') ?? '-' }}</span></div>
-                    <div class="reception-fact"><span>Duracion</span><span>{{ $selected->duration_minutes ? $selected->duration_minutes.' min' : '-' }}</span></div>
-                    <div class="reception-fact"><span>Doctor</span><span>{{ $selected->doctor?->name ?? '-' }}</span></div>
-                    <div class="reception-fact"><span>Procedimiento</span><span>{{ $selected->procedure?->name ?? '-' }}</span></div>
-                    <div class="reception-fact"><span>Canal check-in</span><span>{{ $selected->check_in_source ?? '-' }}</span></div>
-                    <div class="reception-fact"><span>Esperando</span><span>{{ $selected->waitingMinutes() !== null ? $selected->waitingMinutes().' min' : '-' }}</span></div>
+                <div class="reception-drawer-body">
+                    <div class="reception-detail-card">
+                        <div class="reception-alert-title">Cita</div>
+                        <div class="reception-fact"><span>Hora</span><span>{{ $selected->scheduled_at?->format('h:i a') ?? '-' }}</span></div>
+                        <div class="reception-fact"><span>Duracion</span><span>{{ $selected->duration_minutes ? $selected->duration_minutes.' min' : '-' }}</span></div>
+                        <div class="reception-fact"><span>Doctor</span><span>{{ $selected->doctor?->name ?? '-' }}</span></div>
+                        <div class="reception-fact"><span>Procedimiento</span><span>{{ $selected->procedure?->name ?? '-' }}</span></div>
+                        <div class="reception-fact"><span>Canal check-in</span><span>{{ $selected->check_in_source ?? '-' }}</span></div>
+                        <div class="reception-fact"><span>Esperando</span><span>{{ $selected->waitingMinutes() !== null ? $selected->waitingMinutes().' min' : '-' }}</span></div>
+                    </div>
+
+                    @if ($selected->notes)
+                        <div class="reception-detail-card">
+                            <div class="reception-alert-title">Nota de cita</div>
+                            <div class="reception-meta">{{ $selected->notes }}</div>
+                        </div>
+                    @endif
+
+                    @if ($selected->latestAppointmentNote)
+                        <div class="reception-detail-card">
+                            <div class="reception-alert-title">Ultima nota operativa</div>
+                            <div class="reception-meta">{{ $selected->latestAppointmentNote->note }}</div>
+                        </div>
+                    @endif
+
+                    <div class="reception-detail-card">
+                        <div class="reception-alert-title">Siguiente paso</div>
+                        <div class="reception-actions">
+                            @foreach ($this->availableTransitions($selected) as $status => $label)
+                                <button type="button" class="reception-action @if ($loop->first) reception-action-primary @endif" wire:click="transition({{ $selected->id }}, '{{ $status }}')">
+                                    {{ $label }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
 
-                @if ($selected->notes)
-                    <div class="reception-detail-card">
-                        <div class="reception-alert-title">Nota de cita</div>
-                        <div class="reception-meta">{{ $selected->notes }}</div>
-                    </div>
-                @endif
-
-                @if ($selected->latestAppointmentNote)
-                    <div class="reception-detail-card">
-                        <div class="reception-alert-title">Ultima nota operativa</div>
-                        <div class="reception-meta">{{ $selected->latestAppointmentNote->note }}</div>
-                    </div>
-                @endif
-
-                <div class="reception-detail-card">
-                    <div class="reception-alert-title">Siguiente paso</div>
-                    <div class="reception-actions">
-                        @foreach ($this->availableTransitions($selected) as $status => $label)
-                            <button type="button" class="reception-action @if ($loop->first) reception-action-primary @endif" wire:click="transition({{ $selected->id }}, '{{ $status }}')">
-                                {{ $label }}
-                            </button>
-                        @endforeach
-                    </div>
+                <div class="reception-drawer-footer">
+                    <button type="button" class="reception-action" wire:click="openNoteModal({{ $selected->id }})">Agregar nota</button>
+                    <a class="reception-action" href="{{ $this->appointmentUrl($selected) }}">Abrir cita completa</a>
                 </div>
-
-                <button type="button" class="reception-action" wire:click="openNoteModal({{ $selected->id }})">Nota</button>
-
-                <a class="reception-action" style="display: inline-flex; justify-content: center; text-decoration: none;" href="{{ $this->appointmentUrl($selected) }}">
-                    Abrir cita completa
-                </a>
             </aside>
         </div>
     @endif

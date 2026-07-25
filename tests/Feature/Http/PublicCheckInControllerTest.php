@@ -45,6 +45,23 @@ class PublicCheckInControllerTest extends TestCase
         ]);
     }
 
+    public function test_patient_can_check_in_with_country_code_when_phone_is_stored_locally(): void
+    {
+        $this->withoutMiddleware();
+
+        $patient = Patient::factory()->create(['phone' => '0985925100']);
+        $appointment = Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'scheduled_at' => now()->setHour(10),
+            'status' => AppointmentStatus::Confirmed,
+        ]);
+
+        $this->post('/check-in/clinica', ['identifier' => '+593985925100'])
+            ->assertRedirect('/check-in/clinica');
+
+        $this->assertSame(AppointmentStatus::CheckedIn, $appointment->refresh()->status);
+    }
+
     public function test_check_in_by_code_uses_appointment_id(): void
     {
         $this->withoutMiddleware();
