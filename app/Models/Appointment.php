@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Appointment extends Model
 {
@@ -112,6 +113,16 @@ class Appointment extends Model
     public function events(): HasMany
     {
         return $this->hasMany(AppointmentEvent::class);
+    }
+
+    public function appointmentNotes(): HasMany
+    {
+        return $this->hasMany(AppointmentNote::class)->latest();
+    }
+
+    public function latestAppointmentNote(): HasOne
+    {
+        return $this->hasOne(AppointmentNote::class)->latestOfMany();
     }
 
     public function hasCalendarSync(): bool

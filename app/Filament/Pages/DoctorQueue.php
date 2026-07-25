@@ -26,6 +26,10 @@ class DoctorQueue extends Page
 
     protected string $view = 'filament.pages.doctor-queue';
 
+    public ?int $noteAppointmentId = null;
+
+    public string $noteText = '';
+
     public static function canAccess(): bool
     {
         return auth()->user()?->hasRolePermission('patient_flow_doctor.view') ?? false;
@@ -94,10 +98,42 @@ class DoctorQueue extends Page
         }
     }
 
+    public function openNoteModal(int $appointmentId): void
+    {
+        $this->noteAppointmentId = $appointmentId;
+        $this->noteText = '';
+    }
+
+    public function closeNoteModal(): void
+    {
+        $this->noteAppointmentId = null;
+        $this->noteText = '';
+    }
+
+    public function saveNote(): void
+    {
+        $this->validate([
+            'noteText' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $appointment = Appointment::query()->findOrFail($this->noteAppointmentId);
+
+        $appointment->appointmentNotes()->create([
+            'patient_id' => $appointment->patient_id,
+            'created_by' => auth()->id(),
+            'visibility' => 'clinical_team',
+            'note_type' => 'doctor',
+            'note' => $this->noteText,
+        ]);
+
+        $this->closeNoteModal();
+        Notification::make()->title('Nota guardada')->success()->send();
+    }
+
     private function baseQuery(): Builder
     {
         return Appointment::query()
-            ->with(['patient', 'doctor', 'procedure'])
+            ->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote'])
             ->whereDate('scheduled_at', today())
             ->when($this->doctorIdForCurrentUser(), fn (Builder $query, int $doctorId): Builder => $query->where('doctor_id', $doctorId));
     }

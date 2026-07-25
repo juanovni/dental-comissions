@@ -67,4 +67,27 @@ class DoctorQueueTest extends TestCase
         $this->assertSame(AppointmentStatus::InConsultation, $appointment->status);
         $this->assertNotNull($appointment->consultation_started_at);
     }
+
+    public function test_doctor_can_save_operational_note(): void
+    {
+        $appointment = Appointment::factory()->create([
+            'scheduled_at' => now()->setHour(10),
+            'status' => AppointmentStatus::ReadyForDoctor,
+        ]);
+
+        $user = User::factory()->create(['role' => UserRole::Admin]);
+
+        Livewire::actingAs($user)
+            ->test(DoctorQueue::class)
+            ->call('openNoteModal', $appointment->id)
+            ->set('noteText', 'Solicita explicacion paso a paso.')
+            ->call('saveNote');
+
+        $this->assertDatabaseHas('appointment_notes', [
+            'appointment_id' => $appointment->id,
+            'created_by' => $user->id,
+            'note_type' => 'doctor',
+            'note' => 'Solicita explicacion paso a paso.',
+        ]);
+    }
 }

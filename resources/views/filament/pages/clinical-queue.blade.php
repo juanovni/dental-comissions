@@ -44,6 +44,9 @@
         .cq-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
         .cq-action { background: #fff; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .78rem; font-weight: 600; min-height: 2.15rem; padding: .45rem .65rem; }
         .cq-action-primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+        .cq-note-preview { background: #f8fafc; border-radius: .5rem; color: #475569; font-size: .76rem; padding: .45rem .55rem; }
+        .cq-modal-card { background: #fff; border-radius: .875rem; display: grid; gap: .75rem; padding: 1.25rem; width: min(100%, 30rem); }
+        .cq-textarea { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .82rem; min-height: 7rem; padding: .65rem; width: 100%; }
         @media (max-width: 900px) { .cq-toolbar { margin-top: 0; } .cq-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cq-board { grid-template-columns: repeat(4, 16rem); } }
     </style>
 
@@ -70,6 +73,7 @@
                             <button type="button" class="cq-card" wire:click="selectAppointment({{ $appointment->id }})">
                                 <span class="cq-card-head"><span class="cq-avatar">{{ str($appointment->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span><span><span class="cq-name">{{ $appointment->patient?->full_name ?? 'Paciente sin nombre' }}</span><span class="cq-meta">{{ $appointment->scheduled_at?->format('h:i a') }} · {{ $appointment->doctor?->name ?? 'Sin doctor' }}</span><span class="cq-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }}</span></span></span>
                                 <span class="cq-card-foot"><span class="cq-badge">{{ $appointment->status->label() }}</span>@if ($appointment->waitingMinutes() !== null)<span class="cq-wait">{{ $appointment->waitingMinutes() }} min</span>@endif</span>
+                                @if ($appointment->latestAppointmentNote)<span class="cq-note-preview">{{ str($appointment->latestAppointmentNote->note)->limit(70) }}</span>@endif
                             </button>
                         @empty
                             <div class="cq-meta" style="padding: .8rem; text-align: center;">Sin pacientes.</div>
@@ -85,7 +89,13 @@
             <div class="cq-drawer-head"><div style="display: flex; gap: .75rem;"><span class="cq-avatar">{{ str($selected->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span><div><div class="cq-name">{{ $selected->patient?->full_name ?? 'Paciente sin nombre' }}</div><div class="cq-meta">{{ $selected->patient?->phone ?? 'Sin telefono' }}</div><span class="cq-badge" style="margin-top: .35rem;">{{ $selected->status->label() }}</span></div></div><button type="button" class="cq-close" wire:click="closeDetail">×</button></div>
             <div class="cq-detail-card"><div class="cq-title">Cita</div><div class="cq-fact"><span>Hora</span><span>{{ $selected->scheduled_at?->format('h:i a') ?? '-' }}</span></div><div class="cq-fact"><span>Doctor</span><span>{{ $selected->doctor?->name ?? '-' }}</span></div><div class="cq-fact"><span>Procedimiento</span><span>{{ $selected->procedure?->name ?? '-' }}</span></div><div class="cq-fact"><span>Esperando</span><span>{{ $selected->waitingMinutes() !== null ? $selected->waitingMinutes().' min' : '-' }}</span></div></div>
             @if ($selected->notes)<div class="cq-detail-card"><div class="cq-title">Nota</div><div class="cq-meta">{{ $selected->notes }}</div></div>@endif
+            @if ($selected->latestAppointmentNote)<div class="cq-detail-card"><div class="cq-title">Ultima nota operativa</div><div class="cq-meta">{{ $selected->latestAppointmentNote->note }}</div></div>@endif
             <div class="cq-detail-card"><div class="cq-title">Siguiente paso</div><div class="cq-actions">@foreach ($this->availableTransitions($selected) as $status => $label)<button type="button" class="cq-action @if ($loop->first) cq-action-primary @endif" wire:click="transition({{ $selected->id }}, '{{ $status }}')">{{ $label }}</button>@endforeach</div></div>
+            <button type="button" class="cq-action" wire:click="openNoteModal({{ $selected->id }})">Nota</button>
         </aside></div>
+    @endif
+
+    @if ($noteAppointmentId)
+        <div class="cq-drawer" wire:click.self="closeNoteModal" style="display: flex; align-items: center; justify-content: center;"><div class="cq-modal-card"><div class="cq-title">Agregar nota operativa</div><textarea class="cq-textarea" wire:model="noteText" placeholder="Ej.: Paciente ansioso, aplicar comunicacion calmada."></textarea>@error('noteText') <div class="cq-meta" style="color: #dc2626;">{{ $message }}</div> @enderror<div class="cq-actions" style="justify-content: flex-end;"><button type="button" class="cq-action" wire:click="closeNoteModal">Cancelar</button><button type="button" class="cq-action cq-action-primary" wire:click="saveNote">Guardar nota</button></div></div></div>
     @endif
 </x-filament-panels::page>

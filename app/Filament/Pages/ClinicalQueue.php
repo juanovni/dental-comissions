@@ -31,6 +31,10 @@ class ClinicalQueue extends Page
 
     public ?int $selectedAppointmentId = null;
 
+    public ?int $noteAppointmentId = null;
+
+    public string $noteText = '';
+
     public static function canAccess(): bool
     {
         return auth()->user()?->hasRolePermission('patient_flow_assistant.view') ?? false;
@@ -87,7 +91,7 @@ class ClinicalQueue extends Page
     public function selectedAppointment(): ?Appointment
     {
         return $this->selectedAppointmentId
-            ? Appointment::query()->with(['patient', 'doctor', 'procedure'])->find($this->selectedAppointmentId)
+            ? Appointment::query()->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote'])->find($this->selectedAppointmentId)
             : null;
     }
 
@@ -123,10 +127,42 @@ class ClinicalQueue extends Page
             ->all();
     }
 
+    public function openNoteModal(int $appointmentId): void
+    {
+        $this->noteAppointmentId = $appointmentId;
+        $this->noteText = '';
+    }
+
+    public function closeNoteModal(): void
+    {
+        $this->noteAppointmentId = null;
+        $this->noteText = '';
+    }
+
+    public function saveNote(): void
+    {
+        $this->validate([
+            'noteText' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $appointment = Appointment::query()->findOrFail($this->noteAppointmentId);
+
+        $appointment->appointmentNotes()->create([
+            'patient_id' => $appointment->patient_id,
+            'created_by' => auth()->id(),
+            'visibility' => 'clinical_team',
+            'note_type' => 'assistant',
+            'note' => $this->noteText,
+        ]);
+
+        $this->closeNoteModal();
+        Notification::make()->title('Nota guardada')->success()->send();
+    }
+
     private function baseQuery(): Builder
     {
         return Appointment::query()
-            ->with(['patient', 'doctor', 'procedure'])
+            ->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote'])
             ->whereDate('scheduled_at', today())
             ->when($this->doctorIdsForCurrentUser() !== null, fn (Builder $query): Builder => $query->whereIn('doctor_id', $this->doctorIdsForCurrentUser()))
             ->when($this->search, function (Builder $query): void {

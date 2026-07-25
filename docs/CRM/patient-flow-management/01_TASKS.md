@@ -162,21 +162,21 @@ Criterio de salida:
 
 Objetivo: compartir contexto operativo por paciente y cita.
 
-- [ ] Decidir si MVP guarda notas como eventos o tabla `appointment_notes`.
-- [ ] Agregar boton `Nota` en drawer.
-- [ ] Crear textarea simple.
-- [ ] Guardar autor y hora.
-- [ ] Asociar nota a `appointment_id`.
-- [ ] Mostrar ultima nota relevante en card.
-- [ ] Mostrar historial de notas en drawer.
-- [ ] Agregar reglas de redaccion en ayuda o placeholder.
-- [ ] Evitar uso como historia clinica formal.
+- [x] Decidir si MVP guarda notas como eventos o tabla `appointment_notes`.
+- [x] Agregar boton `Nota` en drawer.
+- [x] Crear textarea simple.
+- [x] Guardar autor y hora.
+- [x] Asociar nota a `appointment_id`.
+- [x] Mostrar ultima nota relevante en card.
+- [~] Mostrar historial de notas en drawer.
+- [x] Agregar reglas de redaccion en ayuda o placeholder.
+- [x] Evitar uso como historia clinica formal.
 
 Criterio de salida:
 
-- [ ] Recepcion, asistente y doctor comparten contexto operativo.
-- [ ] Las notas quedan trazables.
-- [ ] No se registran diagnosticos formales en este modulo.
+- [x] Recepcion, asistente y doctor comparten contexto operativo.
+- [x] Las notas quedan trazables.
+- [x] No se registran diagnosticos formales en este modulo.
 
 ## Fase 6: Dashboard administrativo de operacion clinica
 

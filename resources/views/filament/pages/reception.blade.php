@@ -16,7 +16,7 @@
         .reception-kpi-label { color: #64748b; font-size: .74rem; font-weight: 500; }
         .reception-kpi-value { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
         .reception-alerts { background: #fff7f7; border-color: #fecaca; color: #dc2626; padding: .85rem; }
-        .reception-alert-title, .reception-column-title { align-items: center; display: flex; font-size: .8rem; font-weight: 650; gap: .45rem; justify-content: space-between; text-transform: uppercase; }
+        .reception-alert-title, .reception-column-title { align-items: center; display: flex; font-size: .86rem; font-weight: 600; gap: .45rem; justify-content: space-between; }
         .reception-alert-list { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem; }
         .reception-alert-chip { background: #fff; border: 1px solid #fecaca; border-radius: .5rem; font-size: .78rem; padding: .35rem .55rem; }
         .reception-board { display: grid; gap: .75rem; grid-template-columns: repeat(5, minmax(14rem, 1fr)); overflow-x: auto; }
@@ -44,6 +44,9 @@
         .reception-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
         .reception-action { background: #fff; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .78rem; font-weight: 600; min-height: 2.15rem; padding: .45rem .65rem; }
         .reception-action-primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+        .reception-note-preview { background: #f8fafc; border-radius: .5rem; color: #475569; font-size: .76rem; padding: .45rem .55rem; }
+        .reception-modal-card { background: #fff; border-radius: .875rem; display: grid; gap: .75rem; padding: 1.25rem; width: min(100%, 30rem); }
+        .reception-textarea { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .82rem; min-height: 7rem; padding: .65rem; width: 100%; }
         @media (max-width: 900px) { .reception-toolbar { margin-top: 0; } .reception-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .reception-board { grid-template-columns: repeat(5, 16rem); } }
     </style>
 
@@ -93,6 +96,9 @@
                                         <span class="reception-wait">{{ $appointment->waitingMinutes() }} min</span>
                                     @endif
                                 </span>
+                                @if ($appointment->latestAppointmentNote)
+                                    <span class="reception-note-preview">{{ str($appointment->latestAppointmentNote->note)->limit(70) }}</span>
+                                @endif
                             </button>
                         @empty
                             <div class="reception-meta" style="padding: .8rem; text-align: center;">Sin pacientes.</div>
@@ -130,8 +136,15 @@
 
                 @if ($selected->notes)
                     <div class="reception-detail-card">
-                        <div class="reception-alert-title">Nota</div>
+                        <div class="reception-alert-title">Nota de cita</div>
                         <div class="reception-meta">{{ $selected->notes }}</div>
+                    </div>
+                @endif
+
+                @if ($selected->latestAppointmentNote)
+                    <div class="reception-detail-card">
+                        <div class="reception-alert-title">Ultima nota operativa</div>
+                        <div class="reception-meta">{{ $selected->latestAppointmentNote->note }}</div>
                     </div>
                 @endif
 
@@ -146,10 +159,26 @@
                     </div>
                 </div>
 
+                <button type="button" class="reception-action" wire:click="openNoteModal({{ $selected->id }})">Nota</button>
+
                 <a class="reception-action" style="display: inline-flex; justify-content: center; text-decoration: none;" href="{{ $this->appointmentUrl($selected) }}">
                     Abrir cita completa
                 </a>
             </aside>
+        </div>
+    @endif
+
+    @if ($noteAppointmentId)
+        <div class="reception-drawer" wire:click.self="closeNoteModal" style="display: flex; align-items: center; justify-content: center;">
+            <div class="reception-modal-card">
+                <div class="reception-alert-title">Agregar nota operativa</div>
+                <textarea class="reception-textarea" wire:model="noteText" placeholder="Ej.: Llego con acompanante. Paciente ansioso, aplicar comunicacion calmada."></textarea>
+                @error('noteText') <div class="reception-meta" style="color: #dc2626;">{{ $message }}</div> @enderror
+                <div class="reception-actions" style="justify-content: flex-end;">
+                    <button type="button" class="reception-action" wire:click="closeNoteModal">Cancelar</button>
+                    <button type="button" class="reception-action reception-action-primary" wire:click="saveNote">Guardar nota</button>
+                </div>
+            </div>
         </div>
     @endif
 </x-filament-panels::page>

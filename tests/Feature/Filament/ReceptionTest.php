@@ -44,4 +44,27 @@ class ReceptionTest extends TestCase
         $this->assertNotNull($appointment->checked_in_at);
         $this->assertSame('reception', $appointment->check_in_source);
     }
+
+    public function test_reception_page_can_save_operational_note(): void
+    {
+        $appointment = Appointment::factory()->create([
+            'scheduled_at' => now()->setHour(10)->setMinute(0),
+            'status' => AppointmentStatus::CheckedIn,
+        ]);
+
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(Reception::class)
+            ->call('openNoteModal', $appointment->id)
+            ->set('noteText', 'Llego con acompanante.')
+            ->call('saveNote');
+
+        $this->assertDatabaseHas('appointment_notes', [
+            'appointment_id' => $appointment->id,
+            'created_by' => $user->id,
+            'note_type' => 'reception',
+            'note' => 'Llego con acompanante.',
+        ]);
+    }
 }
