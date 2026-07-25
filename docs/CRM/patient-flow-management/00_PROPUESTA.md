@@ -288,6 +288,134 @@ Informacion que debe evitarse en pantalla publica:
 - Estilo sobrio y limpio alineado con `.cursorrules`.
 - Texto simple para pacientes.
 
+## Notas Operativas por Paciente y Cita
+
+Las notas operativas son observaciones internas del flujo de atencion. Deben ayudar a recepcion, asistentes y doctores a coordinar mejor la experiencia del paciente durante una cita especifica.
+
+No deben reemplazar la historia clinica ni usarse como diagnostico formal.
+
+Ejemplos de notas utiles:
+
+- `Llego con acompanante.`
+- `Paciente refiere ansiedad, aplicar comunicacion calmada.`
+- `Pidio ser atendido lo antes posible.`
+- `Tiene dolor fuerte.`
+- `Primera vez en la clinica.`
+- `Solicita explicacion detallada del procedimiento.`
+- `Paciente molesto por espera anterior.`
+
+Regla principal:
+
+- La nota debe asociarse primero a la cita (`appointment`), no solo al paciente.
+- Si una observacion debe quedar como informacion permanente, luego puede convertirse en nota del contacto/paciente.
+
+Por que asociarla a la cita:
+
+- `Llego con acompanante` aplica a esta visita.
+- `Paciente ansioso` puede ser relevante para esta atencion.
+- `Molesto por espera` corresponde a un evento puntual.
+- Permite trazabilidad por fecha, rol y usuario.
+
+### Modelo sugerido
+
+Para MVP puede bastar con registrar notas como eventos o una tabla simple.
+
+Opcion MVP:
+
+- `appointment_id`.
+- `created_by`.
+- `note`.
+- `created_at`.
+
+Opcion robusta futura: tabla `appointment_notes`.
+
+Campos sugeridos:
+
+- `id`.
+- `appointment_id`.
+- `patient_id`.
+- `created_by`.
+- `visibility`.
+- `note_type`.
+- `note`.
+- `is_pinned`.
+- `created_at`.
+- `updated_at`.
+
+Tipos sugeridos:
+
+- `operational`: operativa.
+- `reception`: recepcion.
+- `assistant`: asistencia.
+- `doctor`: doctor.
+- `clinical_context`: contexto clinico no diagnostico.
+- `alert`: alerta.
+
+Visibilidad sugerida:
+
+- `internal`: equipo interno.
+- `reception`: recepcion y admin.
+- `clinical_team`: doctor, asistente y admin.
+
+### UX por rol
+
+Recepcion:
+
+- Boton `Nota` en el drawer del paciente.
+- Puede registrar observaciones de llegada o comportamiento operativo.
+- Puede marcar una nota como importante si debe verla el asistente o doctor.
+
+Asistente:
+
+- Debe ver notas relevantes en la card o drawer.
+- Debe poder agregar notas de preparacion.
+- Ejemplos: `Paciente ansioso`, `Aplicar protocolo suave`, `Requiere acompanante`.
+
+Doctor:
+
+- Debe ver la nota mas relevante en la card principal de `Mi cola`.
+- Puede agregar nota operativa o de contexto no diagnostico.
+- No debe sobrecargarse con todas las notas en la vista principal.
+
+Admin:
+
+- Puede revisar notas en timeline o auditoria.
+- No deben ser foco principal del dashboard administrativo.
+
+### Reglas de redaccion
+
+- Usar lenguaje neutral y profesional.
+- Evitar diagnosticos formales en notas operativas.
+- Evitar comentarios subjetivos, ofensivos o ambiguos.
+- Registrar observaciones accionables.
+
+Ejemplos recomendados:
+
+- `Paciente refiere ansiedad, aplicar comunicacion calmada.`
+- `Llego con acompanante.`
+- `Solicita explicacion paso a paso.`
+- `Movilidad reducida, ofrecer asistencia.`
+
+Ejemplos a evitar:
+
+- `Paciente dificil.`
+- `Vino con alguien raro.`
+- `Exagerado con el dolor.`
+
+### Funcionalidades recomendadas
+
+- Agregar nota desde drawer.
+- Mostrar ultima nota relevante en card.
+- Mostrar historial de notas en drawer.
+- Registrar autor y hora.
+- Marcar nota como importante.
+- Plantillas rapidas futuras: ansioso, prioritario, con acompanante, dolor, movilidad reducida, primera visita.
+
+### Fase recomendada
+
+- MVP: incluir boton `Nota`, textarea simple, guardado con autor/hora y visualizacion en card/drawer.
+- Fase posterior: plantillas, visibilidad avanzada, notas fijadas y conversion a nota permanente del paciente.
+
 ## Diferencia entre Citas y Panel de Recepcion
 
 `Citas` y `Panel de Recepcion` no deben ser la misma pantalla.
