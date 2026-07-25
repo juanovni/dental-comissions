@@ -27,10 +27,13 @@
         .reception-kpi-icon svg { height: 1.15rem; width: 1.15rem; }
         .reception-kpi-label { color: #64748b; font-size: .74rem; font-weight: 500; }
         .reception-kpi-value { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
-        .reception-alerts { background: #fff7f7; border-color: #fecaca; color: #dc2626; padding: .85rem; }
+        .reception-alerts { background: #fff; border-color: #e5e7eb; color: #0f172a; padding: .85rem; }
         .reception-alert-title, .reception-column-title { align-items: center; display: flex; font-size: .86rem; font-weight: 600; gap: .45rem; justify-content: space-between; }
         .reception-alert-list { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem; }
-        .reception-alert-chip { background: #fff; border: 1px solid #fecaca; border-radius: .5rem; font-size: .78rem; padding: .35rem .55rem; }
+        .reception-alert-chip { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; color: #475569; font-size: .78rem; padding: .35rem .55rem; }
+        .reception-alert-chip-warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+        .reception-alert-chip-critical { background: #fff7f7; border-color: #fecaca; color: #dc2626; }
+        .reception-alert-chip-neutral { background: #f8fafc; border-color: #e5e7eb; color: #475569; }
         .reception-board { display: grid; gap: .75rem; grid-template-columns: repeat(5, minmax(14rem, 1fr)); overflow-x: auto; }
         .reception-column { min-height: 32rem; overflow: hidden; }
         .reception-column-title { border-bottom: 1px solid #e5e7eb; padding: .75rem .85rem; }
@@ -51,8 +54,10 @@
         .reception-name { font-size: .9rem; font-weight: 650; }
         .reception-meta { color: #64748b; font-size: .78rem; line-height: 1.45; }
         .reception-badge { background: #ecfdf5; border-radius: .4rem; color: #047857; display: inline-flex; font-size: .72rem; font-weight: 600; padding: .2rem .45rem; width: fit-content; }
-        .reception-wait { align-items: center; color: #b45309; display: inline-flex; font-size: .75rem; font-weight: 600; gap: .25rem; justify-self: end; }
+        .reception-wait { align-items: center; color: #64748b; display: inline-flex; font-size: .75rem; font-weight: 600; gap: .25rem; justify-self: end; }
         .reception-wait svg { height: .85rem; width: .85rem; }
+        .reception-wait-warning { color: #ca8a04; }
+        .reception-wait-critical { color: #dc2626; }
         .reception-card-foot { align-items: center; display: flex; justify-content: space-between; }
         .reception-drawer { background: rgba(15, 23, 42, .22); inset: 0; position: fixed; z-index: 60; }
         .reception-drawer-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: .875rem; box-shadow: 0 8px 20px rgba(15, 23, 42, .08); color: #0f172a; display: flex; flex-direction: column; max-height: calc(100vh - 2rem); overflow: hidden; position: fixed; right: 1rem; top: 1rem; width: min(38rem, calc(100vw - 2rem)); }
@@ -96,7 +101,7 @@
                 <div class="reception-alert-title">Alertas operativas</div>
                 <div class="reception-alert-list">
                     @foreach ($this->alerts() as $alert)
-                        <span class="reception-alert-chip">{{ $alert }}</span>
+                        <span class="reception-alert-chip reception-alert-chip-{{ $alert['level'] ?? 'neutral' }}">{{ $alert['message'] ?? $alert }}</span>
                     @endforeach
                 </div>
             </div>
@@ -145,7 +150,8 @@
                                     <span class="reception-card-foot">
                                         <span class="reception-badge">{{ $appointment->status->label() }}</span>
                                         @if ($appointment->waitingMinutes() !== null)
-                                            <span class="reception-wait"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $appointment->waitingMinutes() }} min</span>
+                                            @php($waitingMinutes = $appointment->waitingMinutes())
+                                            <span class="reception-wait @if ($waitingMinutes >= 20) reception-wait-critical @elseif ($waitingMinutes >= 10) reception-wait-warning @endif"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $waitingMinutes }} min</span>
                                         @endif
                                     </span>
                                     @if ($appointment->latestAppointmentNote)

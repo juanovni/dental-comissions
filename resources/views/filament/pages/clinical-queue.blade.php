@@ -28,10 +28,13 @@
         .cq-kpi-label { color: #64748b; font-size: .74rem; font-weight: 500; }
         .cq-kpi-value { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
         .cq-kpi-count { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
-        .cq-alerts { background: #fff7f7; border-color: #fecaca; color: #dc2626; padding: .85rem; }
+        .cq-alerts { background: #fff; border-color: #e5e7eb; color: #0f172a; padding: .85rem; }
         .cq-title { align-items: center; display: flex; font-size: .86rem; font-weight: 600; justify-content: space-between; }
         .cq-alert-list { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem; }
-        .cq-alert-chip { background: #fff; border: 1px solid #fecaca; border-radius: .5rem; font-size: .78rem; padding: .35rem .55rem; }
+        .cq-alert-chip { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; color: #475569; font-size: .78rem; padding: .35rem .55rem; }
+        .cq-alert-chip-warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+        .cq-alert-chip-critical { background: #fff7f7; border-color: #fecaca; color: #dc2626; }
+        .cq-alert-chip-neutral { background: #f8fafc; border-color: #e5e7eb; color: #475569; }
         .cq-board { display: grid; gap: .75rem; grid-template-columns: repeat(4, minmax(15rem, 1fr)); overflow-x: auto; }
         .cq-column { min-height: 32rem; overflow: hidden; }
         .cq-column-head { border-bottom: 1px solid #e5e7eb; padding: .75rem .85rem; }
@@ -52,8 +55,10 @@
         .cq-name { font-size: .9rem; font-weight: 650; }
         .cq-meta { color: #64748b; font-size: .78rem; line-height: 1.45; }
         .cq-badge { background: #ecfdf5; border-radius: .4rem; color: #047857; display: inline-flex; font-size: .72rem; font-weight: 600; padding: .2rem .45rem; width: fit-content; }
-        .cq-wait { align-items: center; color: #b45309; display: inline-flex; font-size: .75rem; font-weight: 600; gap: .25rem; justify-self: end; }
+        .cq-wait { align-items: center; color: #64748b; display: inline-flex; font-size: .75rem; font-weight: 600; gap: .25rem; justify-self: end; }
         .cq-wait svg { height: .85rem; width: .85rem; }
+        .cq-wait-warning { color: #ca8a04; }
+        .cq-wait-critical { color: #dc2626; }
         .cq-card-foot { align-items: center; display: flex; justify-content: space-between; }
         .cq-drawer { background: rgba(15, 23, 42, .22); inset: 0; position: fixed; z-index: 60; }
         .cq-drawer-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: .875rem; box-shadow: 0 8px 20px rgba(15, 23, 42, .08); color: #0f172a; display: flex; flex-direction: column; max-height: calc(100vh - 2rem); overflow: hidden; position: fixed; right: 1rem; top: 1rem; width: min(38rem, calc(100vw - 2rem)); }
@@ -90,7 +95,7 @@
         </div>
 
         @if ($this->alerts()->isNotEmpty())
-            <div class="cq-alerts"><div class="cq-title">Alertas</div><div class="cq-alert-list">@foreach ($this->alerts() as $alert)<span class="cq-alert-chip">{{ $alert }}</span>@endforeach</div></div>
+            <div class="cq-alerts"><div class="cq-title">Alertas</div><div class="cq-alert-list">@foreach ($this->alerts() as $alert)<span class="cq-alert-chip cq-alert-chip-{{ $alert['level'] ?? 'neutral' }}">{{ $alert['message'] ?? $alert }}</span>@endforeach</div></div>
         @endif
 
         <div class="cq-board">
@@ -122,7 +127,7 @@
                                 @endif
                                 <button type="button" class="cq-card" wire:click="selectAppointment({{ $appointment->id }})">
                                     <span class="cq-card-head"><span class="cq-avatar">{{ str($appointment->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span><span class="cq-card-body"><span class="cq-name">{{ $appointment->patient?->full_name ?? 'Paciente sin nombre' }}</span><span class="cq-meta cq-card-time"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $appointment->scheduled_at?->format('h:i a') }} · {{ $appointment->doctor?->name ?? 'Sin doctor' }}</span><span class="cq-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }}</span></span></span>
-                                    <span class="cq-card-foot"><span class="cq-badge">{{ $appointment->status->label() }}</span>@if ($appointment->waitingMinutes() !== null)<span class="cq-wait"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $appointment->waitingMinutes() }} min</span>@endif</span>
+                                    <span class="cq-card-foot"><span class="cq-badge">{{ $appointment->status->label() }}</span>@if ($appointment->waitingMinutes() !== null)@php($waitingMinutes = $appointment->waitingMinutes())<span class="cq-wait @if ($waitingMinutes >= 20) cq-wait-critical @elseif ($waitingMinutes >= 10) cq-wait-warning @endif"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $waitingMinutes }} min</span>@endif</span>
                                     @if ($appointment->latestAppointmentNote)<span class="cq-note-preview">{{ str($appointment->latestAppointmentNote->note)->limit(70) }}</span>@endif
                                 </button>
                             </div>

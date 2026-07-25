@@ -96,10 +96,16 @@ class Reception extends Page
     {
         return collect()
             ->merge($this->cards('waiting')
-                ->filter(fn (Appointment $appointment): bool => ($appointment->waitingMinutes() ?? 0) >= 20)
-                ->map(fn (Appointment $appointment): string => ($appointment->patient?->full_name ?? 'Paciente').' lleva '.$appointment->waitingMinutes().' min en espera'))
+                ->filter(fn (Appointment $appointment): bool => ($appointment->waitingMinutes() ?? 0) >= 10)
+                ->map(fn (Appointment $appointment): array => [
+                    'level' => ($appointment->waitingMinutes() ?? 0) >= 20 ? 'critical' : 'warning',
+                    'message' => ($appointment->patient?->full_name ?? 'Paciente').' lleva '.$appointment->waitingMinutes().' min en espera',
+                ]))
             ->merge($this->overdueAppointments()
-                ->map(fn (Appointment $appointment): string => 'La cita de '.($appointment->patient?->full_name ?? 'Paciente').' tiene retraso'))
+                ->map(fn (Appointment $appointment): array => [
+                    'level' => 'neutral',
+                    'message' => 'La cita de '.($appointment->patient?->full_name ?? 'Paciente').' tiene retraso',
+                ]))
             ->values();
     }
 
