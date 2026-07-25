@@ -362,6 +362,8 @@ Ejemplos:
 - Las nuevas vistas operativas no deben replicar el formato tabla/listado de `Citas`.
 - Las tablas deben quedar reservadas para administracion, busqueda historica o configuracion.
 - Las vistas de flujo deben sentirse como interfaces operativas tipo `Social Inbox`: cards compactas, paneles, acciones rapidas y estados visibles.
+- Las cards del tablero no deben usar movimiento libre entre columnas como mecanismo principal.
+- Al hacer clic en una card, debe abrirse un drawer lateral con contexto y botones de accion validos.
 
 Menu sugerido en `Operacion Clinica`:
 
@@ -397,6 +399,33 @@ Formato visual sugerido:
 - Tiempo esperando destacado.
 - Acciones rapidas con icono.
 - Panel lateral o detalle expandible para informacion adicional.
+- Cambio de estado desde drawer lateral con botones contextuales, no desde dropdown libre.
+
+Drawer lateral sugerido:
+
+- Header con avatar, nombre, telefono y badge de estado.
+- Card de datos de cita: hora, duracion, doctor, procedimiento, canal de confirmacion y tiempo esperando.
+- Nota de recepcion.
+- Bloque `Siguiente paso` con transiciones validas.
+- Bloque `Acciones` con avisar, nota, reprogramar, cancelar, no-show o abrir cita completa.
+- Footer sticky con acciones frecuentes.
+- Boton para abrir la cita completa en el CRUD de `Citas`.
+
+Regla de acciones:
+
+- No mostrar todos los estados como botones siempre.
+- No mostrar el estado actual como accion principal.
+- Mostrar solo transiciones validas segun el estado actual.
+- Usar boton primario para la accion recomendada.
+- Usar botones outline/neutros para acciones secundarias.
+
+Acciones sugeridas por estado:
+
+- `Por llegar`: check-in, reprogramar, cancelar, no-show, avisar.
+- `En espera`: preparar paciente, listo para doctor, reprogramar, cancelar, avisar, nota.
+- `En preparacion`: listo para doctor, volver a espera, avisar doctor, nota.
+- `Listo para doctor`: iniciar consulta, volver a preparacion, avisar doctor, nota.
+- `En consulta`: finalizar consulta, nota, abrir cita.
 
 Semaforo recomendado:
 
@@ -407,7 +436,7 @@ Semaforo recomendado:
 
 ### Doctor
 
-Debe ser una pantalla simple y directa.
+Debe ser una pantalla simple, directa y enfocada en la siguiente decision clinica. No debe usar kanban completo.
 
 Elementos sugeridos:
 
@@ -427,10 +456,58 @@ Formato visual sugerido:
 - Sin tabla principal.
 - Acciones rapidas con icono.
 - Detalle breve del paciente sin sobrecargar la pantalla.
+- KPIs compactos superiores: en espera, preparando, listos, en consulta.
+- Panel lateral o card secundaria de paciente en consulta.
+- Bloque de comunicacion con recepcion y asistente.
 
 Nombre sugerido de menu:
 
 - `Mi cola`.
+
+Layout recomendado:
+
+- Header: `Mi cola de atencion` con nombre del doctor.
+- KPIs compactos: `En espera`, `Preparando`, `Listos`, `En consulta`.
+- Card principal: proximo paciente accionable.
+- Panel `En consulta`: paciente actualmente atendido y accion para finalizar.
+- Panel `Comunicacion`: mensaje a recepcion y solicitar asistente.
+- Seccion inferior: pacientes pendientes o cola de espera.
+
+Regla para elegir el proximo paciente:
+
+1. Primero pacientes `Listo para doctor`.
+2. Si no hay listos, pacientes `En preparacion` mas cercanos o con mayor espera.
+3. Si no hay preparacion, pacientes `En espera` con mayor prioridad o mayor tiempo esperando.
+
+Accion principal segun estado:
+
+- Si el paciente esta `Listo para doctor`, mostrar accion primaria `Iniciar consulta`.
+- Si el paciente esta `En preparacion`, mostrar accion primaria `Solicitar actualizacion` o `Solicitar asistente`.
+- Si el paciente esta `En espera`, mostrar accion primaria `Solicitar preparacion`.
+- Si el paciente esta `En consulta`, mostrar accion primaria `Finalizar consulta` en el panel de consulta actual.
+
+Reglas de la card principal:
+
+- No llamar simplemente `Proximo paciente` si el paciente aun no esta listo.
+- Para `En preparacion`, usar titulo como `Proximo en preparacion` o mostrar claramente el badge `En preparacion`.
+- Para `En espera`, usar titulo como `Paciente esperando` o indicar que falta preparacion.
+- Mostrar nombre, hora de cita, procedimiento, tiempo esperando y nota relevante.
+- Mantener `Ver contacto` y `Nota` como acciones secundarias.
+
+Panel `En consulta`:
+
+- Mostrar paciente actual.
+- Mostrar procedimiento.
+- Mostrar hora de inicio.
+- Mostrar duracion transcurrida.
+- Boton principal `Finalizar consulta`.
+- Si no hay paciente en consulta, mostrar empty state compacto.
+
+Comunicacion:
+
+- `Mensaje a recepcion`.
+- `Solicitar asistente`.
+- Futuro: `Reportar retraso` si el doctor necesita avisar demora.
 
 ### Administracion
 
