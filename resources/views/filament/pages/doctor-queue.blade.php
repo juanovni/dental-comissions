@@ -7,6 +7,17 @@
     @endphp
 
     <style>
+        .dq-subtitle {
+            color: #64748b;
+            font-size: .84rem;
+            margin: -1.05rem 0 1.25rem;
+        }
+        @media (min-width: 900px) {
+            .dq-subtitle {
+                margin-bottom: 1rem;
+                max-width: 28rem;
+            }
+        }
         .dq-page { color: #0f172a; display: grid; gap: 1rem; }
         .dq-kpis { display: flex; gap: .55rem; justify-content: flex-end; margin-top: -3.8rem; }
         .dq-kpi { background: #f1f5f9; border-radius: .65rem; color: #475569; font-size: .78rem; font-weight: 600; padding: .55rem .7rem; }
@@ -33,6 +44,7 @@
     </style>
 
     <div class="dq-page">
+        <p class="dq-subtitle">Tu lista de atencion del dia · {{ $summary['waiting'] + $summary['preparing'] + $summary['ready'] + $summary['in_consultation'] }} pacientes</p>
         <div class="dq-kpis"><span class="dq-kpi">En espera {{ $summary['waiting'] }}</span><span class="dq-kpi">Preparando {{ $summary['preparing'] }}</span><span class="dq-kpi">Listos {{ $summary['ready'] }}</span><span class="dq-kpi">En consulta {{ $summary['in_consultation'] }}</span></div>
 
         <div class="dq-grid">

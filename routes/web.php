@@ -4,6 +4,7 @@ use App\Http\Controllers\GoogleCalendarAuthController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MetaAuthController;
 use App\Http\Controllers\MetaSocialWebhookController;
+use App\Http\Controllers\PublicCheckInController;
 use App\Http\Controllers\SocialAppointmentLinkController;
 use App\Http\Controllers\SocialSmartLinkController;
 use App\Http\Controllers\TelnyxVoiceWebhookController;
@@ -32,6 +33,8 @@ Route::post('/v/{trackingToken}/event', [SocialSmartLinkController::class, 'trac
 Route::get('/social/appointments/{token}', [SocialAppointmentLinkController::class, 'show'])->name('social-appointments.show');
 Route::get('/social/appointments/{token}/calendar', [SocialAppointmentLinkController::class, 'calendar'])->name('social-appointments.calendar');
 Route::post('/social/appointments/{token}/confirm', [SocialAppointmentLinkController::class, 'confirm'])->name('social-appointments.confirm');
+Route::get('/check-in/{clinicSlug}', [PublicCheckInController::class, 'show'])->name('patient-flow.check-in.show');
+Route::post('/check-in/{clinicSlug}', [PublicCheckInController::class, 'store'])->name('patient-flow.check-in.store')->middleware('throttle:10,1');
 
 if (app()->environment('local', 'testing')) {
     Route::post('/test/whatsapp', [TestWhatsappController::class, 'test']);

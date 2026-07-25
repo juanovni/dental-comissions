@@ -42,7 +42,7 @@ class ClinicalQueue extends Page
 
     public function getSubheading(): ?string
     {
-        return 'Pacientes en espera, preparacion y listos para doctor.';
+        return null;
     }
 
     public function columns(): array

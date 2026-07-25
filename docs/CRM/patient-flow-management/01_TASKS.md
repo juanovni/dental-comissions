@@ -204,23 +204,23 @@ Criterio de salida:
 
 Objetivo: permitir llegada autoservicio desde canales externos.
 
-- [ ] Crear pantalla publica `Confirma tu llegada`.
-- [ ] Crear pantalla publica de exito `Gracias`.
-- [ ] Crear endpoint seguro para check-in QR.
-- [ ] Buscar cita del dia por telefono o codigo.
-- [ ] Manejar varias citas encontradas.
-- [ ] Manejar cita no encontrada.
-- [ ] Manejar llegada ya registrada.
-- [ ] Registrar intentos fallidos.
-- [ ] Agregar rate limiting.
+- [x] Crear pantalla publica `Confirma tu llegada`.
+- [x] Crear pantalla publica de exito `Gracias`.
+- [x] Crear endpoint seguro para check-in QR.
+- [x] Buscar cita del dia por telefono o codigo.
+- [x] Manejar varias citas encontradas.
+- [x] Manejar cita no encontrada.
+- [x] Manejar llegada ya registrada.
+- [~] Registrar intentos fallidos.
+- [x] Agregar rate limiting.
 - [ ] Integrar WhatsApp con intenciones tipo `LLEGUE`.
-- [ ] Crear evento al registrar llegada externa.
+- [x] Crear evento al registrar llegada externa.
 
 Criterio de salida:
 
-- [ ] Paciente puede hacer check-in sin recepcion.
-- [ ] Recepcion ve el cambio a `En espera`.
-- [ ] No se expone informacion sensible en pantalla publica.
+- [x] Paciente puede hacer check-in sin recepcion.
+- [x] Recepcion ve el cambio a `En espera`.
+- [x] No se expone informacion sensible en pantalla publica.
 
 ## Fase 8: Automatizaciones con WhatsApp y Pity Voice
 

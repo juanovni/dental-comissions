@@ -6,17 +6,30 @@
     @endphp
 
     <style>
+        .cq-subtitle {
+            color: #64748b;
+            font-size: .84rem;
+            margin: -1.05rem 0 1.25rem;
+        }
+        @media (min-width: 900px) {
+            .cq-subtitle {
+                margin-bottom: 1rem;
+                max-width: 28rem;
+            }
+        }
         .cq-page { color: #0f172a; display: grid; gap: 1rem; }
         .cq-toolbar { display: flex; justify-content: flex-end; margin-top: -3.8rem; }
         .cq-search { background: #fff; border: 1px solid #e5e7eb; border-radius: .65rem; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); font-size: .84rem; height: 2.65rem; outline: none; padding: 0 .85rem; width: min(100%, 24rem); }
         .cq-kpis { display: grid; gap: .75rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .cq-kpi, .cq-alerts, .cq-column, .cq-card, .cq-detail-card { background: #fff; border: 1px solid #e5e7eb; border-radius: .75rem; }
         .cq-kpi { align-items: center; display: flex; gap: .75rem; padding: .85rem; }
-        .cq-kpi-icon { align-items: center; background: #eef8f8; border-radius: .65rem; color: #0f766e; display: inline-flex; font-size: .82rem; font-weight: 600; height: 2.35rem; justify-content: center; width: 2.35rem; }
+        .cq-kpi-icon { align-items: center; background: #eef8f8; border-radius: .65rem; color: #0f766e; display: inline-flex; height: 2.35rem; justify-content: center; width: 2.35rem; }
+        .cq-kpi-icon svg { height: 1.15rem; width: 1.15rem; }
         .cq-kpi-label { color: #64748b; font-size: .74rem; font-weight: 500; }
         .cq-kpi-value { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
+        .cq-kpi-count { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
         .cq-alerts { background: #fff7f7; border-color: #fecaca; color: #dc2626; padding: .85rem; }
-        .cq-title { align-items: center; display: flex; font-size: .8rem; font-weight: 650; justify-content: space-between; text-transform: uppercase; }
+        .cq-title { align-items: center; display: flex; font-size: .86rem; font-weight: 600; justify-content: space-between; }
         .cq-alert-list { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem; }
         .cq-alert-chip { background: #fff; border: 1px solid #fecaca; border-radius: .5rem; font-size: .78rem; padding: .35rem .55rem; }
         .cq-board { display: grid; gap: .75rem; grid-template-columns: repeat(4, minmax(15rem, 1fr)); overflow-x: auto; }
@@ -51,12 +64,14 @@
     </style>
 
     <div class="cq-page">
+        <p class="cq-subtitle">Asistencia a doctores · pacientes en preparacion y consulta</p>
         <div class="cq-toolbar"><input class="cq-search" type="search" wire:model.live.debounce.350ms="search" placeholder="Buscar paciente..."></div>
 
         <div class="cq-kpis">
-            @foreach ($columns as $status => $label)
-                <div class="cq-kpi"><span class="cq-kpi-icon">{{ $summary[$status] }}</span><div><div class="cq-kpi-label">{{ $label }}</div><div class="cq-meta">pacientes</div></div></div>
-            @endforeach
+            <div class="cq-kpi"><span class="cq-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg></span><div><div class="cq-kpi-label">En espera</div><div class="cq-kpi-count">{{ $summary[\App\Enums\AppointmentStatus::CheckedIn->value] }}</div></div></div>
+            <div class="cq-kpi"><span class="cq-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg></span><div><div class="cq-kpi-label">En preparacion</div><div class="cq-kpi-count">{{ $summary[\App\Enums\AppointmentStatus::Preparing->value] }}</div></div></div>
+            <div class="cq-kpi"><span class="cq-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg></span><div><div class="cq-kpi-label">Listo para doctor</div><div class="cq-kpi-count">{{ $summary[\App\Enums\AppointmentStatus::ReadyForDoctor->value] }}</div></div></div>
+            <div class="cq-kpi"><span class="cq-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"></path></svg></span><div><div class="cq-kpi-label">En consulta</div><div class="cq-kpi-count">{{ $summary[\App\Enums\AppointmentStatus::InConsultation->value] }}</div></div></div>
         </div>
 
         @if ($this->alerts()->isNotEmpty())

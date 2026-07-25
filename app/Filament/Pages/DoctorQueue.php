@@ -37,9 +37,7 @@ class DoctorQueue extends Page
 
     public function getSubheading(): ?string
     {
-        return auth()->user()?->professional?->name
-            ? 'Cola de '.auth()->user()->professional->name
-            : 'Pacientes listos, en preparacion y en consulta.';
+        return null;
     }
 
     public function nextPatient(): ?Appointment

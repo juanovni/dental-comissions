@@ -6,13 +6,25 @@
     @endphp
 
     <style>
+        .reception-subtitle {
+            color: #64748b;
+            font-size: .84rem;
+            margin: -1.05rem 0 1.25rem;
+        }
+        @media (min-width: 900px) {
+            .reception-subtitle {
+                margin-bottom: 1rem;
+                max-width: 28rem;
+            }
+        }
         .reception-page { color: #0f172a; display: grid; gap: 1rem; }
         .reception-toolbar { display: flex; justify-content: flex-end; margin-top: -3.8rem; }
         .reception-search { background: #fff; border: 1px solid #e5e7eb; border-radius: .65rem; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); font-size: .84rem; height: 2.65rem; outline: none; padding: 0 .85rem; width: min(100%, 24rem); }
         .reception-kpis { display: grid; gap: .75rem; grid-template-columns: repeat(5, minmax(0, 1fr)); }
         .reception-kpi, .reception-alerts, .reception-column, .reception-card, .reception-detail-card { background: #fff; border: 1px solid #e5e7eb; border-radius: .75rem; }
         .reception-kpi { align-items: center; display: flex; gap: .75rem; padding: .85rem; }
-        .reception-kpi-icon { align-items: center; background: #eef8f8; border-radius: .65rem; color: #0f766e; display: inline-flex; font-size: .82rem; font-weight: 600; height: 2.35rem; justify-content: center; width: 2.35rem; }
+        .reception-kpi-icon { align-items: center; background: #eef8f8; border-radius: .65rem; color: #0f766e; display: inline-flex; height: 2.35rem; justify-content: center; width: 2.35rem; }
+        .reception-kpi-icon svg { height: 1.15rem; width: 1.15rem; }
         .reception-kpi-label { color: #64748b; font-size: .74rem; font-weight: 500; }
         .reception-kpi-value { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
         .reception-alerts { background: #fff7f7; border-color: #fecaca; color: #dc2626; padding: .85rem; }
@@ -51,16 +63,17 @@
     </style>
 
     <div class="reception-page">
+        <p class="reception-subtitle">Citas confirmadas para hoy · {{ $summary['arriving'] + $summary['waiting'] + $summary['overdue'] + $summary['in_consultation'] }} pacientes en flujo</p>
         <div class="reception-toolbar">
             <input class="reception-search" type="search" wire:model.live.debounce.350ms="search" placeholder="Buscar paciente, doctor...">
         </div>
 
         <div class="reception-kpis">
-            <div class="reception-kpi"><span class="reception-kpi-icon">PL</span><div><div class="reception-kpi-label">Por llegar</div><div class="reception-kpi-value">{{ $summary['arriving'] }}</div></div></div>
-            <div class="reception-kpi"><span class="reception-kpi-icon">EE</span><div><div class="reception-kpi-label">En espera</div><div class="reception-kpi-value">{{ $summary['waiting'] }}</div></div></div>
-            <div class="reception-kpi"><span class="reception-kpi-icon">RT</span><div><div class="reception-kpi-label">Retrasados</div><div class="reception-kpi-value">{{ $summary['overdue'] }}</div></div></div>
-            <div class="reception-kpi"><span class="reception-kpi-icon">EC</span><div><div class="reception-kpi-label">En consulta</div><div class="reception-kpi-value">{{ $summary['in_consultation'] }}</div></div></div>
-            <div class="reception-kpi"><span class="reception-kpi-icon">NS</span><div><div class="reception-kpi-label">No Show</div><div class="reception-kpi-value">{{ $summary['no_show'] }}</div></div></div>
+            <div class="reception-kpi"><span class="reception-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z"></path></svg></span><div><div class="reception-kpi-label">Por llegar</div><div class="reception-kpi-value">{{ $summary['arriving'] }}</div></div></div>
+            <div class="reception-kpi"><span class="reception-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg></span><div><div class="reception-kpi-label">En espera</div><div class="reception-kpi-value">{{ $summary['waiting'] }}</div></div></div>
+            <div class="reception-kpi"><span class="reception-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"></path></svg></span><div><div class="reception-kpi-label">Retrasados</div><div class="reception-kpi-value">{{ $summary['overdue'] }}</div></div></div>
+            <div class="reception-kpi"><span class="reception-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"></path></svg></span><div><div class="reception-kpi-label">En consulta</div><div class="reception-kpi-value">{{ $summary['in_consultation'] }}</div></div></div>
+            <div class="reception-kpi"><span class="reception-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"></path></svg></span><div><div class="reception-kpi-label">No Show</div><div class="reception-kpi-value">{{ $summary['no_show'] }}</div></div></div>
         </div>
 
         @if ($this->alerts()->isNotEmpty())

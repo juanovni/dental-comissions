@@ -42,7 +42,7 @@ class Reception extends Page
 
     public function getSubheading(): ?string
     {
-        return 'Operacion diaria de llegada, espera y consulta de pacientes.';
+        return null;
     }
 
     /**
