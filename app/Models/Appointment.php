@@ -128,6 +128,47 @@ class Appointment extends Model
             && $this->sync_error === null;
     }
 
+    public function waitingMinutes(): ?int
+    {
+        if (! $this->checked_in_at) {
+            return null;
+        }
+
+        $end = $this->consultation_started_at ?? now();
+
+        return (int) $this->checked_in_at->diffInMinutes($end);
+    }
+
+    public function consultationMinutes(): ?int
+    {
+        if (! $this->consultation_started_at) {
+            return null;
+        }
+
+        $end = $this->consultation_finished_at ?? now();
+
+        return (int) $this->consultation_started_at->diffInMinutes($end);
+    }
+
+    public function waitingStatusColor(int $warningMinutes = 15, int $dangerMinutes = 30): string
+    {
+        $minutes = $this->waitingMinutes();
+
+        if ($minutes === null) {
+            return 'gray';
+        }
+
+        if ($minutes >= $dangerMinutes) {
+            return 'danger';
+        }
+
+        if ($minutes >= $warningMinutes) {
+            return 'warning';
+        }
+
+        return 'success';
+    }
+
     public function confirm(): void
     {
         app(\App\Services\AppointmentFlowService::class)->transition($this, AppointmentStatus::Confirmed);

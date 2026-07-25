@@ -77,27 +77,27 @@ Criterio de salida:
 
 Objetivo: estabilizar el flujo manual antes de agregar canales externos.
 
-- [ ] Agregar accion `Check-in`.
-- [ ] Guardar `checked_in_at` y `check_in_source`.
-- [ ] Agregar accion `Preparar paciente`.
-- [ ] Guardar `preparation_started_at`.
-- [ ] Agregar accion `Listo para doctor`.
-- [ ] Guardar `ready_for_doctor_at`.
-- [ ] Agregar accion `Iniciar consulta`.
-- [ ] Guardar `consultation_started_at`.
-- [ ] Agregar accion `Finalizar consulta`.
-- [ ] Guardar `consultation_finished_at` y `completed_at`.
-- [ ] Calcular tiempo esperando desde `checked_in_at`.
-- [ ] Calcular tiempo de consulta desde `consultation_started_at`.
-- [ ] Definir umbral inicial de espera critica.
-- [ ] Mostrar semaforo basico de espera.
+- [x] Agregar accion `Check-in`.
+- [x] Guardar `checked_in_at` y `check_in_source`.
+- [x] Agregar accion `Preparar paciente`.
+- [x] Guardar `preparation_started_at`.
+- [x] Agregar accion `Listo para doctor`.
+- [x] Guardar `ready_for_doctor_at`.
+- [x] Agregar accion `Iniciar consulta`.
+- [x] Guardar `consultation_started_at`.
+- [x] Agregar accion `Finalizar consulta`.
+- [x] Guardar `consultation_finished_at` y `completed_at`.
+- [x] Calcular tiempo esperando desde `checked_in_at`.
+- [x] Calcular tiempo de consulta desde `consultation_started_at`.
+- [x] Definir umbral inicial de espera critica.
+- [x] Mostrar semaforo basico de espera.
 
 Criterio de salida:
 
-- [ ] Recepcion puede marcar llegada.
-- [ ] Asistente puede preparar y marcar listo.
-- [ ] Doctor puede iniciar y finalizar consulta.
-- [ ] Tiempos reales se calculan desde timestamps.
+- [x] Recepcion puede marcar llegada.
+- [x] Asistente puede preparar y marcar listo.
+- [x] Doctor puede iniciar y finalizar consulta.
+- [x] Tiempos reales se calculan desde timestamps.
 
 ## Fase 3: Panel de recepcion
 

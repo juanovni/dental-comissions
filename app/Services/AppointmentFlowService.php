@@ -17,6 +17,7 @@ class AppointmentFlowService
         return [
             AppointmentStatus::PendingConfirmation->value => [
                 AppointmentStatus::Confirmed,
+                AppointmentStatus::CheckedIn,
                 AppointmentStatus::Rescheduled,
                 AppointmentStatus::Cancelled,
                 AppointmentStatus::NoShow,

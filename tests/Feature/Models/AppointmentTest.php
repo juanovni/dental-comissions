@@ -14,6 +14,7 @@ use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Models\SocialPost;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -84,6 +85,36 @@ class AppointmentTest extends TestCase
         $appointment->complete();
         $this->assertSame(AppointmentStatus::Completed, $appointment->refresh()->status);
         $this->assertNotNull($appointment->completed_at);
+    }
+
+    public function test_patient_flow_time_helpers_calculate_waiting_and_consultation_minutes(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-25 10:45:00'));
+
+        $appointment = Appointment::factory()->create([
+            'checked_in_at' => Carbon::parse('2026-07-25 10:00:00'),
+            'consultation_started_at' => Carbon::parse('2026-07-25 10:20:00'),
+            'consultation_finished_at' => Carbon::parse('2026-07-25 10:40:00'),
+        ]);
+
+        $this->assertSame(20, $appointment->waitingMinutes());
+        $this->assertSame(20, $appointment->consultationMinutes());
+
+        Carbon::setTestNow();
+    }
+
+    public function test_waiting_status_color_uses_thresholds(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-25 10:20:00'));
+
+        $appointment = Appointment::factory()->create([
+            'checked_in_at' => Carbon::parse('2026-07-25 10:00:00'),
+            'consultation_started_at' => null,
+        ]);
+
+        $this->assertSame('warning', $appointment->waitingStatusColor());
+
+        Carbon::setTestNow();
     }
 
     private function socialLead(): array

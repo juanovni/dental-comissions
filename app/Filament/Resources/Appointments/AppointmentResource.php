@@ -11,6 +11,7 @@ use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Professional;
+use App\Services\AppointmentFlowService;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\Action;
@@ -124,6 +125,12 @@ class AppointmentResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (AppointmentStatus $state): string => $state->label())
                     ->color(fn (AppointmentStatus $state): string => $state->color()),
+                TextColumn::make('patient_flow_waiting')
+                    ->label('Espera')
+                    ->state(fn (Appointment $record): ?string => $record->waitingMinutes() !== null ? $record->waitingMinutes().' min' : null)
+                    ->badge()
+                    ->color(fn (Appointment $record): string => $record->waitingStatusColor())
+                    ->placeholder('-'),
                 TextColumn::make('source')
                     ->label('Origen')
                     ->badge()
@@ -174,6 +181,89 @@ class AppointmentResource extends Resource
     public static function appointmentActions(): array
     {
         return [
+            Action::make('check_in')
+                ->label('Check-in')
+                ->icon('heroicon-o-map-pin')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Registrar llegada')
+                ->visible(fn (Appointment $record): bool => in_array($record->status, [
+                    AppointmentStatus::PendingConfirmation,
+                    AppointmentStatus::Scheduled,
+                    AppointmentStatus::Confirmed,
+                    AppointmentStatus::Rescheduled,
+                ], true))
+                ->action(function (Appointment $record): void {
+                    try {
+                        app(AppointmentFlowService::class)->transition(
+                            $record,
+                            AppointmentStatus::CheckedIn,
+                            'reception',
+                            auth()->id(),
+                            ['check_in_source' => 'reception'],
+                        );
+                        Notification::make()->title('Llegada registrada')->success()->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()->title('Error al registrar llegada')->body($e->getMessage())->danger()->send();
+                    }
+                }),
+            Action::make('start_preparation')
+                ->label('Preparar')
+                ->icon('heroicon-o-heart')
+                ->color('warning')
+                ->visible(fn (Appointment $record): bool => $record->status === AppointmentStatus::CheckedIn)
+                ->action(function (Appointment $record): void {
+                    try {
+                        app(AppointmentFlowService::class)->transition($record, AppointmentStatus::Preparing, 'assistant', auth()->id());
+                        Notification::make()->title('Paciente en preparacion')->success()->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()->title('Error')->body($e->getMessage())->danger()->send();
+                    }
+                }),
+            Action::make('ready_for_doctor')
+                ->label('Listo para doctor')
+                ->icon('heroicon-o-check-badge')
+                ->color('success')
+                ->visible(fn (Appointment $record): bool => in_array($record->status, [
+                    AppointmentStatus::CheckedIn,
+                    AppointmentStatus::Preparing,
+                ], true))
+                ->action(function (Appointment $record): void {
+                    try {
+                        app(AppointmentFlowService::class)->transition($record, AppointmentStatus::ReadyForDoctor, 'assistant', auth()->id());
+                        Notification::make()->title('Paciente listo para doctor')->success()->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()->title('Error')->body($e->getMessage())->danger()->send();
+                    }
+                }),
+            Action::make('start_consultation')
+                ->label('Iniciar consulta')
+                ->icon('heroicon-o-play-circle')
+                ->color('info')
+                ->visible(fn (Appointment $record): bool => $record->status === AppointmentStatus::ReadyForDoctor)
+                ->action(function (Appointment $record): void {
+                    try {
+                        app(AppointmentFlowService::class)->transition($record, AppointmentStatus::InConsultation, 'doctor', auth()->id());
+                        Notification::make()->title('Consulta iniciada')->success()->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()->title('Error')->body($e->getMessage())->danger()->send();
+                    }
+                }),
+            Action::make('finish_consultation')
+                ->label('Finalizar consulta')
+                ->icon('heroicon-o-stop-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Finalizar consulta')
+                ->visible(fn (Appointment $record): bool => $record->status === AppointmentStatus::InConsultation)
+                ->action(function (Appointment $record): void {
+                    try {
+                        app(AppointmentFlowService::class)->transition($record, AppointmentStatus::Completed, 'doctor', auth()->id());
+                        Notification::make()->title('Consulta finalizada')->success()->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()->title('Error')->body($e->getMessage())->danger()->send();
+                    }
+                }),
             Action::make('confirm')
                 ->label('Confirmar')
                 ->icon('heroicon-o-check-circle')
