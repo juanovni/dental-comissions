@@ -182,23 +182,23 @@ Criterio de salida:
 
 Objetivo: dar gestion y analitica operativa a Admin y Super Admin.
 
-- [ ] Crear pagina `Operacion clinica` para Admin/Super Admin.
-- [ ] Agregar permiso `patient_flow_admin.view`.
-- [ ] Agregar mini cards: agendadas, confirmadas, atendidas, canceladas, no-show.
-- [ ] Agregar mini cards: espera promedio, consulta promedio, puntualidad.
-- [ ] Crear bloque `Estado actual de la clinica`.
-- [ ] Crear bloque `Alertas operativas`.
-- [ ] Crear bloque `Productividad y saturacion por doctor`.
-- [ ] Agregar accion `Umbrales`.
-- [ ] Agregar accion `Exportar`.
-- [ ] Usar ApexCharts si se agregan graficos reales.
-- [ ] Evitar que el dashboard permita mover pacientes.
+- [x] Crear pagina `Operacion clinica` para Admin/Super Admin.
+- [x] Agregar permiso `patient_flow_admin.view`.
+- [x] Agregar mini cards: agendadas, confirmadas, atendidas, canceladas, no-show.
+- [x] Agregar mini cards: espera promedio, consulta promedio, puntualidad.
+- [x] Crear bloque `Estado actual de la clinica`.
+- [x] Crear bloque `Alertas operativas`.
+- [x] Crear bloque `Productividad y saturacion por doctor`.
+- [~] Agregar accion `Umbrales`.
+- [~] Agregar accion `Exportar`.
+- [x] Usar ApexCharts si se agregan graficos reales.
+- [x] Evitar que el dashboard permita mover pacientes.
 
 Criterio de salida:
 
-- [ ] Admin ve metricas operativas del dia.
-- [ ] Dashboard no reemplaza Recepcion ni Citas.
-- [ ] Metricas salen de timestamps/eventos auditables.
+- [x] Admin ve metricas operativas del dia.
+- [x] Dashboard no reemplaza Recepcion ni Citas.
+- [x] Metricas salen de timestamps/eventos auditables.
 
 ## Fase 7: Check-in QR y WhatsApp
 

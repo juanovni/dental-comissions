@@ -26,6 +26,7 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::PatientFlowReceptionView,
                 UserPermission::PatientFlowAssistantView,
                 UserPermission::PatientFlowDoctorView,
+                UserPermission::PatientFlowAdminView,
                 UserPermission::SocialAccountsView,
                 UserPermission::SocialCrmSettingsView,
                 UserPermission::LocalLanguagePatternsView,
