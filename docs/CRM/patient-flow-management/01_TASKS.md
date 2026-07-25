@@ -103,27 +103,27 @@ Criterio de salida:
 
 Objetivo: crear torre de control diaria para recepcion.
 
-- [ ] Crear pagina Filament `Recepcion`.
-- [ ] Agregar permiso `patient_flow_reception.view`.
-- [ ] Mostrar columnas: `Por llegar`, `En espera`, `En preparacion`, `Listo para doctor`, `En consulta`.
-- [ ] Implementar `Por llegar` como estado derivado.
-- [ ] Implementar `Retrasado` como alerta derivada.
-- [ ] Crear cards limpias por paciente reutilizando patrones del sistema.
-- [ ] Mostrar avatar/iniciales, paciente, hora, doctor y procedimiento.
-- [ ] Mostrar badge de estado.
-- [ ] Mostrar tiempo esperando cuando aplique.
-- [ ] Agregar alertas operativas.
-- [ ] Abrir drawer lateral al hacer clic en card.
-- [ ] Mostrar acciones contextuales validas en drawer.
-- [ ] Evitar dropdown libre para mover estados.
-- [ ] Agregar boton `Abrir cita completa`.
-- [ ] Verificar mobile y desktop.
+- [x] Crear pagina Filament `Recepcion`.
+- [x] Agregar permiso `patient_flow_reception.view`.
+- [x] Mostrar columnas: `Por llegar`, `En espera`, `En preparacion`, `Listo para doctor`, `En consulta`.
+- [x] Implementar `Por llegar` como estado derivado.
+- [x] Implementar `Retrasado` como alerta derivada.
+- [x] Crear cards limpias por paciente reutilizando patrones del sistema.
+- [x] Mostrar avatar/iniciales, paciente, hora, doctor y procedimiento.
+- [x] Mostrar badge de estado.
+- [x] Mostrar tiempo esperando cuando aplique.
+- [x] Agregar alertas operativas.
+- [x] Abrir drawer lateral al hacer clic en card.
+- [x] Mostrar acciones contextuales validas en drawer.
+- [x] Evitar dropdown libre para mover estados.
+- [x] Agregar boton `Abrir cita completa`.
+- [~] Verificar mobile y desktop.
 
 Criterio de salida:
 
-- [ ] Recepcion opera el dia sin usar tabla principal.
-- [ ] Las cards usan servicios de flujo para cambiar estado.
-- [ ] La UI cumple `.cursorrules`.
+- [x] Recepcion opera el dia sin usar tabla principal.
+- [x] Las cards usan servicios de flujo para cambiar estado.
+- [~] La UI cumple `.cursorrules`.
 
 ## Fase 4: Cola clinica del asistente y Mi cola del doctor
 
