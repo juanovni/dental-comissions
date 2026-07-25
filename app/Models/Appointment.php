@@ -7,6 +7,7 @@ use App\Enums\AppointmentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Appointment extends Model
 {
@@ -27,9 +28,15 @@ class Appointment extends Model
         'notes',
         'created_by',
         'confirmed_at',
+        'checked_in_at',
+        'preparation_started_at',
+        'ready_for_doctor_at',
+        'consultation_started_at',
+        'consultation_finished_at',
         'cancelled_at',
         'completed_at',
         'no_show_at',
+        'check_in_source',
         'metadata',
         'external_provider',
         'external_appointment_id',
@@ -48,6 +55,11 @@ class Appointment extends Model
             'scheduled_at' => 'datetime',
             'duration_minutes' => 'integer',
             'confirmed_at' => 'datetime',
+            'checked_in_at' => 'datetime',
+            'preparation_started_at' => 'datetime',
+            'ready_for_doctor_at' => 'datetime',
+            'consultation_started_at' => 'datetime',
+            'consultation_finished_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'completed_at' => 'datetime',
             'no_show_at' => 'datetime',
@@ -97,6 +109,11 @@ class Appointment extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function events(): HasMany
+    {
+        return $this->hasMany(AppointmentEvent::class);
+    }
+
     public function hasCalendarSync(): bool
     {
         return $this->doctor_id
@@ -113,33 +130,21 @@ class Appointment extends Model
 
     public function confirm(): void
     {
-        $this->update([
-            'status' => AppointmentStatus::Confirmed,
-            'confirmed_at' => now(),
-        ]);
+        app(\App\Services\AppointmentFlowService::class)->transition($this, AppointmentStatus::Confirmed);
     }
 
     public function cancel(): void
     {
-        $this->update([
-            'status' => AppointmentStatus::Cancelled,
-            'cancelled_at' => now(),
-        ]);
+        app(\App\Services\AppointmentFlowService::class)->transition($this, AppointmentStatus::Cancelled);
     }
 
     public function complete(): void
     {
-        $this->update([
-            'status' => AppointmentStatus::Completed,
-            'completed_at' => now(),
-        ]);
+        app(\App\Services\AppointmentFlowService::class)->transition($this, AppointmentStatus::Completed);
     }
 
     public function markNoShow(): void
     {
-        $this->update([
-            'status' => AppointmentStatus::NoShow,
-            'no_show_at' => now(),
-        ]);
+        app(\App\Services\AppointmentFlowService::class)->transition($this, AppointmentStatus::NoShow);
     }
 }

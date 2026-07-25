@@ -26,52 +26,52 @@ Estados sugeridos:
 
 Objetivo: preparar el modulo sin romper la agenda actual.
 
-- [ ] Auditar modelo `Appointment` actual.
-- [ ] Auditar enum `AppointmentStatus` actual.
-- [ ] Auditar `AppointmentResource` y paginas Filament actuales.
-- [ ] Auditar integraciones actuales con Pipeline, WhatsApp y Pity Voice.
+- [x] Auditar modelo `Appointment` actual.
+- [x] Auditar enum `AppointmentStatus` actual.
+- [x] Auditar `AppointmentResource` y paginas Filament actuales.
+- [~] Auditar integraciones actuales con Pipeline, WhatsApp y Pity Voice.
 - [ ] Definir mapeo de estados actuales a estados Patient Flow.
-- [ ] Confirmar que `/admin/appointments` sigue siendo la ruta CRUD de citas.
-- [ ] Definir transiciones validas entre estados.
+- [x] Confirmar que `/admin/appointments` sigue siendo la ruta CRUD de citas.
+- [x] Definir transiciones validas entre estados.
 - [ ] Definir permisos MVP de Patient Flow.
 - [ ] Documentar decisiones tecnicas antes de migrar.
 
 Criterio de salida:
 
-- [ ] La agenda actual sigue funcionando.
+- [x] La agenda actual sigue funcionando.
 - [ ] Existe mapeo claro de estados.
-- [ ] Existe lista final de transiciones validas.
+- [x] Existe lista final de transiciones validas.
 - [ ] No existe modulo paralelo que duplique citas.
 
 ## Fase 1: Base operativa del flujo
 
 Objetivo: convertir la cita en una entidad trazable con historial.
 
-- [ ] Actualizar o crear estados persistidos de `AppointmentStatus`.
-- [ ] Confirmar estados derivados que no se guardan: `Por llegar`, `Retrasado`, `Espera critica`.
-- [ ] Crear migracion para timestamps operativos en `appointments`.
-- [ ] Agregar `checked_in_at`.
-- [ ] Agregar `preparation_started_at`.
-- [ ] Agregar `ready_for_doctor_at`.
-- [ ] Agregar `consultation_started_at`.
-- [ ] Agregar `consultation_finished_at`.
-- [ ] Agregar `completed_at` si no existe.
-- [ ] Agregar `cancelled_at` si no existe.
-- [ ] Agregar `no_show_at` si no existe.
-- [ ] Agregar `check_in_source`.
-- [ ] Crear migracion `appointment_events`.
-- [ ] Crear modelo `AppointmentEvent`.
-- [ ] Crear relaciones `Appointment -> events`.
-- [ ] Crear `AppointmentFlowService`.
-- [ ] Registrar evento por cada cambio de estado.
-- [ ] Agregar pruebas de transiciones validas.
-- [ ] Agregar pruebas de transiciones invalidas.
+- [x] Actualizar o crear estados persistidos de `AppointmentStatus`.
+- [x] Confirmar estados derivados que no se guardan: `Por llegar`, `Retrasado`, `Espera critica`.
+- [x] Crear migracion para timestamps operativos en `appointments`.
+- [x] Agregar `checked_in_at`.
+- [x] Agregar `preparation_started_at`.
+- [x] Agregar `ready_for_doctor_at`.
+- [x] Agregar `consultation_started_at`.
+- [x] Agregar `consultation_finished_at`.
+- [x] Agregar `completed_at` si no existe.
+- [x] Agregar `cancelled_at` si no existe.
+- [x] Agregar `no_show_at` si no existe.
+- [x] Agregar `check_in_source`.
+- [x] Crear migracion `appointment_events`.
+- [x] Crear modelo `AppointmentEvent`.
+- [x] Crear relaciones `Appointment -> events`.
+- [x] Crear `AppointmentFlowService`.
+- [x] Registrar evento por cada cambio de estado.
+- [x] Agregar pruebas de transiciones validas.
+- [x] Agregar pruebas de transiciones invalidas.
 
 Criterio de salida:
 
-- [ ] Cada cambio de estado queda auditado.
-- [ ] La logica de transiciones vive fuera de Filament.
-- [ ] Las citas existentes siguen visibles.
+- [x] Cada cambio de estado queda auditado.
+- [x] La logica de transiciones vive fuera de Filament.
+- [x] Las citas existentes siguen visibles.
 
 ## Fase 2: Flujo manual interno y cronometro
 
