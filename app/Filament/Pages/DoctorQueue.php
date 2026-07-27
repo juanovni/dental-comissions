@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\AppointmentNote;
 use App\Services\AppointmentFlowService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -27,6 +28,10 @@ class DoctorQueue extends Page
     protected string $view = 'filament.pages.doctor-queue';
 
     public ?int $noteAppointmentId = null;
+
+    public string $activeQueueFilter = 'ready';
+
+    public ?int $selectedAppointmentId = null;
 
     public string $noteText = '';
 
@@ -74,6 +79,60 @@ class DoctorQueue extends Page
             ->get();
     }
 
+    public function queueAppointments(): Collection
+    {
+        return $this->baseQuery()
+            ->whereIn('status', $this->statusesForFilter($this->activeQueueFilter))
+            ->orderByRaw("case status when 'ready_for_doctor' then 1 when 'preparing' then 2 when 'checked_in' then 3 when 'in_consultation' then 4 else 5 end")
+            ->orderBy('scheduled_at')
+            ->get();
+    }
+
+    public function selectedAppointment(): ?Appointment
+    {
+        if ($this->selectedAppointmentId) {
+            $selected = $this->baseQuery()
+                ->whereIn('status', $this->statusesForFilter('all'))
+                ->find($this->selectedAppointmentId);
+
+            if ($selected) {
+                return $selected;
+            }
+        }
+
+        return $this->queueAppointments()->first() ?? $this->nextPatient() ?? $this->currentConsultation();
+    }
+
+    public function selectQueueFilter(string $filter): void
+    {
+        if (! array_key_exists($filter, $this->queueFilters())) {
+            return;
+        }
+
+        $this->activeQueueFilter = $filter;
+        $this->selectedAppointmentId = $this->queueAppointments()->first()?->id;
+    }
+
+    public function selectAppointment(int $appointmentId): void
+    {
+        if (! $this->baseQuery()->whereIn('status', $this->statusesForFilter('all'))->whereKey($appointmentId)->exists()) {
+            return;
+        }
+
+        $this->selectedAppointmentId = $appointmentId;
+    }
+
+    public function queueFilters(): array
+    {
+        return [
+            'all' => 'Todos',
+            'ready' => 'Listos',
+            'preparing' => 'Preparando',
+            'waiting' => 'En espera',
+            'in_consultation' => 'En consulta',
+        ];
+    }
+
     public function summary(): array
     {
         return [
@@ -82,6 +141,46 @@ class DoctorQueue extends Page
             'ready' => $this->baseQuery()->where('status', AppointmentStatus::ReadyForDoctor->value)->count(),
             'in_consultation' => $this->baseQuery()->where('status', AppointmentStatus::InConsultation->value)->count(),
         ];
+    }
+
+    public function countForFilter(string $filter): int
+    {
+        return $this->baseQuery()->whereIn('status', $this->statusesForFilter($filter))->count();
+    }
+
+    public function noteOwnerLabel(AppointmentNote $note): string
+    {
+        if ($note->createdBy?->name) {
+            return $note->createdBy->name;
+        }
+
+        return match ($note->note_type) {
+            'reception' => 'Recepcion',
+            'assistant' => 'Asistente',
+            'doctor' => 'Doctor',
+            default => ucfirst((string) $note->note_type),
+        };
+    }
+
+    public function availableTransitions(Appointment $appointment): array
+    {
+        $allowed = app(AppointmentFlowService::class)->allowedTransitions()[$appointment->status->value] ?? [];
+
+        if ($appointment->status === AppointmentStatus::ReadyForDoctor) {
+            $allowed = collect($allowed)
+                ->filter(fn (AppointmentStatus $status): bool => $status === AppointmentStatus::InConsultation)
+                ->all();
+        }
+
+        return collect($allowed)
+            ->mapWithKeys(fn (AppointmentStatus $status): array => [$status->value => $this->actionLabel($status)])
+            ->only([
+                AppointmentStatus::Preparing->value,
+                AppointmentStatus::ReadyForDoctor->value,
+                AppointmentStatus::InConsultation->value,
+                AppointmentStatus::Completed->value,
+            ])
+            ->all();
     }
 
     public function transition(int $appointmentId, string $status): void
@@ -131,9 +230,36 @@ class DoctorQueue extends Page
     private function baseQuery(): Builder
     {
         return Appointment::query()
-            ->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote'])
+            ->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote', 'appointmentNotes.createdBy'])
             ->whereDate('scheduled_at', today())
             ->when($this->doctorIdForCurrentUser(), fn (Builder $query, int $doctorId): Builder => $query->where('doctor_id', $doctorId));
+    }
+
+    private function actionLabel(AppointmentStatus $status): string
+    {
+        return match ($status) {
+            AppointmentStatus::Preparing => 'Preparar paciente',
+            AppointmentStatus::ReadyForDoctor => 'Listo para doctor',
+            AppointmentStatus::InConsultation => 'Iniciar consulta',
+            AppointmentStatus::Completed => 'Finalizar consulta',
+            default => $status->label(),
+        };
+    }
+
+    private function statusesForFilter(string $filter): array
+    {
+        return match ($filter) {
+            'ready' => [AppointmentStatus::ReadyForDoctor->value],
+            'preparing' => [AppointmentStatus::Preparing->value],
+            'waiting' => [AppointmentStatus::CheckedIn->value],
+            'in_consultation' => [AppointmentStatus::InConsultation->value],
+            default => [
+                AppointmentStatus::ReadyForDoctor->value,
+                AppointmentStatus::Preparing->value,
+                AppointmentStatus::CheckedIn->value,
+                AppointmentStatus::InConsultation->value,
+            ],
+        };
     }
 
     private function doctorIdForCurrentUser(): ?int

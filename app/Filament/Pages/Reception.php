@@ -6,6 +6,8 @@ use App\Enums\AppointmentStatus;
 use App\Filament\Resources\Appointments\AppointmentResource;
 use App\Models\Appointment;
 use App\Services\AppointmentFlowService;
+use App\Services\SocialCrmSettingsService;
+use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
@@ -120,7 +122,7 @@ class Reception extends Page
                     'doctor' => $appointment->doctor?->name ?? 'Sin doctor',
                     'column' => 'Por llegar',
                     'column_status' => 'arriving',
-                    'minutes' => max(0, (int) $appointment->scheduled_at?->diffInMinutes(now())),
+                    'minutes' => $this->overdueMinutes($appointment),
                 ]))
             ->sortByDesc(fn (array $alert): int => $alert['minutes'])
             ->values();
@@ -280,8 +282,26 @@ class Reception extends Page
                 AppointmentStatus::Rescheduled->value,
             ])
             ->whereNull('checked_in_at')
-            ->where('scheduled_at', '<', now())
             ->orderBy('scheduled_at')
-            ->get();
+            ->get()
+            ->filter(fn (Appointment $appointment): bool => $this->overdueMinutes($appointment) > 0)
+            ->values();
+    }
+
+    private function overdueMinutes(Appointment $appointment): int
+    {
+        if (! $appointment->scheduled_at) {
+            return 0;
+        }
+
+        $timezone = app(SocialCrmSettingsService::class)->clinicTimezone();
+        $scheduledAt = Carbon::parse($appointment->scheduled_at->format('Y-m-d H:i:s'), $timezone);
+        $now = Carbon::now($timezone);
+
+        if ($scheduledAt->greaterThanOrEqualTo($now)) {
+            return 0;
+        }
+
+        return (int) $scheduledAt->diffInMinutes($now);
     }
 }

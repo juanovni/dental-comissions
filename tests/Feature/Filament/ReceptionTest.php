@@ -6,6 +6,7 @@ use App\Enums\AppointmentStatus;
 use App\Filament\Pages\Reception;
 use App\Models\Appointment;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -13,6 +14,13 @@ use Tests\TestCase;
 class ReceptionTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
 
     public function test_reception_page_shows_today_appointments(): void
     {
@@ -66,5 +74,21 @@ class ReceptionTest extends TestCase
             'note_type' => 'reception',
             'note' => 'Llego con acompanante.',
         ]);
+    }
+
+    public function test_future_rescheduled_appointment_is_not_marked_as_overdue(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-27 12:00:00', 'America/Guayaquil'));
+
+        $appointment = Appointment::factory()->create([
+            'scheduled_at' => '2026-07-27 14:15:00',
+            'status' => AppointmentStatus::Rescheduled,
+            'checked_in_at' => null,
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(Reception::class)
+            ->assertSee($appointment->patient->full_name)
+            ->assertDontSee('tiene retraso');
     }
 }
