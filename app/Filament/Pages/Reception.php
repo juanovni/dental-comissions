@@ -124,6 +124,22 @@ class Reception extends Page
                     'column_status' => 'arriving',
                     'minutes' => $this->overdueMinutes($appointment),
                 ]))
+            ->merge($this->whatsappReviewAppointments()
+                ->map(function (Appointment $appointment): array {
+                    $note = $appointment->appointmentNotes->first();
+
+                    return [
+                        'id' => $appointment->id,
+                        'level' => 'warning',
+                        'patient' => $appointment->patient?->full_name ?? 'Paciente',
+                        'message' => ($appointment->patient?->full_name ?? 'Paciente').' pidio revisar su cita por WhatsApp',
+                        'procedure' => $appointment->procedure?->name ?? 'Sin procedimiento',
+                        'doctor' => $appointment->doctor?->name ?? 'Sin doctor',
+                        'column' => $this->columnLabelForAppointment($appointment),
+                        'column_status' => $appointment->status->value,
+                        'minutes' => (int) ($note?->created_at?->diffInMinutes(now()) ?? 0),
+                    ];
+                }))
             ->sortByDesc(fn (array $alert): int => $alert['minutes'])
             ->values();
     }
@@ -286,6 +302,40 @@ class Reception extends Page
             ->get()
             ->filter(fn (Appointment $appointment): bool => $this->overdueMinutes($appointment) > 0)
             ->values();
+    }
+
+    private function whatsappReviewAppointments(): Collection
+    {
+        return $this->baseQuery()
+            ->with(['appointmentNotes' => fn ($query) => $query
+                ->where('note_type', 'whatsapp')
+                ->where('created_at', '>=', now()->subDay())
+                ->latest()])
+            ->whereHas('appointmentNotes', fn (Builder $query): Builder => $query
+                ->where('note_type', 'whatsapp')
+                ->where('created_at', '>=', now()->subDay()))
+            ->whereIn('status', [
+                AppointmentStatus::PendingConfirmation->value,
+                AppointmentStatus::Scheduled->value,
+                AppointmentStatus::Confirmed->value,
+                AppointmentStatus::Rescheduled->value,
+                AppointmentStatus::CheckedIn->value,
+                AppointmentStatus::Preparing->value,
+                AppointmentStatus::ReadyForDoctor->value,
+            ])
+            ->orderBy('scheduled_at')
+            ->get();
+    }
+
+    private function columnLabelForAppointment(Appointment $appointment): string
+    {
+        return match ($appointment->status) {
+            AppointmentStatus::CheckedIn => 'En espera',
+            AppointmentStatus::Preparing => 'En preparacion',
+            AppointmentStatus::ReadyForDoctor => 'Listo para doctor',
+            AppointmentStatus::InConsultation => 'En consulta',
+            default => 'Por llegar',
+        };
     }
 
     private function overdueMinutes(Appointment $appointment): int

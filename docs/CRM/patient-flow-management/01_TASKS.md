@@ -244,7 +244,6 @@ Objetivo: reducir no-shows y mejorar comunicacion operacional.
 - [x] Procesar solicitud entrante de reprogramacion como nota/revision operativa.
 - [ ] Migrar WhatsApp reminder a template aprobado de Meta.
 - [ ] Aviso al paciente si la clinica esta atrasada.
-- [ ] Solicitud de resena despues de cita finalizada.
 - [ ] Seguimiento automatico para no-show.
 - [ ] Seguimiento automatico para cancelacion.
 - [ ] Fase futura: escalamiento a Pity Voice si no responde WhatsApp.

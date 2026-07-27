@@ -91,4 +91,25 @@ class ReceptionTest extends TestCase
             ->assertSee($appointment->patient->full_name)
             ->assertDontSee('tiene retraso');
     }
+
+    public function test_reception_alerts_whatsapp_review_notes(): void
+    {
+        $appointment = Appointment::factory()->create([
+            'scheduled_at' => now()->addHours(2),
+            'status' => AppointmentStatus::Scheduled,
+        ]);
+
+        $appointment->appointmentNotes()->create([
+            'patient_id' => $appointment->patient_id,
+            'created_by' => null,
+            'visibility' => 'internal',
+            'note_type' => 'whatsapp',
+            'note' => 'Solicitud de reprogramacion por WhatsApp. Mensaje: Necesito cambiar la cita.',
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(Reception::class)
+            ->assertSee('pidio revisar su cita por WhatsApp')
+            ->assertSee($appointment->patient->full_name);
+    }
 }

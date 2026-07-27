@@ -29,7 +29,7 @@ Incluye:
 - Notas operativas.
 - Eventos e historial del flujo.
 - Dashboard administrativo de operacion clinica.
-- Automatizaciones relacionadas con asistencia, recordatorios y reseñas.
+- Automatizaciones relacionadas con asistencia y recordatorios.
 
 No incluye en MVP:
 
@@ -180,7 +180,6 @@ Tablas futuras, no obligatorias para MVP:
 
 - `appointment_check_ins`: intentos y detalles de check-in por canal.
 - `appointment_reminders`: recordatorios enviados y respuestas.
-- `appointment_feedback_requests`: solicitudes de resena o satisfaccion.
 - `appointment_notes`: notas operativas si se decide separarlas de eventos.
 
 Regla de alcance:
@@ -818,7 +817,6 @@ Metricas avanzadas:
 - No-show por doctor.
 - Tiempo de espera por dia de semana.
 - Pacientes con espera superior a umbral.
-- Relacion entre espera y satisfaccion/resenas.
 
 ## Visibilidad por Rol
 
@@ -1010,8 +1008,6 @@ Durante la llegada:
 
 Despues de la atencion:
 
-- Solicitud de resena.
-- Encuesta rapida de satisfaccion.
 - Seguimiento si no asistio.
 - Reagendamiento si cancelo o fue no-show.
 
@@ -1027,7 +1023,7 @@ Componentes sugeridos:
 - `AppointmentCheckInService`: procesa check-in desde recepcion, QR, WhatsApp o voz.
 - `AppointmentMetricsService`: calcula tiempos e indicadores.
 - `AppointmentAutomationService`: coordina recordatorios, avisos y acciones automaticas.
-- Jobs y queues para WhatsApp, Pity Voice, recordatorios y solicitudes de resena.
+- Jobs y queues para WhatsApp, Pity Voice y recordatorios.
 - Policies o permisos por rol para acciones sensibles.
 
 Filament debe funcionar como interfaz. La logica de negocio debe estar en servicios reutilizables.
@@ -1115,7 +1111,6 @@ Ideas para diferenciar OdonCRM en Latinoamerica:
 - Alertas de saturacion para recepcion.
 - Paciente prioritario o VIP.
 - Deteccion de pacientes molestos por espera.
-- Solicitud automatica de resena tras atencion exitosa.
 - Reporte diario al administrador por WhatsApp.
 - Ranking operativo por sede, doctor o especialidad.
 - Pantallas de sala de espera.
@@ -1302,9 +1297,8 @@ Alcance:
 1. Confirmacion automatica 24 horas antes.
 2. Recordatorio 2 horas antes.
 3. Mensaje de retraso si la clinica esta atrasada.
-4. Solicitud de resena despues de cita finalizada.
-5. Seguimiento automatico para no-show o cancelacion.
-6. Fase futura: escalamiento a Pity Voice si no responde WhatsApp.
+4. Seguimiento automatico para no-show o cancelacion.
+5. Fase futura: escalamiento a Pity Voice si no responde WhatsApp.
 
 Criterio de salida:
 
