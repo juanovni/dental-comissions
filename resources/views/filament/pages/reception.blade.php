@@ -33,12 +33,12 @@
         .reception-alerts-head { align-items: center; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; flex-wrap: wrap; gap: .65rem; padding: .85rem 1rem; }
         .reception-alerts-icon { align-items: center; background: #fff7f7; border: 1px solid #fecaca; border-radius: .65rem; color: #dc2626; display: inline-flex; height: 2rem; justify-content: center; width: 2rem; }
         .reception-alerts-icon svg { height: 1rem; width: 1rem; }
-        .reception-alerts-heading { color: #0f172a; font-size: .92rem; font-weight: 700; }
+        .reception-alerts-heading { color: #0f172a; font-size: .92rem; font-weight: 600; }
         .reception-alerts-hint { color: #64748b; font-size: .78rem; }
         .reception-alerts-toggle { align-items: center; background: transparent; border: 0; color: #64748b; display: inline-flex; height: 2rem; justify-content: center; margin-left: auto; width: 2rem; }
         .reception-alerts-toggle svg { height: 1rem; width: 1rem; }
         .reception-alerts-toggle.is-collapsed svg { transform: rotate(180deg); }
-        .reception-alerts-badge { border-radius: 999px; display: inline-flex; font-size: .72rem; font-weight: 700; padding: .3rem .6rem; }
+        .reception-alerts-badge { border-radius: 999px; display: inline-flex; font-size: .72rem; font-weight: 600; padding: .3rem .6rem; }
         .reception-alerts-badge-critical { background: #ff6b63; color: #111827; }
         .reception-alerts-badge-warning { background: #fbbf24; color: #111827; }
         .reception-alerts-body { display: grid; gap: .55rem; padding: .75rem 1rem 1rem; }
@@ -53,12 +53,12 @@
         .reception-alert-dot-critical { background: #ff6b63; }
         .reception-alert-dot-warning { background: #fbbf24; }
         .reception-alert-dot-neutral { background: #94a3b8; }
-        .reception-alert-name { display: block; font-size: .9rem; font-weight: 700; line-height: 1.25; }
+        .reception-alert-name { display: block; font-size: .9rem; font-weight: 600; line-height: 1.25; }
         .reception-alert-meta { color: #cbd5e1; display: block; font-size: .78rem; margin-top: .35rem; }
         .reception-alert-card-critical .reception-alert-meta, .reception-alert-card-critical .reception-alert-column, .reception-alert-card-warning .reception-alert-meta, .reception-alert-card-warning .reception-alert-column, .reception-alert-card-neutral .reception-alert-meta, .reception-alert-card-neutral .reception-alert-column { color: #64748b; }
         .reception-alert-side { align-items: center; align-self: center; display: flex; gap: .45rem; justify-content: flex-end; }
         .reception-alert-column { color: #cbd5e1; font-size: .78rem; }
-        .reception-alert-time { align-items: center; border-radius: 999px; display: inline-flex; font-size: .78rem; font-weight: 700; gap: .3rem; padding: .28rem .55rem; }
+        .reception-alert-time { align-items: center; border-radius: 999px; display: inline-flex; font-size: .78rem; font-weight: 600; gap: .3rem; padding: .28rem .55rem; }
         .reception-alert-time svg { height: .85rem; width: .85rem; }
         .reception-alert-time-critical { background: #ff6b63; color: #111827; }
         .reception-alert-time-warning { background: #fbbf24; color: #111827; }
