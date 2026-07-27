@@ -35,6 +35,8 @@ class ClinicalQueue extends Page
 
     public string $noteText = '';
 
+    public bool $showAlerts = true;
+
     public static function canAccess(): bool
     {
         return auth()->user()?->hasRolePermission('patient_flow_assistant.view') ?? false;
@@ -72,13 +74,47 @@ class ClinicalQueue extends Page
 
     public function alerts(): Collection
     {
-        return $this->cards(AppointmentStatus::CheckedIn->value)
+        return collect([
+            AppointmentStatus::CheckedIn->value,
+            AppointmentStatus::Preparing->value,
+            AppointmentStatus::ReadyForDoctor->value,
+        ])
+            ->flatMap(fn (string $status): Collection => $this->cards($status))
             ->filter(fn (Appointment $appointment): bool => ($appointment->waitingMinutes() ?? 0) >= 10)
             ->map(fn (Appointment $appointment): array => [
+                'id' => $appointment->id,
                 'level' => ($appointment->waitingMinutes() ?? 0) >= 20 ? 'critical' : 'warning',
-                'message' => ($appointment->patient?->full_name ?? 'Paciente').' lleva '.$appointment->waitingMinutes().' min en espera',
+                'patient' => $appointment->patient?->full_name ?? 'Paciente',
+                'message' => ($appointment->patient?->full_name ?? 'Paciente').' lleva '.$appointment->waitingMinutes().' min '.$this->alertStatusText($appointment),
+                'procedure' => $appointment->procedure?->name ?? 'Sin procedimiento',
+                'doctor' => $appointment->doctor?->name ?? 'Sin doctor',
+                'column' => $appointment->status->label(),
+                'column_status' => $appointment->status->value,
+                'minutes' => $appointment->waitingMinutes() ?? 0,
             ])
+            ->sortByDesc(fn (array $alert): int => $alert['minutes'])
             ->values();
+    }
+
+    public function alertSummary(): array
+    {
+        $alerts = $this->alerts();
+
+        return [
+            'critical' => $alerts->where('level', 'critical')->count(),
+            'warning' => $alerts->where('level', 'warning')->count(),
+        ];
+    }
+
+    public function toggleAlerts(): void
+    {
+        $this->showAlerts = ! $this->showAlerts;
+    }
+
+    public function focusAppointment(int $appointmentId): void
+    {
+        $this->selectedAppointmentId = $appointmentId;
+        $this->dispatch('cq-focus-appointment', appointmentId: $appointmentId);
     }
 
     public function selectAppointment(int $appointmentId): void
@@ -194,5 +230,14 @@ class ClinicalQueue extends Page
             ->where('is_active', true)
             ->pluck('doctor_id')
             ->all();
+    }
+
+    private function alertStatusText(Appointment $appointment): string
+    {
+        return match ($appointment->status) {
+            AppointmentStatus::Preparing => 'en preparacion',
+            AppointmentStatus::ReadyForDoctor => 'esperando al doctor',
+            default => 'en espera',
+        };
     }
 }

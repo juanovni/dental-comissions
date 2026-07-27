@@ -3,6 +3,8 @@
         $summary = $this->summary();
         $columns = $this->columns();
         $selected = $this->selectedAppointment();
+        $alerts = $this->alerts();
+        $alertSummary = $this->alertSummary();
     @endphp
 
     <style>
@@ -27,13 +29,42 @@
         .reception-kpi-icon svg { height: 1.15rem; width: 1.15rem; }
         .reception-kpi-label { color: #64748b; font-size: .74rem; font-weight: 500; }
         .reception-kpi-value { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
-        .reception-alerts { background: #fff; border-color: #e5e7eb; color: #0f172a; padding: .85rem; }
+        .reception-alerts { background: #fff; border-color: #e5e7eb; color: #0f172a; overflow: hidden; padding: 0; }
+        .reception-alerts-head { align-items: center; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; flex-wrap: wrap; gap: .65rem; padding: .85rem 1rem; }
+        .reception-alerts-icon { align-items: center; background: #fff7f7; border: 1px solid #fecaca; border-radius: .65rem; color: #dc2626; display: inline-flex; height: 2rem; justify-content: center; width: 2rem; }
+        .reception-alerts-icon svg { height: 1rem; width: 1rem; }
+        .reception-alerts-heading { color: #0f172a; font-size: .92rem; font-weight: 700; }
+        .reception-alerts-hint { color: #64748b; font-size: .78rem; }
+        .reception-alerts-toggle { align-items: center; background: transparent; border: 0; color: #64748b; display: inline-flex; height: 2rem; justify-content: center; margin-left: auto; width: 2rem; }
+        .reception-alerts-toggle svg { height: 1rem; width: 1rem; }
+        .reception-alerts-toggle.is-collapsed svg { transform: rotate(180deg); }
+        .reception-alerts-badge { border-radius: 999px; display: inline-flex; font-size: .72rem; font-weight: 700; padding: .3rem .6rem; }
+        .reception-alerts-badge-critical { background: #ff6b63; color: #111827; }
+        .reception-alerts-badge-warning { background: #fbbf24; color: #111827; }
+        .reception-alerts-body { display: grid; gap: .55rem; padding: .75rem 1rem 1rem; }
+        .reception-alert-card { align-items: center; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .65rem; color: inherit; cursor: pointer; display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr) auto; padding: .75rem .85rem; text-align: left; transition: border-color .14s ease, background .14s ease, box-shadow .14s ease; width: 100%; }
+        .reception-alert-card:hover { box-shadow: 0 8px 18px rgba(15, 23, 42, .08); }
+        .reception-alert-card-critical { background: #4b1717; border-color: #b91c1c; color: #fff; }
+        .reception-alert-card-warning { background: #422b05; border-color: #a16207; color: #fff; }
+        .reception-alert-card-neutral { background: #f8fafc; border-color: #e5e7eb; color: #0f172a; }
+        .reception-alert-card:focus-visible { outline: 2px solid #14b8a6; outline-offset: 2px; }
+        .reception-alert-main { align-items: start; display: grid; gap: .6rem; grid-template-columns: auto minmax(0, 1fr); }
+        .reception-alert-dot { border-radius: 999px; height: .55rem; margin-top: .35rem; width: .55rem; }
+        .reception-alert-dot-critical { background: #ff6b63; }
+        .reception-alert-dot-warning { background: #fbbf24; }
+        .reception-alert-dot-neutral { background: #94a3b8; }
+        .reception-alert-name { font-size: .9rem; font-weight: 700; line-height: 1.25; }
+        .reception-alert-meta { color: #cbd5e1; font-size: .78rem; margin-top: .35rem; }
+        .reception-alert-card-neutral .reception-alert-meta, .reception-alert-card-neutral .reception-alert-column { color: #64748b; }
+        .reception-alert-side { align-items: end; display: grid; gap: .45rem; justify-items: end; }
+        .reception-alert-column { color: #cbd5e1; font-size: .78rem; }
+        .reception-alert-time { align-items: center; border-radius: 999px; display: inline-flex; font-size: .78rem; font-weight: 700; gap: .3rem; padding: .28rem .55rem; }
+        .reception-alert-time svg { height: .85rem; width: .85rem; }
+        .reception-alert-time-critical { background: #ff6b63; color: #111827; }
+        .reception-alert-time-warning { background: #fbbf24; color: #111827; }
+        .reception-alert-time-neutral { background: #e2e8f0; color: #334155; }
         .reception-alert-title, .reception-column-title { align-items: center; display: flex; font-size: .86rem; font-weight: 600; gap: .45rem; justify-content: space-between; }
         .reception-alert-list { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem; }
-        .reception-alert-chip { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; color: #475569; font-size: .78rem; padding: .35rem .55rem; }
-        .reception-alert-chip-warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
-        .reception-alert-chip-critical { background: #fff7f7; border-color: #fecaca; color: #dc2626; }
-        .reception-alert-chip-neutral { background: #f8fafc; border-color: #e5e7eb; color: #475569; }
         .reception-board { display: grid; gap: .75rem; grid-template-columns: repeat(5, minmax(14rem, 1fr)); overflow-x: auto; }
         .reception-column { min-height: 32rem; overflow: hidden; }
         .reception-column-title { border-bottom: 1px solid #e5e7eb; padding: .75rem .85rem; }
@@ -96,15 +127,42 @@
             <div class="reception-kpi"><span class="reception-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"></path></svg></span><div><div class="reception-kpi-label">No Show</div><div class="reception-kpi-value">{{ $summary['no_show'] }}</div></div></div>
         </div>
 
-        @if ($this->alerts()->isNotEmpty())
-            <div class="reception-alerts">
-                <div class="reception-alert-title">Alertas operativas</div>
-                <div class="reception-alert-list">
-                    @foreach ($this->alerts() as $alert)
-                        <span class="reception-alert-chip reception-alert-chip-{{ $alert['level'] ?? 'neutral' }}">{{ $alert['message'] ?? $alert }}</span>
-                    @endforeach
-                </div>
-            </div>
+        @if ($alerts->isNotEmpty())
+            <section class="reception-alerts">
+                <header class="reception-alerts-head">
+                    <span class="reception-alerts-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"></path></svg></span>
+                    <span class="reception-alerts-heading">Alertas</span>
+                    @if ($alertSummary['critical'] > 0)
+                        <span class="reception-alerts-badge reception-alerts-badge-critical">{{ $alertSummary['critical'] }} criticas</span>
+                    @endif
+                    @if ($alertSummary['warning'] > 0)
+                        <span class="reception-alerts-badge reception-alerts-badge-warning">{{ $alertSummary['warning'] }} medias</span>
+                    @endif
+                    <span class="reception-alerts-hint">Toca una alerta para ubicar al paciente</span>
+                    <button type="button" class="reception-alerts-toggle @if (! $showAlerts) is-collapsed @endif" wire:click="toggleAlerts" aria-label="{{ $showAlerts ? 'Ocultar alertas' : 'Mostrar alertas' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5"></path></svg>
+                    </button>
+                </header>
+                @if ($showAlerts)
+                    <div class="reception-alerts-body">
+                        @foreach ($alerts as $alert)
+                            <button type="button" class="reception-alert-card reception-alert-card-{{ $alert['level'] }}" wire:click="focusAppointment({{ $alert['id'] }})">
+                                <span class="reception-alert-main">
+                                    <span class="reception-alert-dot reception-alert-dot-{{ $alert['level'] }}"></span>
+                                    <span>
+                                        <span class="reception-alert-name">{{ $alert['message'] }}</span>
+                                        <span class="reception-alert-meta">{{ $alert['procedure'] }} · {{ $alert['doctor'] }}</span>
+                                    </span>
+                                </span>
+                                <span class="reception-alert-side">
+                                    <span class="reception-alert-column">{{ $alert['column'] }}</span>
+                                    <span class="reception-alert-time reception-alert-time-{{ $alert['level'] }}"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $alert['minutes'] }} min</span>
+                                </span>
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
         @endif
 
         <div class="reception-board">
@@ -116,7 +174,7 @@
                         @forelse ($cards as $appointment)
                             @php($nextTransitions = $this->availableTransitions($appointment))
                             @php($nextStatus = array_key_first($nextTransitions))
-                            <div class="reception-card-shell">
+                            <div id="reception-appointment-{{ $appointment->id }}" class="reception-card-shell">
                                 @if ($nextStatus)
                                     <button type="button" class="reception-quick-action" title="{{ $nextTransitions[$nextStatus] }}" aria-label="{{ $nextTransitions[$nextStatus] }}" wire:click="transition({{ $appointment->id }}, '{{ $nextStatus }}')">
                                         @switch($nextStatus)
@@ -241,4 +299,20 @@
             </div>
         </div>
     @endif
+
+    <script>
+        window.addEventListener('reception-focus-appointment', (event) => {
+            const appointmentId = event.detail?.appointmentId;
+
+            window.setTimeout(() => {
+                const card = document.getElementById(`reception-appointment-${appointmentId}`);
+
+                if (! card) {
+                    return;
+                }
+
+                card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }, 80);
+        });
+    </script>
 </x-filament-panels::page>

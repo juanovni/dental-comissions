@@ -9,9 +9,6 @@
 
     <style>
         .co-page { color: #0f172a; display: grid; gap: 1rem; }
-        .co-actions { display: flex; gap: .55rem; justify-content: flex-end; margin-top: -3.8rem; }
-        .co-btn { align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: .55rem; display: inline-flex; font-size: .8rem; font-weight: 600; min-height: 2.35rem; padding: .45rem .75rem; }
-        .co-btn-primary { background: #0f766e; border-color: #0f766e; color: #fff; }
         .co-kpis { display: grid; gap: .75rem; grid-template-columns: repeat(8, minmax(0, 1fr)); }
         .co-card, .co-kpi, .co-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: .75rem; }
         .co-kpi { display: grid; gap: .75rem; min-height: 6.25rem; padding: .85rem; }
@@ -31,15 +28,10 @@
         .co-muted { color: #64748b; font-size: .78rem; }
         .co-progress { background: #f1f5f9; border-radius: 999px; height: .45rem; overflow: hidden; }
         .co-progress-fill { background: #d97706; height: 100%; }
-        @media (max-width: 1100px) { .co-actions { justify-content: start; margin-top: 0; } .co-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .co-grid { grid-template-columns: 1fr; } .co-doctor { grid-template-columns: 1fr; } }
+        @media (max-width: 1100px) { .co-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .co-grid { grid-template-columns: 1fr; } .co-doctor { grid-template-columns: 1fr; } }
     </style>
 
     <div class="co-page">
-        <div class="co-actions">
-            <button class="co-btn" type="button">Umbrales</button>
-            <button class="co-btn co-btn-primary" type="button">Exportar</button>
-        </div>
-
         <div class="co-kpis">
             <div class="co-kpi"><div class="co-kpi-label">Agendadas</div><div class="co-kpi-value">{{ $metrics['scheduled'] }}</div></div>
             <div class="co-kpi"><div class="co-kpi-label">Confirmadas</div><div class="co-kpi-value">{{ $metrics['confirmed'] }}</div></div>

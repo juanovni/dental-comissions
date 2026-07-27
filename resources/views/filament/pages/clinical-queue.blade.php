@@ -3,6 +3,8 @@
         $summary = $this->summary();
         $columns = $this->columns();
         $selected = $this->selectedAppointment();
+        $alerts = $this->alerts();
+        $alertSummary = $this->alertSummary();
     @endphp
 
     <style>
@@ -28,7 +30,36 @@
         .cq-kpi-label { color: #64748b; font-size: .74rem; font-weight: 500; }
         .cq-kpi-value { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
         .cq-kpi-count { color: #0f172a; font-size: 1.1rem; font-weight: 650; }
-        .cq-alerts { background: #fff; border-color: #e5e7eb; color: #0f172a; padding: .85rem; }
+        .cq-alerts { background: #fff; border-color: #e5e7eb; color: #0f172a; overflow: hidden; padding: 0; }
+        .cq-alerts-head { align-items: center; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; flex-wrap: wrap; gap: .65rem; padding: .85rem 1rem; }
+        .cq-alerts-icon { align-items: center; background: #fff7f7; border: 1px solid #fecaca; border-radius: .65rem; color: #dc2626; display: inline-flex; height: 2rem; justify-content: center; width: 2rem; }
+        .cq-alerts-icon svg { height: 1rem; width: 1rem; }
+        .cq-alerts-heading { color: #0f172a; font-size: .92rem; font-weight: 700; }
+        .cq-alerts-hint { color: #64748b; font-size: .78rem; }
+        .cq-alerts-toggle { align-items: center; background: transparent; border: 0; color: #64748b; display: inline-flex; height: 2rem; justify-content: center; margin-left: auto; width: 2rem; }
+        .cq-alerts-toggle svg { height: 1rem; width: 1rem; }
+        .cq-alerts-toggle.is-collapsed svg { transform: rotate(180deg); }
+        .cq-alerts-badge { border-radius: 999px; display: inline-flex; font-size: .72rem; font-weight: 700; padding: .3rem .6rem; }
+        .cq-alerts-badge-critical { background: #ff6b63; color: #111827; }
+        .cq-alerts-badge-warning { background: #fbbf24; color: #111827; }
+        .cq-alerts-body { display: grid; gap: .55rem; padding: .75rem 1rem 1rem; }
+        .cq-alert-card { align-items: center; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .65rem; color: inherit; cursor: pointer; display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr) auto; padding: .75rem .85rem; text-align: left; transition: border-color .14s ease, background .14s ease, box-shadow .14s ease; width: 100%; }
+        .cq-alert-card:hover { box-shadow: 0 8px 18px rgba(15, 23, 42, .08); }
+        .cq-alert-card-critical { background: #4b1717; border-color: #b91c1c; color: #fff; }
+        .cq-alert-card-warning { background: #422b05; border-color: #a16207; color: #fff; }
+        .cq-alert-card:focus-visible { outline: 2px solid #14b8a6; outline-offset: 2px; }
+        .cq-alert-main { align-items: start; display: grid; gap: .6rem; grid-template-columns: auto minmax(0, 1fr); }
+        .cq-alert-dot { border-radius: 999px; height: .55rem; margin-top: .35rem; width: .55rem; }
+        .cq-alert-dot-critical { background: #ff6b63; }
+        .cq-alert-dot-warning { background: #fbbf24; }
+        .cq-alert-name { font-size: .9rem; font-weight: 700; line-height: 1.25; }
+        .cq-alert-meta { color: #cbd5e1; font-size: .78rem; margin-top: .35rem; }
+        .cq-alert-side { align-items: end; display: grid; gap: .45rem; justify-items: end; }
+        .cq-alert-column { color: #cbd5e1; font-size: .78rem; }
+        .cq-alert-time { align-items: center; border-radius: 999px; display: inline-flex; font-size: .78rem; font-weight: 700; gap: .3rem; padding: .28rem .55rem; }
+        .cq-alert-time svg { height: .85rem; width: .85rem; }
+        .cq-alert-time-critical { background: #ff6b63; color: #111827; }
+        .cq-alert-time-warning { background: #fbbf24; color: #111827; }
         .cq-title { align-items: center; display: flex; font-size: .86rem; font-weight: 600; justify-content: space-between; }
         .cq-alert-list { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem; }
         .cq-alert-chip { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; color: #475569; font-size: .78rem; padding: .35rem .55rem; }
@@ -39,11 +70,11 @@
         .cq-column { min-height: 32rem; overflow: hidden; }
         .cq-column-head { border-bottom: 1px solid #e5e7eb; padding: .75rem .85rem; }
         .cq-count { background: #f1f5f9; border-radius: 999px; color: #334155; font-size: .75rem; padding: .1rem .45rem; }
-        .cq-card-list { display: grid; gap: .55rem; padding: .65rem .65rem .65rem 1.35rem; }
+        .cq-card-list { display: grid; gap: .55rem; padding: .65rem .65rem .65rem 0.65rem; }
         .cq-card-shell { position: relative; }
         .cq-card { cursor: pointer; display: grid; gap: .55rem; padding: .7rem; text-align: left; width: 100%; }
         .cq-card:hover { background: #f8fafc; border-color: #cbd5e1; }
-        .cq-quick-action { align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: .55rem; box-shadow: 0 8px 18px rgba(15, 23, 42, .1); color: #0f172a; display: inline-flex; height: 2.35rem; justify-content: center; left: -1rem; opacity: 0; pointer-events: none; position: absolute; top: .75rem; transform: translateX(.25rem); transition: opacity .14s ease, transform .14s ease, background .14s ease, border-color .14s ease; width: 2.35rem; z-index: 2; }
+        .cq-quick-action { align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: .55rem; box-shadow: 0 8px 18px rgba(15, 23, 42, .1); color: #0f172a; display: inline-flex; height: 2.35rem; justify-content: center; opacity: 0; pointer-events: none; position: absolute; right: .7rem; top: .7rem; transform: translateX(.25rem); transition: opacity .14s ease, transform .14s ease, background .14s ease, border-color .14s ease; width: 2.35rem; z-index: 2; }
         .cq-quick-action svg { height: 1rem; width: 1rem; }
         .cq-card-shell:hover .cq-quick-action, .cq-card-shell:focus-within .cq-quick-action { opacity: 1; pointer-events: auto; transform: translateX(0); }
         .cq-quick-action:hover { background: #f9fafb; border-color: #d1d5db; }
@@ -94,8 +125,42 @@
             <div class="cq-kpi"><span class="cq-kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"></path></svg></span><div><div class="cq-kpi-label">En consulta</div><div class="cq-kpi-count">{{ $summary[\App\Enums\AppointmentStatus::InConsultation->value] }}</div></div></div>
         </div>
 
-        @if ($this->alerts()->isNotEmpty())
-            <div class="cq-alerts"><div class="cq-title">Alertas</div><div class="cq-alert-list">@foreach ($this->alerts() as $alert)<span class="cq-alert-chip cq-alert-chip-{{ $alert['level'] ?? 'neutral' }}">{{ $alert['message'] ?? $alert }}</span>@endforeach</div></div>
+        @if ($alerts->isNotEmpty())
+            <section class="cq-alerts">
+                <header class="cq-alerts-head">
+                    <span class="cq-alerts-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"></path></svg></span>
+                    <span class="cq-alerts-heading">Alertas</span>
+                    @if ($alertSummary['critical'] > 0)
+                        <span class="cq-alerts-badge cq-alerts-badge-critical">{{ $alertSummary['critical'] }} criticas</span>
+                    @endif
+                    @if ($alertSummary['warning'] > 0)
+                        <span class="cq-alerts-badge cq-alerts-badge-warning">{{ $alertSummary['warning'] }} medias</span>
+                    @endif
+                    <span class="cq-alerts-hint">Toca una alerta para ubicar al paciente</span>
+                    <button type="button" class="cq-alerts-toggle @if (! $showAlerts) is-collapsed @endif" wire:click="toggleAlerts" aria-label="{{ $showAlerts ? 'Ocultar alertas' : 'Mostrar alertas' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5"></path></svg>
+                    </button>
+                </header>
+                @if ($showAlerts)
+                    <div class="cq-alerts-body">
+                        @foreach ($alerts as $alert)
+                            <button type="button" class="cq-alert-card cq-alert-card-{{ $alert['level'] }}" wire:click="focusAppointment({{ $alert['id'] }})">
+                                <span class="cq-alert-main">
+                                    <span class="cq-alert-dot cq-alert-dot-{{ $alert['level'] }}"></span>
+                                    <span>
+                                        <span class="cq-alert-name">{{ $alert['message'] }}</span>
+                                        <span class="cq-alert-meta">{{ $alert['procedure'] }} · {{ $alert['doctor'] }}</span>
+                                    </span>
+                                </span>
+                                <span class="cq-alert-side">
+                                    <span class="cq-alert-column">{{ $alert['column'] }}</span>
+                                    <span class="cq-alert-time cq-alert-time-{{ $alert['level'] }}"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $alert['minutes'] }} min</span>
+                                </span>
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
         @endif
 
         <div class="cq-board">
@@ -107,7 +172,7 @@
                         @forelse ($cards as $appointment)
                             @php($nextTransitions = $this->availableTransitions($appointment))
                             @php($nextStatus = array_key_first($nextTransitions))
-                            <div class="cq-card-shell">
+                            <div id="cq-appointment-{{ $appointment->id }}" class="cq-card-shell">
                                 @if ($nextStatus)
                                     <button type="button" class="cq-quick-action" title="{{ $nextTransitions[$nextStatus] }}" aria-label="{{ $nextTransitions[$nextStatus] }}" wire:click="transition({{ $appointment->id }}, '{{ $nextStatus }}')">
                                         @switch($nextStatus)
@@ -172,4 +237,20 @@
     @if ($noteAppointmentId)
         <div class="cq-drawer" wire:click.self="closeNoteModal" style="display: flex; align-items: center; justify-content: center;"><div class="cq-modal-card"><div class="cq-title">Agregar nota operativa</div><textarea class="cq-textarea" wire:model="noteText" placeholder="Ej.: Paciente ansioso, aplicar comunicacion calmada."></textarea>@error('noteText') <div class="cq-meta" style="color: #dc2626;">{{ $message }}</div> @enderror<div class="cq-actions" style="justify-content: flex-end;"><button type="button" class="cq-action" wire:click="closeNoteModal">Cancelar</button><button type="button" class="cq-action cq-action-primary" wire:click="saveNote">Guardar nota</button></div></div></div>
     @endif
+
+    <script>
+        window.addEventListener('cq-focus-appointment', (event) => {
+            const appointmentId = event.detail?.appointmentId;
+
+            window.setTimeout(() => {
+                const card = document.getElementById(`cq-appointment-${appointmentId}`);
+
+                if (! card) {
+                    return;
+                }
+
+                card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }, 80);
+        });
+    </script>
 </x-filament-panels::page>

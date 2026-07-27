@@ -35,6 +35,8 @@ class Reception extends Page
 
     public string $noteText = '';
 
+    public bool $showAlerts = true;
+
     public static function canAccess(): bool
     {
         return auth()->user()?->hasRolePermission('patient_flow_reception.view') ?? false;
@@ -98,15 +100,51 @@ class Reception extends Page
             ->merge($this->cards('waiting')
                 ->filter(fn (Appointment $appointment): bool => ($appointment->waitingMinutes() ?? 0) >= 10)
                 ->map(fn (Appointment $appointment): array => [
+                    'id' => $appointment->id,
                     'level' => ($appointment->waitingMinutes() ?? 0) >= 20 ? 'critical' : 'warning',
+                    'patient' => $appointment->patient?->full_name ?? 'Paciente',
                     'message' => ($appointment->patient?->full_name ?? 'Paciente').' lleva '.$appointment->waitingMinutes().' min en espera',
+                    'procedure' => $appointment->procedure?->name ?? 'Sin procedimiento',
+                    'doctor' => $appointment->doctor?->name ?? 'Sin doctor',
+                    'column' => 'En espera',
+                    'column_status' => AppointmentStatus::CheckedIn->value,
+                    'minutes' => $appointment->waitingMinutes() ?? 0,
                 ]))
             ->merge($this->overdueAppointments()
                 ->map(fn (Appointment $appointment): array => [
+                    'id' => $appointment->id,
                     'level' => 'neutral',
+                    'patient' => $appointment->patient?->full_name ?? 'Paciente',
                     'message' => 'La cita de '.($appointment->patient?->full_name ?? 'Paciente').' tiene retraso',
+                    'procedure' => $appointment->procedure?->name ?? 'Sin procedimiento',
+                    'doctor' => $appointment->doctor?->name ?? 'Sin doctor',
+                    'column' => 'Por llegar',
+                    'column_status' => 'arriving',
+                    'minutes' => max(0, (int) $appointment->scheduled_at?->diffInMinutes(now())),
                 ]))
+            ->sortByDesc(fn (array $alert): int => $alert['minutes'])
             ->values();
+    }
+
+    public function alertSummary(): array
+    {
+        $alerts = $this->alerts();
+
+        return [
+            'critical' => $alerts->where('level', 'critical')->count(),
+            'warning' => $alerts->where('level', 'warning')->count(),
+        ];
+    }
+
+    public function toggleAlerts(): void
+    {
+        $this->showAlerts = ! $this->showAlerts;
+    }
+
+    public function focusAppointment(int $appointmentId): void
+    {
+        $this->selectedAppointmentId = $appointmentId;
+        $this->dispatch('reception-focus-appointment', appointmentId: $appointmentId);
     }
 
     public function selectAppointment(int $appointmentId): void
