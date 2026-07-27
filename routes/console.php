@@ -24,3 +24,7 @@ Schedule::command('social:roi-leakage-report')
     ->mondays()
     ->at('07:00')
     ->withoutOverlapping();
+
+Schedule::command('appointments:send-reminders')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();

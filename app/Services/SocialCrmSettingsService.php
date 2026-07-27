@@ -167,6 +167,41 @@ class SocialCrmSettingsService
             ->all();
     }
 
+    public function appointmentReminderWhatsappEnabled(): bool
+    {
+        return (bool) $this->get('appointment_reminders_whatsapp_enabled', false);
+    }
+
+    public function appointmentReminderPityVoiceEnabled(): bool
+    {
+        return (bool) $this->get('appointment_reminders_pity_voice_enabled', false);
+    }
+
+    public function appointmentReminderFirstHoursBefore(): int
+    {
+        return max(1, (int) $this->get('appointment_reminders_first_hours_before', 24));
+    }
+
+    public function appointmentReminderSecondHoursBefore(): int
+    {
+        return max(1, (int) $this->get('appointment_reminders_second_hours_before', 2));
+    }
+
+    public function appointmentReminderVoiceEscalationHoursBefore(): int
+    {
+        return max(1, (int) $this->get('appointment_reminders_voice_escalation_hours_before', 4));
+    }
+
+    public function appointmentRemindersOnlyUnconfirmed(): bool
+    {
+        return (bool) $this->get('appointment_reminders_only_unconfirmed', true);
+    }
+
+    public function appointmentReminderInternalAlertOnNoResponse(): bool
+    {
+        return (bool) $this->get('appointment_reminders_internal_alert_on_no_response', true);
+    }
+
     // ── Auto Reply Settings ──────────────────────────────────────
 
     public function autoReplyEnabled(): bool

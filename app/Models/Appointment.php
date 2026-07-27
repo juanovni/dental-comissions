@@ -120,6 +120,11 @@ class Appointment extends Model
         return $this->hasMany(AppointmentNote::class)->latest();
     }
 
+    public function reminders(): HasMany
+    {
+        return $this->hasMany(AppointmentReminder::class);
+    }
+
     public function latestAppointmentNote(): HasOne
     {
         return $this->hasOne(AppointmentNote::class)->latestOfMany();

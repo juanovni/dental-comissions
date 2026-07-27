@@ -65,6 +65,7 @@ class SocialCrmSettings extends Page
             ->components([
                 $this->botSection(),
                 $this->citasSection(),
+                $this->confirmacionesSection(),
                 $this->respuestasAutomaticasSection(),
                 $this->mensajesSection(),
                 $this->seguimientoComercialSection(),
@@ -86,6 +87,11 @@ class SocialCrmSettings extends Page
                 'id' => 'citas',
                 'label' => 'Citas',
                 'description' => 'Horarios y disponibilidad',
+            ],
+            [
+                'id' => 'confirmaciones',
+                'label' => 'Confirmaciones',
+                'description' => 'Recordatorios y escalamiento',
             ],
             [
                 'id' => 'respuestas-automaticas',
@@ -492,6 +498,71 @@ class SocialCrmSettings extends Page
             ->footerActionsAlignment(Alignment::End);
     }
 
+    private function confirmacionesSection(): Section
+    {
+        return Section::make('Confirmaciones')
+            ->id('confirmaciones')
+            ->icon('heroicon-o-bell-alert')
+            ->description('Controla recordatorios de citas y escalamiento para reducir no-shows.')
+            ->schema([
+                Section::make('Canales')
+                    ->icon('heroicon-o-megaphone')
+                    ->description('Activa manualmente los canales cuando las plantillas y costos esten validados.')
+                    ->schema([
+                        Toggle::make('appointment_reminders_whatsapp_enabled')
+                            ->label('Recordatorios por WhatsApp')
+                            ->helperText('Envia mensajes template de confirmacion antes de la cita.'),
+                        Toggle::make('appointment_reminders_pity_voice_enabled')
+                            ->label('Escalamiento Pity Voice')
+                            ->helperText('Llama automaticamente si el paciente no confirma por WhatsApp.'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+
+                Section::make('Tiempos de confirmacion')
+                    ->icon('heroicon-o-clock')
+                    ->description('Define cuando se intentara confirmar una cita ya agendada.')
+                    ->schema([
+                        TextInput::make('appointment_reminders_first_hours_before')
+                            ->label('Primer recordatorio')
+                            ->helperText('Horas antes de la cita.')
+                            ->numeric()
+                            ->minValue(1),
+                        TextInput::make('appointment_reminders_second_hours_before')
+                            ->label('Segundo recordatorio')
+                            ->helperText('Horas antes de la cita si aun no confirma.')
+                            ->numeric()
+                            ->minValue(1),
+                        TextInput::make('appointment_reminders_voice_escalation_hours_before')
+                            ->label('Escalar a Pity Voice')
+                            ->helperText('Horas antes de la cita si sigue sin confirmacion.')
+                            ->numeric()
+                            ->minValue(1),
+                    ])
+                    ->columns(3)
+                    ->columnSpanFull(),
+
+                Section::make('Reglas operativas')
+                    ->icon('heroicon-o-shield-check')
+                    ->description('Evita contactar pacientes que ya confirmaron o que requieren revision humana.')
+                    ->schema([
+                        Toggle::make('appointment_reminders_only_unconfirmed')
+                            ->label('Solo citas sin confirmar')
+                            ->helperText('No envia recordatorios a citas confirmadas o en flujo clinico.'),
+                        Toggle::make('appointment_reminders_internal_alert_on_no_response')
+                            ->label('Alertar si no responde')
+                            ->helperText('Crea una alerta interna para recepcion cuando no hay respuesta.'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+            ])
+            ->columns(1)
+            ->footerActions([
+                $this->saveSectionAction('save_confirmaciones'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
+    }
+
     private function respuestasAutomaticasSection(): Section
     {
         return Section::make('Respuestas Automáticas')
@@ -840,6 +911,14 @@ class SocialCrmSettings extends Page
             'social_appointment_auto_create_patient',
             'social_appointment_require_whatsapp_phone_for_patient',
             'social_appointment_patient_fallback_name',
+            // Confirmaciones
+            'appointment_reminders_whatsapp_enabled',
+            'appointment_reminders_pity_voice_enabled',
+            'appointment_reminders_first_hours_before',
+            'appointment_reminders_second_hours_before',
+            'appointment_reminders_voice_escalation_hours_before',
+            'appointment_reminders_only_unconfirmed',
+            'appointment_reminders_internal_alert_on_no_response',
             // Respuestas automáticas
             'social_auto_reply_enabled',
             'social_auto_reply_dry_run',
@@ -935,6 +1014,13 @@ class SocialCrmSettings extends Page
             'social_appointment_auto_create_patient' => true,
             'social_appointment_require_whatsapp_phone_for_patient' => true,
             'social_appointment_patient_fallback_name' => 'Paciente WhatsApp',
+            'appointment_reminders_whatsapp_enabled' => false,
+            'appointment_reminders_pity_voice_enabled' => false,
+            'appointment_reminders_first_hours_before' => 24,
+            'appointment_reminders_second_hours_before' => 2,
+            'appointment_reminders_voice_escalation_hours_before' => 4,
+            'appointment_reminders_only_unconfirmed' => true,
+            'appointment_reminders_internal_alert_on_no_response' => true,
             'social_auto_reply_enabled' => false,
             'social_auto_reply_dry_run' => true,
             'social_auto_reply_use_ai' => true,
@@ -976,6 +1062,7 @@ class SocialCrmSettings extends Page
     private function inferGroup(string $key): string
     {
         return match (true) {
+            str_contains($key, 'appointment_reminders') => 'appointment_reminders',
             str_contains($key, 'appointment') => 'appointments',
             str_contains($key, 'auto_reply') => 'auto_reply',
             str_contains($key, 'whatsapp') && ! str_contains($key, 'follow_up') => 'whatsapp_bridge',
@@ -1000,6 +1087,13 @@ class SocialCrmSettings extends Page
             'social_smart_link_ping_seconds' => 'Intervalo de ping del Smart Link',
             'social_smart_link_duration_score' => 'Puntos por duración del Smart Link',
             'social_smart_link_duration_alert' => 'Alerta de alta permanencia en Smart Link',
+            'appointment_reminders_whatsapp_enabled' => 'Recordatorios por WhatsApp',
+            'appointment_reminders_pity_voice_enabled' => 'Escalamiento Pity Voice',
+            'appointment_reminders_first_hours_before' => 'Horas antes del primer recordatorio',
+            'appointment_reminders_second_hours_before' => 'Horas antes del segundo recordatorio',
+            'appointment_reminders_voice_escalation_hours_before' => 'Horas antes para escalar a Pity Voice',
+            'appointment_reminders_only_unconfirmed' => 'Solo citas sin confirmar',
+            'appointment_reminders_internal_alert_on_no_response' => 'Alerta interna si no responde',
         ];
 
         return $labels[$key] ?? str($key)

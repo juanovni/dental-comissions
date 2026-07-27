@@ -226,9 +226,25 @@ Criterio de salida:
 
 Objetivo: reducir no-shows y mejorar comunicacion operacional.
 
-- [ ] Confirmacion automatica 24 horas antes.
-- [ ] Recordatorio 2 horas antes.
-- [ ] Escalamiento a Pity Voice si no responde WhatsApp.
+- [x] Crear parametros de Confirmaciones en Configuracion CRM.
+- [x] Activar/desactivar recordatorios por WhatsApp desde Configuracion CRM.
+- [x] Activar/desactivar escalamiento Pity Voice desde Configuracion CRM.
+- [x] Mantener WhatsApp y Pity Voice desactivados por defecto.
+- [x] Parametrizar primer recordatorio en horas antes de la cita.
+- [x] Parametrizar segundo recordatorio en horas antes de la cita.
+- [x] Parametrizar escalamiento Pity Voice en horas antes de la cita.
+- [x] Parametrizar envio solo para citas sin confirmar.
+- [x] Crear tabla `appointment_reminders` para trazabilidad y deduplicacion.
+- [x] Crear modelo `AppointmentReminder`.
+- [x] Relacionar `Appointment -> reminders`.
+- [x] Crear `AppointmentReminderService`.
+- [x] Crear comando `appointments:send-reminders`.
+- [x] Programar comando cada 5 minutos con `withoutOverlapping`.
+- [x] Confirmacion automatica 24 horas antes por WhatsApp cuando el canal este activo.
+- [x] Recordatorio 2 horas antes por WhatsApp cuando el canal este activo.
+- [~] Escalamiento a Pity Voice si no responde WhatsApp.
+- [ ] Integrar llamada saliente real con proveedor de voz.
+- [ ] Migrar WhatsApp reminder a template aprobado de Meta.
 - [ ] Aviso al paciente si la clinica esta atrasada.
 - [ ] Solicitud de resena despues de cita finalizada.
 - [ ] Seguimiento automatico para no-show.
@@ -236,8 +252,9 @@ Objetivo: reducir no-shows y mejorar comunicacion operacional.
 
 Criterio de salida:
 
-- [ ] Las automatizaciones generan eventos trazables.
-- [ ] El equipo puede ver que se envio, cuando y por que canal.
+- [x] Las automatizaciones generan registros trazables.
+- [x] El equipo puede auditar que se intento enviar, cuando y por que canal.
+- [~] El envio real por todos los canales esta integrado end-to-end.
 
 ## Fase 9: Inteligencia predictiva y diferenciadores
 

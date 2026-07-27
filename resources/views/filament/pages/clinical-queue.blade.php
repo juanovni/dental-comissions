@@ -143,7 +143,7 @@
         @media (max-width: 900px) { .cq-toolbar { margin-top: 0; } .cq-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cq-board { grid-template-columns: repeat(4, 16rem); } }
     </style>
 
-    <div class="cq-page">
+    <div class="cq-page" wire:poll.visible.10s>
         <p class="cq-subtitle">Asistencia a doctores · pacientes en preparacion y consulta</p>
         <div class="cq-toolbar"><input class="cq-search" type="search" wire:model.live.debounce.350ms="search" placeholder="Buscar paciente..."></div>
 
@@ -157,7 +157,7 @@
         @if ($alerts->isNotEmpty())
             <section class="cq-alerts">
                 <header class="cq-alerts-head">
-                    <span class="cq-alerts-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"></path></svg></span>
+                    <span class="cq-alerts-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert size-4" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></span>
                     <span class="cq-alerts-heading">Alertas</span>
                     @if ($alertSummary['critical'] > 0)
                         <span class="cq-alerts-badge cq-alerts-badge-critical">{{ $alertSummary['critical'] }} criticas</span>
