@@ -177,7 +177,7 @@
             border-radius: .7rem;
             display: flex;
             flex-direction: column;
-            flex: 0 0 clamp(22rem, 34vw, 29rem);
+            flex: 0 0 clamp(22rem, 34vw, 26rem);
             gap: 0;
             max-height: calc(100dvh - 14rem);
             overflow: hidden;
