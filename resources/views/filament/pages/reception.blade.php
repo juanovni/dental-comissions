@@ -20,8 +20,8 @@
             }
         }
         .reception-page { color: #0f172a; display: grid; gap: 1rem; }
-        .reception-toolbar { display: flex; justify-content: flex-end; margin-top: -3.8rem; }
-        .reception-search { background: #fff; border: 1px solid #e5e7eb; border-radius: .65rem; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); font-size: .84rem; height: 2.65rem; outline: none; padding: 0 .85rem; width: min(100%, 24rem); }
+        .reception-toolbar { align-items: center; display: flex; gap: .75rem; justify-content: flex-end; margin-bottom: .9rem; margin-top: -4.05rem; }
+        .reception-search { background: #fff; border: 1px solid #e5e7eb; border-radius: .5rem; box-shadow: none; color: #0f172a; font-size: .82rem; height: 2.35rem; outline: none; padding: .45rem .75rem; width: min(100%, 24rem); }
         .reception-kpis { display: grid; gap: .75rem; grid-template-columns: repeat(5, minmax(0, 1fr)); }
         .reception-kpi, .reception-alerts, .reception-column, .reception-card, .reception-detail-card { background: #fff; border: 1px solid #e5e7eb; border-radius: .75rem; }
         .reception-kpi { align-items: center; display: flex; gap: .75rem; padding: .85rem; }
@@ -44,8 +44,8 @@
         .reception-alerts-body { display: grid; gap: .55rem; padding: .75rem 1rem 1rem; }
         .reception-alert-card { align-items: center; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .65rem; color: inherit; cursor: pointer; display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr) auto; padding: .75rem .85rem; text-align: left; transition: border-color .14s ease, background .14s ease, box-shadow .14s ease; width: 100%; }
         .reception-alert-card:hover { box-shadow: 0 8px 18px rgba(15, 23, 42, .08); }
-        .reception-alert-card-critical { background: #4b1717; border-color: #b91c1c; color: #fff; }
-        .reception-alert-card-warning { background: #422b05; border-color: #a16207; color: #fff; }
+        .reception-alert-card-critical { background: #fff; border-color: #dc2626; color: #111827; }
+        .reception-alert-card-warning { background: #fff; border-color: #ca8a04; color: #111827; }
         .reception-alert-card-neutral { background: #f8fafc; border-color: #e5e7eb; color: #0f172a; }
         .reception-alert-card:focus-visible { outline: 2px solid #14b8a6; outline-offset: 2px; }
         .reception-alert-main { align-items: start; display: grid; gap: .6rem; grid-template-columns: auto minmax(0, 1fr); }
@@ -55,7 +55,7 @@
         .reception-alert-dot-neutral { background: #94a3b8; }
         .reception-alert-name { display: block; font-size: .9rem; font-weight: 700; line-height: 1.25; }
         .reception-alert-meta { color: #cbd5e1; display: block; font-size: .78rem; margin-top: .35rem; }
-        .reception-alert-card-neutral .reception-alert-meta, .reception-alert-card-neutral .reception-alert-column { color: #64748b; }
+        .reception-alert-card-critical .reception-alert-meta, .reception-alert-card-critical .reception-alert-column, .reception-alert-card-warning .reception-alert-meta, .reception-alert-card-warning .reception-alert-column, .reception-alert-card-neutral .reception-alert-meta, .reception-alert-card-neutral .reception-alert-column { color: #64748b; }
         .reception-alert-side { align-items: center; align-self: center; display: flex; gap: .45rem; justify-content: flex-end; }
         .reception-alert-column { color: #cbd5e1; font-size: .78rem; }
         .reception-alert-time { align-items: center; border-radius: 999px; display: inline-flex; font-size: .78rem; font-weight: 700; gap: .3rem; padding: .28rem .55rem; }

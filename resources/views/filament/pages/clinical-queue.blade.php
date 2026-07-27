@@ -20,8 +20,8 @@
             }
         }
         .cq-page { color: #0f172a; display: grid; gap: 1rem; }
-        .cq-toolbar { display: flex; justify-content: flex-end; margin-top: -3.8rem; }
-        .cq-search { background: #fff; border: 1px solid #e5e7eb; border-radius: .65rem; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); font-size: .84rem; height: 2.65rem; outline: none; padding: 0 .85rem; width: min(100%, 24rem); }
+        .cq-toolbar { align-items: center; display: flex; gap: .75rem; justify-content: flex-end; margin-bottom: .9rem; margin-top: -4.05rem; }
+        .cq-search { background: #fff; border: 1px solid #e5e7eb; border-radius: .5rem; box-shadow: none; color: #0f172a; font-size: .82rem; height: 2.35rem; outline: none; padding: .45rem .75rem; width: min(100%, 24rem); }
         .cq-kpis { display: grid; gap: .75rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .cq-kpi, .cq-alerts, .cq-column, .cq-card, .cq-detail-card { background: #fff; border: 1px solid #e5e7eb; border-radius: .75rem; }
         .cq-kpi { align-items: center; display: flex; gap: .75rem; padding: .85rem; }
