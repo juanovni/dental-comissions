@@ -72,12 +72,12 @@
             align-items: center;
             background: #ffffff;
             border: 1px solid #e5e7eb;
-            border-radius: .65rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+            border-radius: .5rem;
+            box-shadow: none;
             color: #64748b;
             display: flex;
             gap: .45rem;
-            height: 2.65rem;
+            height: 2.35rem;
             padding: 0 .75rem;
             width: min(100%, 24rem);
         }
@@ -127,8 +127,7 @@
         }
 
         .smart-channel-filter[open] .smart-channel-trigger,
-        .smart-channel-trigger:hover,
-        .smart-search-wrap:focus-within {
+        .smart-channel-trigger:hover {
             border-color: color-mix(in srgb, var(--inbox-accent) 35%, #e5e7eb);
             box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
         }
@@ -822,6 +821,16 @@
                 top: 0;
                 width: 100%;
             }
+        }
+
+        .dark .smart-search-wrap {
+            background: rgba(15, 23, 42, .86);
+            border-color: rgba(148, 163, 184, .18);
+            color: #94a3b8;
+        }
+
+        .dark .smart-search {
+            color: #e5e7eb;
         }
 
         .dark .smart-drawer {

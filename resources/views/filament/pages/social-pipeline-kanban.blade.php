@@ -47,6 +47,33 @@
             width: min(100%, 24rem);
         }
 
+        .kanban-search-wrap {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: .5rem;
+            color: #64748b;
+            display: flex;
+            gap: .45rem;
+            height: 2.35rem;
+            padding: 0 .75rem;
+            width: min(100%, 24rem);
+        }
+
+        .kanban-search-wrap svg {
+            flex: 0 0 auto;
+            height: 1.05rem;
+            width: 1.05rem;
+        }
+
+        .kanban-search-wrap .kanban-search {
+            background: transparent;
+            border: 0;
+            height: 100%;
+            padding: 0;
+            width: 100%;
+        }
+
         .kanban-carousel-shell {
             position: relative;
         }
@@ -856,6 +883,12 @@
             color: #e5e7eb;
         }
 
+        .dark .kanban-search-wrap {
+            background: rgba(15, 23, 42, .86);
+            border-color: var(--pk-border);
+            color: #94a3b8;
+        }
+
         .dark .kanban-modal {
             background: #1e293b;
             border-color: var(--pk-border);
@@ -912,12 +945,15 @@
 
     <section class="pipeline-kanban" wire:poll.visible.10s>
         <div class="kanban-toolbar">
-            <input
-                class="kanban-search"
-                type="search"
-                wire:model.live.debounce.350ms="search"
-                placeholder="Buscar leads por nombre o comentario..."
-            />
+            <label class="kanban-search-wrap" aria-label="Buscar leads">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path></svg>
+                <input
+                    class="kanban-search"
+                    type="search"
+                    wire:model.live.debounce.350ms="search"
+                    placeholder="Buscar leads por nombre o comentario..."
+                />
+            </label>
         </div>
 
         <div class="kanban-carousel-shell">

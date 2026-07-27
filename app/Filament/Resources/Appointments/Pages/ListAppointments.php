@@ -272,14 +272,9 @@ class ListAppointments extends ListRecords
 
     public function getStatusOptionsProperty(): array
     {
-        return [
-            AppointmentStatus::Confirmed->value => 'Confirmada',
-            AppointmentStatus::PendingConfirmation->value => 'Pendiente',
-            AppointmentStatus::Rescheduled->value => 'Reprogramada',
-            AppointmentStatus::Cancelled->value => 'Cancelada',
-            AppointmentStatus::Completed->value => 'Completada',
-            AppointmentStatus::NoShow->value => 'No asistio',
-        ];
+        return collect(AppointmentStatus::cases())
+            ->mapWithKeys(fn (AppointmentStatus $status): array => [$status->value => $status->label()])
+            ->all();
     }
 
     public function getDoctorOptionsProperty(): array
@@ -302,15 +297,7 @@ class ListAppointments extends ListRecords
 
     public function statusLabel(AppointmentStatus $status): string
     {
-        return match ($status) {
-            AppointmentStatus::PendingConfirmation => 'Pendiente',
-            AppointmentStatus::Scheduled => 'Agendada',
-            AppointmentStatus::Confirmed => 'Confirmada',
-            AppointmentStatus::Rescheduled => 'Reprogramada',
-            AppointmentStatus::Cancelled => 'Cancelada',
-            AppointmentStatus::Completed => 'Completada',
-            AppointmentStatus::NoShow => 'No asistio',
-        };
+        return $status->label();
     }
 
     public function canUpdateStatus(Appointment $appointment): bool
