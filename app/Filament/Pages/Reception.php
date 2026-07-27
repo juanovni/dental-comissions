@@ -245,7 +245,7 @@ class Reception extends Page
     private function actionLabel(AppointmentStatus $status): string
     {
         return match ($status) {
-            AppointmentStatus::CheckedIn => 'Check-in',
+            AppointmentStatus::CheckedIn => 'Marcar en espera',
             AppointmentStatus::Preparing => 'Preparar paciente',
             AppointmentStatus::ReadyForDoctor => 'Listo para doctor',
             AppointmentStatus::InConsultation => 'Iniciar consulta',
