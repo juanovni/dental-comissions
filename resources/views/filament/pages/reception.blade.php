@@ -53,8 +53,8 @@
         .reception-alert-dot-critical { background: #ff6b63; }
         .reception-alert-dot-warning { background: #fbbf24; }
         .reception-alert-dot-neutral { background: #94a3b8; }
-        .reception-alert-name { font-size: .9rem; font-weight: 700; line-height: 1.25; }
-        .reception-alert-meta { color: #cbd5e1; font-size: .78rem; margin-top: .35rem; }
+        .reception-alert-name { display: block; font-size: .9rem; font-weight: 700; line-height: 1.25; }
+        .reception-alert-meta { color: #cbd5e1; display: block; font-size: .78rem; margin-top: .35rem; }
         .reception-alert-card-neutral .reception-alert-meta, .reception-alert-card-neutral .reception-alert-column { color: #64748b; }
         .reception-alert-side { align-items: end; display: grid; gap: .45rem; justify-items: end; }
         .reception-alert-column { color: #cbd5e1; font-size: .78rem; }

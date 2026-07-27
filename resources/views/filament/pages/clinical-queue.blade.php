@@ -34,29 +34,30 @@
         .cq-alerts-head { align-items: center; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; flex-wrap: wrap; gap: .65rem; padding: .85rem 1rem; }
         .cq-alerts-icon { align-items: center; background: #fff7f7; border: 1px solid #fecaca; border-radius: .65rem; color: #dc2626; display: inline-flex; height: 2rem; justify-content: center; width: 2rem; }
         .cq-alerts-icon svg { height: 1rem; width: 1rem; }
-        .cq-alerts-heading { color: #0f172a; font-size: .92rem; font-weight: 700; }
+        .cq-alerts-heading { color: #0f172a; font-size: .92rem; font-weight: 600; }
         .cq-alerts-hint { color: #64748b; font-size: .78rem; }
         .cq-alerts-toggle { align-items: center; background: transparent; border: 0; color: #64748b; display: inline-flex; height: 2rem; justify-content: center; margin-left: auto; width: 2rem; }
         .cq-alerts-toggle svg { height: 1rem; width: 1rem; }
         .cq-alerts-toggle.is-collapsed svg { transform: rotate(180deg); }
-        .cq-alerts-badge { border-radius: 999px; display: inline-flex; font-size: .72rem; font-weight: 700; padding: .3rem .6rem; }
+        .cq-alerts-badge { border-radius: 999px; display: inline-flex; font-size: .72rem; font-weight: 600; padding: .3rem .6rem; }
         .cq-alerts-badge-critical { background: #ff6b63; color: #111827; }
         .cq-alerts-badge-warning { background: #fbbf24; color: #111827; }
         .cq-alerts-body { display: grid; gap: .55rem; padding: .75rem 1rem 1rem; }
         .cq-alert-card { align-items: center; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .65rem; color: inherit; cursor: pointer; display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr) auto; padding: .75rem .85rem; text-align: left; transition: border-color .14s ease, background .14s ease, box-shadow .14s ease; width: 100%; }
         .cq-alert-card:hover { box-shadow: 0 8px 18px rgba(15, 23, 42, .08); }
-        .cq-alert-card-critical { background: #4b1717; border-color: #b91c1c; color: #fff; }
-        .cq-alert-card-warning { background: #422b05; border-color: #a16207; color: #fff; }
+        .cq-alert-card-critical { background: #fff; border-color: #dc2626; color: #111827; }
+        .cq-alert-card-warning { background: #fff; border-color: #ca8a04; color: #111827; }
         .cq-alert-card:focus-visible { outline: 2px solid #14b8a6; outline-offset: 2px; }
         .cq-alert-main { align-items: start; display: grid; gap: .6rem; grid-template-columns: auto minmax(0, 1fr); }
         .cq-alert-dot { border-radius: 999px; height: .55rem; margin-top: .35rem; width: .55rem; }
         .cq-alert-dot-critical { background: #ff6b63; }
         .cq-alert-dot-warning { background: #fbbf24; }
-        .cq-alert-name { font-size: .9rem; font-weight: 700; line-height: 1.25; }
-        .cq-alert-meta { color: #cbd5e1; font-size: .78rem; margin-top: .35rem; }
-        .cq-alert-side { align-items: end; display: grid; gap: .45rem; justify-items: end; }
+        .cq-alert-name { display: block; font-size: .9rem; font-weight: 600; line-height: 1.25; }
+        .cq-alert-meta { color: #cbd5e1; display: block; font-size: .78rem; margin-top: .35rem; }
+        .cq-alert-card-critical .cq-alert-meta, .cq-alert-card-critical .cq-alert-column, .cq-alert-card-warning .cq-alert-meta, .cq-alert-card-warning .cq-alert-column { color: #64748b; }
+        .cq-alert-side { align-items: center; align-self: center; display: flex; gap: .45rem; justify-content: flex-end; }
         .cq-alert-column { color: #cbd5e1; font-size: .78rem; }
-        .cq-alert-time { align-items: center; border-radius: 999px; display: inline-flex; font-size: .78rem; font-weight: 700; gap: .3rem; padding: .28rem .55rem; }
+        .cq-alert-time { align-items: center; border-radius: 999px; display: inline-flex; font-size: .78rem; font-weight: 600; gap: .3rem; padding: .28rem .55rem; }
         .cq-alert-time svg { height: .85rem; width: .85rem; }
         .cq-alert-time-critical { background: #ff6b63; color: #111827; }
         .cq-alert-time-warning { background: #fbbf24; color: #111827; }
