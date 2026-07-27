@@ -240,6 +240,8 @@ Objetivo: reducir no-shows y mejorar comunicacion operacional.
 - [x] Programar comando cada 5 minutos con `withoutOverlapping`.
 - [x] Confirmacion automatica 24 horas antes por WhatsApp cuando el canal este activo.
 - [x] Recordatorio 2 horas antes por WhatsApp cuando el canal este activo.
+- [x] Procesar respuesta entrante de WhatsApp para confirmar cita.
+- [x] Procesar solicitud entrante de reprogramacion como nota/revision operativa.
 - [ ] Migrar WhatsApp reminder a template aprobado de Meta.
 - [ ] Aviso al paciente si la clinica esta atrasada.
 - [ ] Solicitud de resena despues de cita finalizada.

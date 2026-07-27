@@ -93,6 +93,16 @@ class WhatsappService
                 return $whatsappMessage;
             }
 
+            if (! $professional) {
+                $reminderResponse = app(AppointmentReminderResponseService::class)->handle($whatsappMessage);
+
+                if ($reminderResponse) {
+                    $this->sendMessage($fromPhone, $reminderResponse['reply']);
+
+                    return $whatsappMessage->refresh();
+                }
+            }
+
             $existingLead = $socialConversionService->findLeadByPhone($fromPhone);
 
             if ($existingLead) {
