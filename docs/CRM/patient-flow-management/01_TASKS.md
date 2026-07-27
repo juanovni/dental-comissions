@@ -222,17 +222,15 @@ Criterio de salida:
 - [x] Recepcion ve el cambio a `En espera`.
 - [x] No se expone informacion sensible en pantalla publica.
 
-## Fase 8: Automatizaciones con WhatsApp y Pity Voice
+## Fase 8: Automatizaciones con WhatsApp
 
 Objetivo: reducir no-shows y mejorar comunicacion operacional.
 
 - [x] Crear parametros de Confirmaciones en Configuracion CRM.
 - [x] Activar/desactivar recordatorios por WhatsApp desde Configuracion CRM.
-- [x] Activar/desactivar escalamiento Pity Voice desde Configuracion CRM.
-- [x] Mantener WhatsApp y Pity Voice desactivados por defecto.
+- [x] Mantener WhatsApp desactivado por defecto.
 - [x] Parametrizar primer recordatorio en horas antes de la cita.
 - [x] Parametrizar segundo recordatorio en horas antes de la cita.
-- [x] Parametrizar escalamiento Pity Voice en horas antes de la cita.
 - [x] Parametrizar envio solo para citas sin confirmar.
 - [x] Crear tabla `appointment_reminders` para trazabilidad y deduplicacion.
 - [x] Crear modelo `AppointmentReminder`.
@@ -242,19 +240,19 @@ Objetivo: reducir no-shows y mejorar comunicacion operacional.
 - [x] Programar comando cada 5 minutos con `withoutOverlapping`.
 - [x] Confirmacion automatica 24 horas antes por WhatsApp cuando el canal este activo.
 - [x] Recordatorio 2 horas antes por WhatsApp cuando el canal este activo.
-- [~] Escalamiento a Pity Voice si no responde WhatsApp.
-- [ ] Integrar llamada saliente real con proveedor de voz.
 - [ ] Migrar WhatsApp reminder a template aprobado de Meta.
 - [ ] Aviso al paciente si la clinica esta atrasada.
 - [ ] Solicitud de resena despues de cita finalizada.
 - [ ] Seguimiento automatico para no-show.
 - [ ] Seguimiento automatico para cancelacion.
+- [ ] Fase futura: escalamiento a Pity Voice si no responde WhatsApp.
+- [ ] Fase futura: integrar llamada saliente real con proveedor de voz.
 
 Criterio de salida:
 
 - [x] Las automatizaciones generan registros trazables.
 - [x] El equipo puede auditar que se intento enviar, cuando y por que canal.
-- [~] El envio real por todos los canales esta integrado end-to-end.
+- [~] El envio real por WhatsApp esta integrado end-to-end.
 
 ## Fase 9: Inteligencia predictiva y diferenciadores
 

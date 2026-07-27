@@ -1293,7 +1293,7 @@ Criterio de salida:
 - Paciente puede registrarse sin intervencion manual.
 - Recepcion recibe estado actualizado en tiempo real o casi real.
 
-### Fase 8: Automatizaciones con WhatsApp y Pity Voice
+### Fase 8: Automatizaciones con WhatsApp
 
 Objetivo: reducir no-shows y mejorar comunicacion operacional.
 
@@ -1301,10 +1301,10 @@ Alcance:
 
 1. Confirmacion automatica 24 horas antes.
 2. Recordatorio 2 horas antes.
-3. Escalamiento a Pity Voice si no responde WhatsApp.
-4. Mensaje de retraso si la clinica esta atrasada.
-5. Solicitud de resena despues de cita finalizada.
-6. Seguimiento automatico para no-show o cancelacion.
+3. Mensaje de retraso si la clinica esta atrasada.
+4. Solicitud de resena despues de cita finalizada.
+5. Seguimiento automatico para no-show o cancelacion.
+6. Fase futura: escalamiento a Pity Voice si no responde WhatsApp.
 
 Criterio de salida:
 

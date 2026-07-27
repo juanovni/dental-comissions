@@ -503,20 +503,17 @@ class SocialCrmSettings extends Page
         return Section::make('Confirmaciones')
             ->id('confirmaciones')
             ->icon('heroicon-o-bell-alert')
-            ->description('Controla recordatorios de citas y escalamiento para reducir no-shows.')
+            ->description('Controla recordatorios de citas por WhatsApp para reducir no-shows.')
             ->schema([
                 Section::make('Canales')
                     ->icon('heroicon-o-megaphone')
-                    ->description('Activa manualmente los canales cuando las plantillas y costos esten validados.')
+                    ->description('Activa manualmente WhatsApp cuando las plantillas y costos esten validados.')
                     ->schema([
                         Toggle::make('appointment_reminders_whatsapp_enabled')
                             ->label('Recordatorios por WhatsApp')
                             ->helperText('Envia mensajes template de confirmacion antes de la cita.'),
-                        Toggle::make('appointment_reminders_pity_voice_enabled')
-                            ->label('Escalamiento Pity Voice')
-                            ->helperText('Llama automaticamente si el paciente no confirma por WhatsApp.'),
                     ])
-                    ->columns(2)
+                    ->columns(1)
                     ->columnSpanFull(),
 
                 Section::make('Tiempos de confirmacion')
@@ -533,13 +530,8 @@ class SocialCrmSettings extends Page
                             ->helperText('Horas antes de la cita si aun no confirma.')
                             ->numeric()
                             ->minValue(1),
-                        TextInput::make('appointment_reminders_voice_escalation_hours_before')
-                            ->label('Escalar a Pity Voice')
-                            ->helperText('Horas antes de la cita si sigue sin confirmacion.')
-                            ->numeric()
-                            ->minValue(1),
                     ])
-                    ->columns(3)
+                    ->columns(2)
                     ->columnSpanFull(),
 
                 Section::make('Reglas operativas')
@@ -913,10 +905,8 @@ class SocialCrmSettings extends Page
             'social_appointment_patient_fallback_name',
             // Confirmaciones
             'appointment_reminders_whatsapp_enabled',
-            'appointment_reminders_pity_voice_enabled',
             'appointment_reminders_first_hours_before',
             'appointment_reminders_second_hours_before',
-            'appointment_reminders_voice_escalation_hours_before',
             'appointment_reminders_only_unconfirmed',
             'appointment_reminders_internal_alert_on_no_response',
             // Respuestas automáticas
@@ -1015,10 +1005,8 @@ class SocialCrmSettings extends Page
             'social_appointment_require_whatsapp_phone_for_patient' => true,
             'social_appointment_patient_fallback_name' => 'Paciente WhatsApp',
             'appointment_reminders_whatsapp_enabled' => false,
-            'appointment_reminders_pity_voice_enabled' => false,
             'appointment_reminders_first_hours_before' => 24,
             'appointment_reminders_second_hours_before' => 2,
-            'appointment_reminders_voice_escalation_hours_before' => 4,
             'appointment_reminders_only_unconfirmed' => true,
             'appointment_reminders_internal_alert_on_no_response' => true,
             'social_auto_reply_enabled' => false,
@@ -1088,10 +1076,8 @@ class SocialCrmSettings extends Page
             'social_smart_link_duration_score' => 'Puntos por duración del Smart Link',
             'social_smart_link_duration_alert' => 'Alerta de alta permanencia en Smart Link',
             'appointment_reminders_whatsapp_enabled' => 'Recordatorios por WhatsApp',
-            'appointment_reminders_pity_voice_enabled' => 'Escalamiento Pity Voice',
             'appointment_reminders_first_hours_before' => 'Horas antes del primer recordatorio',
             'appointment_reminders_second_hours_before' => 'Horas antes del segundo recordatorio',
-            'appointment_reminders_voice_escalation_hours_before' => 'Horas antes para escalar a Pity Voice',
             'appointment_reminders_only_unconfirmed' => 'Solo citas sin confirmar',
             'appointment_reminders_internal_alert_on_no_response' => 'Alerta interna si no responde',
         ];

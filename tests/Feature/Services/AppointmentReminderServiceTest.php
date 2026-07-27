@@ -33,7 +33,8 @@ class AppointmentReminderServiceTest extends TestCase
         $summary = app(AppointmentReminderService::class)->run(now());
 
         $this->assertSame(1, $summary['whatsapp_skipped']);
-        $this->assertSame(1, $summary['voice_skipped']);
+        $this->assertArrayNotHasKey('voice_skipped', $summary);
+        $this->assertArrayNotHasKey('voice_queued', $summary);
         $this->assertDatabaseCount('appointment_reminders', 0);
     }
 

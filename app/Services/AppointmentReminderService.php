@@ -3,11 +3,8 @@
 namespace App\Services;
 
 use App\Enums\AppointmentStatus;
-use App\Enums\VoiceCallStatus;
-use App\Enums\VoiceChannelType;
 use App\Models\Appointment;
 use App\Models\AppointmentReminder;
-use App\Models\VoiceCall;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
@@ -29,8 +26,6 @@ class AppointmentReminderService
             'whatsapp_first_sent' => 0,
             'whatsapp_second_sent' => 0,
             'whatsapp_skipped' => 0,
-            'voice_queued' => 0,
-            'voice_skipped' => 0,
         ];
 
         if ($this->settings->appointmentReminderWhatsappEnabled()) {
@@ -38,12 +33,6 @@ class AppointmentReminderService
             $summary['whatsapp_second_sent'] = $this->sendWhatsappReminders('second', $this->settings->appointmentReminderSecondHoursBefore(), $now);
         } else {
             $summary['whatsapp_skipped'] = 1;
-        }
-
-        if ($this->settings->appointmentReminderPityVoiceEnabled()) {
-            $summary['voice_queued'] = $this->queueVoiceEscalations($this->settings->appointmentReminderVoiceEscalationHoursBefore(), $now);
-        } else {
-            $summary['voice_skipped'] = 1;
         }
 
         return $summary;
@@ -85,45 +74,6 @@ class AppointmentReminderService
         }
 
         return $sent;
-    }
-
-    private function queueVoiceEscalations(int $hoursBefore, Carbon $now): int
-    {
-        $queued = 0;
-
-        foreach ($this->dueAppointments($hoursBefore, $now, onlyUnconfirmed: true)->get() as $appointment) {
-            if ($this->hasReminder($appointment, 'pity_voice', 'escalation')) {
-                continue;
-            }
-
-            $phone = $this->normalizePhone($appointment->patient?->phone);
-
-            if (! $phone) {
-                $this->recordReminder($appointment, 'pity_voice', 'escalation', 'failed', null, null, 'Paciente sin telefono.');
-
-                continue;
-            }
-
-            VoiceCall::create([
-                'patient_id' => $appointment->patient_id,
-                'appointment_id' => $appointment->id,
-                'channel' => VoiceChannelType::Telnyx,
-                'provider' => 'pity_voice',
-                'from_phone' => (string) config('services.telnyx.from_number', ''),
-                'to_phone' => $phone,
-                'status' => VoiceCallStatus::Started,
-                'started_at' => now(),
-                'metadata' => [
-                    'source' => 'appointment_reminder',
-                    'note' => 'Escalamiento registrado. La llamada saliente real se integrara con el proveedor de voz.',
-                ],
-            ]);
-
-            $this->recordReminder($appointment, 'pity_voice', 'escalation', 'queued', $phone);
-            $queued++;
-        }
-
-        return $queued;
     }
 
     private function dueAppointments(int $hoursBefore, Carbon $now, ?bool $onlyUnconfirmed = null): Builder
