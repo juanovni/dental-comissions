@@ -150,19 +150,22 @@ class ClinicalQueue extends Page
     {
         $allowed = app(AppointmentFlowService::class)->allowedTransitions()[$appointment->status->value] ?? [];
 
-        return collect($allowed)
+        $labels = collect($allowed)
             ->mapWithKeys(fn (AppointmentStatus $status): array => [$status->value => match ($status) {
                 AppointmentStatus::Preparing => 'Preparar paciente',
                 AppointmentStatus::ReadyForDoctor => 'Listo para doctor',
                 AppointmentStatus::InConsultation => 'Iniciar consulta',
                 AppointmentStatus::CheckedIn => 'Volver a espera',
                 default => $status->label(),
-            }])
-            ->only([
+            }]);
+
+        return collect([
                 AppointmentStatus::Preparing->value,
                 AppointmentStatus::ReadyForDoctor->value,
                 AppointmentStatus::CheckedIn->value,
             ])
+            ->filter(fn (string $status): bool => $labels->has($status))
+            ->mapWithKeys(fn (string $status): array => [$status => $labels->get($status)])
             ->all();
     }
 
