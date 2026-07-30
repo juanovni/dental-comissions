@@ -31,6 +31,9 @@
         .dq-procedure { color: #475569; font-size: .95rem; margin-top: .35rem; }
         .dq-meta { color: #64748b; font-size: .84rem; line-height: 1.5; }
         .dq-meta-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .75rem; }
+        .dq-wait { color: #64748b; font-weight: 600; }
+        .dq-wait-warning { color: #ca8a04; }
+        .dq-wait-critical { color: #dc2626; }
         .dq-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
         .dq-action { align-items: center; background: #fff; border: 1px solid #dbe3ea; border-radius: .48rem; color: #0f172a; display: inline-flex; font-size: .78rem; font-weight: 500; gap: .4rem; justify-content: center; line-height: 1; min-height: 2.05rem; padding: .56rem .72rem; text-decoration: none; transition: background-color .16s ease, border-color .16s ease, filter .16s ease; }
         .dq-action svg { flex: 0 0 auto; height: 1rem; width: 1rem; }
@@ -64,6 +67,8 @@
         .dark .dq-avatar, .dark .dq-patient-avatar, .dark .dq-note, .dark .dq-textarea { background: #142323; border-color: rgba(148, 163, 184, .22); }
         .dark .dq-procedure, .dark .dq-title-muted { color: #b7cbd1; }
         .dark .dq-status { background: rgba(20, 184, 166, .12); border-color: rgba(20, 184, 166, .35); color: #2dd4bf; }
+        .dark .dq-wait-warning { color: #fbbf24; }
+        .dark .dq-wait-critical { color: #f87171; }
         .dark .dq-action-primary { background: oklch(55% .12 185); border-color: oklch(55% .12 185); color: #ffffff; }
     </style>
 
@@ -100,7 +105,8 @@
                                     <div class="dq-procedure">{{ $selected->procedure?->name ?? 'Sin procedimiento' }}</div>
                                     <div class="dq-meta dq-meta-row">
                                         <span>Cita {{ $selected->scheduled_at?->format('h:i a') }}</span>
-                                        <span>Esperando {{ $selected->waitingMinutes() ?? 0 }} min</span>
+                                        @php($selectedWaitingMinutes = $selected->waitingMinutes() ?? 0)
+                                        <span class="dq-wait @if ($selectedWaitingMinutes >= 20) dq-wait-critical @elseif ($selectedWaitingMinutes >= 10) dq-wait-warning @endif">Esperando {{ $selectedWaitingMinutes }} min</span>
                                     </div>
                                 </div>
                             </div>
@@ -114,7 +120,7 @@
                                         {{ $label }}
                                     </button>
                                 @endforeach
-                                <button class="dq-action" type="button" wire:click="openNoteModal({{ $selected->id }})">Nota</button>
+                                <button class="dq-action" type="button" wire:click="openNoteModal({{ $selected->id }})">Agregar nota</button>
                             </div>
 
                             <section class="dq-notes">
@@ -155,11 +161,12 @@
                     <div class="dq-title-muted">{{ $activeFilterLabel }} {{ $queue->count() }}</div>
                     <div class="dq-pending">
                         @forelse ($queue as $appointment)
+                            @php($waitingMinutes = $appointment->waitingMinutes() ?? 0)
                             <button type="button" class="dq-patient {{ $selected?->id === $appointment->id ? 'dq-patient-active' : '' }}" wire:click="selectAppointment({{ $appointment->id }})">
                                 <span class="dq-patient-avatar">{{ str($appointment->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span>
                                 <span>
                                     <span class="dq-patient-name">{{ $appointment->patient?->full_name ?? 'Paciente sin nombre' }}</span>
-                                    <span class="dq-patient-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }} · {{ $appointment->scheduled_at?->format('h:i a') }} · {{ $appointment->waitingMinutes() ?? 0 }} min · {{ $appointment->appointmentNotes->count() }} notas</span>
+                                    <span class="dq-patient-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }} · {{ $appointment->scheduled_at?->format('h:i a') }} · <span class="dq-wait @if ($waitingMinutes >= 20) dq-wait-critical @elseif ($waitingMinutes >= 10) dq-wait-warning @endif">{{ $waitingMinutes }} min</span> · {{ $appointment->appointmentNotes->count() }} notas</span>
                                 </span>
                                 <span class="dq-patient-marker">{{ $selected?->id === $appointment->id ? '•' : '' }}</span>
                             </button>
@@ -167,12 +174,6 @@
                             <div class="dq-meta">No hay pacientes en esta vista.</div>
                         @endforelse
                     </div>
-                </section>
-
-                <section class="dq-panel">
-                    <div class="dq-title">Apoyo</div>
-                    <button class="dq-action" type="button">Mensaje a recepcion</button>
-                    <button class="dq-action" type="button">Solicitar asistente</button>
                 </section>
             </aside>
         </div>

@@ -192,6 +192,11 @@ class SocialCrmSettingsService
         return (bool) $this->get('appointment_reminders_internal_alert_on_no_response', true);
     }
 
+    public function appointmentReminderNoResponseAlertMinutes(): int
+    {
+        return max(1, (int) $this->get('appointment_reminders_no_response_alert_minutes', 60));
+    }
+
     // ── Auto Reply Settings ──────────────────────────────────────
 
     public function autoReplyEnabled(): bool

@@ -544,6 +544,11 @@ class SocialCrmSettings extends Page
                         Toggle::make('appointment_reminders_internal_alert_on_no_response')
                             ->label('Alertar si no responde')
                             ->helperText('Crea una alerta interna para recepcion cuando no hay respuesta.'),
+                        TextInput::make('appointment_reminders_no_response_alert_minutes')
+                            ->label('Minutos sin respuesta')
+                            ->helperText('Tiempo despues del recordatorio para alertar a recepcion si el paciente no responde.')
+                            ->numeric()
+                            ->minValue(1),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
@@ -909,6 +914,7 @@ class SocialCrmSettings extends Page
             'appointment_reminders_second_hours_before',
             'appointment_reminders_only_unconfirmed',
             'appointment_reminders_internal_alert_on_no_response',
+            'appointment_reminders_no_response_alert_minutes',
             // Respuestas automáticas
             'social_auto_reply_enabled',
             'social_auto_reply_dry_run',
@@ -1009,6 +1015,7 @@ class SocialCrmSettings extends Page
             'appointment_reminders_second_hours_before' => 2,
             'appointment_reminders_only_unconfirmed' => true,
             'appointment_reminders_internal_alert_on_no_response' => true,
+            'appointment_reminders_no_response_alert_minutes' => 60,
             'social_auto_reply_enabled' => false,
             'social_auto_reply_dry_run' => true,
             'social_auto_reply_use_ai' => true,
@@ -1080,6 +1087,7 @@ class SocialCrmSettings extends Page
             'appointment_reminders_second_hours_before' => 'Horas antes del segundo recordatorio',
             'appointment_reminders_only_unconfirmed' => 'Solo citas sin confirmar',
             'appointment_reminders_internal_alert_on_no_response' => 'Alerta interna si no responde',
+            'appointment_reminders_no_response_alert_minutes' => 'Minutos sin respuesta para alertar',
         ];
 
         return $labels[$key] ?? str($key)

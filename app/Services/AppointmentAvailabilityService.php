@@ -24,7 +24,7 @@ class AppointmentAvailabilityService
         $openMinutes = $this->timeToMinutes($open);
         $closeMinutes = $this->timeToMinutes($close);
 
-        $start = now()->addHours($leadTimeHours);
+        $start = $this->clinicNow()->addHours($leadTimeHours);
 
         $currentMinutes = $start->hour * 60 + $start->minute;
         $rounded = (int) (ceil($currentMinutes / $duration) * $duration);
@@ -90,7 +90,7 @@ class AppointmentAvailabilityService
         $googleService = app(GoogleCalendarService::class);
 
         $slots = [];
-        $date = $dayStart?->copy() ?? now()->addHours($settings->appointmentLeadTimeHours());
+        $date = $dayStart?->copy() ?? $this->clinicNow()->addHours($settings->appointmentLeadTimeHours());
         $maxIterations = 200;
 
         while (count($slots) < $count && $maxIterations > 0) {
@@ -103,7 +103,7 @@ class AppointmentAvailabilityService
                 continue;
             }
 
-            $currentOpen = ($dayStart && $date->isSameDay($dayStart)) || (! $dayStart && $date->isToday())
+            $currentOpen = ($dayStart && $date->isSameDay($dayStart)) || (! $dayStart && $date->isSameDay($this->clinicNow()))
                 ? max($this->timeToMinutes($open), $date->hour * 60 + $date->minute)
                 : $this->timeToMinutes($open);
 
@@ -160,7 +160,7 @@ class AppointmentAvailabilityService
         $settings = app(SocialCrmSettingsService::class);
         $clinicDays = $settings->appointmentClinicDays();
 
-        if ($start->lessThan(now()->addHours($settings->appointmentLeadTimeHours())->startOfMinute())) {
+        if ($start->lessThan($this->clinicNow()->addHours($settings->appointmentLeadTimeHours())->startOfMinute())) {
             return false;
         }
 
@@ -195,7 +195,7 @@ class AppointmentAvailabilityService
         $leadTimeHours = $settings->appointmentLeadTimeHours();
         $googleService = app(GoogleCalendarService::class);
 
-        $startFrom = now()->addHours($leadTimeHours)->startOfMinute();
+        $startFrom = $this->clinicNow()->addHours($leadTimeHours)->startOfMinute();
         $cursor = $preferredDate?->copy()->startOfDay()->max($startFrom) ?? $startFrom;
 
         $days = [];
@@ -214,7 +214,7 @@ class AppointmentAvailabilityService
                 continue;
             }
 
-            $startMinute = $date->isToday()
+            $startMinute = $date->isSameDay($this->clinicNow())
                 ? max($openMinutes, (int) (ceil(($startFrom->hour * 60 + $startFrom->minute) / $duration) * $duration))
                 : $openMinutes;
 
@@ -306,7 +306,7 @@ class AppointmentAvailabilityService
 
         $query = Appointment::query()
             ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '<', $end)
+            ->where('scheduled_at', '<', $end->format('Y-m-d H:i:s'))
             ->whereNotIn('status', [
                 AppointmentStatus::Cancelled->value,
                 AppointmentStatus::NoShow->value,
@@ -318,7 +318,7 @@ class AppointmentAvailabilityService
 
         return $query->get(['scheduled_at', 'duration_minutes'])
             ->contains(function (Appointment $appointment) use ($start, $end, $defaultDuration): bool {
-                $appointmentStart = $appointment->scheduled_at;
+                $appointmentStart = Carbon::parse($appointment->scheduled_at->format('Y-m-d H:i:s'), $start->getTimezone());
                 $appointmentEnd = $appointmentStart->copy()->addMinutes(
                     $appointment->duration_minutes ?: $defaultDuration,
                 );
@@ -332,8 +332,8 @@ class AppointmentAvailabilityService
         $query = AppointmentSlotHold::query()
             ->where('status', 'active')
             ->where('expires_at', '>', now())
-            ->where('starts_at', '<', $end)
-            ->where('ends_at', '>', $start);
+            ->where('starts_at', '<', $end->format('Y-m-d H:i:s'))
+            ->where('ends_at', '>', $start->format('Y-m-d H:i:s'));
 
         if ($doctorId) {
             $query->where(function ($query) use ($doctorId): void {
@@ -342,5 +342,10 @@ class AppointmentAvailabilityService
         }
 
         return $query->exists();
+    }
+
+    private function clinicNow(): Carbon
+    {
+        return Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone());
     }
 }

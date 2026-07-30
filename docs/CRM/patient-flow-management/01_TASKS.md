@@ -232,6 +232,7 @@ Objetivo: reducir no-shows y mejorar comunicacion operacional.
 - [x] Parametrizar primer recordatorio en horas antes de la cita.
 - [x] Parametrizar segundo recordatorio en horas antes de la cita.
 - [x] Parametrizar envio solo para citas sin confirmar.
+- [x] Parametrizar minutos sin respuesta para alertar a recepcion.
 - [x] Crear tabla `appointment_reminders` para trazabilidad y deduplicacion.
 - [x] Crear modelo `AppointmentReminder`.
 - [x] Relacionar `Appointment -> reminders`.
