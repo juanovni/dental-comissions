@@ -98,12 +98,16 @@ class Reception extends Page
 
     public function alerts(): Collection
     {
+        $settings = app(SocialCrmSettingsService::class);
+        $warningMinutes = $settings->patientFlowWaitWarningMinutes();
+        $criticalMinutes = $settings->patientFlowWaitCriticalMinutes();
+
         return collect()
             ->merge($this->cards('waiting')
-                ->filter(fn (Appointment $appointment): bool => ($appointment->waitingMinutes() ?? 0) >= 10)
+                ->filter(fn (Appointment $appointment): bool => ($appointment->waitingMinutes() ?? 0) >= $warningMinutes)
                 ->map(fn (Appointment $appointment): array => [
                     'id' => $appointment->id,
-                    'level' => ($appointment->waitingMinutes() ?? 0) >= 20 ? 'critical' : 'warning',
+                    'level' => ($appointment->waitingMinutes() ?? 0) >= $criticalMinutes ? 'critical' : 'warning',
                     'patient' => $appointment->patient?->full_name ?? 'Paciente',
                     'message' => ($appointment->patient?->full_name ?? 'Paciente').' lleva '.$appointment->waitingMinutes().' min en espera',
                     'procedure' => $appointment->procedure?->name ?? 'Sin procedimiento',

@@ -92,6 +92,7 @@ Para ejecucion inicial, conviene separar estados persistidos de estados derivado
 Estados persistidos recomendados:
 
 - `pending_confirmation`: Pendiente de confirmacion.
+- `scheduled`: Agendada sin confirmacion explicita.
 - `confirmed`: Confirmada.
 - `checked_in`: En espera.
 - `preparing`: En preparacion.
@@ -116,6 +117,9 @@ Estados futuros:
 Notas:
 
 - No persistir `Por llegar` ni `Retrasado` como estados reales en MVP.
+- `scheduled` se mantiene como estado base visible por compatibilidad con Agenda, WhatsApp, voz, ROI y creacion de citas.
+- `pending_confirmation` queda reservado para citas creadas desde canales donde falta confirmacion explicita del paciente.
+- En MVP, `rescheduled` actualiza la misma cita y registra el cambio en eventos; crear una nueva cita vinculada queda como mejora futura.
 - `ready_for_doctor` permite separar llegada/preparacion de disponibilidad real para consulta.
 - Cada cambio de estado persistido debe registrarse en historial.
 

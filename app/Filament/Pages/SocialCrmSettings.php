@@ -66,6 +66,7 @@ class SocialCrmSettings extends Page
                 $this->botSection(),
                 $this->citasSection(),
                 $this->confirmacionesSection(),
+                $this->patientFlowSection(),
                 $this->respuestasAutomaticasSection(),
                 $this->mensajesSection(),
                 $this->seguimientoComercialSection(),
@@ -92,6 +93,11 @@ class SocialCrmSettings extends Page
                 'id' => 'confirmaciones',
                 'label' => 'Confirmaciones',
                 'description' => 'Recordatorios y escalamiento',
+            ],
+            [
+                'id' => 'patient-flow',
+                'label' => 'Patient Flow',
+                'description' => 'Umbrales de operación clínica',
             ],
             [
                 'id' => 'respuestas-automaticas',
@@ -560,6 +566,56 @@ class SocialCrmSettings extends Page
             ->footerActionsAlignment(Alignment::End);
     }
 
+    private function patientFlowSection(): Section
+    {
+        return Section::make('Patient Flow')
+            ->id('patient-flow')
+            ->icon('heroicon-o-clock')
+            ->description('Define los umbrales operativos usados en recepción, cola clínica y mi cola de atención.')
+            ->schema([
+                Section::make('Tiempos de espera')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->description('Controla cuándo una espera pasa a advertencia o crítica.')
+                    ->schema([
+                        TextInput::make('patient_flow_wait_warning_minutes')
+                            ->label('Espera warning')
+                            ->helperText('Minutos desde check-in para mostrar advertencia.')
+                            ->numeric()
+                            ->minValue(1),
+                        TextInput::make('patient_flow_wait_critical_minutes')
+                            ->label('Espera crítica')
+                            ->helperText('Minutos desde check-in para mostrar alerta crítica.')
+                            ->numeric()
+                            ->minValue(1),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+
+                Section::make('Alertas operativas')
+                    ->icon('heroicon-o-bell-alert')
+                    ->description('Umbrales para detectar demoras antes de consulta y posibles ausencias.')
+                    ->schema([
+                        TextInput::make('patient_flow_ready_delayed_minutes')
+                            ->label('Listo demorado')
+                            ->helperText('Minutos desde listo para doctor sin iniciar consulta.')
+                            ->numeric()
+                            ->minValue(1),
+                        TextInput::make('patient_flow_no_show_probable_minutes')
+                            ->label('No-show probable')
+                            ->helperText('Minutos después de la hora de cita para considerar ausencia probable.')
+                            ->numeric()
+                            ->minValue(1),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+            ])
+            ->columns(1)
+            ->footerActions([
+                $this->saveSectionAction('save_patient_flow'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
+    }
+
     private function respuestasAutomaticasSection(): Section
     {
         return Section::make('Respuestas Automáticas')
@@ -915,6 +971,11 @@ class SocialCrmSettings extends Page
             'appointment_reminders_only_unconfirmed',
             'appointment_reminders_internal_alert_on_no_response',
             'appointment_reminders_no_response_alert_minutes',
+            // Patient Flow
+            'patient_flow_wait_warning_minutes',
+            'patient_flow_wait_critical_minutes',
+            'patient_flow_ready_delayed_minutes',
+            'patient_flow_no_show_probable_minutes',
             // Respuestas automáticas
             'social_auto_reply_enabled',
             'social_auto_reply_dry_run',
@@ -1016,6 +1077,10 @@ class SocialCrmSettings extends Page
             'appointment_reminders_only_unconfirmed' => true,
             'appointment_reminders_internal_alert_on_no_response' => true,
             'appointment_reminders_no_response_alert_minutes' => 60,
+            'patient_flow_wait_warning_minutes' => 10,
+            'patient_flow_wait_critical_minutes' => 20,
+            'patient_flow_ready_delayed_minutes' => 10,
+            'patient_flow_no_show_probable_minutes' => 15,
             'social_auto_reply_enabled' => false,
             'social_auto_reply_dry_run' => true,
             'social_auto_reply_use_ai' => true,
@@ -1057,6 +1122,7 @@ class SocialCrmSettings extends Page
     private function inferGroup(string $key): string
     {
         return match (true) {
+            str_contains($key, 'patient_flow') => 'patient_flow',
             str_contains($key, 'appointment_reminders') => 'appointment_reminders',
             str_contains($key, 'appointment') => 'appointments',
             str_contains($key, 'auto_reply') => 'auto_reply',
@@ -1088,6 +1154,10 @@ class SocialCrmSettings extends Page
             'appointment_reminders_only_unconfirmed' => 'Solo citas sin confirmar',
             'appointment_reminders_internal_alert_on_no_response' => 'Alerta interna si no responde',
             'appointment_reminders_no_response_alert_minutes' => 'Minutos sin respuesta para alertar',
+            'patient_flow_wait_warning_minutes' => 'Minutos para espera warning',
+            'patient_flow_wait_critical_minutes' => 'Minutos para espera crítica',
+            'patient_flow_ready_delayed_minutes' => 'Minutos para listo demorado',
+            'patient_flow_no_show_probable_minutes' => 'Minutos para no-show probable',
         ];
 
         return $labels[$key] ?? str($key)

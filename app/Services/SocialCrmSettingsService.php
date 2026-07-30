@@ -197,6 +197,29 @@ class SocialCrmSettingsService
         return max(1, (int) $this->get('appointment_reminders_no_response_alert_minutes', 60));
     }
 
+    public function patientFlowWaitWarningMinutes(): int
+    {
+        return max(1, (int) $this->get('patient_flow_wait_warning_minutes', 10));
+    }
+
+    public function patientFlowWaitCriticalMinutes(): int
+    {
+        return max(
+            $this->patientFlowWaitWarningMinutes(),
+            (int) $this->get('patient_flow_wait_critical_minutes', 20),
+        );
+    }
+
+    public function patientFlowReadyDelayedMinutes(): int
+    {
+        return max(1, (int) $this->get('patient_flow_ready_delayed_minutes', 10));
+    }
+
+    public function patientFlowNoShowProbableMinutes(): int
+    {
+        return max(1, (int) $this->get('patient_flow_no_show_probable_minutes', 15));
+    }
+
     // ── Auto Reply Settings ──────────────────────────────────────
 
     public function autoReplyEnabled(): bool

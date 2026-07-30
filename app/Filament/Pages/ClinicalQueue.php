@@ -6,6 +6,7 @@ use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\DoctorAssistantAssignment;
 use App\Services\AppointmentFlowService;
+use App\Services\SocialCrmSettingsService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
@@ -74,16 +75,20 @@ class ClinicalQueue extends Page
 
     public function alerts(): Collection
     {
+        $settings = app(SocialCrmSettingsService::class);
+        $warningMinutes = $settings->patientFlowWaitWarningMinutes();
+        $criticalMinutes = $settings->patientFlowWaitCriticalMinutes();
+
         return collect([
             AppointmentStatus::CheckedIn->value,
             AppointmentStatus::Preparing->value,
             AppointmentStatus::ReadyForDoctor->value,
         ])
             ->flatMap(fn (string $status): Collection => $this->cards($status))
-            ->filter(fn (Appointment $appointment): bool => ($appointment->waitingMinutes() ?? 0) >= 10)
+            ->filter(fn (Appointment $appointment): bool => ($appointment->waitingMinutes() ?? 0) >= $warningMinutes)
             ->map(fn (Appointment $appointment): array => [
                 'id' => $appointment->id,
-                'level' => ($appointment->waitingMinutes() ?? 0) >= 20 ? 'critical' : 'warning',
+                'level' => ($appointment->waitingMinutes() ?? 0) >= $criticalMinutes ? 'critical' : 'warning',
                 'patient' => $appointment->patient?->full_name ?? 'Paciente',
                 'message' => ($appointment->patient?->full_name ?? 'Paciente').' lleva '.$appointment->waitingMinutes().' min '.$this->alertStatusText($appointment),
                 'procedure' => $appointment->procedure?->name ?? 'Sin procedimiento',

@@ -6,6 +6,9 @@
         $filters = $this->queueFilters();
         $activeFilterLabel = $filters[$this->activeQueueFilter] ?? 'Todos';
         $totalPatients = $summary['waiting'] + $summary['preparing'] + $summary['ready'] + $summary['in_consultation'];
+        $patientFlowSettings = app(\App\Services\SocialCrmSettingsService::class);
+        $waitWarningMinutes = $patientFlowSettings->patientFlowWaitWarningMinutes();
+        $waitCriticalMinutes = $patientFlowSettings->patientFlowWaitCriticalMinutes();
     @endphp
 
     <style>
@@ -106,7 +109,7 @@
                                     <div class="dq-meta dq-meta-row">
                                         <span>Cita {{ $selected->scheduled_at?->format('h:i a') }}</span>
                                         @php($selectedWaitingMinutes = $selected->waitingMinutes() ?? 0)
-                                        <span class="dq-wait @if ($selectedWaitingMinutes >= 20) dq-wait-critical @elseif ($selectedWaitingMinutes >= 10) dq-wait-warning @endif">Esperando {{ $selectedWaitingMinutes }} min</span>
+                                        <span class="dq-wait @if ($selectedWaitingMinutes >= $waitCriticalMinutes) dq-wait-critical @elseif ($selectedWaitingMinutes >= $waitWarningMinutes) dq-wait-warning @endif">Esperando {{ $selectedWaitingMinutes }} min</span>
                                     </div>
                                 </div>
                             </div>
@@ -166,7 +169,7 @@
                                 <span class="dq-patient-avatar">{{ str($appointment->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span>
                                 <span>
                                     <span class="dq-patient-name">{{ $appointment->patient?->full_name ?? 'Paciente sin nombre' }}</span>
-                                    <span class="dq-patient-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }} · {{ $appointment->scheduled_at?->format('h:i a') }} · <span class="dq-wait @if ($waitingMinutes >= 20) dq-wait-critical @elseif ($waitingMinutes >= 10) dq-wait-warning @endif">{{ $waitingMinutes }} min</span> · {{ $appointment->appointmentNotes->count() }} notas</span>
+                                    <span class="dq-patient-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }} · {{ $appointment->scheduled_at?->format('h:i a') }} · <span class="dq-wait @if ($waitingMinutes >= $waitCriticalMinutes) dq-wait-critical @elseif ($waitingMinutes >= $waitWarningMinutes) dq-wait-warning @endif">{{ $waitingMinutes }} min</span> · {{ $appointment->appointmentNotes->count() }} notas</span>
                                 </span>
                                 <span class="dq-patient-marker">{{ $selected?->id === $appointment->id ? '•' : '' }}</span>
                             </button>

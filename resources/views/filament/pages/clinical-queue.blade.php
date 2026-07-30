@@ -5,6 +5,9 @@
         $selected = $this->selectedAppointment();
         $alerts = $this->alerts();
         $alertSummary = $this->alertSummary();
+        $patientFlowSettings = app(\App\Services\SocialCrmSettingsService::class);
+        $waitWarningMinutes = $patientFlowSettings->patientFlowWaitWarningMinutes();
+        $waitCriticalMinutes = $patientFlowSettings->patientFlowWaitCriticalMinutes();
     @endphp
 
     <style>
@@ -221,7 +224,7 @@
                                 @endif
                                 <button type="button" class="cq-card" wire:click="selectAppointment({{ $appointment->id }})">
                                     <span class="cq-card-head"><span class="cq-avatar">{{ str($appointment->patient?->full_name ?? 'P')->explode(' ')->map(fn ($part) => str($part)->substr(0, 1))->take(2)->implode('') }}</span><span class="cq-card-body"><span class="cq-name">{{ $appointment->patient?->full_name ?? 'Paciente sin nombre' }}</span><span class="cq-meta cq-card-time"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $appointment->scheduled_at?->format('h:i a') }} · {{ $appointment->doctor?->name ?? 'Sin doctor' }}</span><span class="cq-meta">{{ $appointment->procedure?->name ?? 'Sin procedimiento' }}</span></span></span>
-                                    <span class="cq-card-foot"><span class="cq-badge">{{ $appointment->status->label() }}</span>@if ($appointment->waitingMinutes() !== null)@php($waitingMinutes = $appointment->waitingMinutes())<span class="cq-wait @if ($waitingMinutes >= 20) cq-wait-critical @elseif ($waitingMinutes >= 10) cq-wait-warning @endif"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $waitingMinutes }} min</span>@endif</span>
+                                    <span class="cq-card-foot"><span class="cq-badge">{{ $appointment->status->label() }}</span>@if ($appointment->waitingMinutes() !== null)@php($waitingMinutes = $appointment->waitingMinutes())<span class="cq-wait @if ($waitingMinutes >= $waitCriticalMinutes) cq-wait-critical @elseif ($waitingMinutes >= $waitWarningMinutes) cq-wait-warning @endif"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>{{ $waitingMinutes }} min</span>@endif</span>
                                     @if ($appointment->latestAppointmentNote)<span class="cq-note-preview">{{ str($appointment->latestAppointmentNote->note)->limit(70) }}</span>@endif
                                 </button>
                             </div>

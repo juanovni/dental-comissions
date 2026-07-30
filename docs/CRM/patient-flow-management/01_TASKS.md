@@ -30,18 +30,18 @@ Objetivo: preparar el modulo sin romper la agenda actual.
 - [x] Auditar enum `AppointmentStatus` actual.
 - [x] Auditar `AppointmentResource` y paginas Filament actuales.
 - [~] Auditar integraciones actuales con Pipeline, WhatsApp y Pity Voice.
-- [ ] Definir mapeo de estados actuales a estados Patient Flow.
+- [x] Definir mapeo de estados actuales a estados Patient Flow.
 - [x] Confirmar que `/admin/appointments` sigue siendo la ruta CRUD de citas.
 - [x] Definir transiciones validas entre estados.
-- [ ] Definir permisos MVP de Patient Flow.
-- [ ] Documentar decisiones tecnicas antes de migrar.
+- [x] Definir permisos MVP de Patient Flow.
+- [x] Documentar decisiones tecnicas antes de migrar.
 
 Criterio de salida:
 
 - [x] La agenda actual sigue funcionando.
-- [ ] Existe mapeo claro de estados.
+- [x] Existe mapeo claro de estados.
 - [x] Existe lista final de transiciones validas.
-- [ ] No existe modulo paralelo que duplique citas.
+- [x] No existe modulo paralelo que duplique citas.
 
 ## Fase 1: Base operativa del flujo
 
@@ -90,6 +90,7 @@ Objetivo: estabilizar el flujo manual antes de agregar canales externos.
 - [x] Calcular tiempo esperando desde `checked_in_at`.
 - [x] Calcular tiempo de consulta desde `consultation_started_at`.
 - [x] Definir umbral inicial de espera critica.
+- [x] Parametrizar umbrales de Patient Flow en Configuracion CRM.
 - [x] Mostrar semaforo basico de espera.
 
 Criterio de salida:
@@ -274,10 +275,12 @@ Criterio de salida:
 
 ## Decisiones pendientes
 
-- [!] Definir si notas MVP van en `appointment_events` o tabla `appointment_notes`.
-- [!] Definir umbrales iniciales: espera critica, listo demorado, no-show probable.
-- [!] Definir si `rescheduled` es estado final o si crea una nueva cita vinculada.
-- [!] Definir si `pending_confirmation` se conserva desde citas actuales o se migra.
+- [x] Notas MVP van en tabla `appointment_notes`; `appointment_events` queda para auditoria de flujo.
+- [x] Umbrales iniciales configurables en Configuracion CRM: espera warning 10 min, espera critica 20 min, listo demorado 10 min, no-show probable 15 min.
+- [x] `rescheduled` en MVP actualiza la misma cita y registra evento con fecha anterior/nueva; nueva cita vinculada queda para fase futura.
+- [x] `scheduled` queda como estado base visible: cita agendada sin confirmacion explicita.
+- [x] `pending_confirmation` se conserva para citas creadas desde canales donde falta confirmacion explicita del paciente.
+- [x] Super Admin tiene fallback automatico de permisos igual que Admin si falta configuracion en `role_permissions`.
 - [!] Definir alcance exacto de `Exportar` en dashboard admin.
 
 ## No hacer en MVP
