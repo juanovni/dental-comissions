@@ -10,6 +10,7 @@ use App\Models\SocialCrmSetting;
 use App\Services\AppointmentReminderService;
 use App\Services\SocialCrmSettingsService;
 use App\Services\WhatsappService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -17,6 +18,13 @@ use Tests\TestCase;
 class AppointmentReminderServiceTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
 
     public function test_reminders_are_disabled_by_default(): void
     {
@@ -120,6 +128,74 @@ class AppointmentReminderServiceTest extends TestCase
             'is_pinned' => true,
         ]);
         $this->assertDatabaseCount('appointment_notes', 1);
+    }
+
+    public function test_reminder_window_uses_clinic_timezone(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-30 21:41:00', 'UTC'));
+
+        $this->setSetting('appointment_reminders_whatsapp_enabled', true, 'boolean');
+        $this->setSetting('social_appointment_clinic_timezone', 'America/Guayaquil', 'string');
+
+        $patient = Patient::factory()->create(['phone' => '+593985925100']);
+        $appointment = Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'scheduled_at' => Carbon::parse('2026-07-30 17:30:00'),
+            'status' => AppointmentStatus::Scheduled,
+        ]);
+
+        $this->mock(WhatsappService::class, function ($mock): void {
+            $mock->shouldReceive('sendMessage')
+                ->once()
+                ->with('593985925100', Mockery::type('string'))
+                ->andReturnTrue();
+        });
+
+        $summary = app(AppointmentReminderService::class)->run();
+
+        $this->assertSame(1, $summary['whatsapp_first_sent']);
+        $this->assertDatabaseHas('appointment_reminders', [
+            'appointment_id' => $appointment->id,
+            'channel' => 'whatsapp',
+            'reminder_type' => 'first',
+            'status' => 'sent',
+        ]);
+    }
+
+    public function test_second_reminder_is_not_sent_immediately_when_first_is_created_inside_second_window(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-30 21:59:00', 'UTC'));
+
+        $this->setSetting('appointment_reminders_whatsapp_enabled', true, 'boolean');
+        $this->setSetting('social_appointment_clinic_timezone', 'America/Guayaquil', 'string');
+
+        $patient = Patient::factory()->create(['phone' => '+593985925100']);
+        Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'scheduled_at' => Carbon::parse('2026-07-30 17:58:00'),
+            'status' => AppointmentStatus::Scheduled,
+        ]);
+
+        $this->mock(WhatsappService::class, function ($mock): void {
+            $mock->shouldReceive('sendMessage')
+                ->once()
+                ->with('593985925100', Mockery::type('string'))
+                ->andReturnTrue();
+        });
+
+        $summary = app(AppointmentReminderService::class)->run();
+
+        $this->assertSame(1, $summary['whatsapp_first_sent']);
+        $this->assertSame(0, $summary['whatsapp_second_sent']);
+        $this->assertDatabaseHas('appointment_reminders', [
+            'channel' => 'whatsapp',
+            'reminder_type' => 'first',
+            'status' => 'sent',
+        ]);
+        $this->assertDatabaseMissing('appointment_reminders', [
+            'channel' => 'whatsapp',
+            'reminder_type' => 'second',
+        ]);
     }
 
     private function setSetting(string $key, mixed $value, string $type): void

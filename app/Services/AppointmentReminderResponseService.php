@@ -8,9 +8,15 @@ use App\Models\AppointmentReminder;
 use App\Models\Patient;
 use App\Models\WhatsappMessage;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 class AppointmentReminderResponseService
 {
+    public function __construct(
+        private SocialCrmSettingsService $settings,
+        private GoogleCalendarService $calendarService,
+    ) {}
+
     public function handle(WhatsappMessage $message): ?array
     {
         $appointment = $this->findAppointmentForPhone($message->from_phone);
@@ -50,6 +56,8 @@ class AppointmentReminderResponseService
                     'message_body' => $message->message_body,
                 ],
             );
+
+            $this->calendarService->createOrUpdateEvent($appointment->fresh(['doctor', 'patient', 'procedure']));
         }
 
         $message->markAsConfirmed();
@@ -127,6 +135,8 @@ class AppointmentReminderResponseService
 
     private function pendingAppointmentQuery(Builder $query): Builder
     {
+        $now = Carbon::now($this->settings->clinicTimezone());
+
         return $query
             ->whereIn('status', [
                 AppointmentStatus::PendingConfirmation->value,
@@ -135,8 +145,8 @@ class AppointmentReminderResponseService
                 AppointmentStatus::Rescheduled->value,
             ])
             ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '>=', now()->subHours(3))
-            ->where('scheduled_at', '<=', now()->addDays(7));
+            ->where('scheduled_at', '>=', $now->copy()->subHours(3))
+            ->where('scheduled_at', '<=', $now->copy()->addDays(7));
     }
 
     private function confirmedReply(Appointment $appointment): string

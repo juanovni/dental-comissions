@@ -21,7 +21,7 @@ class AppointmentReminderService
      */
     public function run(?Carbon $now = null): array
     {
-        $now ??= now();
+        $now ??= Carbon::now($this->settings->clinicTimezone());
 
         $summary = [
             'whatsapp_first_sent' => 0,
@@ -99,11 +99,15 @@ class AppointmentReminderService
                 continue;
             }
 
+            if ($type === 'second' && ! $this->hasPreviousSentReminderBeforeWindow($appointment, 'whatsapp', 'first', $hoursBefore)) {
+                continue;
+            }
+
             $phone = $this->normalizePhone($appointment->patient?->phone);
             $message = $this->buildWhatsappMessage($appointment, $type);
 
             if (! $phone) {
-                $this->recordReminder($appointment, 'whatsapp', $type, 'failed', null, $message, 'Paciente sin telefono.');
+                $this->recordReminder($appointment, 'whatsapp', $type, 'failed', null, $message, 'Paciente sin telefono.', $now);
 
                 continue;
             }
@@ -118,6 +122,7 @@ class AppointmentReminderService
                 $phone,
                 $message,
                 $wasSent ? null : 'WhatsApp no envio el mensaje. Revisa credenciales o respuesta de Meta.',
+                $now,
             );
 
             if ($wasSent) {
@@ -151,6 +156,25 @@ class AppointmentReminderService
             ->exists();
     }
 
+    private function hasPreviousSentReminderBeforeWindow(Appointment $appointment, string $channel, string $type, int $hoursBefore): bool
+    {
+        $windowStartsAt = $appointment->scheduled_at
+            ?->copy()
+            ->subHours($hoursBefore);
+
+        if (! $windowStartsAt) {
+            return false;
+        }
+
+        return AppointmentReminder::query()
+            ->where('appointment_id', $appointment->id)
+            ->where('channel', $channel)
+            ->where('reminder_type', $type)
+            ->where('status', 'sent')
+            ->where('sent_at', '<=', $windowStartsAt)
+            ->exists();
+    }
+
     private function recordReminder(
         Appointment $appointment,
         string $channel,
@@ -159,7 +183,10 @@ class AppointmentReminderService
         ?string $phone,
         ?string $message = null,
         ?string $error = null,
+        ?Carbon $now = null,
     ): AppointmentReminder {
+        $now ??= Carbon::now($this->settings->clinicTimezone());
+
         return AppointmentReminder::create([
             'appointment_id' => $appointment->id,
             'patient_id' => $appointment->patient_id,
@@ -169,7 +196,7 @@ class AppointmentReminderService
             'to_phone' => $phone,
             'message' => $message,
             'scheduled_for' => $appointment->scheduled_at,
-            'sent_at' => in_array($status, ['sent', 'queued'], true) ? now() : null,
+            'sent_at' => in_array($status, ['sent', 'queued'], true) ? $now : null,
             'last_error' => $error,
             'metadata' => [
                 'appointment_status' => $appointment->status->value,

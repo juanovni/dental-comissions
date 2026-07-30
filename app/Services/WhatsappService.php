@@ -65,6 +65,25 @@ class WhatsappService
 
             $socialConversionService = app(SocialConversionService::class);
             $trackingToken = $socialConversionService->extractTrackingToken($body);
+
+            if (! $professional && ! $trackingToken) {
+                $checkInResponse = app(AppointmentWhatsappCheckInService::class)->handle($whatsappMessage);
+
+                if ($checkInResponse) {
+                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $checkInResponse['reply']);
+
+                    return $whatsappMessage->refresh();
+                }
+
+                $reminderResponse = app(AppointmentReminderResponseService::class)->handle($whatsappMessage);
+
+                if ($reminderResponse) {
+                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $reminderResponse['reply']);
+
+                    return $whatsappMessage->refresh();
+                }
+            }
+
             $socialComment = $socialConversionService->processIncomingMessage($whatsappMessage);
 
             if ($socialComment) {
@@ -91,24 +110,6 @@ class WhatsappService
                 $whatsappMessage->markAsFailed('Codigo de lead incompleto o invalido');
 
                 return $whatsappMessage;
-            }
-
-            if (! $professional) {
-                $checkInResponse = app(AppointmentWhatsappCheckInService::class)->handle($whatsappMessage);
-
-                if ($checkInResponse) {
-                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $checkInResponse['reply']);
-
-                    return $whatsappMessage->refresh();
-                }
-
-                $reminderResponse = app(AppointmentReminderResponseService::class)->handle($whatsappMessage);
-
-                if ($reminderResponse) {
-                    $this->sendMessage($fromPhone, $reminderResponse['reply']);
-
-                    return $whatsappMessage->refresh();
-                }
             }
 
             $existingLead = $socialConversionService->findLeadByPhone($fromPhone);

@@ -152,14 +152,30 @@
 
         @media (max-width: 700px) {
             .kanban-carousel-shell::before,
-            .kanban-carousel-shell::after,
-            .kanban-carousel-btn {
+            .kanban-carousel-shell::after {
                 display: none;
             }
 
+            .kanban-carousel-btn {
+                background: rgba(255, 255, 255, .96);
+                box-shadow: 0 12px 28px rgba(15, 23, 42, .18);
+                font-size: 1rem;
+                height: 2.15rem;
+                top: 3.1rem;
+                width: 2.15rem;
+            }
+
+            .kanban-carousel-btn.prev {
+                left: .3rem;
+            }
+
+            .kanban-carousel-btn.next {
+                right: .3rem;
+            }
+
             .kanban-board {
-                padding-inline: .15rem;
-                scroll-padding-inline: .15rem;
+                padding-inline: 2.55rem;
+                scroll-padding-inline: 2.55rem;
             }
 
             .kanban-detail-panel {
