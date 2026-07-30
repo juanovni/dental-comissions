@@ -94,6 +94,14 @@ class WhatsappService
             }
 
             if (! $professional) {
+                $checkInResponse = app(AppointmentWhatsappCheckInService::class)->handle($whatsappMessage);
+
+                if ($checkInResponse) {
+                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $checkInResponse['reply']);
+
+                    return $whatsappMessage->refresh();
+                }
+
                 $reminderResponse = app(AppointmentReminderResponseService::class)->handle($whatsappMessage);
 
                 if ($reminderResponse) {

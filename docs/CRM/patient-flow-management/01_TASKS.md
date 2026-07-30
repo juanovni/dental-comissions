@@ -214,7 +214,7 @@ Objetivo: permitir llegada autoservicio desde canales externos.
 - [x] Manejar llegada ya registrada.
 - [~] Registrar intentos fallidos.
 - [x] Agregar rate limiting.
-- [ ] Integrar WhatsApp con intenciones tipo `LLEGUE`.
+- [x] Integrar WhatsApp con intenciones tipo `LLEGUE`.
 - [x] Crear evento al registrar llegada externa.
 
 Criterio de salida:
