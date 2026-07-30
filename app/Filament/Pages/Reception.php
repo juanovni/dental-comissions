@@ -136,7 +136,9 @@ class Reception extends Page
                         'id' => $appointment->id,
                         'level' => 'warning',
                         'patient' => $appointment->patient?->full_name ?? 'Paciente',
-                        'message' => ($appointment->patient?->full_name ?? 'Paciente').' pidio revisar su cita por WhatsApp',
+                        'message' => $note?->note_type === 'whatsapp_no_response'
+                            ? ($appointment->patient?->full_name ?? 'Paciente').' no respondió el recordatorio WhatsApp'
+                            : ($appointment->patient?->full_name ?? 'Paciente').' pidio revisar su cita por WhatsApp',
                         'procedure' => $appointment->procedure?->name ?? 'Sin procedimiento',
                         'doctor' => $appointment->doctor?->name ?? 'Sin doctor',
                         'column' => $this->columnLabelForAppointment($appointment),
@@ -310,13 +312,15 @@ class Reception extends Page
 
     private function whatsappReviewAppointments(): Collection
     {
+        $noteTypes = ['whatsapp', 'whatsapp_no_response'];
+
         return $this->baseQuery()
             ->with(['appointmentNotes' => fn ($query) => $query
-                ->where('note_type', 'whatsapp')
+                ->whereIn('note_type', $noteTypes)
                 ->where('created_at', '>=', now()->subDay())
                 ->latest()])
             ->whereHas('appointmentNotes', fn (Builder $query): Builder => $query
-                ->where('note_type', 'whatsapp')
+                ->whereIn('note_type', $noteTypes)
                 ->where('created_at', '>=', now()->subDay()))
             ->whereIn('status', [
                 AppointmentStatus::PendingConfirmation->value,

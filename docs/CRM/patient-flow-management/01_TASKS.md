@@ -244,6 +244,7 @@ Objetivo: reducir no-shows y mejorar comunicacion operacional.
 - [x] Recordatorio 2 horas antes por WhatsApp cuando el canal este activo.
 - [x] Procesar respuesta entrante de WhatsApp para confirmar cita.
 - [x] Procesar solicitud entrante de reprogramacion como nota/revision operativa.
+- [x] Generar alerta interna para recepcion si el paciente no responde recordatorio WhatsApp.
 - [ ] Migrar WhatsApp reminder a template aprobado de Meta.
 - [ ] Aviso al paciente si la clinica esta atrasada.
 - [ ] Seguimiento automatico para no-show.

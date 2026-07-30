@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\AppointmentNote;
 use App\Models\AppointmentReminder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -26,6 +27,7 @@ class AppointmentReminderService
             'whatsapp_first_sent' => 0,
             'whatsapp_second_sent' => 0,
             'whatsapp_skipped' => 0,
+            'no_response_alerts_created' => 0,
         ];
 
         if ($this->settings->appointmentReminderWhatsappEnabled()) {
@@ -35,7 +37,57 @@ class AppointmentReminderService
             $summary['whatsapp_skipped'] = 1;
         }
 
+        if ($this->settings->appointmentReminderInternalAlertOnNoResponse()) {
+            $summary['no_response_alerts_created'] = $this->createNoResponseAlerts($now);
+        }
+
         return $summary;
+    }
+
+    private function createNoResponseAlerts(Carbon $now): int
+    {
+        $created = 0;
+        $cutoff = $now->copy()->subMinutes($this->settings->appointmentReminderNoResponseAlertMinutes());
+
+        AppointmentReminder::query()
+            ->with(['appointment.patient', 'appointment.doctor', 'appointment.procedure'])
+            ->where('channel', 'whatsapp')
+            ->where('status', 'sent')
+            ->whereNotNull('sent_at')
+            ->where('sent_at', '<=', $cutoff)
+            ->where(function (Builder $query): void {
+                $query->whereNull('metadata->no_response_alert_created_at')
+                    ->orWhere('metadata->no_response_alert_created_at', '');
+            })
+            ->whereHas('appointment', fn (Builder $query): Builder => $query
+                ->whereIn('status', [
+                    AppointmentStatus::PendingConfirmation->value,
+                    AppointmentStatus::Scheduled->value,
+                    AppointmentStatus::Rescheduled->value,
+                ]))
+            ->each(function (AppointmentReminder $reminder) use ($now, &$created): void {
+                $appointment = $reminder->appointment;
+
+                if (! $appointment || $this->hasNoResponseAlert($appointment, $reminder)) {
+                    $this->markNoResponseAlertCreated($reminder, $now);
+
+                    return;
+                }
+
+                AppointmentNote::create([
+                    'appointment_id' => $appointment->id,
+                    'patient_id' => $appointment->patient_id,
+                    'visibility' => 'internal',
+                    'note_type' => 'whatsapp_no_response',
+                    'note' => $this->buildNoResponseAlertNote($appointment, $reminder),
+                    'is_pinned' => true,
+                ]);
+
+                $this->markNoResponseAlertCreated($reminder, $now);
+                $created++;
+            });
+
+        return $created;
     }
 
     private function sendWhatsappReminders(string $type, int $hoursBefore, Carbon $now): int
@@ -135,6 +187,31 @@ class AppointmentReminderService
         $prefix = $type === 'second' ? 'Te recordamos nuevamente' : 'Te recordamos';
 
         return "Hola {$name}, {$prefix} tu cita{$procedure}{$doctor} el {$time}. Responde CONFIRMO para confirmar o REPROGRAMAR si necesitas cambiarla.";
+    }
+
+    private function hasNoResponseAlert(Appointment $appointment, AppointmentReminder $reminder): bool
+    {
+        return AppointmentNote::query()
+            ->where('appointment_id', $appointment->id)
+            ->where('note_type', 'whatsapp_no_response')
+            ->where('note', 'like', '%recordatorio '.$reminder->reminder_type.'%')
+            ->exists();
+    }
+
+    private function buildNoResponseAlertNote(Appointment $appointment, AppointmentReminder $reminder): string
+    {
+        $patient = $appointment->patient?->full_name ?? 'Paciente';
+        $time = $appointment->scheduled_at?->format('d/m/Y h:i a') ?? 'la hora programada';
+
+        return "{$patient} no respondió el recordatorio {$reminder->reminder_type} de WhatsApp para la cita del {$time}. Revisar confirmación con recepción.";
+    }
+
+    private function markNoResponseAlertCreated(AppointmentReminder $reminder, Carbon $now): void
+    {
+        $metadata = $reminder->metadata ?? [];
+        $metadata['no_response_alert_created_at'] = $now->toISOString();
+
+        $reminder->update(['metadata' => $metadata]);
     }
 
     private function normalizePhone(?string $phone): ?string

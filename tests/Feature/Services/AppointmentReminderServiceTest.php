@@ -4,6 +4,7 @@ namespace Tests\Feature\Services;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\AppointmentReminder;
 use App\Models\Patient;
 use App\Models\SocialCrmSetting;
 use App\Services\AppointmentReminderService;
@@ -70,6 +71,55 @@ class AppointmentReminderServiceTest extends TestCase
             'status' => 'sent',
             'to_phone' => '593985925100',
         ]);
+    }
+
+    public function test_no_response_alert_is_created_once_for_sent_whatsapp_reminder(): void
+    {
+        $this->setSetting('appointment_reminders_whatsapp_enabled', false, 'boolean');
+        $this->setSetting('appointment_reminders_internal_alert_on_no_response', true, 'boolean');
+        $this->setSetting('appointment_reminders_no_response_alert_minutes', 60, 'integer');
+
+        $patient = Patient::factory()->create([
+            'full_name' => 'Maria Perez',
+            'phone' => '+593985925100',
+        ]);
+        $appointment = Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'scheduled_at' => now()->addHours(2),
+            'status' => AppointmentStatus::Scheduled,
+        ]);
+
+        AppointmentReminder::create([
+            'appointment_id' => $appointment->id,
+            'patient_id' => $patient->id,
+            'channel' => 'whatsapp',
+            'reminder_type' => 'first',
+            'status' => 'sent',
+            'to_phone' => '593985925100',
+            'message' => 'Recordatorio',
+            'scheduled_for' => $appointment->scheduled_at,
+            'sent_at' => now()->subMinutes(61),
+            'metadata' => ['appointment_status' => AppointmentStatus::Scheduled->value],
+        ]);
+
+        $this->mock(WhatsappService::class, function ($mock): void {
+            $mock->shouldNotReceive('sendMessage');
+        });
+
+        $service = app(AppointmentReminderService::class);
+
+        $summary = $service->run(now());
+        $secondRun = $service->run(now());
+
+        $this->assertSame(1, $summary['no_response_alerts_created']);
+        $this->assertSame(0, $secondRun['no_response_alerts_created']);
+        $this->assertDatabaseHas('appointment_notes', [
+            'appointment_id' => $appointment->id,
+            'patient_id' => $patient->id,
+            'note_type' => 'whatsapp_no_response',
+            'is_pinned' => true,
+        ]);
+        $this->assertDatabaseCount('appointment_notes', 1);
     }
 
     private function setSetting(string $key, mixed $value, string $type): void
