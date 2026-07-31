@@ -152,8 +152,8 @@ class DoctorQueue extends Page
 
     public function noteOwnerLabel(AppointmentNote $note): string
     {
-        if ($note->createdBy?->name) {
-            return $note->createdBy->name;
+        if ($note->createdBy) {
+            return strtoupper($note->createdBy->role->label()).': '.$note->createdBy->name;
         }
 
         return match ($note->note_type) {

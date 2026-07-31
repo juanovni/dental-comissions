@@ -25,10 +25,11 @@
         .dq-card-head, .dq-panel-head { align-items: center; display: flex; gap: .75rem; justify-content: space-between; }
         .dq-card-head { border-bottom: 1px solid #e5e7eb; padding: .9rem 1.25rem; }
         .dq-card-body { display: grid; gap: 1.4rem; padding: 1.6rem 1.6rem 1.25rem; }
-        .dq-title { color: #0f172a; font-size: .9rem; font-weight: 600; line-height: 1.25; }
+        .dq-title { align-items: center; color: #0f172a; display: inline-flex; font-size: .9rem; font-weight: 600; gap: .45rem; line-height: 1.25; }
+        .dq-title svg { flex: 0 0 auto; height: 1rem; width: 1rem; }
         .dq-title-muted { color: #64748b; font-size: .78rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
         .dq-status { background: #ecfdf5; border: 1px solid #99f6e4; border-radius: 999px; color: #0f766e; font-size: .75rem; font-weight: 600; padding: .25rem .6rem; }
-        .dq-main { align-items: center; display: grid; gap: 1rem; grid-template-columns: auto 1fr; }
+        .dq-main { display: grid; gap: 1rem; grid-template-columns: auto 1fr; }
         .dq-avatar { align-items: center; background: #f1f5f9; border: 1px solid #dbe3ea; border-radius: 999px; color: #0f766e; display: inline-flex; font-size: .9rem; font-weight: 600; height: 3.95rem; justify-content: center; width: 3.95rem; }
         .dq-name { color: #0f172a; font-size: 1.45rem; font-weight: 600; line-height: 1.15; }
         .dq-procedure { color: #475569; font-size: .95rem; margin-top: .35rem; }
@@ -93,7 +94,15 @@
             <main class="dq-main-stack">
                 <section class="dq-card">
                     <header class="dq-card-head">
-                        <div class="dq-title">Siguiente a atender</div>
+                        <div class="dq-title">
+                            @if ($selected?->status === \App\Enums\AppointmentStatus::InConsultation)
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles size-4 text-primary" aria-hidden="true"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg>
+                                En consulta ahora
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right size-4 text-primary" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                Siguiente a atender
+                            @endif
+                        </div>
                         @if ($selected)
                             <span class="dq-status">{{ $selected->status->label() }}</span>
                         @endif
@@ -119,6 +128,8 @@
                                     <button class="dq-action dq-action-primary" wire:click="transition({{ $selected->id }}, '{{ $status }}')">
                                         @if ($status === \App\Enums\AppointmentStatus::InConsultation->value)
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play size-4" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"></path></svg>
+                                        @elseif ($status === \App\Enums\AppointmentStatus::Completed->value)
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check size-4" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
                                         @endif
                                         {{ $label }}
                                     </button>
