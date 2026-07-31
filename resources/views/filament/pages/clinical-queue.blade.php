@@ -110,8 +110,8 @@
         .cq-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .5rem; }
         .cq-action { align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: .45rem; color: #111827; display: inline-flex; font-size: .76rem; font-weight: 500; gap: .35rem; justify-content: center; line-height: 1; min-height: 2rem; padding: .38rem .65rem; text-decoration: none; transition: background-color .14s ease, border-color .14s ease, color .14s ease; }
         .cq-action:hover { background: #f9fafb; border-color: #d1d5db; color: #111827; }
-        .cq-action-primary { background: #000; border-color: #000; color: #fff; }
-        .cq-action-primary:hover { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
+        .cq-action-primary { background: oklch(55% .12 185); border-color: oklch(55% .12 185); color: #ffffff; }
+        .cq-action-primary:hover { background: oklch(50% .12 185); border-color: oklch(50% .12 185); color: #ffffff; }
         .cq-note-preview { background: #f8fafc; border-radius: .5rem; color: #475569; font-size: .76rem; padding: .45rem .55rem; }
         .cq-modal-card { background: #fff; border: 1px solid #e5e7eb; border-radius: .875rem; box-shadow: 0 8px 20px rgba(15, 23, 42, .08); display: grid; gap: .8rem; padding: 1rem; width: min(100%, 30rem); }
         .cq-textarea { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .82rem; min-height: 7rem; padding: .65rem; width: 100%; }
@@ -140,8 +140,8 @@
         .dark .cq-wait-critical { color: #f87171; }
         .dark .cq-drawer { background: rgba(2, 6, 23, .56); }
         .dark .cq-action { background: #111827; border-color: #263244; color: #e5e7eb; }
-        .dark .cq-action-primary { background: #f8fafc; border-color: #f8fafc; color: #0f172a; }
-        .dark .cq-action-primary:hover { background: #e5e7eb; border-color: #e5e7eb; color: #0f172a; }
+        .dark .cq-action-primary { background: oklch(55% .12 185); border-color: oklch(55% .12 185); color: #ffffff; }
+        .dark .cq-action-primary:hover { background: oklch(50% .12 185); border-color: oklch(50% .12 185); color: #ffffff; }
         .dark .cq-note-preview, .dark .cq-textarea { background: #0f172a; border-color: #263244; color: #cbd5e1; }
         @media (max-width: 900px) { .cq-toolbar { margin-top: 0; } .cq-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cq-board { grid-template-columns: repeat(4, 16rem); } }
     </style>
