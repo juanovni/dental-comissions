@@ -167,6 +167,59 @@ class SocialCrmSettingsService
             ->all();
     }
 
+    public function appointmentReminderWhatsappEnabled(): bool
+    {
+        return (bool) $this->get('appointment_reminders_whatsapp_enabled', false);
+    }
+
+    public function appointmentReminderFirstHoursBefore(): int
+    {
+        return max(1, (int) $this->get('appointment_reminders_first_hours_before', 24));
+    }
+
+    public function appointmentReminderSecondHoursBefore(): int
+    {
+        return max(1, (int) $this->get('appointment_reminders_second_hours_before', 2));
+    }
+
+    public function appointmentRemindersOnlyUnconfirmed(): bool
+    {
+        return (bool) $this->get('appointment_reminders_only_unconfirmed', true);
+    }
+
+    public function appointmentReminderInternalAlertOnNoResponse(): bool
+    {
+        return (bool) $this->get('appointment_reminders_internal_alert_on_no_response', true);
+    }
+
+    public function appointmentReminderNoResponseAlertMinutes(): int
+    {
+        return max(1, (int) $this->get('appointment_reminders_no_response_alert_minutes', 60));
+    }
+
+    public function patientFlowWaitWarningMinutes(): int
+    {
+        return max(1, (int) $this->get('patient_flow_wait_warning_minutes', 10));
+    }
+
+    public function patientFlowWaitCriticalMinutes(): int
+    {
+        return max(
+            $this->patientFlowWaitWarningMinutes(),
+            (int) $this->get('patient_flow_wait_critical_minutes', 20),
+        );
+    }
+
+    public function patientFlowReadyDelayedMinutes(): int
+    {
+        return max(1, (int) $this->get('patient_flow_ready_delayed_minutes', 10));
+    }
+
+    public function patientFlowNoShowProbableMinutes(): int
+    {
+        return max(1, (int) $this->get('patient_flow_no_show_probable_minutes', 15));
+    }
+
     // ── Auto Reply Settings ──────────────────────────────────────
 
     public function autoReplyEnabled(): bool

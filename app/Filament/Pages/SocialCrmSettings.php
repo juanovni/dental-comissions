@@ -65,6 +65,8 @@ class SocialCrmSettings extends Page
             ->components([
                 $this->botSection(),
                 $this->citasSection(),
+                $this->confirmacionesSection(),
+                $this->patientFlowSection(),
                 $this->respuestasAutomaticasSection(),
                 $this->mensajesSection(),
                 $this->seguimientoComercialSection(),
@@ -86,6 +88,16 @@ class SocialCrmSettings extends Page
                 'id' => 'citas',
                 'label' => 'Citas',
                 'description' => 'Horarios y disponibilidad',
+            ],
+            [
+                'id' => 'confirmaciones',
+                'label' => 'Confirmaciones',
+                'description' => 'Recordatorios y escalamiento',
+            ],
+            [
+                'id' => 'patient-flow',
+                'label' => 'Patient Flow',
+                'description' => 'Umbrales de operación clínica',
             ],
             [
                 'id' => 'respuestas-automaticas',
@@ -492,6 +504,118 @@ class SocialCrmSettings extends Page
             ->footerActionsAlignment(Alignment::End);
     }
 
+    private function confirmacionesSection(): Section
+    {
+        return Section::make('Confirmaciones')
+            ->id('confirmaciones')
+            ->icon('heroicon-o-bell-alert')
+            ->description('Controla recordatorios de citas por WhatsApp para reducir no-shows.')
+            ->schema([
+                Section::make('Canales')
+                    ->icon('heroicon-o-megaphone')
+                    ->description('Activa manualmente WhatsApp cuando las plantillas y costos esten validados.')
+                    ->schema([
+                        Toggle::make('appointment_reminders_whatsapp_enabled')
+                            ->label('Recordatorios por WhatsApp')
+                            ->helperText('Envia mensajes template de confirmacion antes de la cita.'),
+                    ])
+                    ->columns(1)
+                    ->columnSpanFull(),
+
+                Section::make('Tiempos de confirmacion')
+                    ->icon('heroicon-o-clock')
+                    ->description('Define cuando se intentara confirmar una cita ya agendada.')
+                    ->schema([
+                        TextInput::make('appointment_reminders_first_hours_before')
+                            ->label('Primer recordatorio')
+                            ->helperText('Horas antes de la cita.')
+                            ->numeric()
+                            ->minValue(1),
+                        TextInput::make('appointment_reminders_second_hours_before')
+                            ->label('Segundo recordatorio')
+                            ->helperText('Horas antes de la cita si aun no confirma.')
+                            ->numeric()
+                            ->minValue(1),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+
+                Section::make('Reglas operativas')
+                    ->icon('heroicon-o-shield-check')
+                    ->description('Evita contactar pacientes que ya confirmaron o que requieren revision humana.')
+                    ->schema([
+                        Toggle::make('appointment_reminders_only_unconfirmed')
+                            ->label('Solo citas sin confirmar')
+                            ->helperText('No envia recordatorios a citas confirmadas o en flujo clinico.'),
+                        Toggle::make('appointment_reminders_internal_alert_on_no_response')
+                            ->label('Alertar si no responde')
+                            ->helperText('Crea una alerta interna para recepcion cuando no hay respuesta.'),
+                        TextInput::make('appointment_reminders_no_response_alert_minutes')
+                            ->label('Minutos sin respuesta')
+                            ->helperText('Tiempo despues del recordatorio para alertar a recepcion si el paciente no responde.')
+                            ->numeric()
+                            ->minValue(1),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+            ])
+            ->columns(1)
+            ->footerActions([
+                $this->saveSectionAction('save_confirmaciones'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
+    }
+
+    private function patientFlowSection(): Section
+    {
+        return Section::make('Patient Flow')
+            ->id('patient-flow')
+            ->icon('heroicon-o-clock')
+            ->description('Define los umbrales operativos usados en recepción, cola clínica y mi cola de atención.')
+            ->schema([
+                Section::make('Tiempos de espera')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->description('Controla cuándo una espera pasa a advertencia o crítica.')
+                    ->schema([
+                        TextInput::make('patient_flow_wait_warning_minutes')
+                            ->label('Espera warning')
+                            ->helperText('Minutos desde check-in para mostrar advertencia.')
+                            ->numeric()
+                            ->minValue(1),
+                        TextInput::make('patient_flow_wait_critical_minutes')
+                            ->label('Espera crítica')
+                            ->helperText('Minutos desde check-in para mostrar alerta crítica.')
+                            ->numeric()
+                            ->minValue(1),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+
+                Section::make('Alertas operativas')
+                    ->icon('heroicon-o-bell-alert')
+                    ->description('Umbrales para detectar demoras antes de consulta y posibles ausencias.')
+                    ->schema([
+                        TextInput::make('patient_flow_ready_delayed_minutes')
+                            ->label('Listo demorado')
+                            ->helperText('Minutos desde listo para doctor sin iniciar consulta.')
+                            ->numeric()
+                            ->minValue(1),
+                        TextInput::make('patient_flow_no_show_probable_minutes')
+                            ->label('No-show probable')
+                            ->helperText('Minutos después de la hora de cita para considerar ausencia probable.')
+                            ->numeric()
+                            ->minValue(1),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+            ])
+            ->columns(1)
+            ->footerActions([
+                $this->saveSectionAction('save_patient_flow'),
+            ])
+            ->footerActionsAlignment(Alignment::End);
+    }
+
     private function respuestasAutomaticasSection(): Section
     {
         return Section::make('Respuestas Automáticas')
@@ -840,6 +964,18 @@ class SocialCrmSettings extends Page
             'social_appointment_auto_create_patient',
             'social_appointment_require_whatsapp_phone_for_patient',
             'social_appointment_patient_fallback_name',
+            // Confirmaciones
+            'appointment_reminders_whatsapp_enabled',
+            'appointment_reminders_first_hours_before',
+            'appointment_reminders_second_hours_before',
+            'appointment_reminders_only_unconfirmed',
+            'appointment_reminders_internal_alert_on_no_response',
+            'appointment_reminders_no_response_alert_minutes',
+            // Patient Flow
+            'patient_flow_wait_warning_minutes',
+            'patient_flow_wait_critical_minutes',
+            'patient_flow_ready_delayed_minutes',
+            'patient_flow_no_show_probable_minutes',
             // Respuestas automáticas
             'social_auto_reply_enabled',
             'social_auto_reply_dry_run',
@@ -935,6 +1071,16 @@ class SocialCrmSettings extends Page
             'social_appointment_auto_create_patient' => true,
             'social_appointment_require_whatsapp_phone_for_patient' => true,
             'social_appointment_patient_fallback_name' => 'Paciente WhatsApp',
+            'appointment_reminders_whatsapp_enabled' => false,
+            'appointment_reminders_first_hours_before' => 24,
+            'appointment_reminders_second_hours_before' => 2,
+            'appointment_reminders_only_unconfirmed' => true,
+            'appointment_reminders_internal_alert_on_no_response' => true,
+            'appointment_reminders_no_response_alert_minutes' => 60,
+            'patient_flow_wait_warning_minutes' => 10,
+            'patient_flow_wait_critical_minutes' => 20,
+            'patient_flow_ready_delayed_minutes' => 10,
+            'patient_flow_no_show_probable_minutes' => 15,
             'social_auto_reply_enabled' => false,
             'social_auto_reply_dry_run' => true,
             'social_auto_reply_use_ai' => true,
@@ -976,6 +1122,8 @@ class SocialCrmSettings extends Page
     private function inferGroup(string $key): string
     {
         return match (true) {
+            str_contains($key, 'patient_flow') => 'patient_flow',
+            str_contains($key, 'appointment_reminders') => 'appointment_reminders',
             str_contains($key, 'appointment') => 'appointments',
             str_contains($key, 'auto_reply') => 'auto_reply',
             str_contains($key, 'whatsapp') && ! str_contains($key, 'follow_up') => 'whatsapp_bridge',
@@ -1000,6 +1148,16 @@ class SocialCrmSettings extends Page
             'social_smart_link_ping_seconds' => 'Intervalo de ping del Smart Link',
             'social_smart_link_duration_score' => 'Puntos por duración del Smart Link',
             'social_smart_link_duration_alert' => 'Alerta de alta permanencia en Smart Link',
+            'appointment_reminders_whatsapp_enabled' => 'Recordatorios por WhatsApp',
+            'appointment_reminders_first_hours_before' => 'Horas antes del primer recordatorio',
+            'appointment_reminders_second_hours_before' => 'Horas antes del segundo recordatorio',
+            'appointment_reminders_only_unconfirmed' => 'Solo citas sin confirmar',
+            'appointment_reminders_internal_alert_on_no_response' => 'Alerta interna si no responde',
+            'appointment_reminders_no_response_alert_minutes' => 'Minutos sin respuesta para alertar',
+            'patient_flow_wait_warning_minutes' => 'Minutos para espera warning',
+            'patient_flow_wait_critical_minutes' => 'Minutos para espera crítica',
+            'patient_flow_ready_delayed_minutes' => 'Minutos para listo demorado',
+            'patient_flow_no_show_probable_minutes' => 'Minutos para no-show probable',
         ];
 
         return $labels[$key] ?? str($key)

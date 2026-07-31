@@ -29,6 +29,8 @@ class DoctorAssistantAssignmentResource extends Resource
 
     protected static string | \UnitEnum | null $navigationGroup = 'Operación Clinica';
 
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-plus';
+
     protected static ?string $navigationLabel = 'Asignaciones';
 
     protected static bool $shouldRegisterNavigation = true;

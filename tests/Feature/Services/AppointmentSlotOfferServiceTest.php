@@ -17,6 +17,7 @@ use App\Models\SocialIdentity;
 use App\Models\SocialPost;
 use App\Models\WhatsappMessage;
 use App\Services\AppointmentSlotOfferService;
+use App\Services\SocialCrmSettingsService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -162,6 +163,42 @@ class AppointmentSlotOfferServiceTest extends TestCase
             $this->assertGreaterThanOrEqual(13, $slot->hour);
             $this->assertLessThan(18, $slot->hour + ($slot->minute / 60));
         }
+
+        Carbon::setTestNow();
+    }
+
+    public function test_today_request_uses_clinic_timezone_for_available_slots(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-30 12:43:00', 'America/Guayaquil'));
+
+        $this->setting('social_appointment_propose_slots', true, 'boolean');
+        $this->setting('social_appointment_clinic_timezone', 'America/Guayaquil', 'string');
+        $this->setting('social_appointment_lead_time_hours', 0, 'integer');
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $this->setting('social_appointment_clinic_open', '09:00', 'string');
+        $this->setting('social_appointment_clinic_close', '18:00', 'string');
+        $this->setting('social_appointment_afternoon_start', '13:00', 'string');
+        $this->setting('social_appointment_afternoon_end', '18:00', 'string');
+
+        $procedure = Procedure::factory()->create(['name' => 'Valoracion odontologica']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dr. Demo']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $message = $this->message($comment, 'La cita es para hoy jueves');
+
+        $offer = app(AppointmentSlotOfferService::class)->createFromAgentResponse($comment, $message, [
+            'intent' => 'appointment_interest',
+            'appointment_candidate' => [
+                'wants_appointment' => true,
+                'preferred_date_parsed' => '2026-07-30',
+                'preferred_time_parsed' => null,
+                'preferred_period' => 'afternoon',
+                'intent_type' => 'appointment_interest',
+            ],
+        ]);
+
+        $this->assertInstanceOf(AppointmentSlotOffer::class, $offer);
+        $this->assertSame('2026-07-30', substr($offer->metadata['options'][0]['datetime'], 0, 10));
+        $this->assertStringContainsString('jueves 30 de julio', app(AppointmentSlotOfferService::class)->buildOfferReply($offer));
 
         Carbon::setTestNow();
     }
@@ -503,6 +540,8 @@ class AppointmentSlotOfferServiceTest extends TestCase
             ['key' => $key],
             ['value' => $value, 'value_type' => $type, 'label' => $key, 'is_active' => true],
         );
+
+        app(SocialCrmSettingsService::class)->clearCache();
     }
 
     private function createOffer(SocialComment $comment, string $date): AppointmentSlotOffer

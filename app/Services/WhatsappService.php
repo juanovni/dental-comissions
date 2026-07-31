@@ -65,6 +65,25 @@ class WhatsappService
 
             $socialConversionService = app(SocialConversionService::class);
             $trackingToken = $socialConversionService->extractTrackingToken($body);
+
+            if (! $professional && ! $trackingToken) {
+                $checkInResponse = app(AppointmentWhatsappCheckInService::class)->handle($whatsappMessage);
+
+                if ($checkInResponse) {
+                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $checkInResponse['reply']);
+
+                    return $whatsappMessage->refresh();
+                }
+
+                $reminderResponse = app(AppointmentReminderResponseService::class)->handle($whatsappMessage);
+
+                if ($reminderResponse) {
+                    $this->sendAndMarkIncoming($whatsappMessage, $fromPhone, $reminderResponse['reply']);
+
+                    return $whatsappMessage->refresh();
+                }
+            }
+
             $socialComment = $socialConversionService->processIncomingMessage($whatsappMessage);
 
             if ($socialComment) {
@@ -413,7 +432,13 @@ class WhatsappService
         $pendingInfoOffer = app(AppointmentSlotOfferService::class)->pendingPatientInfoOffer($comment);
 
         if ($pendingInfoOffer) {
-            $infoResult = app(AppointmentSlotOfferService::class)->handlePatientInfoReply($pendingInfoOffer, $comment, $message);
+            try {
+                $infoResult = app(AppointmentSlotOfferService::class)->handlePatientInfoReply($pendingInfoOffer, $comment, $message);
+            } catch (\Throwable $e) {
+                $this->sendAndMarkIncoming($message, $fromPhone, 'Ese horario acaba de ocuparse. Te mostraremos nuevas opciones disponibles en breve.');
+
+                return $message;
+            }
 
             if ($infoResult) {
                 $this->sendAndMarkIncoming($message, $fromPhone, $infoResult['reply']);

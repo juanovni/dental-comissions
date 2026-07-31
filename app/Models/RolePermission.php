@@ -44,6 +44,6 @@ class RolePermission extends Model
             return $configuredPermission->is_enabled;
         }
 
-        return $role === UserRole::Admin->value;
+        return in_array($role, [UserRole::Admin->value, UserRole::SuperAdmin->value], true);
     }
 }

@@ -20,10 +20,13 @@ class AppointmentWorkflowService
     public function confirm(Appointment $appointment, ?array $metadata = null): Appointment
     {
         return DB::transaction(function () use ($appointment, $metadata): Appointment {
-            $appointment->update([
-                'status' => AppointmentStatus::Confirmed,
-                'confirmed_at' => now(),
-            ]);
+            app(AppointmentFlowService::class)->transition(
+                $appointment,
+                AppointmentStatus::Confirmed,
+                'admin',
+                auth()->id(),
+                $metadata ?? [],
+            );
 
             $this->calendarService->createOrUpdateEvent($appointment);
 
@@ -45,8 +48,20 @@ class AppointmentWorkflowService
             $appointment->update([
                 'scheduled_at' => $newDate,
                 'duration_minutes' => $durationMinutes,
-                'status' => AppointmentStatus::Rescheduled,
             ]);
+
+            app(AppointmentFlowService::class)->transition(
+                $appointment,
+                AppointmentStatus::Rescheduled,
+                'admin',
+                auth()->id(),
+                array_filter([
+                    'old_scheduled_at' => $oldDate?->toISOString(),
+                    'new_scheduled_at' => $newDate->toISOString(),
+                    'duration_minutes' => $durationMinutes,
+                    ...($metadata ?? []),
+                ]),
+            );
 
             $this->calendarService->createOrUpdateEvent($appointment);
 
@@ -57,13 +72,19 @@ class AppointmentWorkflowService
     public function cancel(Appointment $appointment, ?string $reason = null, ?array $metadata = null): Appointment
     {
         return DB::transaction(function () use ($appointment, $reason, $metadata): Appointment {
-            $appointment->update([
-                'status' => AppointmentStatus::Cancelled,
-                'cancelled_at' => now(),
-                'notes' => $reason
-                    ? trim(($appointment->notes ?? '') . "\nMotivo de cancelación: " . $reason)
-                    : $appointment->notes,
-            ]);
+            if ($reason) {
+                $appointment->update([
+                    'notes' => trim(($appointment->notes ?? '') . "\nMotivo de cancelación: " . $reason),
+                ]);
+            }
+
+            app(AppointmentFlowService::class)->transition(
+                $appointment,
+                AppointmentStatus::Cancelled,
+                'admin',
+                auth()->id(),
+                array_filter(['reason' => $reason, ...($metadata ?? [])]),
+            );
 
             if ($appointment->external_appointment_id) {
                 $this->calendarService->deleteEvent($appointment);
@@ -86,10 +107,13 @@ class AppointmentWorkflowService
     public function complete(Appointment $appointment, ?array $metadata = null): Appointment
     {
         return DB::transaction(function () use ($appointment, $metadata): Appointment {
-            $appointment->update([
-                'status' => AppointmentStatus::Completed,
-                'completed_at' => now(),
-            ]);
+            app(AppointmentFlowService::class)->transition(
+                $appointment,
+                AppointmentStatus::Completed,
+                'admin',
+                auth()->id(),
+                $metadata ?? [],
+            );
 
             $comment = $appointment->socialComment;
 
@@ -108,10 +132,13 @@ class AppointmentWorkflowService
     public function markNoShow(Appointment $appointment, ?array $metadata = null): Appointment
     {
         return DB::transaction(function () use ($appointment, $metadata): Appointment {
-            $appointment->update([
-                'status' => AppointmentStatus::NoShow,
-                'no_show_at' => now(),
-            ]);
+            app(AppointmentFlowService::class)->transition(
+                $appointment,
+                AppointmentStatus::NoShow,
+                'admin',
+                auth()->id(),
+                $metadata ?? [],
+            );
 
             if ($appointment->external_appointment_id) {
                 $this->calendarService->deleteEvent($appointment);

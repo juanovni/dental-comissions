@@ -261,7 +261,7 @@ class AppointmentSlotOfferService
         $lines = [];
 
         foreach ($options as $option) {
-            $slot = Carbon::parse($option['datetime']);
+            $slot = $this->parseOptionDateTime($option['datetime']);
             $lines[] = $option['index'].'. '.$slot->isoFormat('dddd D [de] MMMM').' - '.$slot->format('g:i A');
         }
 
@@ -299,7 +299,7 @@ class AppointmentSlotOfferService
 
         return collect($offer->metadata['options'] ?? [])
             ->filter(function (array $option) use ($comment, $duration): bool {
-                $start = Carbon::parse($option['datetime']);
+                $start = $this->parseOptionDateTime($option['datetime']);
                 $end = $start->copy()->addMinutes($duration);
                 $doctor = $this->doctorForOption($option, $comment);
 
@@ -314,7 +314,7 @@ class AppointmentSlotOfferService
     {
         $comment = $offer->socialComment()->with(['suggestedProcedure', 'suggestedDoctor'])->firstOrFail();
         $settings = app(SocialCrmSettingsService::class);
-        $start = Carbon::parse($option['datetime']);
+        $start = $this->parseOptionDateTime($option['datetime']);
         $duration = $settings->appointmentSlotDuration();
         $end = $start->copy()->addMinutes($duration);
         $doctor = $this->doctorForOption($option, $comment);
@@ -414,7 +414,7 @@ class AppointmentSlotOfferService
     private function selectedOptionByLabel(AppointmentSlotOffer $offer, string $normalizedMessage): ?array
     {
         foreach ($offer->metadata['options'] ?? [] as $option) {
-            $slot = Carbon::parse($option['datetime']);
+            $slot = $this->parseOptionDateTime($option['datetime']);
             $labels = [
                 $option['label'] ?? null,
                 $slot->isoFormat('dddd D [de] MMMM').' - '.$slot->format('g:i A'),
@@ -566,5 +566,10 @@ class AppointmentSlotOfferService
         }
 
         return false;
+    }
+
+    private function parseOptionDateTime(string $datetime): Carbon
+    {
+        return Carbon::parse($datetime, app(SocialCrmSettingsService::class)->clinicTimezone());
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Professional;
 use App\Services\AppointmentWorkflowService;
+use App\Services\SocialCrmSettingsService;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Notifications\Notification;
@@ -252,9 +253,11 @@ class ListAppointments extends ListRecords
 
     public function getGroupedAppointmentsProperty(): array
     {
+        $timezone = $this->clinicTimezone();
+
         return $this->appointmentsQuery()
             ->get()
-            ->groupBy(fn (Appointment $appointment): string => $appointment->scheduled_at->toDateString())
+            ->groupBy(fn (Appointment $appointment): string => $appointment->scheduled_at->copy()->timezone($timezone)->toDateString())
             ->map(fn ($appointments, string $date): array => [
                 'date' => Carbon::parse($date),
                 'label' => strtoupper(Carbon::parse($date)->locale('es')->isoFormat('ddd D [de] MMM')),
@@ -272,14 +275,9 @@ class ListAppointments extends ListRecords
 
     public function getStatusOptionsProperty(): array
     {
-        return [
-            AppointmentStatus::Confirmed->value => 'Confirmada',
-            AppointmentStatus::PendingConfirmation->value => 'Pendiente',
-            AppointmentStatus::Rescheduled->value => 'Reprogramada',
-            AppointmentStatus::Cancelled->value => 'Cancelada',
-            AppointmentStatus::Completed->value => 'Completada',
-            AppointmentStatus::NoShow->value => 'No asistio',
-        ];
+        return collect(AppointmentStatus::cases())
+            ->mapWithKeys(fn (AppointmentStatus $status): array => [$status->value => $status->label()])
+            ->all();
     }
 
     public function getDoctorOptionsProperty(): array
@@ -302,15 +300,7 @@ class ListAppointments extends ListRecords
 
     public function statusLabel(AppointmentStatus $status): string
     {
-        return match ($status) {
-            AppointmentStatus::PendingConfirmation => 'Pendiente',
-            AppointmentStatus::Scheduled => 'Agendada',
-            AppointmentStatus::Confirmed => 'Confirmada',
-            AppointmentStatus::Rescheduled => 'Reprogramada',
-            AppointmentStatus::Cancelled => 'Cancelada',
-            AppointmentStatus::Completed => 'Completada',
-            AppointmentStatus::NoShow => 'No asistio',
-        };
+        return $status->label();
     }
 
     public function canUpdateStatus(Appointment $appointment): bool
@@ -324,11 +314,14 @@ class ListAppointments extends ListRecords
 
     protected function appointmentsQuery(): Builder
     {
+        $todayStart = Carbon::now($this->clinicTimezone())->startOfDay();
+        $todayEnd = $todayStart->copy()->endOfDay();
+
         return Appointment::query()
             ->with(['patient', 'doctor', 'procedure', 'socialComment', 'socialComment.socialIdentity'])
-            ->when($this->period === 'today', fn (Builder $query): Builder => $query->whereDate('scheduled_at', today()))
-            ->when($this->period === 'upcoming', fn (Builder $query): Builder => $query->where('scheduled_at', '>=', now()->startOfDay()))
-            ->when($this->period === 'past', fn (Builder $query): Builder => $query->where('scheduled_at', '<', now()->startOfDay()))
+            ->when($this->period === 'today', fn (Builder $query): Builder => $query->whereBetween('scheduled_at', [$todayStart, $todayEnd]))
+            ->when($this->period === 'upcoming', fn (Builder $query): Builder => $query->where('scheduled_at', '>=', $todayStart))
+            ->when($this->period === 'past', fn (Builder $query): Builder => $query->where('scheduled_at', '<', $todayStart))
             ->when($this->statusFilter, fn (Builder $query, string $status): Builder => $query->where('status', $status))
             ->when($this->doctorFilter, fn (Builder $query, int $doctorId): Builder => $query->where('doctor_id', $doctorId))
             ->when($this->patientFilter, fn (Builder $query, int $patientId): Builder => $query->where('patient_id', $patientId))
@@ -345,5 +338,10 @@ class ListAppointments extends ListRecords
                 });
             })
             ->orderBy('scheduled_at');
+    }
+
+    private function clinicTimezone(): string
+    {
+        return app(SocialCrmSettingsService::class)->clinicTimezone();
     }
 }

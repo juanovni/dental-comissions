@@ -60,7 +60,7 @@ class AppointmentSlotSearchService
     private function exactTime(Carbon $date, string $time, ?Professional $doctor, string $strategy): array
     {
         $settings = app(SocialCrmSettingsService::class);
-        $start = Carbon::parse($date->format('Y-m-d').' '.$time);
+        $start = Carbon::parse($date->format('Y-m-d').' '.$time, $settings->clinicTimezone());
         $end = $start->copy()->addMinutes($settings->appointmentSlotDuration());
 
         if ($doctor && app(AppointmentAvailabilityService::class)->isSlotAvailableForDoctor($doctor, $start, $end)) {
@@ -74,7 +74,7 @@ class AppointmentSlotSearchService
     {
         [$from, $until] = $this->periodRange($date, $period);
 
-        $earliest = now()
+        $earliest = $this->clinicNow()
             ->addHours(app(SocialCrmSettingsService::class)->appointmentLeadTimeHours())
             ->startOfMinute();
 
@@ -175,8 +175,8 @@ class AppointmentSlotSearchService
         };
 
         return [
-            Carbon::parse($date->format('Y-m-d').' '.$range[0]),
-            Carbon::parse($date->format('Y-m-d').' '.$range[1]),
+            Carbon::parse($date->format('Y-m-d').' '.$range[0], $settings->clinicTimezone()),
+            Carbon::parse($date->format('Y-m-d').' '.$range[1], $settings->clinicTimezone()),
         ];
     }
 
@@ -219,9 +219,9 @@ class AppointmentSlotSearchService
         }
 
         try {
-            $parsed = Carbon::parse($date)->startOfDay();
+            $parsed = Carbon::parse($date, app(SocialCrmSettingsService::class)->clinicTimezone())->startOfDay();
 
-            if ($parsed->lessThan(now()->startOfDay())) {
+            if ($parsed->lessThan($this->clinicNow()->startOfDay())) {
                 return null;
             }
 
@@ -242,5 +242,10 @@ class AppointmentSlotSearchService
             ->where('role', ProfessionalRole::Doctor->value)
             ->where('is_active', true)
             ->first();
+    }
+
+    private function clinicNow(): Carbon
+    {
+        return Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone());
     }
 }
