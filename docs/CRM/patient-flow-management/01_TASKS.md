@@ -190,8 +190,8 @@ Objetivo: dar gestion y analitica operativa a Admin y Super Admin.
 - [x] Crear bloque `Estado actual de la clinica`.
 - [x] Crear bloque `Alertas operativas`.
 - [x] Crear bloque `Productividad y saturacion por doctor`.
-- [~] Agregar accion `Umbrales`.
-- [~] Agregar accion `Exportar`.
+- [x] No agregar accion `Umbrales` en dashboard; los umbrales se gestionan desde Configuracion CRM.
+- [x] No agregar accion `Exportar` en MVP; queda fuera del alcance actual del dashboard.
 - [x] Usar ApexCharts si se agregan graficos reales.
 - [x] Evitar que el dashboard permita mover pacientes.
 
@@ -212,7 +212,7 @@ Objetivo: permitir llegada autoservicio desde canales externos.
 - [x] Manejar varias citas encontradas.
 - [x] Manejar cita no encontrada.
 - [x] Manejar llegada ya registrada.
-- [~] Registrar intentos fallidos.
+- [x] Registrar intentos fallidos.
 - [x] Agregar rate limiting.
 - [x] Integrar WhatsApp con intenciones tipo `LLEGUE`.
 - [x] Crear evento al registrar llegada externa.
@@ -282,7 +282,6 @@ Criterio de salida:
 - [x] `scheduled` queda como estado base visible: cita agendada sin confirmacion explicita.
 - [x] `pending_confirmation` se conserva para citas creadas desde canales donde falta confirmacion explicita del paciente.
 - [x] Super Admin tiene fallback automatico de permisos igual que Admin si falta configuracion en `role_permissions`.
-- [!] Definir alcance exacto de `Exportar` en dashboard admin.
 
 ## No hacer en MVP
 

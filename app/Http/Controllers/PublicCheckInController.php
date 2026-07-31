@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\AppointmentCheckInAttempt;
 use App\Services\AppointmentFlowService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -29,12 +30,14 @@ class PublicCheckInController extends Controller
         ]);
 
         if (! empty($data['appointment_id'])) {
-            return $this->checkInAppointment((int) $data['appointment_id'], $clinicSlug);
+            return $this->checkInAppointment((int) $data['appointment_id'], $clinicSlug, $request);
         }
 
         $appointments = $this->findTodayAppointments((string) $data['identifier']);
 
         if ($appointments->isEmpty()) {
+            $this->recordFailedAttempt($request, $clinicSlug, 'not_found', (string) $data['identifier']);
+
             return redirect()
                 ->route('patient-flow.check-in.show', ['clinicSlug' => $clinicSlug])
                 ->with('check_in_status', [
@@ -59,10 +62,10 @@ class PublicCheckInController extends Controller
                 ])->all());
         }
 
-        return $this->checkInAppointment((int) $appointments->first()->id, $clinicSlug);
+        return $this->checkInAppointment((int) $appointments->first()->id, $clinicSlug, $request);
     }
 
-    private function checkInAppointment(int $appointmentId, string $clinicSlug): RedirectResponse
+    private function checkInAppointment(int $appointmentId, string $clinicSlug, Request $request): RedirectResponse
     {
         $appointment = Appointment::query()
             ->with(['patient', 'doctor'])
@@ -70,6 +73,8 @@ class PublicCheckInController extends Controller
             ->find($appointmentId);
 
         if (! $appointment) {
+            $this->recordFailedAttempt($request, $clinicSlug, 'appointment_not_found', (string) $appointmentId);
+
             return redirect()
                 ->route('patient-flow.check-in.show', ['clinicSlug' => $clinicSlug])
                 ->with('check_in_status', [
@@ -86,6 +91,10 @@ class PublicCheckInController extends Controller
         }
 
         if (in_array($appointment->status, [AppointmentStatus::Cancelled, AppointmentStatus::Rescheduled, AppointmentStatus::NoShow, AppointmentStatus::Completed], true)) {
+            $this->recordFailedAttempt($request, $clinicSlug, 'unavailable_status', (string) $appointmentId, $appointment, [
+                'appointment_status' => $appointment->status->value,
+            ]);
+
             return redirect()
                 ->route('patient-flow.check-in.show', ['clinicSlug' => $clinicSlug])
                 ->with('check_in_status', [
@@ -106,6 +115,34 @@ class PublicCheckInController extends Controller
         return redirect()
             ->route('patient-flow.check-in.show', ['clinicSlug' => $clinicSlug])
             ->with('check_in_status', $this->successStatus('Recepcion fue notificada de tu llegada.', $appointment->fresh(['doctor'])));
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    private function recordFailedAttempt(
+        Request $request,
+        string $clinicSlug,
+        string $reason,
+        ?string $identifier = null,
+        ?Appointment $appointment = null,
+        array $metadata = [],
+    ): void {
+        $identifier = trim((string) $identifier);
+        $digits = preg_replace('/\D+/', '', $identifier) ?: '';
+
+        AppointmentCheckInAttempt::create([
+            'appointment_id' => $appointment?->id,
+            'clinic_slug' => $clinicSlug,
+            'channel' => 'public',
+            'status' => 'failed',
+            'failure_reason' => $reason,
+            'identifier_hash' => $identifier !== '' ? hash('sha256', mb_strtolower($identifier)) : null,
+            'identifier_last_digits' => $digits !== '' ? substr($digits, -4) : null,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'metadata' => $metadata ?: null,
+        ]);
     }
 
     private function findTodayAppointments(string $identifier): Collection

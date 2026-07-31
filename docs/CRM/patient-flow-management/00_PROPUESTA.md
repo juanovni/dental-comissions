@@ -729,9 +729,9 @@ Formato visual sugerido:
 - Widgets compactos.
 - Cards de indicadores.
 - Graficos ApexCharts.
-- Tablas solo para auditoria, historico o exportacion.
+- Tablas solo para auditoria o historico.
 - Filas resumen tipo card para productividad o saturacion por doctor.
-- Botones compactos con icono para `Umbrales` y `Exportar`.
+- Sin botones `Umbrales` ni `Exportar` en MVP; los umbrales se gestionan desde Configuracion CRM y exportacion queda futura.
 - Estilo limpio tipo Metronic siguiendo `.cursorrules`.
 - Reutilizar `mc-card`, `mc-badge`, `mc-btn`, `mc-facts` y patrones existentes cuando aplique.
 
@@ -786,8 +786,9 @@ Productividad y saturacion por doctor:
 
 Acciones administrativas:
 
-- `Umbrales`: configurar limites de espera, retraso, no-show y saturacion.
-- `Exportar`: descargar reporte del periodo.
+- MVP: solo visualizacion y filtros basicos disponibles en el dashboard.
+- Umbrales: se configuran desde Configuracion CRM, no desde el dashboard.
+- Futuro: exportar reporte del periodo.
 - Filtros futuros: hoy, semana, mes, doctor, sede.
 
 Restricciones:
@@ -796,7 +797,7 @@ Restricciones:
 - No debe reemplazar el panel `Recepcion`.
 - No debe convertirse en una tabla densa.
 - No debe mostrar datos clinicos sensibles innecesarios.
-- Solo Admin y Super Admin deben ver exportacion y configuracion de umbrales.
+- Solo Admin y Super Admin deben ver este dashboard.
 
 Indicadores sugeridos:
 

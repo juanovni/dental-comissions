@@ -4,6 +4,7 @@ namespace Tests\Feature\Http;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\AppointmentCheckInAttempt;
 use App\Models\Patient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -84,6 +85,41 @@ class PublicCheckInControllerTest extends TestCase
         $this->followingRedirects()
             ->post('/check-in/clinica', ['identifier' => '0000000000'])
             ->assertSee('No encontramos tu cita');
+
+        $this->assertDatabaseHas('appointment_check_in_attempts', [
+            'clinic_slug' => 'clinica',
+            'channel' => 'public',
+            'status' => 'failed',
+            'failure_reason' => 'not_found',
+            'identifier_last_digits' => '0000',
+        ]);
+        $this->assertSame(
+            hash('sha256', '0000000000'),
+            AppointmentCheckInAttempt::query()->first()?->identifier_hash,
+        );
+    }
+
+    public function test_unavailable_appointment_check_in_is_recorded_as_failed_attempt(): void
+    {
+        $this->withoutMiddleware();
+
+        $appointment = Appointment::factory()->create([
+            'scheduled_at' => now()->setHour(10),
+            'status' => AppointmentStatus::Cancelled,
+        ]);
+
+        $this->followingRedirects()
+            ->post('/check-in/clinica', ['appointment_id' => $appointment->id])
+            ->assertSee('Cita no disponible');
+
+        $this->assertDatabaseHas('appointment_check_in_attempts', [
+            'appointment_id' => $appointment->id,
+            'clinic_slug' => 'clinica',
+            'channel' => 'public',
+            'status' => 'failed',
+            'failure_reason' => 'unavailable_status',
+            'identifier_last_digits' => (string) $appointment->id,
+        ]);
     }
 
     public function test_multiple_matches_ask_patient_to_select_appointment(): void
