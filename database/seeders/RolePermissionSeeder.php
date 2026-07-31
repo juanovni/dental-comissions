@@ -32,7 +32,6 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::LocalLanguagePatternsView,
             ],
             UserRole::Doctor->value => [
-                UserPermission::DashboardRoiSocialView,
                 UserPermission::ProfessionalsView,
                 UserPermission::PatientsView,
                 UserPermission::ProceduresView,
@@ -41,13 +40,11 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::PatientFlowDoctorView,
             ],
             UserRole::Assistant->value => [
-                UserPermission::DashboardRoiSocialView,
                 UserPermission::PatientsView,
                 UserPermission::AppointmentsView,
                 UserPermission::PatientFlowAssistantView,
             ],
             UserRole::Receptionist->value => [
-                UserPermission::DashboardRoiSocialView,
                 UserPermission::SocialInboxView,
                 UserPermission::SocialPipelineView,
                 UserPermission::PatientsView,

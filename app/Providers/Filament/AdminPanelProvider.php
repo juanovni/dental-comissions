@@ -3,8 +3,11 @@
 namespace App\Providers\Filament;
 
 use App\Enums\UserRole;
+use App\Filament\Pages\ClinicalQueue;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\DashboardRoiSocial;
+use App\Filament\Pages\DoctorQueue;
+use App\Filament\Pages\Reception;
 use App\Filament\Resources\Appointments\AppointmentResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -39,11 +42,13 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->homeUrl(function (): string {
-                $role = auth()->user()?->role;
-
-                return in_array($role, [UserRole::SuperAdmin, UserRole::Admin], true)
-                    ? DashboardRoiSocial::getUrl()
-                    : AppointmentResource::getUrl();
+                return match (auth()->user()?->role) {
+                    UserRole::Receptionist => Reception::getUrl(),
+                    UserRole::Doctor => DoctorQueue::getUrl(),
+                    UserRole::Assistant => ClinicalQueue::getUrl(),
+                    UserRole::SuperAdmin, UserRole::Admin => DashboardRoiSocial::getUrl(),
+                    default => AppointmentResource::getUrl(),
+                };
             })
             ->login()
             ->brandLogo(function () {

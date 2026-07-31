@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
+use App\Filament\Resources\Appointments\AppointmentResource;
 use App\Filament\Widgets\WhatsappIssuesTable;
 use Filament\Pages\Dashboard as BaseDashboard;
 
@@ -19,7 +21,13 @@ class Dashboard extends BaseDashboard
 
     public function mount(): void
     {
-        $this->redirect(DashboardRoiSocial::getUrl());
+        $this->redirect(match (auth()->user()?->role) {
+            UserRole::Receptionist => Reception::getUrl(),
+            UserRole::Doctor => DoctorQueue::getUrl(),
+            UserRole::Assistant => ClinicalQueue::getUrl(),
+            UserRole::SuperAdmin, UserRole::Admin => DashboardRoiSocial::getUrl(),
+            default => AppointmentResource::getUrl(),
+        });
     }
 
     public static function getNavigationIcon(): string|\BackedEnum|\Illuminate\Contracts\Support\Htmlable|null
