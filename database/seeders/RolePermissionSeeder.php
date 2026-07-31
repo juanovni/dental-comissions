@@ -17,6 +17,7 @@ class RolePermissionSeeder extends Seeder
                 UserPermission::DashboardRoiSocialView,
                 UserPermission::SocialInboxView,
                 UserPermission::SocialPipelineView,
+                UserPermission::SocialCommentsView,
                 UserPermission::IntegrationsView,
                 UserPermission::ProfessionalsView,
                 UserPermission::PatientsView,

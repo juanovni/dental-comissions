@@ -137,4 +137,32 @@ class PublicCheckInControllerTest extends TestCase
             ->post('/check-in/clinica', ['identifier' => '+52 555 123 4567'])
             ->assertSee('Selecciona tu cita');
     }
+
+    public function test_completed_and_cancelled_appointments_are_not_shown_as_check_in_options(): void
+    {
+        $this->withoutMiddleware();
+
+        $patient = Patient::factory()->create(['phone' => '+52 555 123 4567']);
+        $confirmed = Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'scheduled_at' => now()->setHour(10),
+            'status' => AppointmentStatus::Confirmed,
+        ]);
+        Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'scheduled_at' => now()->setHour(12),
+            'status' => AppointmentStatus::Completed,
+            'checked_in_at' => now()->subHours(2),
+        ]);
+        Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'scheduled_at' => now()->setHour(15),
+            'status' => AppointmentStatus::Cancelled,
+        ]);
+
+        $this->post('/check-in/clinica', ['identifier' => '+52 555 123 4567'])
+            ->assertRedirect('/check-in/clinica');
+
+        $this->assertSame(AppointmentStatus::CheckedIn, $confirmed->refresh()->status);
+    }
 }
