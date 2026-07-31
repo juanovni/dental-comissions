@@ -282,9 +282,12 @@ class Reception extends Page
 
     private function baseQuery(): Builder
     {
+        $todayStart = Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone())->startOfDay();
+        $todayEnd = $todayStart->copy()->endOfDay();
+
         return Appointment::query()
             ->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote'])
-            ->whereDate('scheduled_at', today())
+            ->whereBetween('scheduled_at', [$todayStart, $todayEnd])
             ->when($this->search, function (Builder $query): void {
                 $query->where(function (Builder $query): void {
                     $query->whereHas('patient', fn (Builder $q): Builder => $q->where('full_name', 'ilike', "%{$this->search}%"))

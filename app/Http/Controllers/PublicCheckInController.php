@@ -6,6 +6,8 @@ use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\AppointmentCheckInAttempt;
 use App\Services\AppointmentFlowService;
+use App\Services\SocialCrmSettingsService;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -69,7 +71,7 @@ class PublicCheckInController extends Controller
     {
         $appointment = Appointment::query()
             ->with(['patient', 'doctor'])
-            ->whereDate('scheduled_at', today())
+            ->whereBetween('scheduled_at', $this->todayBounds())
             ->find($appointmentId);
 
         if (! $appointment) {
@@ -158,7 +160,7 @@ class PublicCheckInController extends Controller
 
         return Appointment::query()
             ->with(['patient', 'doctor'])
-            ->whereDate('scheduled_at', today())
+            ->whereBetween('scheduled_at', $this->todayBounds())
             ->where(function ($query) use ($identifier, $phoneVariants): void {
                 if (ctype_digit($identifier)) {
                     $query->orWhere('id', (int) $identifier);
@@ -176,6 +178,13 @@ class PublicCheckInController extends Controller
             })
             ->orderBy('scheduled_at')
             ->get();
+    }
+
+    private function todayBounds(): array
+    {
+        $todayStart = Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone())->startOfDay();
+
+        return [$todayStart, $todayStart->copy()->endOfDay()];
     }
 
     /**

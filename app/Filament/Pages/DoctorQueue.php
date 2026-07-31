@@ -6,6 +6,8 @@ use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\AppointmentNote;
 use App\Services\AppointmentFlowService;
+use App\Services\SocialCrmSettingsService;
+use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
@@ -229,9 +231,12 @@ class DoctorQueue extends Page
 
     private function baseQuery(): Builder
     {
+        $todayStart = Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone())->startOfDay();
+        $todayEnd = $todayStart->copy()->endOfDay();
+
         return Appointment::query()
             ->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote', 'appointmentNotes.createdBy'])
-            ->whereDate('scheduled_at', today())
+            ->whereBetween('scheduled_at', [$todayStart, $todayEnd])
             ->when($this->doctorIdForCurrentUser(), fn (Builder $query, int $doctorId): Builder => $query->where('doctor_id', $doctorId));
     }
 

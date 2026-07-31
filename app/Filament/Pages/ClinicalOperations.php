@@ -5,6 +5,8 @@ namespace App\Filament\Pages;
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\Professional;
+use App\Services\SocialCrmSettingsService;
+use Carbon\Carbon;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -91,7 +93,7 @@ class ClinicalOperations extends Page
         $possibleNoShows = $this->todayAppointments()
             ->whereIn('status', [AppointmentStatus::PendingConfirmation->value, AppointmentStatus::Scheduled->value, AppointmentStatus::Confirmed->value, AppointmentStatus::Rescheduled->value])
             ->whereNull('checked_in_at')
-            ->where('scheduled_at', '<', now()->subMinutes(15))
+            ->where('scheduled_at', '<', Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone())->subMinutes(15))
             ->count();
 
         if ($possibleNoShows > 0) {
@@ -133,6 +135,9 @@ class ClinicalOperations extends Page
 
     private function todayAppointments(): Builder
     {
-        return Appointment::query()->whereDate('scheduled_at', today());
+        $todayStart = Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone())->startOfDay();
+        $todayEnd = $todayStart->copy()->endOfDay();
+
+        return Appointment::query()->whereBetween('scheduled_at', [$todayStart, $todayEnd]);
     }
 }
