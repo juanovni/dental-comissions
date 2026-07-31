@@ -41,8 +41,21 @@ services:
             WHATSAPP_ACCESS_TOKEN: '${WHATSAPP_ACCESS_TOKEN:?WHATSAPP_ACCESS_TOKEN is required}'
             WHATSAPP_VERIFY_TOKEN: '${WHATSAPP_VERIFY_TOKEN:?WHATSAPP_VERIFY_TOKEN is required}'
             WHATSAPP_APP_SECRET: '${WHATSAPP_APP_SECRET:?WHATSAPP_APP_SECRET is required}'
+            AI_PROVIDER: '${AI_PROVIDER:-openai}'
+            OPENAI_API_KEY: '${OPENAI_API_KEY:-}'
+            OPENAI_MODEL: '${OPENAI_MODEL:-gpt-4o-mini}'
+            OPENAI_API_URL: '${OPENAI_API_URL:-https://api.openai.com/v1}'
+            OPENAI_REQUEST_TIMEOUT: '${OPENAI_REQUEST_TIMEOUT:-30}'
             GEMINI_API_KEY: '${GEMINI_API_KEY:?GEMINI_API_KEY is required}'
             GEMINI_MODEL: '${GEMINI_MODEL:-gemini-2.0-flash}'
+            TELNYX_API_KEY: '${TELNYX_API_KEY:-}'
+            TELNYX_API_URL: '${TELNYX_API_URL:-https://api.telnyx.com/v2}'
+            TELNYX_VOICE: '${TELNYX_VOICE:-female}'
+            TELNYX_LANGUAGE: '${TELNYX_LANGUAGE:-es-MX}'
+            TELNYX_PROCESSING_PROMPT: '${TELNYX_PROCESSING_PROMPT:-Dame un segundo.}'
+            TELNYX_TRANSCRIPTION_LANGUAGE: '${TELNYX_TRANSCRIPTION_LANGUAGE:-es}'
+            TELNYX_TRANSCRIPTION_ENGINE: '${TELNYX_TRANSCRIPTION_ENGINE:-Telnyx}'
+            TELNYX_DEBUG: '${TELNYX_DEBUG:-false}'
         volumes:
             - dental-storage:/var/www/html/storage
         networks:
@@ -81,8 +94,21 @@ services:
             WHATSAPP_ACCESS_TOKEN: '${WHATSAPP_ACCESS_TOKEN:?WHATSAPP_ACCESS_TOKEN is required}'
             WHATSAPP_VERIFY_TOKEN: '${WHATSAPP_VERIFY_TOKEN:?WHATSAPP_VERIFY_TOKEN is required}'
             WHATSAPP_APP_SECRET: '${WHATSAPP_APP_SECRET:?WHATSAPP_APP_SECRET is required}'
+            AI_PROVIDER: '${AI_PROVIDER:-openai}'
+            OPENAI_API_KEY: '${OPENAI_API_KEY:-}'
+            OPENAI_MODEL: '${OPENAI_MODEL:-gpt-4o-mini}'
+            OPENAI_API_URL: '${OPENAI_API_URL:-https://api.openai.com/v1}'
+            OPENAI_REQUEST_TIMEOUT: '${OPENAI_REQUEST_TIMEOUT:-30}'
             GEMINI_API_KEY: '${GEMINI_API_KEY:?GEMINI_API_KEY is required}'
             GEMINI_MODEL: '${GEMINI_MODEL:-gemini-2.0-flash}'
+            TELNYX_API_KEY: '${TELNYX_API_KEY:-}'
+            TELNYX_API_URL: '${TELNYX_API_URL:-https://api.telnyx.com/v2}'
+            TELNYX_VOICE: '${TELNYX_VOICE:-female}'
+            TELNYX_LANGUAGE: '${TELNYX_LANGUAGE:-es-MX}'
+            TELNYX_PROCESSING_PROMPT: '${TELNYX_PROCESSING_PROMPT:-Dame un segundo.}'
+            TELNYX_TRANSCRIPTION_LANGUAGE: '${TELNYX_TRANSCRIPTION_LANGUAGE:-es}'
+            TELNYX_TRANSCRIPTION_ENGINE: '${TELNYX_TRANSCRIPTION_ENGINE:-Telnyx}'
+            TELNYX_DEBUG: '${TELNYX_DEBUG:-false}'
         volumes:
             - dental-storage:/var/www/html/storage
         networks:
