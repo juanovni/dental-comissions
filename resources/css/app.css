@@ -1137,7 +1137,8 @@
         color: #f9fafb;
     }
 
-    .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group[data-group-label="Reputacion Digital"] > .fi-sidebar-group-btn .fi-sidebar-group-label {
+    .fi-role-receptionist .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group[data-group-label="Reputacion Digital"] > .fi-sidebar-group-btn .fi-sidebar-group-label,
+    .fi-role-receptionist .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group[data-group-label="Operación Clinica"] > .fi-sidebar-group-btn .fi-sidebar-group-label {
         color: #71717b !important;
         font-size: 0.75rem;
         font-weight: 500;
@@ -1145,7 +1146,8 @@
         text-transform: uppercase;
     }
 
-    .dark .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group[data-group-label="Reputacion Digital"] > .fi-sidebar-group-btn .fi-sidebar-group-label {
+    .fi-role-receptionist.dark .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group[data-group-label="Reputacion Digital"] > .fi-sidebar-group-btn .fi-sidebar-group-label,
+    .fi-role-receptionist.dark .fi-main-sidebar.fi-sidebar-open .fi-sidebar-group[data-group-label="Operación Clinica"] > .fi-sidebar-group-btn .fi-sidebar-group-label {
         color: #a1a1aa !important;
     }
 
