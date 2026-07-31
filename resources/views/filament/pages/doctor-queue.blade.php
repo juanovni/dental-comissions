@@ -81,7 +81,7 @@
 
         <div class="dq-top">
             <span></span>
-            <div class="dq-tabs" role="tablist" aria-label="Filtro de cola del dia">
+            <div class="dq-tabs" role="tablist" aria-label="Filtro de cola del día">
                 @foreach ($filters as $filter => $label)
                     <button type="button" class="dq-tab {{ $this->activeQueueFilter === $filter ? 'dq-tab-active' : '' }}" wire:click="selectQueueFilter('{{ $filter }}')">
                         {{ $label }} {{ $this->countForFilter($filter) }}
@@ -117,8 +117,13 @@
                                     <div class="dq-procedure">{{ $selected->procedure?->name ?? 'Sin procedimiento' }}</div>
                                     <div class="dq-meta dq-meta-row">
                                         <span>Cita {{ $selected->scheduled_at?->format('h:i a') }}</span>
-                                        @php($selectedWaitingMinutes = $selected->waitingMinutes() ?? 0)
-                                        <span class="dq-wait @if ($selectedWaitingMinutes >= $waitCriticalMinutes) dq-wait-critical @elseif ($selectedWaitingMinutes >= $waitWarningMinutes) dq-wait-warning @endif">Esperando {{ $selectedWaitingMinutes }} min</span>
+                                        @if ($selected->status === \App\Enums\AppointmentStatus::InConsultation)
+                                            @php($selectedConsultationMinutes = $selected->consultationMinutes() ?? 0)
+                                            <span class="dq-wait">En consulta {{ $selectedConsultationMinutes }} min</span>
+                                        @else
+                                            @php($selectedWaitingMinutes = $selected->waitingMinutes() ?? 0)
+                                            <span class="dq-wait @if ($selectedWaitingMinutes >= $waitCriticalMinutes) dq-wait-critical @elseif ($selectedWaitingMinutes >= $waitWarningMinutes) dq-wait-warning @endif">Esperando {{ $selectedWaitingMinutes }} min</span>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -169,7 +174,7 @@
             <aside class="dq-side">
                 <section class="dq-panel">
                     <header class="dq-panel-head">
-                        <div class="dq-title">Cola del dia</div>
+                        <div class="dq-title">Cola del día</div>
                         <span class="dq-panel-count">{{ $queue->count() }} pacientes</span>
                     </header>
                     <div class="dq-title-muted">{{ $activeFilterLabel }} {{ $queue->count() }}</div>
@@ -197,7 +202,7 @@
         <div class="dq-modal" wire:click.self="closeNoteModal">
             <div class="dq-modal-card">
                 <div class="dq-title">Agregar nota operativa</div>
-                <textarea class="dq-textarea" wire:model="noteText" placeholder="Ej.: Paciente ansioso, aplicar comunicacion calmada."></textarea>
+                <textarea class="dq-textarea" wire:model="noteText" placeholder="Ej.: Paciente ansioso, aplicar comunicación calmada."></textarea>
                 @error('noteText') <div class="dq-meta" style="color: #dc2626;">{{ $message }}</div> @enderror
                 <div class="dq-actions" style="justify-content: flex-end;"><button type="button" class="dq-action" wire:click="closeNoteModal">Cancelar</button><button type="button" class="dq-action dq-action-primary" wire:click="saveNote">Guardar nota</button></div>
             </div>

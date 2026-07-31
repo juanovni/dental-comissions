@@ -21,7 +21,7 @@ class DoctorQueue extends Page
 
     protected static ?string $navigationLabel = 'Mi cola';
 
-    protected static ?string $title = 'Mi cola de atencion';
+    protected static ?string $title = 'Mi cola de atención';
 
     protected static ?string $slug = 'doctor-queue';
 
@@ -157,7 +157,7 @@ class DoctorQueue extends Page
         }
 
         return match ($note->note_type) {
-            'reception' => 'Recepcion',
+            'reception' => 'Recepción',
             'assistant' => 'Asistente',
             'doctor' => 'Doctor',
             default => ucfirst((string) $note->note_type),
