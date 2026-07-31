@@ -159,10 +159,10 @@
             .kanban-carousel-btn {
                 background: rgba(255, 255, 255, .96);
                 box-shadow: 0 12px 28px rgba(15, 23, 42, .18);
-                font-size: 1rem;
-                height: 2.15rem;
-                top: 3.1rem;
-                width: 2.15rem;
+                font-size: 1.25rem;
+                height: 2.65rem;
+                top: 50%;
+                width: 2.65rem;
             }
 
             .kanban-carousel-btn.prev {
@@ -174,8 +174,8 @@
             }
 
             .kanban-board {
-                padding-inline: 2.55rem;
-                scroll-padding-inline: 2.55rem;
+                padding-inline: 0;
+                scroll-padding-inline: 0;
             }
 
             .kanban-detail-panel {
