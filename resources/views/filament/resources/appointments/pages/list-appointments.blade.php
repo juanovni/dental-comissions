@@ -602,6 +602,171 @@
             box-shadow: var(--agenda-shadow);
         }
 
+        .dark .appointments-agenda {
+            --agenda-border: rgba(148, 163, 184, .16);
+            --agenda-border-strong: rgba(148, 163, 184, .22);
+            --agenda-card: rgba(15, 23, 42, .74);
+            --agenda-muted: #94a3b8;
+            --agenda-text: #e5e7eb;
+            --agenda-soft: rgba(30, 41, 59, .72);
+            --agenda-shadow: 0 1px 2px rgba(0, 0, 0, .22), 0 18px 42px rgba(0, 0, 0, .2);
+        }
+
+        .dark .appointments-tabs {
+            background: rgba(15, 23, 42, .72);
+            border: 1px solid rgba(148, 163, 184, .14);
+        }
+
+        .dark .appointments-tab {
+            color: #94a3b8;
+        }
+
+        .dark .appointments-tab:hover,
+        .dark .appointments-tab.active {
+            background: rgba(30, 41, 59, .95);
+            color: #f8fafc;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .2);
+        }
+
+        .dark .appointments-search,
+        .dark .appointment-filter-button,
+        .dark .appointment-filter-menu,
+        .dark .appointment-action-menu,
+        .dark .appointments-empty-action {
+            background: rgba(15, 23, 42, .82);
+            border-color: rgba(148, 163, 184, .18);
+            color: #e5e7eb;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, .18);
+        }
+
+        .dark .appointments-search {
+            color: #94a3b8;
+        }
+
+        .dark .appointments-search:focus-within,
+        .dark .appointment-filter-button:hover,
+        .dark .appointment-filter-button:focus-visible {
+            border-color: color-mix(in srgb, var(--agenda-primary) 48%, rgba(148, 163, 184, .2));
+            box-shadow: 0 12px 28px rgba(0, 138, 112, .12);
+        }
+
+        .dark .appointments-search input,
+        .dark .appointment-filter-heading,
+        .dark .appointment-action-heading {
+            color: #f8fafc;
+        }
+
+        .dark .appointments-search input::placeholder {
+            color: #64748b;
+        }
+
+        .dark .appointment-filter-heading {
+            border-bottom-color: rgba(148, 163, 184, .14);
+        }
+
+        .dark .appointment-filter-option,
+        .dark .appointment-action-item {
+            color: #cbd5e1;
+        }
+
+        .dark .appointment-filter-option:hover,
+        .dark .appointment-action-item:hover,
+        .dark .appointment-row-icon-action:hover,
+        .dark .appointment-more-button:hover {
+            background: rgba(20, 184, 166, .1);
+            color: #5eead4;
+        }
+
+        .dark .appointment-filter-option.active {
+            color: #5eead4;
+        }
+
+        .dark .appointment-action-separator,
+        .dark .appointment-row + .appointment-row {
+            background: rgba(148, 163, 184, .16);
+            border-top-color: rgba(148, 163, 184, .16);
+        }
+
+        .dark .appointments-meta-row,
+        .dark .appointment-date-heading,
+        .dark .appointment-duration,
+        .dark .appointment-line,
+        .dark .appointments-empty-copy {
+            color: #94a3b8;
+        }
+
+        .dark .appointment-date-heading::after {
+            background: rgba(148, 163, 184, .18);
+        }
+
+        .dark .appointment-date-count {
+            color: #bae6fd;
+        }
+
+        .dark .appointment-day-card {
+            background: rgba(15, 23, 42, .72);
+            border-color: rgba(148, 163, 184, .18);
+            box-shadow: 0 22px 54px rgba(0, 0, 0, .18);
+        }
+
+        .dark .appointment-row:hover {
+            background: rgba(30, 41, 59, .48);
+        }
+
+        .dark .appointment-time,
+        .dark .appointment-patient,
+        .dark .appointments-empty-title {
+            color: #f8fafc;
+        }
+
+        .dark .appointment-channel-dot,
+        .dark .appointment-source {
+            background: rgba(2, 6, 23, .86);
+            border-color: rgba(148, 163, 184, .18);
+            color: #e5e7eb;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .22);
+        }
+
+        .dark .appointment-avatar {
+            background: linear-gradient(135deg, rgba(20, 184, 166, .18), rgba(14, 165, 233, .12));
+            border-color: rgba(94, 234, 212, .22);
+            color: #f8fafc;
+        }
+
+        .dark .appointment-dot-separator {
+            background: rgba(148, 163, 184, .42);
+        }
+
+        .dark .appointment-status-success { background: rgba(16, 185, 129, .14); color: #34d399; }
+        .dark .appointment-status-warning { background: rgba(245, 158, 11, .15); color: #fbbf24; }
+        .dark .appointment-status-info { background: rgba(14, 165, 233, .15); color: #38bdf8; }
+        .dark .appointment-status-danger { background: rgba(244, 63, 94, .15); color: #fb7185; }
+
+        .dark .appointment-sync {
+            background: #facc15;
+        }
+
+        .dark .appointment-sync.synced {
+            background: rgba(16, 185, 129, .14);
+            border-color: rgba(52, 211, 153, .4);
+            color: #34d399;
+        }
+
+        .dark .appointment-more-button,
+        .dark .appointment-row-icon-action {
+            color: #94a3b8;
+        }
+
+        .dark .appointment-action-item.danger:hover {
+            background: rgba(244, 63, 94, .12);
+            color: #fb7185;
+        }
+
+        .dark .appointments-empty-icon {
+            filter: saturate(.8) brightness(.82);
+            opacity: .78;
+        }
+
         @media (max-width: 900px) {
             .appointments-filter-row {
                 grid-template-columns: 1fr;
