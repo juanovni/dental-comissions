@@ -95,6 +95,10 @@ class AppointmentReminderService
         $sent = 0;
 
         foreach ($this->dueAppointments($hoursBefore, $now)->get() as $appointment) {
+            if (($appointment->metadata['whatsapp_notifications_consent'] ?? null) === false) {
+                continue;
+            }
+
             if ($this->hasReminder($appointment, 'whatsapp', $type)) {
                 continue;
             }

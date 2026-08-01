@@ -83,7 +83,9 @@ class SocialAppointmentLinkController extends Controller
         $offerService = app(AppointmentSlotOfferService::class);
 
         $patientName = trim((string) $request->input('patient_name', ''));
-        $phoneConfirmed = (bool) $request->input('phone_confirmed', false);
+        $patientPhone = $offerService->getPhoneForConfirmation($comment);
+        $whatsappNotificationsConsent = $patientPhone
+            && (bool) $request->boolean('whatsapp_notifications_consent');
         $selectedDatetime = $request->input('selected_datetime');
         $selectedOptionIndex = $request->input('option');
         $neededPatientName = ! $offerService->hasRealPatientName($comment);
@@ -103,15 +105,24 @@ class SocialAppointmentLinkController extends Controller
             return back()->with('appointment_error', 'No pudimos guardar el nombre del paciente. Escríbenos por WhatsApp para ayudarte.');
         }
 
-        if ($neededPatientName && ! $phoneConfirmed && $offerService->getPhoneForConfirmation($comment)) {
-            return back()->with('appointment_error', 'Por favor confirma que el número de teléfono es correcto.');
-        }
-
         try {
+            $notificationMetadata = $this->whatsappNotificationMetadata($whatsappNotificationsConsent, $patientPhone);
+
             if (filled($selectedDatetime)) {
-                $appointment = $this->confirmFromDatetime($offer, $comment, Carbon::parse($selectedDatetime));
+                $appointment = $this->confirmFromDatetime(
+                    $offer,
+                    $comment,
+                    Carbon::parse($selectedDatetime),
+                    $notificationMetadata,
+                    $whatsappNotificationsConsent ? $patientPhone : null,
+                );
             } elseif (filled($selectedOptionIndex)) {
-                $appointment = $offerService->confirmFromToken($offer, (int) $selectedOptionIndex);
+                $appointment = $offerService->confirmFromToken(
+                    $offer,
+                    (int) $selectedOptionIndex,
+                    $notificationMetadata,
+                    $whatsappNotificationsConsent ? $patientPhone : null,
+                );
             } else {
                 return back()->with('appointment_error', 'Por favor selecciona un horario.');
             }
@@ -119,16 +130,25 @@ class SocialAppointmentLinkController extends Controller
             return back()->with('appointment_error', 'Ese horario acaba de ocuparse. Por favor elige otra opción o escríbenos por WhatsApp.');
         }
 
-        $sent = $this->sendWhatsappConfirmation($offer->refresh(), $appointment);
+        $sent = $whatsappNotificationsConsent
+            && $this->sendWhatsappConfirmation($offer->refresh(), $appointment);
 
         return redirect()
             ->route('social-appointments.show', ['token' => $token])
-            ->with('appointment_success', $sent
-                ? 'Tu cita quedó registrada. Te enviamos la confirmación por WhatsApp.'
-                : 'Tu cita quedó registrada. No pudimos enviar la confirmación por WhatsApp en este momento.');
+            ->with('appointment_success', match (true) {
+                $sent => 'Tu cita quedó registrada. Te enviamos la confirmación por WhatsApp.',
+                $whatsappNotificationsConsent => 'Tu cita quedó registrada. No pudimos enviar la confirmación por WhatsApp en este momento.',
+                default => 'Tu cita quedó registrada. No enviaremos mensajes automáticos por WhatsApp para esta cita.',
+            });
     }
 
-    private function confirmFromDatetime(AppointmentSlotOffer $offer, \App\Models\SocialComment $comment, Carbon $start): Appointment
+    private function confirmFromDatetime(
+        AppointmentSlotOffer $offer,
+        \App\Models\SocialComment $comment,
+        Carbon $start,
+        array $notificationMetadata,
+        ?string $whatsappPhone,
+    ): Appointment
     {
         $settings = app(SocialCrmSettingsService::class);
         $duration = $settings->appointmentSlotDuration();
@@ -150,7 +170,11 @@ class SocialAppointmentLinkController extends Controller
             throw new \RuntimeException('Ese horario acaba de ocuparse.');
         }
 
-        $patient = app(\App\Services\SocialPatientConversionService::class)->ensurePatientForLead($comment);
+        $patient = app(\App\Services\SocialPatientConversionService::class)->ensurePatientForLead($comment, $whatsappPhone);
+
+        if ($patient && $whatsappPhone && blank($patient->phone)) {
+            $patient->update(['phone' => $whatsappPhone]);
+        }
 
         $appointment = app(\App\Services\AppointmentCreationService::class)->createFromSocialLead($comment, [
             'patient_id' => $patient?->id,
@@ -166,7 +190,7 @@ class SocialAppointmentLinkController extends Controller
             'metadata' => [
                 'slot_offer_id' => $offer->id,
                 'selected_datetime' => $start->toIso8601String(),
-            ],
+            ] + $notificationMetadata,
         ]);
 
         app(\App\Services\AppointmentWorkflowService::class)->syncToCalendar($appointment);
@@ -181,7 +205,7 @@ class SocialAppointmentLinkController extends Controller
             'ends_at' => $end,
             'expires_at' => now()->addMinutes($settings->appointmentSlotHoldMinutes()),
             'status' => 'confirmed',
-            'metadata' => ['selected_datetime' => $start->toIso8601String()],
+            'metadata' => ['selected_datetime' => $start->toIso8601String()] + $notificationMetadata,
         ]);
 
         $offer->update([
@@ -204,6 +228,15 @@ class SocialAppointmentLinkController extends Controller
         app(\App\Services\SocialLeadScoringService::class)->scoreWhatsappSlotSelected($comment->refresh());
 
         return $appointment;
+    }
+
+    private function whatsappNotificationMetadata(bool $consent, ?string $phone): array
+    {
+        return [
+            'whatsapp_notifications_consent' => $consent,
+            'whatsapp_notifications_phone' => $consent ? $phone : null,
+            'whatsapp_notifications_scope' => $consent ? ['confirmation', 'reminders', 'changes'] : [],
+        ];
     }
 
     public function calendar(string $token): Response
