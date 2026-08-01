@@ -169,6 +169,39 @@ class SocialInboxTest extends TestCase
             ->assertSee($facebook->comment_text);
     }
 
+    public function test_moderated_meta_filter_keeps_comments_visible_in_crisis(): void
+    {
+        $moderated = $this->socialComment([
+            'comment_text' => 'Comentario ofensivo ocultado en Meta',
+            'classification' => SocialCommentClassification::Offensive,
+            'reputation_risk' => \App\Enums\SocialReputationRisk::High,
+            'status' => SocialCommentStatus::ReviewRequired,
+            'requires_human_review' => true,
+            'platform_hidden_at' => now(),
+        ]);
+        $archivedModerated = $this->socialComment([
+            'comment_text' => 'Comentario moderado archivado',
+            'classification' => SocialCommentClassification::Offensive,
+            'reputation_risk' => \App\Enums\SocialReputationRisk::High,
+            'status' => SocialCommentStatus::Classified,
+            'platform_hidden_at' => now(),
+            'is_hidden' => true,
+        ]);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(SocialInbox::class)
+            ->set('filter', 'crisis')
+            ->assertSee($moderated->comment_text)
+            ->assertDontSee($archivedModerated->comment_text)
+            ->assertSee('Ocultado en Meta')
+            ->set('filter', 'moderated')
+            ->assertSee($moderated->comment_text)
+            ->assertSee($archivedModerated->comment_text)
+            ->assertSee('Moderados en Meta')
+            ->set('filter', 'archived')
+            ->assertDontSee($moderated->comment_text);
+    }
+
     public function test_route_to_whatsapp_shows_final_tracking_reply_text(): void
     {
         config(['services.whatsapp.business_phone' => '+593999999999']);

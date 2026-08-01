@@ -49,6 +49,23 @@ class VoiceToolsFeatureTest extends TestCase
             ]);
     }
 
+    public function test_identify_patient_finds_by_phone_without_plus_prefix(): void
+    {
+        $patient = Patient::factory()->create(['phone' => '+593985925100']);
+
+        $response = $this->withToken($this->validToken)
+            ->postJson('/api/voice/tools/identify-patient', [
+                'phone_e164' => '593985925100',
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'found' => true,
+                'patient_id' => $patient->id,
+                'name' => $patient->full_name,
+            ]);
+    }
+
     public function test_identify_patient_returns_not_found(): void
     {
         $response = $this->withToken($this->validToken)

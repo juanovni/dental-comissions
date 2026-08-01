@@ -411,6 +411,25 @@ class MetaSocialService
         ], $comment->socialAccount);
     }
 
+    public function hideComment(SocialComment $comment): array
+    {
+        $comment->loadMissing('socialAccount');
+
+        if (blank($comment->external_comment_id)) {
+            throw new \InvalidArgumentException('El comentario no tiene external_comment_id para ocultar en Meta.');
+        }
+
+        if (! $comment->socialAccount) {
+            throw new \InvalidArgumentException('El comentario no tiene cuenta social asociada para ocultar en Meta.');
+        }
+
+        $params = $comment->platform === SocialPlatform::Instagram
+            ? ['hide' => true]
+            : ['is_hidden' => true];
+
+        return $this->post("/{$comment->external_comment_id}", $params, $comment->socialAccount);
+    }
+
     public function storePost(SocialAccount $account, array $postData): SocialPost
     {
         $publishedAt = $postData['created_time'] ?? $postData['timestamp'] ?? null;

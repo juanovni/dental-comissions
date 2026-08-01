@@ -30,7 +30,10 @@ class SocialCommentClassificationService
             $result['reason'] .= ' Fallback local usado por error de IA.';
         }
 
-        $validated = $this->validateResult($result);
+        $validated = $this->applyDeterministicSafetyOverrides(
+            $this->validateResult($result),
+            $comment,
+        );
         $status = $validated['requires_human_review']
             ? SocialCommentStatus::ReviewRequired
             : SocialCommentStatus::Classified;
@@ -60,6 +63,8 @@ class SocialCommentClassificationService
             'notes' => 'Comentario clasificado automaticamente.',
             'external_response' => $validated,
         ]);
+
+        app(SocialCommentModerationService::class)->moderateIfNeeded($comment->refresh());
 
         return $comment->refresh();
     }
@@ -94,17 +99,17 @@ class SocialCommentClassificationService
             );
         }
 
-        if (preg_match('/\b(estafa|ladrones|idiotas|mierda|basura|asco)\b/u', $text) === 1) {
+        if ($this->containsAutoHideOffensiveText($text)) {
             return $this->result(
                 SocialCommentClassification::Offensive,
                 SocialSentiment::Negative,
                 SocialPriority::High,
                 SocialReputationRisk::High,
-                SocialSuggestedAction::Review,
+                SocialSuggestedAction::Hide,
                 SocialResponseChannel::NoResponse,
                 '',
                 true,
-                'El comentario contiene lenguaje ofensivo o agresivo.',
+                'El comentario contiene lenguaje ofensivo, acusatorio o agresivo.',
             );
         }
 
@@ -224,6 +229,33 @@ class SocialCommentClassificationService
             'reason' => (string) ($data['reason'] ?? 'Clasificacion sin motivo especificado.'),
             'suggested_procedure_code' => $procedureCode,
         ];
+    }
+
+    private function applyDeterministicSafetyOverrides(array $validated, SocialComment $comment): array
+    {
+        $text = Str::of($comment->comment_text)->lower()->ascii()->toString();
+
+        if (! $this->containsAutoHideOffensiveText($text)) {
+            return $validated;
+        }
+
+        $validated['classification'] = SocialCommentClassification::Offensive->value;
+        $validated['sentiment'] = SocialSentiment::Negative->value;
+        $validated['priority'] = SocialPriority::High->value;
+        $validated['reputation_risk'] = SocialReputationRisk::High->value;
+        $validated['suggested_action'] = SocialSuggestedAction::Hide->value;
+        $validated['response_channel'] = SocialResponseChannel::NoResponse->value;
+        $validated['suggested_reply'] = '';
+        $validated['requires_human_review'] = true;
+        $validated['reason'] = trim($validated['reason'].' Regla local: lenguaje ofensivo o acusatorio requiere ocultamiento en Meta sin auto-respuesta.');
+
+        return $validated;
+    }
+
+    private function containsAutoHideOffensiveText(string $text): bool
+    {
+        return preg_match('/\b(estafa|estada|fraude|ladrones|rateros|idiotas|mierda|basura|asco|porqueria|inutiles)\b/u', $text) === 1
+            || str_contains($text, 'son los peores');
     }
 
     /**
