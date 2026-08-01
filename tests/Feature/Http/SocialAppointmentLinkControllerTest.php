@@ -158,8 +158,18 @@ class SocialAppointmentLinkControllerTest extends TestCase
         ]);
         $offer->update(['whatsapp_message_id' => $incoming->id]);
 
-        $this->post(route('social-appointments.confirm', ['token' => $offer->token]), ['option' => 1])
+        $this->post(route('social-appointments.confirm', ['token' => $offer->token]), [
+            'option' => 1,
+            'patient_name' => 'Test User',
+            'whatsapp_notifications_consent' => '1',
+        ])
             ->assertRedirect(route('social-appointments.show', ['token' => $offer->token]));
+
+        $appointment = $offer->refresh()->appointment;
+
+        $this->assertTrue($appointment->metadata['whatsapp_notifications_consent']);
+        $this->assertSame('+593985925100', $appointment->metadata['whatsapp_notifications_phone']);
+        $this->assertSame(['confirmation', 'reminders', 'changes'], $appointment->metadata['whatsapp_notifications_scope']);
 
         $this->assertDatabaseHas('whatsapp_messages', [
             'social_comment_id' => $comment->id,
@@ -183,6 +193,57 @@ class SocialAppointmentLinkControllerTest extends TestCase
             ->assertSee('10:00')
             ->assertDontSee('Clínica Dental')
             ->assertDontSee('Confirmar cita');
+
+        Carbon::setTestNow();
+    }
+
+    public function test_confirming_from_link_without_whatsapp_consent_does_not_send_confirmation(): void
+    {
+        $this->withoutMiddleware();
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+        config([
+            'services.whatsapp.phone_number_id' => 'phone-number-id',
+            'services.whatsapp.access_token' => 'test-token',
+        ]);
+        Http::fake(fn () => Http::response([
+            'messages' => [['id' => 'wamid.confirmation']],
+        ]));
+
+        $this->setting('social_appointment_slot_duration', 45, 'integer');
+        $procedure = Procedure::factory()->create(['name' => 'Ortodoncia invisible']);
+        $doctor = Professional::factory()->doctor()->create(['name' => 'Dra. Ana Morales']);
+        $comment = $this->socialComment($procedure, $doctor);
+        $comment->socialIdentity->update(['phone' => '+593985925100']);
+        $incoming = WhatsappMessage::create([
+            'social_comment_id' => $comment->id,
+            'direction' => WhatsappMessageDirection::Incoming,
+            'status' => WhatsappMessageStatus::Received,
+            'from_phone' => '+593985925100',
+            'to_phone' => 'phone-number-id',
+            'message_body' => 'Quiero una cita',
+            'message_sid' => 'wamid.incoming.no-consent',
+        ]);
+        $offer = $this->offer($comment, [
+            ['index' => 1, 'datetime' => '2026-07-15 10:00:00', 'doctor_id' => $doctor->id],
+        ]);
+        $offer->update(['whatsapp_message_id' => $incoming->id]);
+
+        $this->post(route('social-appointments.confirm', ['token' => $offer->token]), [
+            'option' => 1,
+            'patient_name' => 'Test User',
+        ])
+            ->assertRedirect(route('social-appointments.show', ['token' => $offer->token]));
+
+        $appointment = $offer->refresh()->appointment;
+
+        $this->assertFalse($appointment->metadata['whatsapp_notifications_consent']);
+        $this->assertNull($appointment->metadata['whatsapp_notifications_phone']);
+        $this->assertSame([], $appointment->metadata['whatsapp_notifications_scope']);
+        $this->assertDatabaseMissing('whatsapp_messages', [
+            'social_comment_id' => $comment->id,
+            'direction' => WhatsappMessageDirection::Outgoing->value,
+        ]);
+        Http::assertNothingSent();
 
         Carbon::setTestNow();
     }

@@ -277,7 +277,12 @@ class AppointmentSlotOfferService
             "\n\nResponde con el número de la opción o abre este enlace para ver más horarios:\n{$calendarLink}";
     }
 
-    public function confirmFromToken(AppointmentSlotOffer $offer, int $optionIndex): Appointment
+    public function confirmFromToken(
+        AppointmentSlotOffer $offer,
+        int $optionIndex,
+        array $notificationMetadata = [],
+        ?string $whatsappPhone = null,
+    ): Appointment
     {
         $option = collect($offer->metadata['options'] ?? [])->firstWhere('index', $optionIndex);
 
@@ -285,7 +290,7 @@ class AppointmentSlotOfferService
             throw new \RuntimeException('La opción seleccionada no existe.');
         }
 
-        return $this->confirmOption($offer, $option);
+        return $this->confirmOption($offer, $option, $notificationMetadata, $whatsappPhone);
     }
 
     public function validOptionsForOffer(AppointmentSlotOffer $offer): array
@@ -310,7 +315,12 @@ class AppointmentSlotOfferService
             ->all();
     }
 
-    private function confirmOption(AppointmentSlotOffer $offer, array $option): Appointment
+    private function confirmOption(
+        AppointmentSlotOffer $offer,
+        array $option,
+        array $notificationMetadata = [],
+        ?string $whatsappPhone = null,
+    ): Appointment
     {
         $comment = $offer->socialComment()->with(['suggestedProcedure', 'suggestedDoctor'])->firstOrFail();
         $settings = app(SocialCrmSettingsService::class);
@@ -324,7 +334,11 @@ class AppointmentSlotOfferService
             throw new \RuntimeException('Ese horario acaba de ocuparse.');
         }
 
-        $patient = app(SocialPatientConversionService::class)->ensurePatientForLead($comment);
+        $patient = app(SocialPatientConversionService::class)->ensurePatientForLead($comment, $whatsappPhone);
+
+        if ($patient && $whatsappPhone && blank($patient->phone)) {
+            $patient->update(['phone' => $whatsappPhone]);
+        }
 
         $appointment = app(AppointmentCreationService::class)->createFromSocialLead($comment, [
             'patient_id' => $patient?->id,
@@ -340,7 +354,7 @@ class AppointmentSlotOfferService
             'metadata' => [
                 'slot_offer_id' => $offer->id,
                 'selected_option' => $option,
-            ],
+            ] + $notificationMetadata,
         ]);
 
         app(AppointmentWorkflowService::class)->syncToCalendar($appointment);
@@ -355,7 +369,7 @@ class AppointmentSlotOfferService
             'ends_at' => $end,
             'expires_at' => now()->addMinutes($settings->appointmentSlotHoldMinutes()),
             'status' => 'confirmed',
-            'metadata' => ['option' => $option],
+            'metadata' => ['option' => $option] + $notificationMetadata,
         ]);
 
         $offer->update([

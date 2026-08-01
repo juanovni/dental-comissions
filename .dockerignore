@@ -6,14 +6,23 @@
 .vscode
 .zed
 .fleet
+.agents
+.opencode
 
 node_modules
+vendor
 /public/build
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
 /storage/logs/*.log
+/storage/framework/cache/*
+/storage/framework/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/bootstrap/cache/*
 
 .env
 .env.backup

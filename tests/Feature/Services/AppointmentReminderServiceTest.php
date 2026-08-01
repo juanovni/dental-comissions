@@ -81,6 +81,28 @@ class AppointmentReminderServiceTest extends TestCase
         ]);
     }
 
+    public function test_whatsapp_reminder_is_not_sent_without_appointment_consent(): void
+    {
+        $this->setSetting('appointment_reminders_whatsapp_enabled', true, 'boolean');
+
+        $patient = Patient::factory()->create(['phone' => '+593985925100']);
+        Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'scheduled_at' => now()->addHours(3),
+            'status' => AppointmentStatus::Scheduled,
+            'metadata' => ['whatsapp_notifications_consent' => false],
+        ]);
+
+        $this->mock(WhatsappService::class, function ($mock): void {
+            $mock->shouldNotReceive('sendMessage');
+        });
+
+        $summary = app(AppointmentReminderService::class)->run(now());
+
+        $this->assertSame(0, $summary['whatsapp_first_sent']);
+        $this->assertDatabaseCount('appointment_reminders', 0);
+    }
+
     public function test_no_response_alert_is_created_once_for_sent_whatsapp_reminder(): void
     {
         $this->setSetting('appointment_reminders_whatsapp_enabled', false, 'boolean');

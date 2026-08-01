@@ -437,6 +437,7 @@
         .appointment-btn svg { height: 1rem; width: 1rem; }
         .appointment-btn:disabled { background: #7bc5bd; cursor: not-allowed; opacity: 1; }
         .appointment-btn:not(:disabled):hover { filter: brightness(.97); transform: translateY(-1px); }
+        .appointment-btn.secondary { background: #fafffe; border: 1px solid var(--appt-border); color: var(--appt-text); }
 
         .patient-info-row { display: grid; gap: .4rem; }
         .patient-info-label { color: var(--appt-muted); font-size: .78rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
@@ -468,6 +469,57 @@
         .phone-confirm-text { line-height: 1.4; }
         .phone-confirm-text strong { color: var(--appt-text); font-weight: 600; }
 
+        .appointment-modal[hidden] { display: none; }
+        .appointment-modal {
+            align-items: end;
+            background: rgba(15, 23, 42, .42);
+            display: grid;
+            inset: 0;
+            padding: 1rem 0 0;
+            position: fixed;
+            z-index: 50;
+        }
+        .appointment-modal-panel {
+            background: #ffffff;
+            border: 1px solid rgba(219, 232, 231, .92);
+            border-radius: 1.4rem 1.4rem 0 0;
+            box-shadow: 0 -26px 70px -38px rgba(15, 23, 42, .85);
+            display: grid;
+            gap: 1rem;
+            max-height: calc(100vh - 1.5rem);
+            overflow-y: auto;
+            padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+            width: 100%;
+        }
+        .appointment-modal-head { align-items: start; display: flex; gap: .85rem; justify-content: space-between; }
+        .appointment-modal-kicker { color: var(--appt-muted); display: block; font-size: .74rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        .appointment-modal-title { display: block; font-size: 1.18rem; font-weight: 700; letter-spacing: -.035em; line-height: 1.15; margin-top: .2rem; }
+        .appointment-modal-close {
+            align-items: center;
+            background: #f8fbfa;
+            border: 1px solid var(--appt-border);
+            border-radius: 999px;
+            color: var(--appt-text);
+            cursor: pointer;
+            display: inline-flex;
+            flex: 0 0 auto;
+            font-size: 1.35rem;
+            height: 2.35rem;
+            justify-content: center;
+            line-height: 1;
+            width: 2.35rem;
+        }
+        .appointment-modal-summary {
+            align-items: start;
+            background: #fafffe;
+            border: 1px solid var(--appt-border);
+            border-radius: .9rem;
+            display: flex;
+            gap: .75rem;
+            padding: .85rem;
+        }
+        .appointment-modal-actions { display: grid; gap: .55rem; }
+
         .full-day-badge {
             background: #fee2e2;
             border-radius: .35rem;
@@ -490,6 +542,8 @@
             .confirmation-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .summary-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .appointment-btn { width: auto; }
+            .appointment-modal { align-items: center; padding: 1.5rem; }
+            .appointment-modal-panel { border-radius: 1.35rem; margin: 0 auto; max-width: 31rem; padding: 1.15rem; }
         }
 
         @media (max-width: 640px) {
@@ -499,10 +553,10 @@
             .appointment-carousel-shell { margin-inline: -1rem; }
             .appointment-carousel-shell::before,
             .appointment-carousel-shell::after { display: none; }
-            .appointment-carousel-btn { height: 2.35rem; opacity: .92; top: 47%; width: 2.35rem; }
-            .appointment-carousel-btn.prev { left: .55rem; }
-            .appointment-carousel-btn.next { right: .55rem; }
-            .day-pills { grid-auto-columns: minmax(16.2rem, 76vw); padding-inline: 1rem 4.4rem; scroll-padding-inline: 1rem; }
+            .appointment-carousel-btn { height: 2.75rem; opacity: .94; top: 50%; width: 2.75rem; }
+            .appointment-carousel-btn.prev { left: .75rem; }
+            .appointment-carousel-btn.next { right: .75rem; }
+            .day-pills { grid-auto-columns: minmax(16.2rem, 76vw); padding-inline: 1rem; scroll-padding-inline: 1rem; }
             .day-pill { min-height: 13rem; }
             .summary-card {
                 border-radius: 1.1rem 1.1rem 0 0;
@@ -730,25 +784,6 @@
                 <input type="hidden" name="selected_datetime" id="selected-datetime" value="">
                 <input type="hidden" name="option" id="selected-option" value="">
 
-                <div class="patient-info-row">
-                    <label class="patient-info-label" for="patient-name">Nombre del paciente</label>
-                    <input class="patient-info-input" type="text" name="patient_name" id="patient-name" value="{{ old('patient_name', $patientName) }}" placeholder="Ej: Juan Constantine" autocomplete="name" required>
-                    <span class="patient-info-help">
-                        @if ($needsPatientName)
-                            Necesitamos este dato para registrar tu cita.
-                        @else
-                            Agendaremos con este nombre. Puedes corregirlo si la cita es para otra persona.
-                        @endif
-                    </span>
-                </div>
-
-                @if ($needsPatientName && $patientPhone)
-                    <label class="phone-confirm-row">
-                        <input type="checkbox" name="phone_confirmed" value="1" required>
-                        <span class="phone-confirm-text">Usaremos <strong>{{ $patientPhone }}</strong> para recordatorios por WhatsApp</span>
-                    </label>
-                @endif
-
                 <div class="summary-content">
                     <span class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
                     <span>
@@ -757,11 +792,59 @@
                         <span class="summary-meta" id="selected-meta">{{ trim(($doctorName ? $doctorName.' · ' : '').$procedureName) }}</span>
                     </span>
                 </div>
-                <button class="appointment-btn" type="submit" id="confirm-button" disabled>
+                <button class="appointment-btn" type="button" id="confirm-button" disabled>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
                     Confirmar cita
                 </button>
             </form>
+
+            <div class="appointment-modal" id="appointment-confirm-modal" hidden role="dialog" aria-modal="true" aria-labelledby="appointment-modal-title">
+                <div class="appointment-modal-panel" role="document">
+                    <div class="appointment-modal-head">
+                        <span>
+                            <span class="appointment-modal-kicker">Confirma tus datos</span>
+                            <span class="appointment-modal-title" id="appointment-modal-title">Último paso para reservar tu cita</span>
+                        </span>
+                        <button class="appointment-modal-close" type="button" aria-label="Cerrar" data-modal-close>&times;</button>
+                    </div>
+
+                    <div class="patient-info-row">
+                        <label class="patient-info-label" for="patient-name">Nombre del paciente</label>
+                        <input class="patient-info-input" type="text" name="patient_name" id="patient-name" value="{{ old('patient_name', $patientName) }}" placeholder="Ej: Juan Constantine" autocomplete="name" required form="appointment-confirm-form">
+                        <span class="patient-info-help">
+                            @if ($needsPatientName)
+                                Necesitamos este dato para registrar tu cita.
+                            @else
+                                Agendaremos con este nombre. Puedes corregirlo si la cita es para otra persona.
+                            @endif
+                        </span>
+                    </div>
+
+                    @if ($patientPhone)
+                        <label class="phone-confirm-row">
+                            <input type="checkbox" name="whatsapp_notifications_consent" value="1" checked form="appointment-confirm-form">
+                            <span class="phone-confirm-text">Usar <strong>{{ $patientPhone }}</strong> para enviarme confirmación, recordatorios y cambios de mi cita por WhatsApp.</span>
+                        </label>
+                    @endif
+
+                    <div class="appointment-modal-summary">
+                        <span class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                        <span>
+                            <span class="summary-label">Cita seleccionada</span>
+                            <span class="summary-title" id="modal-selected-summary">Selecciona un horario disponible</span>
+                            <span class="summary-meta" id="modal-selected-meta">{{ trim(($doctorName ? $doctorName.' · ' : '').$procedureName) }}</span>
+                        </span>
+                    </div>
+
+                    <div class="appointment-modal-actions">
+                        <button class="appointment-btn" type="submit" id="modal-submit-button" form="appointment-confirm-form">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+                            Confirmar cita
+                        </button>
+                        <button class="appointment-btn secondary" type="button" data-modal-close>Volver a elegir horario</button>
+                    </div>
+                </div>
+            </div>
         @endif
         @endif
     </main>
@@ -777,6 +860,41 @@
             var summary = document.getElementById('selected-summary');
             var meta = document.getElementById('selected-meta');
             var confirmButton = document.getElementById('confirm-button');
+            var confirmForm = document.getElementById('appointment-confirm-form');
+            var confirmModal = document.getElementById('appointment-confirm-modal');
+            var modalSummary = document.getElementById('modal-selected-summary');
+            var modalMeta = document.getElementById('modal-selected-meta');
+            var patientName = document.getElementById('patient-name');
+            var lastFocusedElement = null;
+
+            var openModal = function () {
+                var hasSelection = (datetimeInput && datetimeInput.value) || (optionInput && optionInput.value);
+
+                if (! confirmModal || ! hasSelection) {
+                    return;
+                }
+
+                lastFocusedElement = document.activeElement;
+                confirmModal.hidden = false;
+                document.body.style.overflow = 'hidden';
+
+                if (patientName) {
+                    window.setTimeout(function () { patientName.focus(); patientName.select(); }, 50);
+                }
+            };
+
+            var closeModal = function () {
+                if (! confirmModal) {
+                    return;
+                }
+
+                confirmModal.hidden = true;
+                document.body.style.overflow = '';
+
+                if (lastFocusedElement && lastFocusedElement.focus) {
+                    lastFocusedElement.focus();
+                }
+            };
 
             slotButtons.forEach(function (button) {
                 button.addEventListener('click', function () {
@@ -803,8 +921,16 @@
                         summary.textContent = button.dataset.summary || 'Horario seleccionado';
                     }
 
+                    if (modalSummary) {
+                        modalSummary.textContent = button.dataset.summary || 'Horario seleccionado';
+                    }
+
                     if (meta && button.dataset.meta) {
                         meta.textContent = button.dataset.meta;
+                    }
+
+                    if (modalMeta && button.dataset.meta) {
+                        modalMeta.textContent = button.dataset.meta;
                     }
 
                     if (confirmButton) {
@@ -812,6 +938,36 @@
                     }
                 });
             });
+
+            if (confirmButton) {
+                confirmButton.addEventListener('click', openModal);
+            }
+
+            if (confirmModal) {
+                confirmModal.addEventListener('click', function (event) {
+                    if (event.target === confirmModal || event.target.closest('[data-modal-close]')) {
+                        closeModal();
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && confirmModal && ! confirmModal.hidden) {
+                    closeModal();
+                }
+            });
+
+            if (confirmForm) {
+                confirmForm.addEventListener('submit', function (event) {
+                    if (! patientName || patientName.value.trim() !== '') {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    openModal();
+                    patientName.focus();
+                });
+            }
 
             carouselButtons.forEach(function (button) {
                 button.addEventListener('click', function () {

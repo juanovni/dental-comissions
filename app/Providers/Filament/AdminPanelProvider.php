@@ -37,6 +37,28 @@ class AdminPanelProvider extends PanelProvider
             fn (): HtmlString => new HtmlString('<div class="">'.view('filament.partials.social-lead-notification-center')->render().'</div>'),
         );
 
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::HEAD_END,
+            fn (): HtmlString => in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant, UserRole::Doctor], true)
+                ? new HtmlString(<<<'HTML'
+                    <script>
+                        document.documentElement.classList.add('fi-role-clinical-flat')
+
+                        try {
+                            const collapsedGroups = JSON.parse(localStorage.getItem('collapsedGroups') || '[]')
+
+                            localStorage.setItem(
+                                'collapsedGroups',
+                                JSON.stringify(collapsedGroups.filter((group) => group !== 'Operación Clinica')),
+                            )
+                        } catch (error) {
+                            localStorage.removeItem('collapsedGroups')
+                        }
+                    </script>
+                    HTML)
+                : new HtmlString(''),
+        );
+
         return $panel
             ->default()
             ->id('admin')
@@ -82,7 +104,8 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Reputacion Digital')
                     ->collapsible(false),
                 NavigationGroup::make('Operación Clinica')
-                    ->icon('heroicon-o-clipboard-document-list'),
+                    ->icon(fn (): ?string => in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant, UserRole::Doctor], true) ? null : 'heroicon-o-clipboard-document-list')
+                    ->collapsible(fn (): bool => ! in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant, UserRole::Doctor], true)),
                 NavigationGroup::make('Pity Voice')
                     ->icon('heroicon-o-phone'),
                 NavigationGroup::make('Configuración')
