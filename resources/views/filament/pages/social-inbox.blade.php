@@ -6,6 +6,7 @@
             'todos' => ['label' => 'Todos', 'icon' => 'inbox', 'count' => $stats['todos']],
             'leads' => ['label' => 'Leads', 'icon' => 'user-plus', 'count' => $stats['leads']],
             'crisis' => ['label' => 'Crisis', 'icon' => 'exclamation-triangle', 'count' => $stats['crisis']],
+            'moderated' => ['label' => 'Moderados en Meta', 'icon' => 'eye-slash', 'count' => $stats['moderated']],
             'vip' => ['label' => 'Pacientes VIP', 'icon' => 'star', 'count' => $stats['vip']],
             'medical' => ['label' => 'Atencion Medica', 'icon' => 'heart', 'count' => $stats['medical']],
             'all' => ['label' => 'Activos', 'icon' => 'magnifying-glass', 'count' => $stats['all']],
@@ -2482,6 +2483,9 @@
                             @case('exclamation-triangle')
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
                                 @break
+                            @case('eye-slash')
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+                                @break
                             @case('star')
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" /></svg>
                                 @break
@@ -2523,6 +2527,8 @@
                     $isDerived = $comment->conversion_status === \App\Enums\SocialConversionStatus::TokenGenerated;
                     $isHotLead = filled($comment->hot_lead_at);
                     $isReheated = filled($comment->reheated_at);
+                    $isHiddenOnPlatform = filled($comment->platform_hidden_at);
+                    $hideOnPlatformFailed = blank($comment->platform_hidden_at) && filled($comment->platform_hide_error);
                     $autoReply = $this->autoReplyStatus($comment);
                     $intent = $isCrisis ? 'crisis' : ($isLead ? 'lead' : ($isVip ? 'vip' : ($isMedical ? 'medical' : 'normal')));
                     $intentTitle = match ($intent) {
@@ -2639,6 +2645,13 @@
                             <span>{{ $autoReply['label'] }}</span>
                             <span class="smart-auto-separator">·</span>
                             <span>{{ $procedureLabel }}</span>
+                            @if ($isHiddenOnPlatform)
+                                <span class="smart-auto-separator">·</span>
+                                <span class="smart-badge neutral">Ocultado en Meta</span>
+                            @elseif ($hideOnPlatformFailed)
+                                <span class="smart-auto-separator">·</span>
+                                <span class="smart-badge danger">Error al ocultar en Meta</span>
+                            @endif
                         </div>
                     </div>
 
@@ -2768,6 +2781,22 @@
                             <div>
                                 <strong>Auto-respuesta Meta</strong>
                                 <p>{{ $selectedComment->auto_reply_error ?: $selectedComment->auto_reply_message }}</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if (filled($selectedComment->platform_hidden_at) || filled($selectedComment->platform_hide_error))
+                        <div class="smart-action-banner" style="margin-bottom:.75rem">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+                            <div>
+                                <strong>Moderacion en Meta</strong>
+                                <p>
+                                    @if (filled($selectedComment->platform_hidden_at))
+                                        Comentario ocultado en Meta {{ $selectedComment->platform_hidden_at->diffForHumans() }}. Sigue visible aqui para seguimiento.
+                                    @else
+                                        No se pudo ocultar en Meta: {{ $selectedComment->platform_hide_error }}
+                                    @endif
+                                </p>
                             </div>
                         </div>
                     @endif

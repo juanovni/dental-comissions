@@ -491,8 +491,12 @@ class SocialInbox extends Page
     {
         return $this->baseQuery()
             ->when($this->filter === 'archived', fn (Builder $query): Builder => $this->applyArchivedQuery($query))
-            ->when($this->filter !== 'archived' && $this->filter !== 'todos', fn (Builder $query): Builder => $this->applyActiveQuery($query))
+            ->when(
+                ! in_array($this->filter, ['archived', 'moderated', 'todos'], true),
+                fn (Builder $query): Builder => $this->applyActiveQuery($query),
+            )
             ->when($this->filter === 'crisis', fn (Builder $query): Builder => $this->applyCrisisQuery($query))
+            ->when($this->filter === 'moderated', fn (Builder $query): Builder => $query->whereNotNull('platform_hidden_at'))
             ->when($this->filter === 'leads', fn (Builder $query): Builder => $query->whereIn('classification', [
                 SocialCommentClassification::SalesLead->value,
                 SocialCommentClassification::CommercialQuestion->value,
@@ -520,6 +524,10 @@ class SocialInbox extends Page
                 SocialCommentClassification::CommercialQuestion->value,
             ])->count(),
             'crisis' => $this->applyCrisisQuery($this->applyActiveQuery(SocialComment::query()))->count(),
+            'moderated' => SocialComment::query()
+                ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
+                ->whereNotNull('platform_hidden_at')
+                ->count(),
             'vip' => $this->applyActiveQuery(SocialComment::query())->whereHas('socialIdentity.patient')
                 ->whereHas('socialIdentity.patient.appointments')
                 ->count(),

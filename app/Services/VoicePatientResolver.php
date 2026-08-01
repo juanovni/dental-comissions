@@ -10,15 +10,19 @@ class VoicePatientResolver
 {
     public function find(string $phoneE164): ?Patient
     {
-        $phone = $this->normalize($phoneE164);
+        $phones = $this->phoneVariants($phoneE164);
 
-        $patient = Patient::where('phone', $phone)->first();
+        $patient = Patient::whereIn('phone', $phones)->first();
 
         if ($patient) {
             return $patient;
         }
 
-        $identity = SocialIdentity::where('phone', $phone)->first();
+        $digits = $this->digits($phoneE164);
+        $identity = SocialIdentity::query()
+            ->whereIn('phone', $phones)
+            ->when($digits !== '', fn ($query) => $query->orWhere('normalized_phone', $digits))
+            ->first();
 
         return $identity?->patient;
     }
@@ -44,5 +48,25 @@ class VoicePatientResolver
     private function normalize(string $phone): string
     {
         return preg_replace('/[^0-9+]/', '', $phone);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function phoneVariants(string $phone): array
+    {
+        $normalized = $this->normalize($phone);
+        $digits = $this->digits($phone);
+
+        return array_values(array_unique(array_filter([
+            $normalized,
+            $digits,
+            $digits !== '' ? '+'.$digits : null,
+        ])));
+    }
+
+    private function digits(string $phone): string
+    {
+        return preg_replace('/\D+/', '', $phone) ?? '';
     }
 }

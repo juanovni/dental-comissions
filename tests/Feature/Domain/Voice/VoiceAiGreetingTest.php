@@ -38,6 +38,24 @@ class VoiceAiGreetingTest extends TestCase
         ]);
     }
 
+    public function test_web_voice_simulator_matches_patient_phone_with_or_without_plus_prefix(): void
+    {
+        $patient = Patient::factory()->create([
+            'full_name' => 'Juan Perez',
+            'phone' => '+593985925100',
+        ]);
+
+        $callId = null;
+        $result = app(VoiceAiService::class)->startConversation('593985925100', $callId);
+
+        $this->assertSame('Hola Juan, soy Pity. Que gusto escucharte otra vez. ¿Quieres agendar, confirmar o cambiar una cita?', $result['message']);
+
+        $this->assertDatabaseHas('voice_calls', [
+            'id' => $callId,
+            'patient_id' => $patient->id,
+        ]);
+    }
+
     public function test_web_voice_simulator_uses_generic_greeting_when_phone_is_unknown(): void
     {
         $callId = null;
