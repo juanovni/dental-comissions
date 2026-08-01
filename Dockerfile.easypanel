@@ -67,11 +67,11 @@ RUN npm ci
 
 COPY . .
 
-RUN composer dump-autoload --optimize \
-    && php artisan package:discover --ansi \
-    && npm run build \
-    && rm -rf node_modules \
-    && mkdir -p storage/framework/{cache,data,sessions,testing,views} storage/logs bootstrap/cache \
+RUN composer dump-autoload --optimize --no-scripts
+RUN npm run build
+RUN php artisan package:discover --ansi
+RUN rm -rf node_modules \
+    && mkdir -p storage/framework/cache storage/framework/data storage/framework/sessions storage/framework/testing storage/framework/views storage/logs bootstrap/cache \
     && chmod +x /usr/local/bin/start-container \
     && chown -R sail:sail /var/www/html
 
