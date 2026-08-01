@@ -39,10 +39,10 @@ class AdminPanelProvider extends PanelProvider
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::HEAD_END,
-            fn (): HtmlString => auth()->user()?->role === UserRole::Receptionist
+            fn (): HtmlString => in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant], true)
                 ? new HtmlString(<<<'HTML'
                     <script>
-                        document.documentElement.classList.add('fi-role-receptionist')
+                        document.documentElement.classList.add('fi-role-clinical-flat')
 
                         try {
                             const collapsedGroups = JSON.parse(localStorage.getItem('collapsedGroups') || '[]')
@@ -104,8 +104,8 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Reputacion Digital')
                     ->collapsible(false),
                 NavigationGroup::make('Operación Clinica')
-                    ->icon(fn (): ?string => auth()->user()?->role === UserRole::Receptionist ? null : 'heroicon-o-clipboard-document-list')
-                    ->collapsible(fn (): bool => auth()->user()?->role !== UserRole::Receptionist),
+                    ->icon(fn (): ?string => in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant], true) ? null : 'heroicon-o-clipboard-document-list')
+                    ->collapsible(fn (): bool => ! in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant], true)),
                 NavigationGroup::make('Pity Voice')
                     ->icon('heroicon-o-phone'),
                 NavigationGroup::make('Configuración')
