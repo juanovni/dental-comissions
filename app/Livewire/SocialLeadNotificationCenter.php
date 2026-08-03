@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Filament\Pages\SocialPipelineKanban;
+use App\Filament\Pages\SocialInbox;
 use App\Models\SocialLeadAlert;
 use App\Services\SocialLeadAlertService;
 use Filament\Notifications\Notification;
@@ -105,7 +105,7 @@ class SocialLeadNotificationCenter extends Component
 
     public function leadUrl(SocialLeadAlert $alert): string
     {
-        return SocialPipelineKanban::getUrl(['lead' => $alert->social_comment_id]);
+        return SocialInbox::getUrl(['comment' => $alert->social_comment_id]);
     }
 
     #[Computed]

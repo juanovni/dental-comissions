@@ -22,6 +22,7 @@ use Filament\Pages\Page;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\WithPagination;
 
 class SocialInbox extends Page
@@ -99,6 +100,7 @@ class SocialInbox extends Page
 
     public ?int $recentActivityLeadId = null;
 
+    #[Url(as: 'comment')]
     public ?int $selectedCommentId = null;
 
     public ?int $historicalSuggestionCommentId = null;
