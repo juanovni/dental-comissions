@@ -69,7 +69,7 @@
                         <form method="POST" action="{{ route('patient-flow.check-in.store', ['clinicSlug' => $clinicSlug]) }}" style="display: grid; gap: .9rem;">
                             @csrf
                             <label>Teléfono o código
-                                <input name="identifier" value="{{ old('identifier') }}" placeholder="+52 555 123 4567" autocomplete="tel">
+                                <input name="identifier" value="{{ old('identifier') }}" placeholder="0912345678" autocomplete="tel">
                             </label>
                             @error('identifier') <p style="color:#dc2626;">{{ $message }}</p> @enderror
                             <button type="submit">Ya llegué</button>
