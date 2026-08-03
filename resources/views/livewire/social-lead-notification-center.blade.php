@@ -258,6 +258,12 @@
             padding: .9rem 1rem;
         }
 
+        .ln-footer .ln-btn {
+            flex: 1;
+            justify-content: center;
+            min-height: 2.25rem;
+        }
+
         .ln-btn {
             align-items: center;
             background: #ffffff;
@@ -341,6 +347,13 @@
             background: rgba(30, 41, 59, .86);
         }
 
+        .dark .ln-btn-primary,
+        .dark .ln-btn-primary:hover {
+            background: #000000;
+            border-color: #000000;
+            color: #ffffff;
+        }
+
         @media (max-width: 640px) {
             .ln-panel {
                 border-radius: 0;
@@ -350,9 +363,6 @@
                 width: 100vw;
             }
 
-            .ln-footer .ln-btn {
-                flex: 1 1 0;
-            }
         }
     </style>
 
@@ -435,8 +445,7 @@
                 </div>
 
                 <footer class="ln-footer">
-                    <button class="ln-btn" type="button" wire:click="resolveAll" wire:loading.attr="disabled" @disabled($stats['all'] === 0)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="m4.5 12.75 6 6 9-13.5"/></svg><span>Resolver todas</span></button>
-                    <button class="ln-btn ln-btn-primary" type="button" wire:click="runChecks" wire:loading.attr="disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/><path d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z"/></svg><span>Revisar ahora</span></button>
+                    <button class="ln-btn" type="button" wire:click="resolveAll" wire:confirm="Marcar todas las alertas abiertas como resueltas? Se quitaran de esta bandeja." wire:loading.attr="disabled" @disabled($stats['all'] === 0)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="m4.5 12.75 6 6 9-13.5"/></svg><span>Marcar todas como resueltas</span></button>
                 </footer>
             </aside>
         </div>
