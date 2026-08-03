@@ -4,7 +4,7 @@ namespace Tests\Feature\Livewire;
 
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
-use App\Filament\Pages\SocialPipelineKanban;
+use App\Filament\Pages\SocialInbox;
 use App\Livewire\SocialLeadNotificationCenter;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
@@ -34,9 +34,12 @@ class SocialLeadNotificationCenterTest extends TestCase
         Livewire::actingAs(User::factory()->create())
             ->test(SocialLeadNotificationCenter::class)
             ->assertSee('Lead caliente')
-            ->assertSee(SocialPipelineKanban::getUrl(['lead' => $comment->id]))
             ->call('resolveAlert', $alert->id);
 
+        $this->assertSame(
+            SocialInbox::getUrl(['comment' => $comment->id]),
+            app(SocialLeadNotificationCenter::class)->leadUrl($alert),
+        );
         $this->assertNotNull($alert->refresh()->resolved_at);
     }
 

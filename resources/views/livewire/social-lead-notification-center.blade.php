@@ -110,7 +110,7 @@
 
         .ln-header {
             align-items: center;
-            border-bottom: 1px solid var(--ln-border);
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             gap: .75rem;
             justify-content: space-between;
@@ -150,7 +150,7 @@
 
         .ln-tabs {
             align-items: center;
-            border-bottom: 1px solid var(--ln-border);
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             gap: 1rem;
             padding: 0 1rem;
@@ -205,6 +205,18 @@
             gap: .7rem;
         }
 
+        .ln-alert.is-clickable {
+            cursor: pointer;
+            transition: background-color .14s ease, border-color .14s ease;
+        }
+
+        .ln-alert.is-clickable:hover,
+        .ln-alert.is-clickable:focus-visible {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            outline: none;
+        }
+
         .ln-alert-head {
             align-items: start;
             display: flex;
@@ -246,22 +258,57 @@
             padding: .65rem .7rem;
         }
 
-        .ln-actions,
         .ln-footer {
             display: flex;
             flex-wrap: wrap;
             gap: .45rem;
         }
 
+        .ln-alert-resolve {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: .45rem;
+            color: var(--ln-muted);
+            cursor: pointer;
+            display: inline-flex;
+            height: 1.8rem;
+            justify-content: center;
+            padding: 0;
+            transition: background-color .14s ease, color .14s ease;
+            width: 1.8rem;
+        }
+
+        .ln-alert-resolve:hover {
+            background: #f0fdf4;
+            color: var(--ln-success);
+        }
+
+        .ln-alert-resolve:disabled {
+            cursor: not-allowed;
+            opacity: .6;
+        }
+
+        .ln-alert-resolve svg {
+            height: .9rem;
+            width: .9rem;
+        }
+
         .ln-footer {
-            border-top: 1px solid var(--ln-border);
+            border-top: 1px solid #e5e7eb;
             padding: .9rem 1rem;
+        }
+
+        .ln-footer .ln-btn {
+            flex: 1;
+            justify-content: center;
+            min-height: 2.25rem;
         }
 
         .ln-btn {
             align-items: center;
             background: #ffffff;
-            border: 1px solid var(--ln-border);
+            border: 1px solid #e5e7eb;
             border-radius: .45rem;
             color: #111827;
             display: inline-flex;
@@ -269,7 +316,7 @@
             font-weight: 500;
             gap: .35rem;
             justify-content: center;
-            min-height: 2rem;
+            min-height: 2.25rem;
             padding: .38rem .65rem;
             text-decoration: none;
             transition: background-color .14s ease, border-color .14s ease, color .14s ease;
@@ -320,25 +367,50 @@
 
         .dark .ln-bell,
         .dark .ln-panel,
-        .dark .ln-alert,
-        .dark .ln-btn {
+        .dark .ln-alert {
             background: rgba(15, 23, 42, .92);
             border-color: var(--ln-border);
         }
 
-        .dark .ln-message,
         .dark .ln-btn {
+            background: transparent;
+            border-color: rgba(148, 163, 184, .18);
             color: #e5e7eb;
         }
 
         .dark .ln-message {
+            color: #e5e7eb;
             border-color: rgba(148, 163, 184, .14);
+        }
+
+        .dark .ln-header,
+        .dark .ln-tabs,
+        .dark .ln-footer {
+            border-color: rgba(148, 163, 184, .18);
         }
 
         .dark .ln-close:hover,
         .dark .ln-bell:hover,
         .dark .ln-btn:hover {
             background: rgba(30, 41, 59, .86);
+        }
+
+        .dark .ln-alert-resolve:hover {
+            background: rgba(16, 185, 129, .12);
+            color: #6ee7b7;
+        }
+
+        .dark .ln-alert.is-clickable:hover,
+        .dark .ln-alert.is-clickable:focus-visible {
+            background: rgba(30, 41, 59, .86);
+            border-color: rgba(148, 163, 184, .32);
+        }
+
+        .dark .ln-btn-primary,
+        .dark .ln-btn-primary:hover {
+            background: #000000;
+            border-color: #000000;
+            color: #ffffff;
         }
 
         @media (max-width: 640px) {
@@ -350,9 +422,6 @@
                 width: 100vw;
             }
 
-            .ln-footer .ln-btn {
-                flex: 1 1 0;
-            }
         }
     </style>
 
@@ -404,9 +473,20 @@
                                 'warning' => 'Advertencia',
                                 default => 'Info',
                             };
+                            $leadUrl = $lead ? $this->leadUrl($alert) : null;
                         @endphp
 
-                        <article class="ln-alert">
+                        <article
+                            @class(['ln-alert', 'is-clickable' => filled($leadUrl)])
+                            @if ($leadUrl)
+                                role="link"
+                                tabindex="0"
+                                aria-label="Ver caso: {{ $alert->title }}"
+                                x-on:click="window.location.href = @js($leadUrl)"
+                                x-on:keydown.enter.self="window.location.href = @js($leadUrl)"
+                                x-on:keydown.space.prevent.self="window.location.href = @js($leadUrl)"
+                            @endif
+                        >
                             <div class="ln-alert-head">
                                 <span class="ln-severity-dot {{ $alert->severity }}" aria-hidden="true"></span>
                                 <div style="min-width:0;flex:1">
@@ -415,16 +495,12 @@
                                         {{ $leadName }} · Score {{ $lead?->interest_score ?? 0 }} · {{ $patient?->full_name ?: 'Sin ficha' }} · {{ $alert->created_at?->diffForHumans() }}
                                     </div>
                                 </div>
+                                <button class="ln-alert-resolve" type="button" wire:click.stop="resolveAlert({{ $alert->id }})" wire:confirm="Marcar esta alerta como resuelta?" wire:loading.attr="disabled" title="Resolver" aria-label="Resolver alerta">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4.5 12.75 6 6 9-13.5"/></svg>
+                                </button>
                             </div>
 
                             <div class="ln-message">{{ $alert->message }}</div>
-
-                            <div class="ln-actions">
-                                <button class="ln-btn" type="button" wire:click="resolveAlert({{ $alert->id }})" wire:loading.attr="disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="m4.5 12.75 6 6 9-13.5"/></svg><span>Resolver</span></button>
-                                @if ($lead)
-                                    <a class="ln-btn ln-btn-primary" href="{{ $this->leadUrl($alert) }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Ver Lead</span></a>
-                                @endif
-                            </div>
                         </article>
                     @empty
                         <div class="ln-empty">
@@ -435,8 +511,7 @@
                 </div>
 
                 <footer class="ln-footer">
-                    <button class="ln-btn" type="button" wire:click="resolveAll" wire:loading.attr="disabled" @disabled($stats['all'] === 0)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="m4.5 12.75 6 6 9-13.5"/></svg><span>Resolver todas</span></button>
-                    <button class="ln-btn ln-btn-primary" type="button" wire:click="runChecks" wire:loading.attr="disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/><path d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z"/></svg><span>Revisar ahora</span></button>
+                    <button class="ln-btn" type="button" wire:click="resolveAll" wire:confirm="Marcar todas las alertas abiertas como resueltas? Se quitaran de esta bandeja." wire:loading.attr="disabled" @disabled($stats['all'] === 0)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.78rem;height:.78rem"><path d="m4.5 12.75 6 6 9-13.5"/></svg><span>Marcar todas como resueltas</span></button>
                 </footer>
             </aside>
         </div>
