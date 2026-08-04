@@ -23,7 +23,7 @@ class ListAppointments extends ListRecords
 
     protected string $view = 'filament.resources.appointments.pages.list-appointments';
 
-    public string $period = 'all';
+    public string $period = 'today';
 
     public string $search = '';
 
