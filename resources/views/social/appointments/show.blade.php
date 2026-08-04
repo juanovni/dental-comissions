@@ -25,6 +25,7 @@
                 linear-gradient(180deg, #f7fdfc 0%, var(--appt-bg) 100%);
             color: var(--appt-text);
             margin: 0;
+            overflow-x: hidden;
         }
         button, input { font: inherit; }
         .visually-hidden-copy { left: -9999px; position: fixed; top: -9999px; }
@@ -35,7 +36,9 @@
             margin: 0 auto;
             max-width: 90rem;
             min-height: 100vh;
+            overflow-x: hidden;
             padding: 1rem;
+            width: 100%;
         }
         .appointment-shell.is-confirmed { align-content: center; }
 
@@ -64,6 +67,7 @@
             border: 1px solid var(--appt-border);
             border-radius: 1.25rem;
             box-shadow: var(--appt-shadow);
+            min-width: 0;
             padding: 1rem;
         }
 
@@ -79,8 +83,10 @@
             border-radius: 1rem;
             display: flex;
             gap: .75rem;
+            min-width: 0;
             padding: .85rem;
         }
+        .context-item > span:last-child { min-width: 0; }
         .context-icon, .summary-icon {
             align-items: center;
             background: var(--appt-primary-soft);
@@ -94,7 +100,7 @@
         }
         .context-icon svg, .summary-icon svg { height: 1rem; width: 1rem; }
         .context-label { color: var(--appt-muted); display: block; font-size: .72rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
-        .context-value { display: block; font-size: .98rem; font-weight: 600; margin-top: .2rem; }
+        .context-value { display: block; font-size: .98rem; font-weight: 600; line-height: 1.25; margin-top: .2rem; overflow-wrap: anywhere; }
 
         .schedule-head {
             align-items: end;
@@ -548,16 +554,37 @@
 
         @media (max-width: 640px) {
             body { padding-bottom: 12rem; }
+            .appointment-shell { gap: .85rem; padding: .85rem; }
+            .appointment-card { border-radius: 1.1rem; padding: .85rem; }
+            .appointment-copy { font-size: .9rem; max-width: 100%; }
+            .context-item { align-items: flex-start; padding: .75rem; }
             .schedule-head { align-items: start; flex-direction: column; }
             .schedule-count { white-space: normal; }
-            .appointment-carousel-shell { margin-inline: -1rem; }
+            .appointment-carousel-shell { margin-inline: -.85rem; overflow: hidden; }
             .appointment-carousel-shell::before,
             .appointment-carousel-shell::after { display: none; }
-            .appointment-carousel-btn { height: 2.75rem; opacity: .94; top: 50%; width: 2.75rem; }
-            .appointment-carousel-btn.prev { left: .75rem; }
-            .appointment-carousel-btn.next { right: .75rem; }
-            .day-pills { grid-auto-columns: minmax(16.2rem, 76vw); padding-inline: 1rem; scroll-padding-inline: 1rem; }
-            .day-pill { min-height: 13rem; }
+            .appointment-carousel-btn { height: 2.45rem; opacity: .96; top: 54%; width: 2.45rem; }
+            .appointment-carousel-btn.prev { left: .8rem; }
+            .appointment-carousel-btn.next { right: .8rem; }
+            .day-pills {
+                display: flex;
+                gap: .75rem;
+                overflow-x: auto;
+                padding: .1rem .85rem .55rem;
+                scroll-padding-inline: .85rem;
+                scroll-snap-type: x mandatory;
+            }
+            .day-pill {
+                flex: 0 0 calc(100vw - 3.4rem);
+                max-width: calc(100vw - 3.4rem);
+                min-height: 0;
+                min-width: 0;
+                padding: .95rem;
+                scroll-snap-align: center;
+            }
+            .day-pill-date { font-size: 1.32rem; }
+            .slot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .slot-btn { min-height: 2.85rem; }
             .summary-card {
                 border-radius: 1.1rem 1.1rem 0 0;
                 bottom: 0;
@@ -572,7 +599,8 @@
         }
 
         @media (max-width: 360px) {
-            .slot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .appointment-carousel-btn { display: none; }
+            .day-pill { flex-basis: calc(100vw - 2.4rem); max-width: calc(100vw - 2.4rem); }
         }
     </style>
 </head>
