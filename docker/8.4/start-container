@@ -1,13 +1,24 @@
 #!/usr/bin/env bash
 
-if [ "$SUPERVISOR_PHP_USER" != "root" ] && [ "$SUPERVISOR_PHP_USER" != "sail" ]; then
-    echo "You should set SUPERVISOR_PHP_USER to either 'sail' or 'root'."
+if [ ! -z "$WWWUSER" ]; then
+    if [ "$(id -u sail)" != "$WWWUSER" ]; then
+        EXISTING_USER=$(getent passwd "$WWWUSER" | cut -d: -f1)
+
+        if [ ! -z "$EXISTING_USER" ]; then
+            SUPERVISOR_PHP_USER="$EXISTING_USER"
+            export SUPERVISOR_PHP_USER
+        else
+            usermod -u $WWWUSER sail
+        fi
+    fi
+fi
+
+if [ "$SUPERVISOR_PHP_USER" != "root" ] && ! id "$SUPERVISOR_PHP_USER" > /dev/null 2>&1; then
+    echo "SUPERVISOR_PHP_USER must be 'root' or an existing user."
     exit 1
 fi
 
-if [ ! -z "$WWWUSER" ]; then
-    usermod -u $WWWUSER sail
-fi
+chmod -R ugo+rwX /var/www/html/storage /var/www/html/bootstrap/cache 2> /dev/null || true
 
 if [ ! -d /.composer ]; then
     mkdir /.composer
