@@ -1,72 +1,94 @@
 services:
     dental.app:
         build:
-            context: ./docker/8.4
-            dockerfile: Dockerfile
+            context: .
+            dockerfile: docker/8.4/Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP:-1000}'
+
         image: dental-commissions/app:8.4
         container_name: dental-app
+
         extra_hosts:
             - 'host.docker.internal:host-gateway'
+
         ports:
             - '${APP_PORT:-8080}:80'
+
         environment:
             WWWUSER: '${WWWUSER:-1000}'
             LARAVEL_SAIL: 1
+
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
+
             DB_CONNECTION: pgsql
             DB_HOST: dental.pgsql
             DB_PORT: 5432
             DB_DATABASE: '${DB_DATABASE:-dental_commissions_mvp}'
             DB_USERNAME: '${DB_USERNAME:-dental}'
             DB_PASSWORD: '${DB_PASSWORD:-dental}'
+
             APP_ENV: '${APP_ENV:-local}'
             APP_DEBUG: '${APP_DEBUG:-true}'
             APP_URL: '${APP_URL:-http://localhost:8080}'
+
             CACHE_STORE: database
             SESSION_DRIVER: database
             QUEUE_CONNECTION: database
+
             BROADCAST_CONNECTION: '${BROADCAST_CONNECTION:-reverb}'
+
             REVERB_APP_ID: '${REVERB_APP_ID:-odoncrm}'
             REVERB_APP_KEY: '${REVERB_APP_KEY:-local-key}'
             REVERB_APP_SECRET: '${REVERB_APP_SECRET:-local-secret}'
             REVERB_HOST: '${REVERB_INTERNAL_HOST:-dental-reverb}'
             REVERB_PORT: '${REVERB_PORT:-8081}'
             REVERB_SCHEME: '${REVERB_SCHEME:-http}'
+
         volumes:
             - '.:/var/www/html'
-            - './docker/8.4/php.ini:/usr/local/etc/php/conf.d/99-sail.ini'
+            - 'dental-vendor:/var/www/html/vendor'
+            - 'dental-node-modules:/var/www/html/node_modules'
+            - './docker/8.4/php.ini:/etc/php/8.4/cli/conf.d/99-dental.ini'
+
         networks:
             - dental
+
         depends_on:
             dental.pgsql:
                 condition: service_healthy
+
         deploy:
             resources:
                 limits:
                     cpus: '0.5'
                     memory: 800M
 
+
     dental.pgsql:
-        image: 'postgres:16-alpine'
+        image: postgres:16-alpine
         container_name: dental-pgsql
+
         ports:
             - '${FORWARD_DB_PORT:-5432}:5432'
+
         environment:
             PGPASSWORD: '${DB_PASSWORD:-dental}'
             POSTGRES_DB: '${DB_DATABASE:-dental_commissions_mvp}'
             POSTGRES_USER: '${DB_USERNAME:-dental}'
             POSTGRES_PASSWORD: '${DB_PASSWORD:-dental}'
             POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --lc-collate=C --lc-ctype=C'
-            TZ: 'UTC'
+            TZ: UTC
+
         volumes:
             - 'sail-pgsql:/var/lib/postgresql/data'
             - './docker/pgsql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+
         networks:
             - dental
+
         healthcheck:
             test:
                 - CMD
@@ -78,52 +100,75 @@ services:
                 - '${DB_USERNAME:-dental}'
             retries: 5
             timeout: 5s
+
         deploy:
             resources:
                 limits:
                     cpus: '0.6'
                     memory: 1000M
 
+
     dental.reverb:
         image: dental-commissions/app:8.4
         container_name: dental-reverb
+
         command: php artisan reverb:start --host=0.0.0.0 --port=8081
+
         ports:
             - '${REVERB_PORT:-8081}:8081'
+
         environment:
             WWWUSER: '${REVERB_WWWUSER:-1337}'
             WWWGROUP: '${WWWGROUP:-1000}'
+
             APP_ENV: '${APP_ENV:-local}'
             APP_DEBUG: '${APP_DEBUG:-true}'
             APP_URL: '${APP_URL:-http://localhost:8080}'
+
             DB_CONNECTION: pgsql
             DB_HOST: dental.pgsql
             DB_PORT: 5432
             DB_DATABASE: '${DB_DATABASE:-dental_commissions_mvp}'
             DB_USERNAME: '${DB_USERNAME:-dental}'
             DB_PASSWORD: '${DB_PASSWORD:-dental}'
+
             BROADCAST_CONNECTION: reverb
+
             REVERB_APP_ID: '${REVERB_APP_ID:-odoncrm}'
             REVERB_APP_KEY: '${REVERB_APP_KEY:-local-key}'
             REVERB_APP_SECRET: '${REVERB_APP_SECRET:-local-secret}'
+
             REVERB_HOST: '${REVERB_HOST:-localhost}'
             REVERB_PORT: '${REVERB_PORT:-8081}'
             REVERB_SCHEME: '${REVERB_SCHEME:-http}'
+
         volumes:
             - '.:/var/www/html'
-            - './docker/8.4/php.ini:/usr/local/etc/php/conf.d/99-sail.ini'
+            - 'dental-vendor:/var/www/html/vendor'
+            - './docker/8.4/php.ini:/etc/php/8.4/cli/conf.d/99-dental.ini'
+
         networks:
             - dental
+
         depends_on:
             dental.app:
                 condition: service_started
+
             dental.pgsql:
                 condition: service_healthy
+
 
 networks:
     dental:
         driver: bridge
 
+
 volumes:
     sail-pgsql:
+        driver: local
+
+    dental-vendor:
+        driver: local
+
+    dental-node-modules:
         driver: local
