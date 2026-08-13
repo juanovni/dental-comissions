@@ -66,11 +66,11 @@ Estados sugeridos:
 
 ## Fase 2: Migraciones de datos
 
-- [~] Agregar `clinic_id nullable` a tablas tenant-scoped.
-- [~] Backfill de datos actuales a `Clinic #1`.
-- [ ] Validar conteos por tabla antes y despues del backfill.
-- [~] Crear indices por `clinic_id`.
-- [~] Ajustar uniques globales a uniques por tenant cuando aplique.
+- [x] Agregar `clinic_id nullable` a tablas tenant-scoped activas.
+- [x] Backfill de datos actuales a `Clinic #1` en tablas activas.
+- [x] Validar conteos por tabla antes y despues del backfill.
+- [x] Crear indices por `clinic_id`.
+- [x] Ajustar uniques globales a uniques por tenant cuando aplique.
 - [ ] Preparar cambio futuro de `clinic_id` a `NOT NULL`.
 
 ## Fase 3: Contexto y scopes

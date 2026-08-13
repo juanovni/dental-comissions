@@ -66,6 +66,20 @@ class ClinicSeeder extends Seeder
             'appointment_slot_offers',
             'appointment_slot_holds',
             'doctor_assistant_assignments',
+            'social_accounts',
+            'social_posts',
+            'social_comments',
+            'social_identities',
+            'social_comment_actions',
+            'social_lead_alerts',
+            'social_link_events',
+            'social_reply_templates',
+            'social_moderation_rules',
+            'social_crm_settings',
+            'whatsapp_messages',
+            'calendar_integrations',
+            'voice_calls',
+            'voice_events',
         ] as $table) {
             if (! Schema::hasColumn($table, 'clinic_id')) {
                 continue;
