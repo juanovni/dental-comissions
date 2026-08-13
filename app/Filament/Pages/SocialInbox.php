@@ -53,6 +53,7 @@ class SocialInbox extends Page
         $archivedStatuses = app(SocialCrmSettingsService::class)->archivedConversionStatuses();
 
         $count = SocialComment::query()
+            ->forCurrentTenant()
             ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
             ->where('is_hidden', false)
             ->when($archivedStatuses !== [], fn (Builder $query): Builder => $query->whereNotIn('conversion_status', $archivedStatuses))
@@ -178,7 +179,7 @@ class SocialInbox extends Page
 
     public function timelineEvents(int $commentId): array
     {
-        return SocialComment::find($commentId)?->linkEvents()
+        return SocialComment::query()->forCurrentTenant()->find($commentId)?->linkEvents()
             ->latest('created_at')
             ->limit(6)
             ->get()
@@ -257,6 +258,7 @@ class SocialInbox extends Page
 
         // 3. WhatsApp messages linked to the lead, with token fallback for older records.
         $whatsappMessages = WhatsappMessage::query()
+            ->forCurrentTenant()
             ->where(function (Builder $query) use ($comment): void {
                 $query->where('social_comment_id', $comment->id)
                     ->when($comment->tracking_token, function (Builder $query) use ($comment): void {
@@ -348,6 +350,7 @@ class SocialInbox extends Page
         }
 
         return WhatsappMessage::query()
+            ->forCurrentTenant()
             ->where('social_comment_id', $comment->id)
             ->where('direction', WhatsappMessageDirection::Outgoing)
             ->whereBetween('created_at', [
@@ -385,6 +388,7 @@ class SocialInbox extends Page
     public function suggestHistoricalReply(int $commentId): void
     {
         $comment = SocialComment::query()
+            ->forCurrentTenant()
             ->with(['actions', 'linkEvents', 'suggestedProcedure'])
             ->find($commentId);
 
@@ -436,7 +440,7 @@ class SocialInbox extends Page
 
     public function runAutoReply(int $commentId): void
     {
-        $comment = SocialComment::find($commentId);
+        $comment = SocialComment::query()->forCurrentTenant()->find($commentId);
 
         if (! $comment) {
             Notification::make()->title('Lead no encontrado')->danger()->send();
@@ -521,27 +525,29 @@ class SocialInbox extends Page
     {
         return [
             'todos' => $this->baseQuery()->count(),
-            'leads' => $this->applyActiveQuery(SocialComment::query())->whereIn('classification', [
+            'leads' => $this->applyActiveQuery(SocialComment::query()->forCurrentTenant())->whereIn('classification', [
                 SocialCommentClassification::SalesLead->value,
                 SocialCommentClassification::CommercialQuestion->value,
             ])->count(),
-            'crisis' => $this->applyCrisisQuery($this->applyActiveQuery(SocialComment::query()))->count(),
+            'crisis' => $this->applyCrisisQuery($this->applyActiveQuery(SocialComment::query()->forCurrentTenant()))->count(),
             'moderated' => SocialComment::query()
+                ->forCurrentTenant()
                 ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
                 ->whereNotNull('platform_hidden_at')
                 ->count(),
-            'vip' => $this->applyActiveQuery(SocialComment::query())->whereHas('socialIdentity.patient')
+            'vip' => $this->applyActiveQuery(SocialComment::query()->forCurrentTenant())->whereHas('socialIdentity.patient')
                 ->whereHas('socialIdentity.patient.appointments')
                 ->count(),
-            'medical' => $this->applyActiveQuery(SocialComment::query())->where('classification', SocialCommentClassification::MedicalSensitive->value)->count(),
-            'all' => $this->applyActiveQuery(SocialComment::query())->count(),
-            'archived' => $this->applyArchivedQuery(SocialComment::query())->count(),
+            'medical' => $this->applyActiveQuery(SocialComment::query()->forCurrentTenant())->where('classification', SocialCommentClassification::MedicalSensitive->value)->count(),
+            'all' => $this->applyActiveQuery(SocialComment::query()->forCurrentTenant())->count(),
+            'archived' => $this->applyArchivedQuery(SocialComment::query()->forCurrentTenant())->count(),
         ];
     }
 
     public function routeToWhatsapp(int $commentId): void
     {
         $comment = SocialComment::query()
+            ->forCurrentTenant()
             ->with(['socialPost.procedure', 'suggestedProcedure'])
             ->find($commentId);
 
@@ -556,6 +562,7 @@ class SocialInbox extends Page
 
         $this->whatsappCommentId = $comment->id;
         $this->whatsappProcedureOptions = Procedure::query()
+            ->forCurrentTenant()
             ->where('is_active', true)
             ->orderBy('name')
             ->pluck('name', 'id')
@@ -583,7 +590,7 @@ class SocialInbox extends Page
             return;
         }
 
-        $comment = SocialComment::find($this->whatsappCommentId);
+        $comment = SocialComment::query()->forCurrentTenant()->find($this->whatsappCommentId);
 
         if (! $comment) {
             Notification::make()
@@ -599,7 +606,7 @@ class SocialInbox extends Page
         $data = ['suggested_procedure_id' => $procedureId];
 
         if ($comment->estimated_value === null && $procedureId) {
-            $procedure = Procedure::find($procedureId);
+            $procedure = Procedure::query()->forCurrentTenant()->find($procedureId);
 
             if ($procedure?->internal_rate !== null) {
                 $data['estimated_value'] = $procedure->internal_rate;
@@ -665,7 +672,7 @@ class SocialInbox extends Page
 
     private function refreshSmartLinkPreview(): void
     {
-        $procedure = filled($this->whatsappProcedureId) ? Procedure::find((int) $this->whatsappProcedureId) : null;
+        $procedure = filled($this->whatsappProcedureId) ? Procedure::query()->forCurrentTenant()->find((int) $this->whatsappProcedureId) : null;
         $category = strtolower((string) ($procedure?->category ?: $procedure?->code ?: 'unknown'));
         $normalizedCategory = str($category)->ascii()->lower()->replace([' ', '-'], '_')->toString();
         $blocks = app(SocialCrmSettingsService::class)->smartLinkContentBlocks();
@@ -729,6 +736,7 @@ class SocialInbox extends Page
         }
 
         return Procedure::query()
+            ->forCurrentTenant()
             ->where('is_active', true)
             ->where(function (Builder $query) use ($category): void {
                 $query->where('category', $category)
@@ -783,7 +791,7 @@ class SocialInbox extends Page
         SocialCommentStatus $status,
         string $notes,
     ): void {
-        $comment = SocialComment::find($commentId);
+        $comment = SocialComment::query()->forCurrentTenant()->find($commentId);
 
         if (! $comment) {
             Notification::make()
@@ -822,6 +830,7 @@ class SocialInbox extends Page
     private function baseQuery(): Builder
     {
         return SocialComment::query()
+            ->forCurrentTenant()
             ->where(fn (Builder $query): Builder => static::applyExternalAuthorQuery($query))
             ->with([
                 'convertedPatient',

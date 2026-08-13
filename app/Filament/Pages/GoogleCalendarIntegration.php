@@ -51,6 +51,7 @@ class GoogleCalendarIntegration extends Page
     public function getDoctors(): array
     {
         $doctors = Professional::query()
+            ->forCurrentTenant()
             ->where('role', ProfessionalRole::Doctor)
             ->orderBy('name')
             ->get();
@@ -71,7 +72,7 @@ class GoogleCalendarIntegration extends Page
 
     public function disconnect(int $professionalId): void
     {
-        $professional = Professional::find($professionalId);
+        $professional = Professional::query()->forCurrentTenant()->find($professionalId);
 
         if (!$professional) {
             Notification::make()

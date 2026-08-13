@@ -13,6 +13,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Resources\Resource\Concerns\BelongsToTenant;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -20,6 +21,8 @@ use Illuminate\Support\Str;
 
 class PatientResource extends Resource
 {
+    use BelongsToTenant;
+
 
     public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('patients.view') ?? false; }
 

@@ -9,6 +9,7 @@ use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialPost;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -65,6 +66,9 @@ class ViewSocialCommentTest extends TestCase
             'is_default' => true,
             'is_active' => true,
         ]);
+
+        Filament::setCurrentPanel('clinic');
+        Filament::setTenant($clinic, isQuiet: true);
 
         Livewire::actingAs($user)
             ->test(ViewSocialComment::class, ['record' => $comment->getRouteKey(), 'tenant' => $clinic->getRouteKey()])

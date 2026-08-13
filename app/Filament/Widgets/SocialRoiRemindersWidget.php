@@ -32,6 +32,7 @@ class SocialRoiRemindersWidget extends Widget
     protected function getReminders(): Collection
     {
         $appointmentLeakage = Appointment::query()
+            ->forCurrentTenant()
             ->whereNotNull('social_comment_id')
             ->whereNotNull('scheduled_at')
             ->where('scheduled_at', '<=', now()->subDay())
@@ -43,6 +44,7 @@ class SocialRoiRemindersWidget extends Widget
             ->count();
 
         $hotLeads = SocialComment::query()
+            ->forCurrentTenant()
             ->whereNull('lost_at')
             ->where(function ($query): void {
                 $query->whereNull('pipeline_stage')
@@ -56,6 +58,7 @@ class SocialRoiRemindersWidget extends Widget
             ->count();
 
         $orphanLeads = SocialComment::query()
+            ->forCurrentTenant()
             ->whereNull('converted_patient_id')
             ->whereNull('whatsapp_redirected_at')
             ->where('created_at', '<=', now()->subDays(2))
@@ -63,6 +66,7 @@ class SocialRoiRemindersWidget extends Widget
             ->count();
 
         $highValueLost = SocialComment::query()
+            ->forCurrentTenant()
             ->where('pipeline_stage', SocialPipelineStage::Lost->value)
             ->where('estimated_value', '>=', 1000)
             ->whereDate('lost_at', today())

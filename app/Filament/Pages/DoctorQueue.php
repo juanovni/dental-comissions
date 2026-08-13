@@ -187,7 +187,7 @@ class DoctorQueue extends Page
 
     public function transition(int $appointmentId, string $status): void
     {
-        $appointment = Appointment::query()->findOrFail($appointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($appointmentId);
 
         try {
             app(AppointmentFlowService::class)->transition($appointment, AppointmentStatus::from($status), 'doctor', auth()->id());
@@ -215,7 +215,7 @@ class DoctorQueue extends Page
             'noteText' => ['required', 'string', 'max:1000'],
         ]);
 
-        $appointment = Appointment::query()->findOrFail($this->noteAppointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($this->noteAppointmentId);
 
         $appointment->appointmentNotes()->create([
             'patient_id' => $appointment->patient_id,
@@ -235,6 +235,7 @@ class DoctorQueue extends Page
         $todayEnd = $todayStart->copy()->endOfDay();
 
         return Appointment::query()
+            ->forCurrentTenant()
             ->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote', 'appointmentNotes.createdBy'])
             ->whereBetween('scheduled_at', [$todayStart, $todayEnd])
             ->when($this->doctorIdForCurrentUser(), fn (Builder $query, int $doctorId): Builder => $query->where('doctor_id', $doctorId));

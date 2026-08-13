@@ -33,6 +33,7 @@ class Integrations extends Page
     public function metaStats(): array
     {
         $accounts = SocialAccount::query()
+            ->forCurrentTenant()
             ->whereIn('platform', [
                 SocialPlatform::Facebook->value,
                 SocialPlatform::Instagram->value,

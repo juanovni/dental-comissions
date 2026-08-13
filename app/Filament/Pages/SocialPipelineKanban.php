@@ -70,6 +70,7 @@ class SocialPipelineKanban extends Page
     public function cards(string $stage): Collection
     {
         return SocialComment::query()
+            ->forCurrentTenant()
             ->with(['socialIdentity.patient', 'socialAccount', 'suggestedProcedure'])
             ->where('pipeline_stage', $stage)
             ->where('is_hidden', false)
@@ -187,6 +188,7 @@ class SocialPipelineKanban extends Page
         }
 
         return SocialComment::query()
+            ->forCurrentTenant()
             ->with(['socialIdentity.patient', 'convertedPatient', 'socialAccount', 'suggestedProcedure', 'leadAlerts' => fn ($query) => $query->whereNull('resolved_at')->latest()])
             ->where('is_hidden', false)
             ->find($this->selectedLeadId);
@@ -233,7 +235,7 @@ class SocialPipelineKanban extends Page
 
     private function findComment(int $commentId): ?SocialComment
     {
-        $comment = SocialComment::find($commentId);
+        $comment = SocialComment::query()->forCurrentTenant()->find($commentId);
 
         if (! $comment) {
             Notification::make()
@@ -248,6 +250,7 @@ class SocialPipelineKanban extends Page
     private function baseStageQuery(string $stage): Builder
     {
         return SocialComment::query()
+            ->forCurrentTenant()
             ->where('is_hidden', false)
             ->where('pipeline_stage', $stage);
     }
@@ -255,6 +258,7 @@ class SocialPipelineKanban extends Page
     private function fillMissingEstimatedValuesFromProcedures(): void
     {
         SocialComment::query()
+            ->forCurrentTenant()
             ->with('suggestedProcedure:id,internal_rate')
             ->whereNull('estimated_value')
             ->whereNotNull('suggested_procedure_id')

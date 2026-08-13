@@ -21,6 +21,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Resources\Resource\Concerns\BelongsToTenant;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -32,6 +33,8 @@ use Illuminate\Support\Carbon;
 
 class AppointmentResource extends Resource
 {
+    use BelongsToTenant;
+
 
     public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('appointments.view') ?? false; }
 
@@ -60,17 +63,17 @@ class AppointmentResource extends Resource
         return $schema->components([
             Select::make('patient_id')
                 ->label('Paciente')
-                ->options(fn (): array => Patient::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
+                ->options(fn (): array => Patient::query()->forCurrentTenant()->orderBy('full_name')->pluck('full_name', 'id')->all())
                 ->searchable()
                 ->nullable(),
             Select::make('doctor_id')
                 ->label('Doctor')
-                ->options(fn (): array => Professional::query()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
+                ->options(fn (): array => Professional::query()->forCurrentTenant()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
                 ->searchable()
                 ->nullable(),
             Select::make('procedure_id')
                 ->label('Procedimiento')
-                ->options(fn (): array => Procedure::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                ->options(fn (): array => Procedure::query()->forCurrentTenant()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
                 ->searchable()
                 ->nullable(),
             DateTimePicker::make('scheduled_at')
@@ -157,7 +160,7 @@ class AppointmentResource extends Resource
                     ->options(collect(AppointmentSource::cases())->mapWithKeys(fn (AppointmentSource $s): array => [$s->value => $s->label()])),
                 SelectFilter::make('doctor_id')
                     ->label('Doctor')
-                    ->options(fn (): array => Professional::query()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all()),
+                    ->options(fn (): array => Professional::query()->forCurrentTenant()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all()),
                 Filter::make('scheduled_at')
                     ->label('Rango de fecha')
                     ->form([

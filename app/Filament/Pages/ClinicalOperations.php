@@ -106,6 +106,7 @@ class ClinicalOperations extends Page
     public function doctorLoad(): Collection
     {
         return Professional::query()
+            ->forCurrentTenant()
             ->where('role', 'doctor')
             ->where('is_active', true)
             ->orderBy('name')
@@ -138,6 +139,6 @@ class ClinicalOperations extends Page
         $todayStart = Carbon::now(app(SocialCrmSettingsService::class)->clinicTimezone())->startOfDay();
         $todayEnd = $todayStart->copy()->endOfDay();
 
-        return Appointment::query()->whereBetween('scheduled_at', [$todayStart, $todayEnd]);
+        return Appointment::query()->forCurrentTenant()->whereBetween('scheduled_at', [$todayStart, $todayEnd]);
     }
 }

@@ -6,10 +6,13 @@ use App\Enums\VoiceCallStatus;
 use App\Enums\VoiceChannelType;
 use App\Filament\Resources\VoiceCalls\Pages\ListVoiceCalls;
 use App\Filament\Resources\VoiceCalls\Pages\ViewVoiceCall;
+use App\Filament\Resources\Appointments\AppointmentResource;
 use App\Models\VoiceCall;
+use Filament\Facades\Filament;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Resources\Resource;
+use Filament\Resources\Resource\Concerns\BelongsToTenant;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -20,6 +23,8 @@ use Illuminate\Support\Carbon;
 
 class VoiceCallResource extends Resource
 {
+    use BelongsToTenant;
+
 
     public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('voice_calls.view') ?? false; }
 
@@ -90,7 +95,7 @@ class VoiceCallResource extends Resource
                 TextColumn::make('appointment.id')
                     ->label('Cita')
                     ->placeholder('-')
-                    ->url(fn (?int $state): ?string => $state ? route('filament.admin.resources.appointments.view', $state) : null),
+                    ->url(fn (?int $state): ?string => $state ? AppointmentResource::getUrl('view', ['record' => $state], panel: 'clinic', tenant: Filament::getTenant()) : null),
                 TextColumn::make('last_error')
                     ->label('Error')
                     ->color('danger')
@@ -104,6 +109,7 @@ class VoiceCallResource extends Resource
                 SelectFilter::make('provider')
                     ->label('Proveedor')
                     ->options(fn (): array => VoiceCall::query()
+                        ->forCurrentTenant()
                         ->whereNotNull('provider')
                         ->distinct()
                         ->orderBy('provider')
