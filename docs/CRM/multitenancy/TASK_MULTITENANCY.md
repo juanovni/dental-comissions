@@ -38,6 +38,7 @@ Estados sugeridos:
 - [x] Definir flujo de activacion: crear en `provisioning`, pasar a `active` si todo sale bien, o `provisioning_failed` si falla.
 - [x] Definir admin inicial: crear usuario nuevo o seleccionar existente, exigiendo minimo un admin activo por clinica.
 - [x] Definir horario base: lunes a viernes 09:00-17:00, intervalo 30 minutos.
+- [x] Definir Settings CRM: auto-respuestas off, IA revision/manual, alertas off, plantillas editables; admin puede activar/desactivar automatico.
 
 ## Fase 0: Preparacion
 

@@ -26,6 +26,8 @@
 - Las cuentas externas Meta/WhatsApp tendran propiedad unica global: una misma Page ID, Instagram Business Account ID o WhatsApp phone number ID no puede pertenecer a mas de una clinica.
 - Defaults minimos para activar tenant: `Clinic`, dominio, admin inicial, `clinic_user`, permisos admin, settings base y storage prefix.
 - Defaults operativos iniciales: procedimiento base `Consulta inicial`, settings de citas y settings CRM seguros.
+- Settings CRM iniciales: auto-respuestas desactivadas, clasificacion IA en modo revision/manual, alertas internas desactivadas y plantillas de ejemplo editables.
+- El admin de la clinica puede activar o desactivar el modo automatico desde su panel, siempre que existan integraciones, plantillas y canal validos.
 - Las integraciones nacen como `not_configured` y se configuran despues desde el panel de la clinica.
 - Estados del tenant: `draft`, `provisioning`, `active`, `suspended`, `provisioning_failed`.
 - Al crear un tenant desde el admin global, el flujo normal inicia en `provisioning` y pasa automaticamente a `active` si todo sale bien.
@@ -103,6 +105,15 @@ suspended -> active
 - Horario laboral base: lunes a viernes, `09:00` a `17:00`.
 - Intervalo de agenda: `30` minutos.
 - Duracion default de cita: `30` minutos.
+
+## Settings CRM iniciales
+
+- Auto-respuestas desactivadas por defecto.
+- Clasificacion IA en modo revision/manual por defecto.
+- Alertas internas desactivadas por defecto.
+- Plantillas de ejemplo editables.
+- El admin de la clinica puede activar o desactivar el modo automatico desde su panel.
+- Antes de permitir modo automatico, el sistema debe validar integraciones, plantillas y canal de envio.
 
 ## Pendiente antes de implementar
 

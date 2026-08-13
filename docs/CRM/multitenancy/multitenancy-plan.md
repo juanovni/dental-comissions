@@ -774,6 +774,15 @@ Settings de citas iniciales:
 - Intervalo de agenda: `30` minutos.
 - Duracion default de cita: `30` minutos.
 
+Settings CRM iniciales:
+
+- Auto-respuestas desactivadas por defecto.
+- Clasificacion IA en modo revision/manual por defecto.
+- Alertas internas desactivadas por defecto.
+- Plantillas de ejemplo editables.
+- El admin de la clinica puede activar o desactivar el modo automatico desde su panel.
+- Antes de permitir modo automatico, el sistema debe validar integraciones, plantillas y canal de envio.
+
 ## Estados del tenant
 
 Estados definidos:
