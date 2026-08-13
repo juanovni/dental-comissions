@@ -84,7 +84,7 @@ Estados sugeridos:
 - [x] Crear middleware inicial de resolucion de tenant por request/host.
 - [~] Activar resolucion tenant solo en rutas publicas controladas.
 - [ ] Auditar usos de `withoutGlobalScopes()`.
-- [ ] Agregar tests base de aislamiento por modelo.
+- [~] Agregar tests base de aislamiento por modelo.
 
 ## Fase 4: Dominio, host y Filament
 
@@ -95,8 +95,8 @@ Estados sugeridos:
 - [x] Sincronizar tenant de Filament con `TenantContext`.
 - [ ] Bloquear cambios de tenant incompatibles con el host actual.
 - [x] Crear o separar dashboard admin global para crear tenants.
-- [ ] Adaptar resources principales de Filament.
-- [ ] Revisar pages custom, widgets y selects.
+- [x] Adaptar resources principales de Filament.
+- [~] Revisar pages custom, widgets y selects.
 
 ## Fase 4.5: Aislamiento del panel tenant
 

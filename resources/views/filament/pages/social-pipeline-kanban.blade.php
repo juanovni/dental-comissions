@@ -1005,8 +1005,8 @@
                                 @php
                                     $patient = $comment->socialIdentity?->patient ?: $comment->convertedPatient;
                                     $detailTenant = $comment->clinic ?? \Filament\Facades\Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first();
-                                    $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $comment], panel: 'clinic', tenant: $detailTenant);
-                                    $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient], panel: 'clinic', tenant: $detailTenant) : null;
+                                    $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['tenant' => $detailTenant, 'record' => $comment], panel: 'clinic');
+                                    $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['tenant' => $detailTenant, 'record' => $patient], panel: 'clinic') : null;
                                     $realScore = (int) $comment->recent_engagement_score;
                                     $displayScore = min(100, max(0, $realScore));
                                     $temperature = match (true) {
@@ -1137,7 +1137,7 @@
             $patient = $selectedLead->socialIdentity?->patient ?: $selectedLead->convertedPatient;
             $leadName = $patient?->full_name ?? ($selectedLead->author_username ? '@'.$selectedLead->author_username : ($selectedLead->author_name ?: 'Lead social'));
             $detailTenant = $selectedLead->clinic ?? \Filament\Facades\Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first();
-            $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedLead], panel: 'clinic', tenant: $detailTenant);
+            $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['tenant' => $detailTenant, 'record' => $selectedLead], panel: 'clinic');
             $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
             $realScore = (int) $selectedLead->recent_engagement_score;
             $displayScore = min(100, max(0, $realScore));

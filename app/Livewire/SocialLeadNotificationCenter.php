@@ -107,8 +107,9 @@ class SocialLeadNotificationCenter extends Component
     public function leadUrl(SocialLeadAlert $alert): string
     {
         return SocialInbox::getUrl([
+            'tenant' => $alert->clinic ?? Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first(),
             'comment' => $alert->social_comment_id,
-        ], panel: 'clinic', tenant: $alert->clinic ?? Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first());
+        ], panel: 'clinic');
     }
 
     #[Computed]
