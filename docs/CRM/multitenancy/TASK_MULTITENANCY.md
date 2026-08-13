@@ -21,7 +21,7 @@ Estados sugeridos:
 - [x] Definir host del admin global: `app.odon-crm.com`.
 - [x] Definir patron de tenants: `{subdomain}.odon-crm.com`.
 - [ ] Configurar o confirmar wildcard DNS `*.odon-crm.com`.
-- [ ] Rotar cualquier token Cloudflare expuesto antes de usarlo.
+- [x] Rotar cualquier token Cloudflare expuesto antes de usarlo.
 - [x] Definir roles/permisos: rol operativo por `clinic_user`; permisos base globales reutilizables.
 - [x] Confirmar que `procedures` sera tenant-scoped con precios y duraciones por clinica.
 - [x] Definir cuentas Meta/WhatsApp: propiedad unica global, no pueden pertenecer a mas de una clinica.
@@ -32,7 +32,7 @@ Estados sugeridos:
 - [x] Confirmar comisiones: modulo no activo en OdonCRM, fuera de defaults minimos.
 - [x] Confirmar defaults minimos: Clinic, dominio, admin inicial, clinic_user, permisos admin, settings base y storage prefix.
 - [x] Confirmar defaults operativos: procedimientos base editables, settings de citas, settings CRM e integraciones not_configured.
-- [ ] Definir estados de tenant: `draft`, `provisioning`, `active`, `suspended`.
+- [x] Definir estados de tenant: `draft`, `provisioning`, `active`, `suspended`.
 
 ## Fase 0: Preparacion
 

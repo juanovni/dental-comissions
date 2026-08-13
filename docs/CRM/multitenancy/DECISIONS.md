@@ -4,6 +4,7 @@
 
 - Dominio base de la plataforma: `odon-crm.com`.
 - El dominio esta administrado en Cloudflare.
+- Token Cloudflare expuesto fue rotado.
 - Host del admin global de plataforma: `app.odon-crm.com`.
 - Cada tenant debe tener una entrada unica para acceder al sistema.
 - Patron de tenants: `{subdomain}.odon-crm.com`.
@@ -24,6 +25,9 @@
 - Defaults minimos para activar tenant: `Clinic`, dominio, admin inicial, `clinic_user`, permisos admin, settings base y storage prefix.
 - Defaults operativos iniciales: procedimientos base editables, settings de citas y settings CRM seguros.
 - Las integraciones nacen como `not_configured` y se configuran despues desde el panel de la clinica.
+- Estados del tenant: `draft`, `provisioning`, `active`, `suspended`.
+- Solo tenants en estado `active` permiten acceso normal al panel de la clinica.
+- Tenants en `suspended` conservan datos pero bloquean acceso normal de usuarios de la clinica.
 - El aislamiento principal de datos sera logico por `clinic_id` en una sola base PostgreSQL.
 - Los archivos tenant-scoped deben guardarse bajo prefijo `clinics/{clinic_id}/`.
 - La creacion de tenants debe hacerse desde un dashboard administrador global, no desde el panel de una clinica.
@@ -33,13 +37,12 @@
 - Configurar wildcard DNS `*.odon-crm.com` apuntando a la aplicacion.
 - No crear registros DNS individuales por tenant mientras exista wildcard DNS.
 - Usar la API de Cloudflare solo en casos donde no se use wildcard.
-- Usar estados de tenant: `draft`, `provisioning`, `active`, `suspended`.
 - Activar un tenant solo cuando tenga dominio valido, admin inicial y defaults minimos confirmados.
 
 ## Seguridad Cloudflare
 
-- Cualquier token Cloudflare expuesto en conversacion, documento, log o repositorio debe considerarse comprometido.
-- Antes de usar Cloudflare API, crear un token nuevo con permisos minimos sobre la zona `odon-crm.com`.
+- Cualquier token Cloudflare expuesto en conversacion, documento, log o repositorio debe considerarse comprometido y rotarse.
+- El token actual debe tener permisos minimos sobre la zona `odon-crm.com`.
 - Guardar el token solo en `.env` como `CLOUDFLARE_API_TOKEN` si finalmente se necesita.
 
 ## Defaults minimos por tenant
@@ -68,6 +71,23 @@ No incluir en defaults iniciales:
 - Dominios personalizados.
 - Credenciales Meta, WhatsApp, Google Calendar o Telnyx.
 - Datos clinicos o pacientes demo reales.
+
+## Estados del tenant
+
+Estados definidos:
+
+- `draft`: tenant incompleto o guardado como borrador. No permite acceso normal.
+- `provisioning`: tenant en proceso de creacion de dominio, admin inicial, settings, defaults y storage prefix. No permite acceso normal.
+- `active`: tenant listo y accesible desde `{subdomain}.odon-crm.com`.
+- `suspended`: tenant bloqueado temporalmente. Conserva datos, pero usuarios de la clinica no pueden acceder normalmente.
+
+Flujo recomendado:
+
+```text
+draft -> provisioning -> active
+active -> suspended
+suspended -> active
+```
 
 ## Pendiente antes de implementar
 

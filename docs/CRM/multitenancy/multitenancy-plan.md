@@ -747,6 +747,30 @@ No incluir en defaults iniciales:
 - Credenciales Meta, WhatsApp, Google Calendar o Telnyx.
 - Datos clinicos o pacientes demo reales.
 
+## Estados del tenant
+
+Estados definidos:
+
+- `draft`: tenant incompleto o guardado como borrador. No permite acceso normal.
+- `provisioning`: tenant en proceso de creacion de dominio, admin inicial, settings, defaults y storage prefix. No permite acceso normal.
+- `active`: tenant listo y accesible desde `{subdomain}.odon-crm.com`.
+- `suspended`: tenant bloqueado temporalmente. Conserva datos, pero usuarios de la clinica no pueden acceder normalmente.
+
+Flujo recomendado:
+
+```text
+draft -> provisioning -> active
+active -> suspended
+suspended -> active
+```
+
+Reglas:
+
+- Solo `active` permite acceso normal al panel tenant-scoped.
+- `draft` y `provisioning` no deben permitir login tenant normal.
+- `suspended` bloquea acceso operativo, pero no elimina datos.
+- El admin global en `app.odon-crm.com` puede ver y cambiar estados segun permisos.
+
 ## Auditoria
 
 Crear tabla `audit_logs`:
