@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\SocialCrmSetting;
 use App\Services\SocialCrmSettingsService;
+use App\Support\TenantContext;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -17,10 +18,15 @@ class SocialCrmAutomaticModeButton extends Component
 
         foreach ($settings as $key => $value) {
             $valueType = $this->valueType($value);
+            $clinicId = app(TenantContext::class)->id();
 
             SocialCrmSetting::query()->updateOrCreate(
-                ['key' => $key],
                 [
+                    'clinic_id' => $clinicId,
+                    'key' => $key,
+                ],
+                [
+                    'clinic_id' => $clinicId,
                     'setting_group' => $this->settingGroup($key),
                     'label' => $this->settingLabel($key),
                     'value_type' => $valueType,

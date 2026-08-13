@@ -158,6 +158,7 @@ class SocialCrmSettings extends Page
                 };
 
                 SocialCrmSetting::create([
+                    'clinic_id' => app(\App\Support\TenantContext::class)->id(),
                     'key' => $key,
                     'setting_group' => $this->inferGroup($key),
                     'label' => $this->inferLabel($key),

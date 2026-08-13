@@ -102,7 +102,7 @@ class ListAppointments extends ListRecords
 
     public function openRescheduleModal(int $appointmentId): void
     {
-        $appointment = Appointment::query()->findOrFail($appointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($appointmentId);
         $this->reschedulingAppointmentId = $appointmentId;
         $this->newScheduledAt = $appointment->scheduled_at?->format('Y-m-d\TH:i');
         $this->newDurationMinutes = $appointment->duration_minutes ?? 45;
@@ -130,7 +130,7 @@ class ListAppointments extends ListRecords
         }
 
         try {
-            $appointment = Appointment::query()->findOrFail($this->reschedulingAppointmentId);
+            $appointment = Appointment::query()->forCurrentTenant()->findOrFail($this->reschedulingAppointmentId);
             app(AppointmentWorkflowService::class)->reschedule($appointment, $newDate, $duration);
             Notification::make()->title('Cita reprogramada exitosamente')->success()->send();
             $this->closeRescheduleModal();

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\SocialConversionStatus;
 use App\Models\SocialCrmSetting;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\Cache;
 
 class SocialCrmSettingsService
@@ -474,13 +475,14 @@ class SocialCrmSettingsService
 
     public function clearCache(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget($this->cacheKey());
     }
 
     private function settings(): array
     {
-        return Cache::remember(self::CACHE_KEY, now()->addMinutes(10), function (): array {
+        return Cache::remember($this->cacheKey(), now()->addMinutes(10), function (): array {
             return SocialCrmSetting::query()
+                ->forCurrentTenant()
                 ->where('is_active', true)
                 ->get(['key', 'value', 'value_type'])
                 ->keyBy('key')
@@ -490,6 +492,13 @@ class SocialCrmSettingsService
                 ])
                 ->all();
         });
+    }
+
+    private function cacheKey(): string
+    {
+        $clinicId = app(TenantContext::class)->id();
+
+        return self::CACHE_KEY.'.'.($clinicId ?? 'global');
     }
 
     private function castValue(mixed $value, string $type, mixed $default): mixed

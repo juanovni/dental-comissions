@@ -82,7 +82,7 @@ Estados sugeridos:
 - [x] Definir comportamiento fail-closed cuando no exista tenant en el panel tenant.
 - [x] Preparar scope inicial en `Patient`, `Professional`, `Appointment` y `Procedure` sin activarlo globalmente todavia.
 - [x] Crear middleware inicial de resolucion de tenant por request/host.
-- [~] Activar resolucion tenant solo en rutas publicas controladas.
+- [x] Activar resolucion tenant solo en rutas publicas controladas.
 - [x] Auditar usos de `withoutGlobalScopes()`.
 - [x] Agregar tests base de aislamiento por modelo.
 
@@ -97,7 +97,7 @@ Estados sugeridos:
 - [x] Bloquear cambios de tenant incompatibles con el host actual.
 - [x] Crear o separar dashboard admin global para crear tenants.
 - [x] Adaptar resources principales de Filament.
-- [~] Revisar pages custom, widgets y selects.
+- [x] Revisar pages custom, widgets y selects.
 - [x] Soportar host-based local real para panel global y panel tenant.
 
 ## Fase 4.5: Aislamiento del panel tenant
@@ -106,7 +106,7 @@ Estados sugeridos:
 - [x] Aplicar scoping tenant en pages custom clave del panel tenant.
 - [x] Revisar widgets tenant base para que filtren por clinica actual de forma consistente.
 - [x] Corregir `ViewSocialCommentTest` y su vista si hace falta.
-- [~] Seguir con mas pages/widgets tenant que aun tengan queries manuales sin filtrar, especialmente social/ROI.
+- [x] Seguir con mas pages/widgets tenant que aun tengan queries manuales sin filtrar, especialmente social/ROI.
 - [x] Agregar tests focalizados de aislamiento del panel tenant por recurso/pagina.
 
 ## Fase 5: Integraciones publicas
