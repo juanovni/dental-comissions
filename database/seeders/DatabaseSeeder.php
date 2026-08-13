@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminUserSeeder::class,
             RolePermissionSeeder::class,
             DemoDoctorSeeder::class,
+            ClinicSeeder::class,
         ]);
     }
 }

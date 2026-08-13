@@ -46,21 +46,21 @@ Estados sugeridos:
 - [ ] Validar tabla final de modelos tenant-scoped.
 - [ ] Validar tablas globales.
 - [ ] Documentar decisiones de dominio/subdominio.
-- [ ] Agregar configuracion `TENANCY_BASE_DOMAIN` y `TENANCY_ADMIN_DOMAIN` por ambiente.
+- [x] Agregar configuracion `TENANCY_BASE_DOMAIN` y `TENANCY_ADMIN_DOMAIN` por ambiente.
 - [ ] Documentar estrategia Cloudflare: wildcard primero, API solo si aplica.
 - [ ] Documentar estrategia de storage por `clinics/{clinic_id}/`.
 - [ ] Crear checklist de pruebas de aislamiento.
 
 ## Fase 1: Base de tenancy
 
-- [ ] Crear tabla `clinics`.
-- [ ] Crear modelo `Clinic`.
-- [ ] Agregar campos `slug`, `subdomain` y `primary_domain`.
-- [ ] Agregar indices unicos para `slug`, `subdomain` y `primary_domain`.
-- [ ] Crear tabla `clinic_user`.
-- [ ] Asociar usuarios actuales a `Clinic #1`.
-- [ ] Mantener `users.role` temporalmente para no romper el sistema actual.
-- [ ] Crear defaults minimos para tenant nuevo: Clinic, dominio, al menos un admin activo, clinic_user, permisos admin, settings base y storage prefix.
+- [x] Crear tabla `clinics`.
+- [x] Crear modelo `Clinic`.
+- [x] Agregar campos `slug`, `subdomain` y `primary_domain`.
+- [x] Agregar indices unicos para `slug`, `subdomain` y `primary_domain`.
+- [x] Crear tabla `clinic_user`.
+- [x] Asociar usuarios actuales a `Clinic #1`.
+- [x] Mantener `users.role` temporalmente para no romper el sistema actual.
+- [~] Crear defaults minimos para tenant nuevo: Clinic, dominio, al menos un admin activo, clinic_user, permisos admin, settings base y storage prefix.
 - [ ] Crear defaults operativos: Consulta inicial precio 0 duracion 30, settings de citas, settings CRM e integraciones `not_configured`.
 - [ ] Crear flujo de provisionamiento: crear tenant en `provisioning`, crear/asignar admin, aplicar defaults, validar dominio, activar o marcar `provisioning_failed`.
 

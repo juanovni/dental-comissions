@@ -10,6 +10,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -84,6 +85,13 @@ class User extends Authenticatable implements FilamentUser
     public function professional(): BelongsTo
     {
         return $this->belongsTo(Professional::class);
+    }
+
+    public function clinics(): BelongsToMany
+    {
+        return $this->belongsToMany(Clinic::class)
+            ->withPivot(['role', 'is_default', 'is_active', 'permissions'])
+            ->withTimestamps();
     }
 
     public function socialCommentActions(): HasMany
