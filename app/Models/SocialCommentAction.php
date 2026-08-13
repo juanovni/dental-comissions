@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use App\Enums\SocialCommentActionType;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SocialCommentAction extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'social_comment_id',
         'action',
         'performed_by',

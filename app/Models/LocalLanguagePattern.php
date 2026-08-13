@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\LocalLanguagePatternType;
+use App\Models\Concerns\BelongsToTenant;
 use App\Services\LocalLanguagePatternService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LocalLanguagePattern extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
+        'clinic_id',
         'type',
         'phrase',
         'normalized_phrase',

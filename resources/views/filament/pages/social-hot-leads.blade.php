@@ -335,7 +335,8 @@
                 @php
                     $patient = $lead->socialIdentity?->patient ?: $lead->convertedPatient;
                     $isOverdue = $operations->isOverdue($lead);
-                    $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $lead]);
+                    $detailTenant = $lead->clinic ?? \Filament\Facades\Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first();
+                    $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $lead], panel: 'clinic', tenant: $detailTenant);
                     $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
                     $score = min(100, max(0, (int) $lead->interest_score));
                     $leadName = $patient?->full_name ?? ($lead->author_username ? '@' . $lead->author_username : ($lead->author_name ?: 'Lead social'));

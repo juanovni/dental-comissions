@@ -72,9 +72,9 @@ class ViewSocialCommentTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(ViewSocialComment::class, ['record' => $comment->getRouteKey(), 'tenant' => $clinic->getRouteKey()])
-            ->assertSee('Publicacion original')
+            ->assertSee('Publicación original')
             ->assertSee('Ortodoncia invisible para adultos. Consulta si eres candidato.')
             ->assertSee('Me interesa esta promocion.')
-            ->assertSee('Abrir publicacion');
+            ->assertSee('Abrir publicación');
     }
 }

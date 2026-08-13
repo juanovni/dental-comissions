@@ -78,10 +78,12 @@ class SocialCommentResource extends Resource
 
     public static function getIndexUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?\Illuminate\Database\Eloquent\Model $tenant = null, bool $shouldGuessMissingParameters = false): string
     {
+        $tenant ??= Filament::getTenant() ?? Clinic::query()->orderBy('id')->first();
+
         return SocialInbox::getUrl(
             isAbsolute: $isAbsolute,
             panel: 'clinic',
-            tenant: $tenant ?? Filament::getTenant(),
+            tenant: $tenant,
             shouldGuessMissingParameters: $shouldGuessMissingParameters,
         );
     }

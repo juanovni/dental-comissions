@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Filament\Pages\SocialInbox;
 use App\Models\SocialLeadAlert;
 use App\Services\SocialLeadAlertService;
+use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -105,7 +106,9 @@ class SocialLeadNotificationCenter extends Component
 
     public function leadUrl(SocialLeadAlert $alert): string
     {
-        return SocialInbox::getUrl(['comment' => $alert->social_comment_id]);
+        return SocialInbox::getUrl([
+            'comment' => $alert->social_comment_id,
+        ], panel: 'clinic', tenant: $alert->clinic ?? Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first());
     }
 
     #[Computed]
@@ -121,10 +124,10 @@ class SocialLeadNotificationCenter extends Component
     public function stats(): array
     {
         return [
-            'all' => SocialLeadAlert::whereNull('resolved_at')->count(),
-            'danger' => SocialLeadAlert::whereNull('resolved_at')->where('severity', 'danger')->count(),
-            'warning' => SocialLeadAlert::whereNull('resolved_at')->where('severity', 'warning')->count(),
-            'info' => SocialLeadAlert::whereNull('resolved_at')->where('severity', 'info')->count(),
+            'all' => SocialLeadAlert::query()->forCurrentTenant()->whereNull('resolved_at')->count(),
+            'danger' => SocialLeadAlert::query()->forCurrentTenant()->whereNull('resolved_at')->where('severity', 'danger')->count(),
+            'warning' => SocialLeadAlert::query()->forCurrentTenant()->whereNull('resolved_at')->where('severity', 'warning')->count(),
+            'info' => SocialLeadAlert::query()->forCurrentTenant()->whereNull('resolved_at')->where('severity', 'info')->count(),
         ];
     }
 
@@ -136,6 +139,7 @@ class SocialLeadNotificationCenter extends Component
     private function baseAlertQuery(): Builder
     {
         return SocialLeadAlert::query()
+            ->forCurrentTenant()
             ->with(['socialComment.socialIdentity.patient', 'socialComment.convertedPatient', 'socialComment.suggestedProcedure'])
             ->whereNull('resolved_at')
             ->orderByRaw("case when severity = 'danger' then 0 when severity = 'warning' then 1 else 2 end")

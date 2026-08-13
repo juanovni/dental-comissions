@@ -91,12 +91,21 @@ Estados sugeridos:
 - [ ] Crear middleware `ResolveClinicFromHost`.
 - [ ] Resolver tenant por `primary_domain` o `subdomain`.
 - [ ] Rechazar hosts no reconocidos sin devolver datos de ninguna clinica.
-- [ ] Configurar Filament Tenancy con `Clinic::class`.
-- [ ] Sincronizar tenant de Filament con `TenantContext`.
+- [x] Configurar Filament Tenancy con `Clinic::class`.
+- [x] Sincronizar tenant de Filament con `TenantContext`.
 - [ ] Bloquear cambios de tenant incompatibles con el host actual.
-- [ ] Crear o separar dashboard admin global para crear tenants.
+- [x] Crear o separar dashboard admin global para crear tenants.
 - [ ] Adaptar resources principales de Filament.
 - [ ] Revisar pages custom, widgets y selects.
+
+## Fase 4.5: Aislamiento del panel tenant
+
+- [x] Aplicar scoping tenant en resources del panel tenant base.
+- [x] Aplicar scoping tenant en pages custom clave del panel tenant.
+- [x] Revisar widgets tenant base para que filtren por clinica actual de forma consistente.
+- [x] Corregir `ViewSocialCommentTest` y su vista si hace falta.
+- [~] Seguir con mas pages/widgets tenant que aun tengan queries manuales sin filtrar, especialmente social/ROI.
+- [x] Agregar tests focalizados de aislamiento del panel tenant por recurso/pagina.
 
 ## Fase 5: Integraciones publicas
 

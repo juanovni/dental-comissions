@@ -30,11 +30,13 @@ class SocialRoiService
         }
 
         $metrics = Appointment::query()
+            ->forCurrentTenant()
             ->where('social_post_id', $post->id)
             ->selectRaw('COUNT(*) as conversions')
             ->first();
 
         $revenue = SocialComment::query()
+            ->forCurrentTenant()
             ->where('social_post_id', $post->id)
             ->where('pipeline_stage', SocialPipelineStage::Won->value)
             ->sum('estimated_value');
@@ -144,6 +146,7 @@ class SocialRoiService
         $period = SocialRoiPeriod::resolve($filters);
 
         return SocialPost::query()
+            ->forCurrentTenant()
             ->with('socialAccount')
             ->join('appointments', 'appointments.social_post_id', '=', 'social_posts.id')
             ->leftJoin('social_comments', 'social_comments.social_post_id', '=', 'social_posts.id')
@@ -172,21 +175,25 @@ class SocialRoiService
 
         return [
             'pipeline_value' => (float) SocialComment::query()
+                ->forCurrentTenant()
                 ->whereNotIn('pipeline_stage', [
                     SocialPipelineStage::Won->value,
                     SocialPipelineStage::Lost->value,
                 ])
                 ->sum('estimated_value'),
             'won_value_month' => (float) SocialComment::query()
+                ->forCurrentTenant()
                 ->where('pipeline_stage', SocialPipelineStage::Won->value)
                 ->whereBetween('updated_at', [now()->startOfMonth(), now()->endOfMonth()])
                 ->sum('estimated_value'),
             'high_value_lost_count' => SocialComment::query()
+                ->forCurrentTenant()
                 ->where('pipeline_stage', SocialPipelineStage::Lost->value)
                 ->where('estimated_value', '>=', 1000)
                 ->count(),
             'smart_link_to_whatsapp_rate' => $leadCount > 0 ? round(($whatsappCount / $leadCount) * 100, 1) : 0,
             'active_hot_leads_count' => SocialComment::query()
+                ->forCurrentTenant()
                 ->whereNotNull('hot_lead_at')
                 ->whereNull('lost_at')
                 ->where(function (Builder $query): void {
