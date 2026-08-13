@@ -98,6 +98,7 @@ Estados sugeridos:
 - [x] Crear o separar dashboard admin global para crear tenants.
 - [x] Adaptar resources principales de Filament.
 - [~] Revisar pages custom, widgets y selects.
+- [x] Soportar host-based local real para panel global y panel tenant.
 
 ## Fase 4.5: Aislamiento del panel tenant
 

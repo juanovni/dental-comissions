@@ -65,6 +65,11 @@ class Clinic extends Model implements HasCurrentTenantLabel
         return $this->status?->allowsTenantAccess() ?? false;
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     public function getCurrentTenantLabel(): string
     {
         return $this->name;

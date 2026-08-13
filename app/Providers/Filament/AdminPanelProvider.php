@@ -26,6 +26,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
+            ->domain(config('tenancy.admin_domain'))
             ->path('admin')
             ->homeUrl(fn (): string => ClinicResource::getUrl(panel: 'admin'))
             ->login()

@@ -83,8 +83,9 @@ class ClinicPanelProvider extends PanelProvider
 
         return $panel
             ->id('clinic')
-            ->path('clinic')
+            ->path('admin')
             ->tenant(Clinic::class, slugAttribute: 'slug')
+            ->tenantDomain('{tenant}.' . config('tenancy.base_domain'))
             ->homeUrl(function (): string {
                 return match (auth()->user()?->role) {
                     UserRole::Receptionist => Reception::getUrl(panel: 'clinic'),

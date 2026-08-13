@@ -14,7 +14,12 @@ use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect('/admin/roi-social');
+    return redirect()->to(sprintf(
+        '%s://%s:%s/admin',
+        request()->getScheme(),
+        config('tenancy.admin_domain', 'app.localhost'),
+        request()->getPort(),
+    ));
 });
 
 Route::get('/privacy-policy', [LegalController::class, 'privacy'])->name('privacy.policy');
