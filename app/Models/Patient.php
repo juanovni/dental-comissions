@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Patient extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
@@ -30,11 +31,6 @@ class Patient extends Model
     public function socialIdentities(): HasMany
     {
         return $this->hasMany(SocialIdentity::class);
-    }
-
-    public function clinic(): BelongsTo
-    {
-        return $this->belongsTo(Clinic::class);
     }
 
     public function appointments(): HasMany
