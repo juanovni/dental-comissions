@@ -26,10 +26,13 @@ use App\Filament\Resources\SocialAccounts\SocialAccountResource;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Filament\Resources\SocialCrmSettings\SocialCrmSettingResource;
 use App\Filament\Resources\VoiceCalls\VoiceCallResource;
+use App\Http\Middleware\EnsureAuthenticatedUserCanAccessTenant;
 use App\Http\Middleware\EnsureTenantMatchesHost;
 use App\Http\Middleware\ResolveClinicFromHost;
 use App\Http\Middleware\SyncFilamentTenantContext;
 use App\Models\Clinic;
+use App\Models\User;
+use App\Support\TenantContext;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -87,6 +90,23 @@ class ClinicPanelProvider extends PanelProvider
             ->tenant(Clinic::class, slugAttribute: 'slug')
             ->tenantDomain('{tenant}.' . config('tenancy.base_domain'))
             ->homeUrl(function (): string {
+                $hostTenant = app(TenantContext::class)->get();
+                $user = auth()->user();
+
+                if (($hostTenant !== null) && ($user instanceof User)) {
+                    if (! $user->canAccessTenant($hostTenant)) {
+                        abort(403);
+                    }
+
+                    return match ($user->role) {
+                        UserRole::Receptionist => Reception::getUrl(panel: 'clinic', tenant: $hostTenant),
+                        UserRole::Doctor => DoctorQueue::getUrl(panel: 'clinic', tenant: $hostTenant),
+                        UserRole::Assistant => ClinicalQueue::getUrl(panel: 'clinic', tenant: $hostTenant),
+                        UserRole::SuperAdmin, UserRole::Admin => DashboardRoiSocial::getUrl(panel: 'clinic', tenant: $hostTenant),
+                        default => AppointmentResource::getUrl(panel: 'clinic', tenant: $hostTenant),
+                    };
+                }
+
                 return match (auth()->user()?->role) {
                     UserRole::Receptionist => Reception::getUrl(panel: 'clinic'),
                     UserRole::Doctor => DoctorQueue::getUrl(panel: 'clinic'),
@@ -169,6 +189,7 @@ class ClinicPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 ResolveClinicFromHost::class,
+                EnsureAuthenticatedUserCanAccessTenant::class,
                 IdentifyTenant::class,
                 EnsureTenantMatchesHost::class,
                 SyncFilamentTenantContext::class,

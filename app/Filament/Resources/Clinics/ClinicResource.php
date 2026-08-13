@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Clinics;
 
 use App\Enums\TenantStatus;
+use App\Filament\Resources\Clinics\RelationManagers\UsersRelationManager;
 use App\Filament\Resources\Clinics\Pages\CreateClinic;
 use App\Filament\Resources\Clinics\Pages\EditClinic;
 use App\Filament\Resources\Clinics\Pages\ListClinics;
@@ -114,6 +115,13 @@ class ClinicResource extends Resource
             'index' => ListClinics::route('/'),
             'create' => CreateClinic::route('/create'),
             'edit' => EditClinic::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            UsersRelationManager::class,
         ];
     }
 }

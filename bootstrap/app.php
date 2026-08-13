@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
+            'tenant.auth' => \App\Http\Middleware\EnsureAuthenticatedUserCanAccessTenant::class,
             'tenant.host' => \App\Http\Middleware\ResolveClinicFromHost::class,
             'tenant.match' => \App\Http\Middleware\EnsureTenantMatchesHost::class,
             'tenant.request' => \App\Http\Middleware\ResolveClinicFromRequest::class,
