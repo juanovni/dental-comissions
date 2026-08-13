@@ -302,6 +302,22 @@ clinica-b.dominio.com
 demo.dominio.com
 ```
 
+Para desarrollo local, se usara `localhost` como dominio base:
+
+```text
+app.localhost:8080
+demo.localhost:8080
+clinica-a.localhost:8080
+```
+
+Para produccion, se usara `odon-crm.com`:
+
+```text
+app.odon-crm.com
+demo.odon-crm.com
+clinica-a.odon-crm.com
+```
+
 Middleware recomendado:
 
 ```text
@@ -311,6 +327,7 @@ ResolveClinicFromHost
 Responsabilidades:
 
 - Leer el host actual del request.
+- Normalizar el host removiendo el puerto antes de comparar, por ejemplo `demo.localhost:8080` -> `demo.localhost`.
 - Buscar la clinica activa por `primary_domain` o por `subdomain`.
 - Rechazar hosts no reconocidos con `404` o una pagina controlada.
 - Ejecutar `TenantContext::set($clinic)` antes de llegar a controladores, recursos o servicios tenant-scoped.
@@ -320,6 +337,8 @@ Responsabilidades:
 Reglas:
 
 - El dominio principal de administracion global es `app.odon-crm.com` y debe estar separado de los hosts tenant-scoped `{subdomain}.odon-crm.com`.
+- En local, el dominio principal de administracion global es `app.localhost:8080` y los tenants usan `{subdomain}.localhost:8080`.
+- El codigo no debe hardcodear `odon-crm.com`; debe leer `TENANCY_BASE_DOMAIN` y `TENANCY_ADMIN_DOMAIN` desde configuracion.
 - Si se usa Filament Tenancy, el tenant de Filament debe sincronizarse con el tenant resuelto por host para evitar que un usuario cambie a una clinica distinta desde un host que no le corresponde.
 - Un usuario solo puede acceder a un host tenant si pertenece a esa clinica o es superadmin.
 - Links publicos deben incluir tenant por host y, si tambien usan slugs, deben validar que el recurso pertenece a la clinica del host.
@@ -353,6 +372,8 @@ clinica-b.dominio.com
 ```
 
 La aplicacion resuelve el tenant desde el host y no desde el registro DNS individual.
+
+Por ejemplo, si `*.odon-crm.com` apunta a la app, crear un tenant con `subdomain = dental` permite usar `dental.odon-crm.com` automaticamente. No se crea un registro DNS individual para `dental.odon-crm.com`; ya queda cubierto por el wildcard.
 
 La API de Cloudflare solo deberia usarse si:
 
@@ -735,7 +756,7 @@ Para activar un tenant, deben existir como minimo:
 
 Defaults operativos iniciales:
 
-- Procedimientos base editables por la clinica.
+- Procedimiento base editable: `Consulta inicial`, precio `0`, duracion `30` minutos.
 - Settings de citas seguros.
 - Settings CRM seguros.
 - Integraciones en estado `not_configured`.
@@ -747,6 +768,12 @@ No incluir en defaults iniciales:
 - Credenciales Meta, WhatsApp, Google Calendar o Telnyx.
 - Datos clinicos o pacientes demo reales.
 
+Settings de citas iniciales:
+
+- Horario laboral base: lunes a viernes, `09:00` a `17:00`.
+- Intervalo de agenda: `30` minutos.
+- Duracion default de cita: `30` minutos.
+
 ## Estados del tenant
 
 Estados definidos:
@@ -755,11 +782,14 @@ Estados definidos:
 - `provisioning`: tenant en proceso de creacion de dominio, admin inicial, settings, defaults y storage prefix. No permite acceso normal.
 - `active`: tenant listo y accesible desde `{subdomain}.odon-crm.com`.
 - `suspended`: tenant bloqueado temporalmente. Conserva datos, pero usuarios de la clinica no pueden acceder normalmente.
+- `provisioning_failed`: fallo durante el alta del tenant. No permite acceso normal y requiere revision o reintento desde el admin global.
 
 Flujo recomendado:
 
 ```text
 draft -> provisioning -> active
+provisioning -> provisioning_failed
+provisioning_failed -> provisioning
 active -> suspended
 suspended -> active
 ```
@@ -770,6 +800,9 @@ Reglas:
 - `draft` y `provisioning` no deben permitir login tenant normal.
 - `suspended` bloquea acceso operativo, pero no elimina datos.
 - El admin global en `app.odon-crm.com` puede ver y cambiar estados segun permisos.
+- El flujo normal de alta crea el tenant en `provisioning` y lo pasa a `active` automaticamente si dominio, admin y defaults se crean correctamente.
+- Si el alta falla, el tenant queda en `provisioning_failed` para revision o reintento.
+- Al crear tenant, se puede crear un usuario admin nuevo o seleccionar un usuario existente, pero siempre debe quedar al menos un admin activo en `clinic_user`.
 
 ## Auditoria
 

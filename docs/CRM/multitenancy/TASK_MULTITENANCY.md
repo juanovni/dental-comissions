@@ -18,8 +18,10 @@ Estados sugeridos:
 ## Decisiones pendientes antes de implementar
 
 - [x] Definir dominio base de la plataforma: `odon-crm.com`.
+- [x] Definir dominio base local: `localhost` con URLs como `demo.localhost:8080`.
 - [x] Definir host del admin global: `app.odon-crm.com`.
 - [x] Definir patron de tenants: `{subdomain}.odon-crm.com`.
+- [x] Definir patron local de tenants: `{subdomain}.localhost:8080`.
 - [ ] Configurar o confirmar wildcard DNS `*.odon-crm.com`.
 - [x] Rotar cualquier token Cloudflare expuesto antes de usarlo.
 - [x] Definir roles/permisos: rol operativo por `clinic_user`; permisos base globales reutilizables.
@@ -31,8 +33,11 @@ Estados sugeridos:
 - [x] Confirmar dominios personalizados: no se soportan en la primera version.
 - [x] Confirmar comisiones: modulo no activo en OdonCRM, fuera de defaults minimos.
 - [x] Confirmar defaults minimos: Clinic, dominio, admin inicial, clinic_user, permisos admin, settings base y storage prefix.
-- [x] Confirmar defaults operativos: procedimientos base editables, settings de citas, settings CRM e integraciones not_configured.
-- [x] Definir estados de tenant: `draft`, `provisioning`, `active`, `suspended`.
+- [x] Confirmar defaults operativos: Consulta inicial precio 0 duracion 30, settings de citas, settings CRM e integraciones not_configured.
+- [x] Definir estados de tenant: `draft`, `provisioning`, `active`, `suspended`, `provisioning_failed`.
+- [x] Definir flujo de activacion: crear en `provisioning`, pasar a `active` si todo sale bien, o `provisioning_failed` si falla.
+- [x] Definir admin inicial: crear usuario nuevo o seleccionar existente, exigiendo minimo un admin activo por clinica.
+- [x] Definir horario base: lunes a viernes 09:00-17:00, intervalo 30 minutos.
 
 ## Fase 0: Preparacion
 
@@ -40,6 +45,7 @@ Estados sugeridos:
 - [ ] Validar tabla final de modelos tenant-scoped.
 - [ ] Validar tablas globales.
 - [ ] Documentar decisiones de dominio/subdominio.
+- [ ] Agregar configuracion `TENANCY_BASE_DOMAIN` y `TENANCY_ADMIN_DOMAIN` por ambiente.
 - [ ] Documentar estrategia Cloudflare: wildcard primero, API solo si aplica.
 - [ ] Documentar estrategia de storage por `clinics/{clinic_id}/`.
 - [ ] Crear checklist de pruebas de aislamiento.
@@ -53,9 +59,9 @@ Estados sugeridos:
 - [ ] Crear tabla `clinic_user`.
 - [ ] Asociar usuarios actuales a `Clinic #1`.
 - [ ] Mantener `users.role` temporalmente para no romper el sistema actual.
-- [ ] Crear defaults minimos para tenant nuevo: Clinic, dominio, admin inicial, clinic_user, permisos admin, settings base y storage prefix.
-- [ ] Crear defaults operativos: procedimientos base editables, settings de citas, settings CRM e integraciones `not_configured`.
-- [ ] Crear flujo de provisionamiento: crear tenant, crear admin, aplicar defaults, validar dominio, activar.
+- [ ] Crear defaults minimos para tenant nuevo: Clinic, dominio, al menos un admin activo, clinic_user, permisos admin, settings base y storage prefix.
+- [ ] Crear defaults operativos: Consulta inicial precio 0 duracion 30, settings de citas, settings CRM e integraciones `not_configured`.
+- [ ] Crear flujo de provisionamiento: crear tenant en `provisioning`, crear/asignar admin, aplicar defaults, validar dominio, activar o marcar `provisioning_failed`.
 
 ## Fase 2: Migraciones de datos
 
