@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\TenantStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Clinic extends Model
@@ -36,6 +37,26 @@ class Clinic extends Model
         return $this->belongsToMany(User::class)
             ->withPivot(['role', 'is_default', 'is_active', 'permissions'])
             ->withTimestamps();
+    }
+
+    public function patients(): HasMany
+    {
+        return $this->hasMany(Patient::class);
+    }
+
+    public function professionals(): HasMany
+    {
+        return $this->hasMany(Professional::class);
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    public function procedures(): HasMany
+    {
+        return $this->hasMany(Procedure::class);
     }
 
     public function allowsAccess(): bool

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Patient extends Model
@@ -11,6 +12,7 @@ class Patient extends Model
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'full_name',
         'normalized_name',
         'phone',
@@ -28,6 +30,11 @@ class Patient extends Model
     public function socialIdentities(): HasMany
     {
         return $this->hasMany(SocialIdentity::class);
+    }
+
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 
     public function appointments(): HasMany

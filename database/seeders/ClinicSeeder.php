@@ -2,37 +2,39 @@
 
 namespace Database\Seeders;
 
-use App\Enums\TenantStatus;
 use App\Enums\UserRole;
 use App\Models\Clinic;
 use App\Models\User;
+use App\Services\ClinicProvisioningService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ClinicSeeder extends Seeder
 {
     public function run(): void
     {
-        $subdomain = 'clinic-1';
-        $baseDomain = config('tenancy.base_domain', 'localhost');
+        $existing = Clinic::query()->where('slug', 'clinic-1')->first();
 
-        $clinic = Clinic::updateOrCreate(
-            ['slug' => 'clinic-1'],
-            [
+        if ($existing === null) {
+            $seedAdmin = User::query()->orderByRaw("case when role = 'super_admin' then 0 else 1 end")
+                ->orderBy('id')
+                ->first();
+
+            if ($seedAdmin === null) {
+                return;
+            }
+
+            $clinic = app(ClinicProvisioningService::class)->provision([
                 'name' => 'Clinic #1',
-                'subdomain' => $subdomain,
-                'primary_domain' => $subdomain.'.'.$baseDomain,
-                'country' => null,
+                'slug' => 'clinic-1',
+                'subdomain' => 'clinic-1',
                 'currency' => 'USD',
                 'timezone' => config('app.timezone', 'UTC'),
-                'status' => TenantStatus::Active,
-            ],
-        );
-
-        $clinic->update([
-            'settings' => [
-                'storage_prefix' => 'clinics/'.$clinic->id.'/',
-            ],
-        ]);
+            ], existingAdmin: $seedAdmin);
+        } else {
+            $clinic = $existing;
+        }
 
         User::query()->each(function (User $user) use ($clinic): void {
             $role = $user->isSuperAdmin() ? UserRole::Admin : $user->role;
@@ -46,5 +48,20 @@ class ClinicSeeder extends Seeder
                 ],
             ]);
         });
+
+        $this->backfillCoreTables($clinic);
+    }
+
+    private function backfillCoreTables(Clinic $clinic): void
+    {
+        foreach (['patients', 'professionals', 'appointments', 'procedures'] as $table) {
+            if (! Schema::hasColumn($table, 'clinic_id')) {
+                continue;
+            }
+
+            DB::table($table)
+                ->whereNull('clinic_id')
+                ->update(['clinic_id' => $clinic->id]);
+        }
     }
 }

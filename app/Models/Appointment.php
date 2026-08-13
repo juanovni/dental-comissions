@@ -15,6 +15,7 @@ class Appointment extends Model
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'patient_id',
         'social_comment_id',
         'social_identity_id',
@@ -73,6 +74,11 @@ class Appointment extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 
     public function socialComment(): BelongsTo

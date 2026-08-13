@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ProfessionalRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Crypt;
@@ -14,6 +15,7 @@ class Professional extends Model
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'name',
         'role',
         'whatsapp_phone',
@@ -41,6 +43,11 @@ class Professional extends Model
     public function hasGoogleCalendar(): bool
     {
         return $this->google_calendar_enabled && filled($this->google_calendar_token);
+    }
+
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 
     public function getGoogleCalendarTokenDecrypted(): ?array

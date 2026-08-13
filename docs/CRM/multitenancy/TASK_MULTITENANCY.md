@@ -60,17 +60,17 @@ Estados sugeridos:
 - [x] Crear tabla `clinic_user`.
 - [x] Asociar usuarios actuales a `Clinic #1`.
 - [x] Mantener `users.role` temporalmente para no romper el sistema actual.
-- [~] Crear defaults minimos para tenant nuevo: Clinic, dominio, al menos un admin activo, clinic_user, permisos admin, settings base y storage prefix.
-- [ ] Crear defaults operativos: Consulta inicial precio 0 duracion 30, settings de citas, settings CRM e integraciones `not_configured`.
-- [ ] Crear flujo de provisionamiento: crear tenant en `provisioning`, crear/asignar admin, aplicar defaults, validar dominio, activar o marcar `provisioning_failed`.
+- [x] Crear defaults minimos para tenant nuevo: Clinic, dominio, al menos un admin activo, clinic_user, permisos admin, settings base y storage prefix.
+- [x] Crear defaults operativos iniciales en `clinic.settings`: Consulta inicial precio 0 duracion 30, settings de citas, settings CRM e integraciones `not_configured`.
+- [x] Crear flujo de provisionamiento: crear tenant en `provisioning`, crear/asignar admin, aplicar defaults, activar o marcar `provisioning_failed`.
 
 ## Fase 2: Migraciones de datos
 
-- [ ] Agregar `clinic_id nullable` a tablas tenant-scoped.
-- [ ] Backfill de datos actuales a `Clinic #1`.
+- [~] Agregar `clinic_id nullable` a tablas tenant-scoped.
+- [~] Backfill de datos actuales a `Clinic #1`.
 - [ ] Validar conteos por tabla antes y despues del backfill.
-- [ ] Crear indices por `clinic_id`.
-- [ ] Ajustar uniques globales a uniques por tenant cuando aplique.
+- [~] Crear indices por `clinic_id`.
+- [~] Ajustar uniques globales a uniques por tenant cuando aplique.
 - [ ] Preparar cambio futuro de `clinic_id` a `NOT NULL`.
 
 ## Fase 3: Contexto y scopes
