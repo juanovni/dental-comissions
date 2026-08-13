@@ -2,6 +2,7 @@
 
 use App\Providers\AppServiceProvider;
 use App\Providers\Filament\AdminPanelProvider;
+use App\Providers\Filament\ClinicPanelProvider;
 use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
 use BladeUI\Icons\BladeIconsServiceProvider;
 use Filament\Actions\ActionsServiceProvider;
@@ -36,4 +37,5 @@ return [
     QueryBuilderServiceProvider::class,
     FilamentServiceProvider::class,
     AdminPanelProvider::class,
+    ClinicPanelProvider::class,
 ];

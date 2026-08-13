@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use App\Enums\SocialPlatform;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SocialAccount extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'platform',
         'account_name',
         'external_account_id',

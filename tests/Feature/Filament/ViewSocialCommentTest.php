@@ -4,6 +4,7 @@ namespace Tests\Feature\Filament;
 
 use App\Enums\SocialPlatform;
 use App\Filament\Resources\SocialComments\Pages\ViewSocialComment;
+use App\Models\Clinic;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialPost;
@@ -18,7 +19,18 @@ class ViewSocialCommentTest extends TestCase
 
     public function test_social_comment_detail_shows_original_post_card(): void
     {
+        $clinic = Clinic::create([
+            'name' => 'Clinica Demo',
+            'slug' => 'clinica-demo',
+            'subdomain' => 'clinica-demo',
+            'primary_domain' => 'clinica-demo.localhost',
+            'currency' => 'USD',
+            'timezone' => 'UTC',
+            'status' => 'active',
+        ]);
+
         $account = SocialAccount::create([
+            'clinic_id' => $clinic->id,
             'platform' => SocialPlatform::Instagram,
             'account_name' => 'Clinica Dental IG',
             'external_account_id' => 'ig_account_'.uniqid(),
@@ -26,6 +38,7 @@ class ViewSocialCommentTest extends TestCase
         ]);
 
         $post = SocialPost::create([
+            'clinic_id' => $clinic->id,
             'social_account_id' => $account->id,
             'platform' => SocialPlatform::Instagram,
             'external_post_id' => 'post_'.uniqid(),
@@ -36,6 +49,7 @@ class ViewSocialCommentTest extends TestCase
         ]);
 
         $comment = SocialComment::create([
+            'clinic_id' => $clinic->id,
             'social_account_id' => $account->id,
             'social_post_id' => $post->id,
             'platform' => SocialPlatform::Instagram,
@@ -45,8 +59,15 @@ class ViewSocialCommentTest extends TestCase
             'comment_text' => 'Me interesa esta promocion.',
         ]);
 
-        Livewire::actingAs(User::factory()->create())
-            ->test(ViewSocialComment::class, ['record' => $comment->getRouteKey()])
+        $user = User::factory()->create();
+        $clinic->users()->attach($user, [
+            'role' => 'admin',
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(ViewSocialComment::class, ['record' => $comment->getRouteKey(), 'tenant' => $clinic->getRouteKey()])
             ->assertSee('Publicacion original')
             ->assertSee('Ortodoncia invisible para adultos. Consulta si eres candidato.')
             ->assertSee('Me interesa esta promocion.')

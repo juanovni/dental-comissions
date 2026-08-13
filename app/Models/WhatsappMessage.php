@@ -4,16 +4,18 @@ namespace App\Models;
 
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WhatsappMessage extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'professional_id',
         'social_comment_id',
         'direction',
@@ -38,17 +40,17 @@ class WhatsappMessage extends Model
         ];
     }
 
-    public function professional(): BelongsTo
+    public function professional(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Professional::class);
     }
 
-    public function socialComment(): BelongsTo
+    public function socialComment(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(SocialComment::class);
     }
 
-    public function relatedMessage(): BelongsTo
+    public function relatedMessage(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(WhatsappMessage::class, 'related_message_id');
     }

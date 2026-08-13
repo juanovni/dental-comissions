@@ -74,7 +74,7 @@ class SocialCommentResource extends Resource
 
     public static function getIndexUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?\Illuminate\Database\Eloquent\Model $tenant = null, bool $shouldGuessMissingParameters = false): string
     {
-        return SocialInbox::getUrl(isAbsolute: $isAbsolute, panel: $panel, tenant: $tenant, shouldGuessMissingParameters: $shouldGuessMissingParameters);
+        return SocialInbox::getUrl(isAbsolute: $isAbsolute, panel: 'clinic', tenant: $tenant, shouldGuessMissingParameters: $shouldGuessMissingParameters);
     }
 
     public static function form(Schema $schema): Schema

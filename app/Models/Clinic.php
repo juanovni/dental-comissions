@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Enums\TenantStatus;
+use Filament\Models\Contracts\HasCurrentTenantLabel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Clinic extends Model
+class Clinic extends Model implements HasCurrentTenantLabel
 {
     use HasFactory;
 
@@ -62,5 +63,10 @@ class Clinic extends Model
     public function allowsAccess(): bool
     {
         return $this->status?->allowsTenantAccess() ?? false;
+    }
+
+    public function getCurrentTenantLabel(): string
+    {
+        return $this->name;
     }
 }

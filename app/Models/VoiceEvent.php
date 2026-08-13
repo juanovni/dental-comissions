@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use App\Enums\VoiceEventType;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VoiceEvent extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'voice_call_id',
         'type',
         'direction',
@@ -27,7 +29,7 @@ class VoiceEvent extends Model
         ];
     }
 
-    public function voiceCall(): BelongsTo
+    public function voiceCall(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(VoiceCall::class);
     }
