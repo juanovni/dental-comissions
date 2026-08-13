@@ -11,6 +11,7 @@ class AppointmentReminder extends Model
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'appointment_id',
         'patient_id',
         'channel',
@@ -36,6 +37,11 @@ class AppointmentReminder extends Model
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
+    }
+
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 
     public function patient(): BelongsTo

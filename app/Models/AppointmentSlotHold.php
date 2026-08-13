@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AppointmentSlotHold extends Model
 {
     protected $fillable = [
+        'clinic_id',
         'appointment_slot_offer_id',
         'social_comment_id',
         'appointment_id',
@@ -33,6 +34,11 @@ class AppointmentSlotHold extends Model
     public function offer(): BelongsTo
     {
         return $this->belongsTo(AppointmentSlotOffer::class, 'appointment_slot_offer_id');
+    }
+
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 
     public function socialComment(): BelongsTo

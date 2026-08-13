@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AppointmentStatus;
+use App\Models\Clinic;
 use App\Models\Appointment;
 use App\Models\AppointmentCheckInAttempt;
 use App\Services\AppointmentFlowService;
 use App\Services\SocialCrmSettingsService;
+use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +19,8 @@ class PublicCheckInController extends Controller
 {
     public function show(string $clinicSlug): View
     {
+        $this->resolveClinicSlug($clinicSlug);
+
         $companyName = $this->companyName();
 
         return view('patient-flow.check-in', [
@@ -29,6 +33,8 @@ class PublicCheckInController extends Controller
 
     public function store(Request $request, string $clinicSlug): RedirectResponse
     {
+        $this->resolveClinicSlug($clinicSlug);
+
         $data = $request->validate([
             'identifier' => ['required_without:appointment_id', 'nullable', 'string', 'max:80'],
             'appointment_id' => ['nullable', 'integer'],
@@ -72,10 +78,15 @@ class PublicCheckInController extends Controller
 
     private function checkInAppointment(int $appointmentId, string $clinicSlug, Request $request): RedirectResponse
     {
-        $appointment = Appointment::query()
+        $query = Appointment::query()
             ->with(['patient', 'doctor'])
-            ->whereBetween('scheduled_at', $this->todayBounds())
-            ->find($appointmentId);
+            ->whereBetween('scheduled_at', $this->todayBounds());
+
+        if (($clinicId = app(TenantContext::class)->id()) !== null) {
+            $query->where('clinic_id', $clinicId);
+        }
+
+        $appointment = $query->find($appointmentId);
 
         if (! $appointment) {
             $this->recordFailedAttempt($request, $clinicSlug, 'appointment_not_found', (string) $appointmentId);
@@ -137,6 +148,7 @@ class PublicCheckInController extends Controller
         $digits = preg_replace('/\D+/', '', $identifier) ?: '';
 
         AppointmentCheckInAttempt::create([
+            'clinic_id' => app(TenantContext::class)->id(),
             'appointment_id' => $appointment?->id,
             'clinic_slug' => $clinicSlug,
             'channel' => 'public',
@@ -165,6 +177,9 @@ class PublicCheckInController extends Controller
             ->with(['patient', 'doctor'])
             ->whereBetween('scheduled_at', $this->todayBounds())
             ->whereNotIn('status', collect($this->unavailableStatuses())->map->value->all())
+            ->when(app(TenantContext::class)->id() !== null, function ($query): void {
+                $query->where('clinic_id', app(TenantContext::class)->id());
+            })
             ->where(function ($query) use ($identifier, $phoneVariants): void {
                 if (ctype_digit($identifier)) {
                     $query->orWhere('id', (int) $identifier);
@@ -207,6 +222,23 @@ class PublicCheckInController extends Controller
     private function companyName(): string
     {
         return app(SocialCrmSettingsService::class)->autoReplyCompanyName();
+    }
+
+    private function resolveClinicSlug(string $clinicSlug): ?Clinic
+    {
+        $context = app(TenantContext::class);
+
+        if ($context->get()?->slug === $clinicSlug) {
+            return $context->require();
+        }
+
+        $clinic = Clinic::query()->where('slug', $clinicSlug)->first();
+
+        if ($clinic !== null) {
+            $context->set($clinic);
+        }
+
+        return $clinic;
     }
 
     /**

@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
+            'tenant.request' => \App\Http\Middleware\ResolveClinicFromRequest::class,
             'voice.tool' => \App\Http\Middleware\VerifyVoiceToolToken::class,
         ]);
     })

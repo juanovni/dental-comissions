@@ -79,6 +79,9 @@ Estados sugeridos:
 - [ ] Crear trait `BelongsToTenant`.
 - [ ] Definir comportamiento fail-closed cuando no exista tenant.
 - [ ] Activar scope primero en `Patient`, `Professional` y `Appointment`.
+- [x] Crear `TenantContext`.
+- [x] Crear middleware inicial de resolucion de tenant por request/host.
+- [~] Activar resolucion tenant solo en rutas publicas controladas.
 - [ ] Auditar usos de `withoutGlobalScopes()`.
 - [ ] Agregar tests base de aislamiento por modelo.
 

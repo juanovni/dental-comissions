@@ -11,6 +11,7 @@ class AppointmentEvent extends Model
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'appointment_id',
         'event_type',
         'from_status',
@@ -32,6 +33,11 @@ class AppointmentEvent extends Model
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
+    }
+
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 
     public function createdBy(): BelongsTo

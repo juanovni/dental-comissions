@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class AppointmentSlotOffer extends Model
 {
     protected $fillable = [
+        'clinic_id',
         'social_comment_id',
         'whatsapp_message_id',
         'appointment_id',
@@ -31,6 +32,11 @@ class AppointmentSlotOffer extends Model
     public function socialComment(): BelongsTo
     {
         return $this->belongsTo(SocialComment::class);
+    }
+
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 
     public function whatsappMessage(): BelongsTo

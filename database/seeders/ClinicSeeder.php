@@ -54,7 +54,37 @@ class ClinicSeeder extends Seeder
 
     private function backfillCoreTables(Clinic $clinic): void
     {
-        foreach (['patients', 'professionals', 'appointments', 'procedures'] as $table) {
+        foreach ([
+            'patients',
+            'professionals',
+            'appointments',
+            'procedures',
+            'appointment_events',
+            'appointment_notes',
+            'appointment_reminders',
+            'appointment_check_in_attempts',
+            'appointment_slot_offers',
+            'appointment_slot_holds',
+            'doctor_assistant_assignments',
+        ] as $table) {
+            if (! Schema::hasColumn($table, 'clinic_id')) {
+                continue;
+            }
+
+            DB::table($table)
+                ->whereNull('clinic_id')
+                ->update(['clinic_id' => $clinic->id]);
+        }
+
+        foreach ([
+            'appointment_events',
+            'appointment_notes',
+            'appointment_reminders',
+            'appointment_check_in_attempts',
+            'appointment_slot_offers',
+            'appointment_slot_holds',
+            'doctor_assistant_assignments',
+        ] as $table) {
             if (! Schema::hasColumn($table, 'clinic_id')) {
                 continue;
             }

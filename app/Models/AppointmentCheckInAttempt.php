@@ -11,6 +11,7 @@ class AppointmentCheckInAttempt extends Model
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'appointment_id',
         'clinic_slug',
         'channel',
@@ -33,5 +34,10 @@ class AppointmentCheckInAttempt extends Model
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
+    }
+
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 }
