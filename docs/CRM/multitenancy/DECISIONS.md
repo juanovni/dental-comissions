@@ -23,7 +23,9 @@
 - No se soportaran dominios personalizados en la primera version.
 - `procedures` sera tenant-scoped; cada clinica tendra sus propios procedimientos, precios y duraciones.
 - El modulo de comisiones no se considera activo en OdonCRM y no debe formar parte de los defaults minimos del tenant.
+- El modulo de comisiones queda excluido formalmente del alcance activo de Fase 2. Si se reactiva en el futuro, debera tenant-scopearse.
 - Las cuentas externas Meta/WhatsApp tendran propiedad unica global: una misma Page ID, Instagram Business Account ID o WhatsApp phone number ID no puede pertenecer a mas de una clinica.
+- `local_language_patterns` usara `clinic_id nullable`: patrones globales como base y overrides opcionales por clinica.
 - Defaults minimos para activar tenant: `Clinic`, dominio, admin inicial, `clinic_user`, permisos admin, settings base y storage prefix.
 - Defaults operativos iniciales: procedimiento base `Consulta inicial`, settings de citas y settings CRM seguros.
 - Settings CRM iniciales: auto-respuestas desactivadas, clasificacion IA en modo revision/manual, alertas internas desactivadas y plantillas de ejemplo editables.

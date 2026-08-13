@@ -32,6 +32,8 @@ Estados sugeridos:
 - [x] Definir politica de descargas privadas: controlador autorizado para uso interno y URLs firmadas para comparticion temporal.
 - [x] Confirmar dominios personalizados: no se soportan en la primera version.
 - [x] Confirmar comisiones: modulo no activo en OdonCRM, fuera de defaults minimos.
+- [x] Excluir formalmente comisiones del alcance activo de Fase 2.
+- [x] Definir `local_language_patterns`: `clinic_id nullable` para global + overrides por clinica.
 - [x] Confirmar defaults minimos: Clinic, dominio, admin inicial, clinic_user, permisos admin, settings base y storage prefix.
 - [x] Confirmar defaults operativos: Consulta inicial precio 0 duracion 30, settings de citas, settings CRM e integraciones not_configured.
 - [x] Definir estados de tenant: `draft`, `provisioning`, `active`, `suspended`, `provisioning_failed`.
@@ -71,7 +73,7 @@ Estados sugeridos:
 - [x] Validar conteos por tabla antes y despues del backfill.
 - [x] Crear indices por `clinic_id`.
 - [x] Ajustar uniques globales a uniques por tenant cuando aplique.
-- [ ] Preparar cambio futuro de `clinic_id` a `NOT NULL`.
+- [ ] Preparar cambio futuro de `clinic_id` a `NOT NULL` en tablas activas tenant-scoped.
 
 ## Fase 3: Contexto y scopes
 

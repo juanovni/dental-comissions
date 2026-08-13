@@ -106,7 +106,7 @@ Aunque algunas tablas puedan inferir clinica por `appointment_id`, conviene guar
 
 ### Comisiones y pagos historicos
 
-El modulo de comisiones no se considera activo en OdonCRM y no debe formar parte de los defaults minimos de un tenant nuevo. Si estos modulos historicos se mantienen en base de datos o se reactivan en el futuro, deben ser tenant-scoped:
+El modulo de comisiones no se considera activo en OdonCRM, queda excluido del alcance activo de Fase 2 y no debe formar parte de los defaults minimos de un tenant nuevo. Si estos modulos historicos se mantienen en base de datos o se reactivan en el futuro, deben ser tenant-scoped:
 
 - `commission_rules`
 - `activity_records`
@@ -134,8 +134,11 @@ Estas tablas pueden ser globales:
 
 Tablas con decision pendiente:
 
-- `local_language_patterns`: puede ser global, o tener `clinic_id nullable` para defaults globales y overrides por clinica.
 - `role_permissions`: puede pasar a tenant-scoped si cada clinica puede personalizar permisos.
+
+Tabla con decision tomada:
+
+- `local_language_patterns`: `clinic_id nullable` para defaults globales y overrides por clinica.
 
 ## Modelo Clinic
 
