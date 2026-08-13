@@ -23,11 +23,15 @@ Estados sugeridos:
 - [ ] Configurar o confirmar wildcard DNS `*.odon-crm.com`.
 - [ ] Rotar cualquier token Cloudflare expuesto antes de usarlo.
 - [x] Definir roles/permisos: rol operativo por `clinic_user`; permisos base globales reutilizables.
-- [ ] Confirmar que `procedures` sera tenant-scoped.
-- [ ] Definir si cuentas Meta/WhatsApp pueden pertenecer a mas de una clinica.
+- [x] Confirmar que `procedures` sera tenant-scoped con precios y duraciones por clinica.
+- [x] Definir cuentas Meta/WhatsApp: propiedad unica global, no pueden pertenecer a mas de una clinica.
 - [x] Confirmar integraciones: se configuran despues desde el panel de la clinica por un admin de esa clinica.
 - [x] Definir storage: local en primera version.
 - [x] Definir politica de descargas privadas: controlador autorizado para uso interno y URLs firmadas para comparticion temporal.
+- [x] Confirmar dominios personalizados: no se soportan en la primera version.
+- [x] Confirmar comisiones: modulo no activo en OdonCRM, fuera de defaults minimos.
+- [x] Confirmar defaults minimos: Clinic, dominio, admin inicial, clinic_user, permisos admin, settings base y storage prefix.
+- [x] Confirmar defaults operativos: procedimientos base editables, settings de citas, settings CRM e integraciones not_configured.
 - [ ] Definir estados de tenant: `draft`, `provisioning`, `active`, `suspended`.
 
 ## Fase 0: Preparacion
@@ -49,7 +53,8 @@ Estados sugeridos:
 - [ ] Crear tabla `clinic_user`.
 - [ ] Asociar usuarios actuales a `Clinic #1`.
 - [ ] Mantener `users.role` temporalmente para no romper el sistema actual.
-- [ ] Crear defaults minimos para tenant nuevo.
+- [ ] Crear defaults minimos para tenant nuevo: Clinic, dominio, admin inicial, clinic_user, permisos admin, settings base y storage prefix.
+- [ ] Crear defaults operativos: procedimientos base editables, settings de citas, settings CRM e integraciones `not_configured`.
 - [ ] Crear flujo de provisionamiento: crear tenant, crear admin, aplicar defaults, validar dominio, activar.
 
 ## Fase 2: Migraciones de datos

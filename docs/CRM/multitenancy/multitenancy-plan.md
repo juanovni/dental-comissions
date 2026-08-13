@@ -64,7 +64,7 @@ Estas tablas contienen datos operativos, clinicos, comerciales, credenciales o e
 - `procedures`
 - `doctor_assistant_assignments`
 
-`procedures` deberia ser tenant-scoped porque procedimientos, duraciones, precios y reglas deben ser parametrizables por clinica.
+`procedures` debe ser tenant-scoped porque procedimientos, duraciones y precios deben ser parametrizables por clinica.
 
 ### Citas y flujo de paciente
 
@@ -104,9 +104,9 @@ Aunque algunas tablas puedan inferir clinica por `appointment_id`, conviene guar
 - `voice_calls`
 - `voice_events`
 
-### Comisiones y pagos
+### Comisiones y pagos historicos
 
-Si estos modulos se mantienen o se reactivan, deben ser tenant-scoped:
+El modulo de comisiones no se considera activo en OdonCRM y no debe formar parte de los defaults minimos de un tenant nuevo. Si estos modulos historicos se mantienen en base de datos o se reactivan en el futuro, deben ser tenant-scoped:
 
 - `commission_rules`
 - `activity_records`
@@ -358,7 +358,7 @@ La API de Cloudflare solo deberia usarse si:
 
 - No se usara wildcard DNS.
 - Se necesitan registros individuales por tenant por una razon operativa concreta.
-- Se van a soportar dominios personalizados de clientes.
+- Se van a soportar dominios personalizados de clientes en una fase futura.
 - Se automatizara verificacion DNS para dominios externos.
 
 Reglas de seguridad para Cloudflare:
@@ -561,7 +561,7 @@ Cambios:
 - Procesar cada evento dentro de `TenantContext::run($clinicId, ...)`.
 - Firmar `state` de OAuth con `clinic_id`, `user_id` y nonce.
 - Guardar tokens Meta por clinica.
-- Revisar unique: mantener global si una pagina solo puede conectarse una vez en toda la plataforma, o cambiar a `unique(clinic_id, platform, external_account_id)` si se permite repeticion controlada.
+- Mantener unique global para cuentas externas: una Page ID, Instagram Business Account ID o cuenta equivalente no puede conectarse a mas de una clinica.
 
 ## Adaptacion de WhatsApp
 
@@ -577,6 +577,7 @@ Cambios:
 - Resolver tenant por `phone_number_id` del payload.
 - Guardar `clinic_id` en `whatsapp_messages`.
 - Cambiar busquedas por telefono para que sean scoped.
+- Mantener propiedad unica global de `phone_number_id`: un numero WhatsApp Cloud API no puede pertenecer a mas de una clinica.
 - Cambiar unique de `message_sid` a `unique(clinic_id, message_sid)` o mantener global si Meta garantiza unicidad universal.
 
 ## Adaptacion de Google Calendar
@@ -714,9 +715,37 @@ Debe ser por clinica:
 Regla operativa:
 
 - Las integraciones no son parte obligatoria del alta inicial del tenant.
+- Las integraciones deben nacer en estado `not_configured`.
 - Se configuran despues desde el panel tenant-scoped de cada clinica.
 - Solo usuarios con rol admin en `clinic_user` para esa clinica pueden crear, actualizar o desconectar integraciones.
 - Un admin de Clinica A no puede ver ni modificar integraciones de Clinica B.
+
+## Defaults minimos por tenant
+
+Para activar un tenant, deben existir como minimo:
+
+- Registro en `clinics`.
+- `name`, `slug`, `subdomain` y `primary_domain`.
+- `country`, `currency`, `timezone` y `status`.
+- Usuario administrador inicial.
+- Relacion `clinic_user` activa con rol `admin`.
+- Permisos base del rol `admin`.
+- Configuracion base de clinica.
+- Prefijo de storage logico `clinics/{clinic_id}/`.
+
+Defaults operativos iniciales:
+
+- Procedimientos base editables por la clinica.
+- Settings de citas seguros.
+- Settings CRM seguros.
+- Integraciones en estado `not_configured`.
+
+No incluir en defaults iniciales:
+
+- Comisiones.
+- Dominios personalizados.
+- Credenciales Meta, WhatsApp, Google Calendar o Telnyx.
+- Datos clinicos o pacientes demo reales.
 
 ## Auditoria
 
@@ -809,10 +838,7 @@ social_crm_settings: unique(clinic_id, key)
 calendar_integrations: unique(clinic_id, provider)
 ```
 
-Para `social_accounts`, definir regla de producto:
-
-- Unique global si una cuenta Meta no puede conectarse a mas de una clinica.
-- Unique por clinica si se permite repetir cuenta bajo condiciones controladas.
+Para `social_accounts`, la regla de producto queda definida como unique global: una cuenta Meta externa no puede conectarse a mas de una clinica. Esto evita ambiguedad al resolver webhooks.
 
 ## Pruebas automatizadas
 
@@ -859,7 +885,7 @@ Tests minimos de aislamiento:
 - Definir dominio base de la plataforma, por ejemplo `dominio.com`.
 - Usar `app.odon-crm.com` para el admin global y `{subdomain}.odon-crm.com` para tenants.
 - Configurar wildcard DNS `*.dominio.com` si se confirma la estrategia de subdominios.
-- Definir si `procedures` y `role_permissions` seran globales o por clinica.
+- `procedures` queda definido como tenant-scoped.
 - Definir si una cuenta Meta/WhatsApp puede pertenecer a mas de una clinica.
 
 ### Fase 1: Base de tenancy
