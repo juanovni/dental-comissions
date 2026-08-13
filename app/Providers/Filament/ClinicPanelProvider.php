@@ -26,6 +26,8 @@ use App\Filament\Resources\SocialAccounts\SocialAccountResource;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Filament\Resources\SocialCrmSettings\SocialCrmSettingResource;
 use App\Filament\Resources\VoiceCalls\VoiceCallResource;
+use App\Http\Middleware\EnsureTenantMatchesHost;
+use App\Http\Middleware\ResolveClinicFromHost;
 use App\Http\Middleware\SyncFilamentTenantContext;
 use App\Models\Clinic;
 use Filament\Http\Middleware\Authenticate;
@@ -165,7 +167,9 @@ class ClinicPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                ResolveClinicFromHost::class,
                 IdentifyTenant::class,
+                EnsureTenantMatchesHost::class,
                 SyncFilamentTenantContext::class,
             ])
             ->authMiddleware([

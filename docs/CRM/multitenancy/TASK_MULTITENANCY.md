@@ -79,21 +79,22 @@ Estados sugeridos:
 
 - [x] Crear `TenantContext`.
 - [x] Crear trait `BelongsToTenant`.
-- [ ] Definir comportamiento fail-closed cuando no exista tenant.
-- [~] Preparar scope inicial en `Patient`, `Professional`, `Appointment` y `Procedure` sin activarlo globalmente todavia.
+- [x] Definir comportamiento fail-closed cuando no exista tenant en el panel tenant.
+- [x] Preparar scope inicial en `Patient`, `Professional`, `Appointment` y `Procedure` sin activarlo globalmente todavia.
 - [x] Crear middleware inicial de resolucion de tenant por request/host.
 - [~] Activar resolucion tenant solo en rutas publicas controladas.
-- [ ] Auditar usos de `withoutGlobalScopes()`.
-- [~] Agregar tests base de aislamiento por modelo.
+- [x] Auditar usos de `withoutGlobalScopes()`.
+- [x] Agregar tests base de aislamiento por modelo.
 
 ## Fase 4: Dominio, host y Filament
 
-- [ ] Crear middleware `ResolveClinicFromHost`.
-- [ ] Resolver tenant por `primary_domain` o `subdomain`.
-- [ ] Rechazar hosts no reconocidos sin devolver datos de ninguna clinica.
+- [x] Crear middleware `ResolveClinicFromHost`.
+- [x] Resolver tenant por `primary_domain` o `subdomain`.
+- [x] Rechazar mismatch host/tenant en rutas tenant-aware controladas.
+- [~] Rechazar hosts no reconocidos sin devolver datos de ninguna clinica.
 - [x] Configurar Filament Tenancy con `Clinic::class`.
 - [x] Sincronizar tenant de Filament con `TenantContext`.
-- [ ] Bloquear cambios de tenant incompatibles con el host actual.
+- [x] Bloquear cambios de tenant incompatibles con el host actual.
 - [x] Crear o separar dashboard admin global para crear tenants.
 - [x] Adaptar resources principales de Filament.
 - [~] Revisar pages custom, widgets y selects.

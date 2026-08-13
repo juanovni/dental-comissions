@@ -24,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
+            'tenant.host' => \App\Http\Middleware\ResolveClinicFromHost::class,
+            'tenant.match' => \App\Http\Middleware\EnsureTenantMatchesHost::class,
             'tenant.request' => \App\Http\Middleware\ResolveClinicFromRequest::class,
             'voice.tool' => \App\Http\Middleware\VerifyVoiceToolToken::class,
         ]);

@@ -8,7 +8,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class ResolveClinicFromRequest
+class ResolveClinicFromHost
 {
     public function __construct(private TenantContext $tenantContext)
     {
@@ -16,41 +16,25 @@ class ResolveClinicFromRequest
 
     public function handle(Request $request, Closure $next): Response
     {
-        $clinic = $this->resolveClinic($request);
+        $clinic = $this->resolveClinicFromHost($request->getHost());
 
         if ($clinic !== null) {
             $this->tenantContext->set($clinic);
         }
 
-        try {
-            return $next($request);
-        } finally {
-            $this->tenantContext->clear();
-        }
+        return $next($request);
     }
 
-    private function resolveClinic(Request $request): ?Clinic
+    public function resolveClinicFromHost(string $host): ?Clinic
     {
-        $host = $request->getHost();
-
-        if ($host !== '' && $host !== config('tenancy.admin_domain')) {
-            $clinic = Clinic::query()
-                ->where('primary_domain', $host)
-                ->orWhere('subdomain', $this->extractSubdomain($host))
-                ->first();
-
-            if ($clinic !== null) {
-                return $clinic;
-            }
+        if ($host === '' || $host === config('tenancy.admin_domain')) {
+            return null;
         }
 
-        $clinicSlug = $request->route('clinicSlug');
-
-        if (is_string($clinicSlug) && $clinicSlug !== '') {
-            return Clinic::query()->where('slug', $clinicSlug)->first();
-        }
-
-        return null;
+        return Clinic::query()
+            ->where('primary_domain', $host)
+            ->orWhere('subdomain', $this->extractSubdomain($host))
+            ->first();
     }
 
     private function extractSubdomain(string $host): ?string

@@ -33,7 +33,7 @@ Route::post('/v/{trackingToken}/event', [SocialSmartLinkController::class, 'trac
 Route::get('/social/appointments/{token}', [SocialAppointmentLinkController::class, 'show'])->name('social-appointments.show');
 Route::get('/social/appointments/{token}/calendar', [SocialAppointmentLinkController::class, 'calendar'])->name('social-appointments.calendar');
 Route::post('/social/appointments/{token}/confirm', [SocialAppointmentLinkController::class, 'confirm'])->name('social-appointments.confirm');
-Route::middleware('tenant.request')->group(function (): void {
+Route::middleware(['tenant.request', 'tenant.match'])->group(function (): void {
     Route::get('/check-in/{clinicSlug}', [PublicCheckInController::class, 'show'])->name('patient-flow.check-in.show');
     Route::post('/check-in/{clinicSlug}', [PublicCheckInController::class, 'store'])->name('patient-flow.check-in.store')->middleware('throttle:10,1');
 });
