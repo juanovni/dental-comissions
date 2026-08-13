@@ -64,8 +64,9 @@ class ClinicPanelProvider extends PanelProvider
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::HEAD_END,
-            fn (): HtmlString => in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant, UserRole::Doctor], true)
-                ? new HtmlString(<<<'HTML'
+            fn (): HtmlString => new HtmlString(
+                (in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant, UserRole::Doctor], true)
+                    ? <<<'HTML'
                     <script>
                         document.documentElement.classList.add('fi-role-clinical-flat')
 
@@ -80,8 +81,10 @@ class ClinicPanelProvider extends PanelProvider
                             localStorage.removeItem('collapsedGroups')
                         }
                     </script>
-                    HTML)
-                : new HtmlString(''),
+                    HTML
+                    : '')
+                . '<style>.fi-tenant-avatar{display:none!important;}</style>'
+            ),
         );
 
         return $panel
