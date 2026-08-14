@@ -84,6 +84,9 @@ class ClinicPanelProvider extends PanelProvider
                     HTML
                     : '')
                 . '<style>.fi-tenant-avatar{display:none!important;}</style>'
+                . ((auth()->user()?->isSuperAdmin() ?? false)
+                    ? ''
+                    : '<style>.fi-tenant-menu-trigger{background:var(--gray-100)!important;justify-content:center!important;text-align:center!important}.fi-tenant-menu-trigger > .fi-icon{display:none!important}.fi-tenant-menu-trigger-text{margin-inline-start:0!important;text-align:center!important}</style>')
             ),
         );
 
