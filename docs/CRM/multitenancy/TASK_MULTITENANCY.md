@@ -115,11 +115,11 @@ Estados sugeridos:
 - [x] Corregir check-in publico para filtrar por clinica.
 - [x] Adaptar webhook WhatsApp por `phone_number_id`.
 - [x] Agregar `clinic_id` a `whatsapp_messages`.
-- [ ] Adaptar Meta webhook por page/account id.
-- [ ] Adaptar OAuth Meta con `state` firmado por clinica.
-- [ ] Adaptar Google Calendar OAuth con `state` firmado por clinica.
-- [ ] Adaptar Telnyx/Pity Voice por numero destino.
-- [ ] Scopear validaciones de doctores, pacientes, procedimientos y citas.
+- [x] Adaptar Meta webhook por page/account id.
+- [~] Adaptar OAuth Meta con `state` firmado por clinica.
+- [~] Adaptar Google Calendar OAuth con `state` firmado por clinica.
+- [x] Adaptar Telnyx/Pity Voice por numero destino.
+- [~] Scopear validaciones de doctores, pacientes, procedimientos y citas en integraciones publicas principales.
 
 ## Fase 6: Jobs, commands y cache
 
