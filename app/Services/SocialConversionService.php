@@ -16,6 +16,7 @@ use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Models\WhatsappMessage;
+use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
@@ -128,6 +129,7 @@ class SocialConversionService
         }
 
         $comment = SocialComment::query()
+            ->forCurrentTenant()
             ->with('socialIdentity')
             ->where('tracking_token', $token)
             ->first();
@@ -140,6 +142,7 @@ class SocialConversionService
 
         if (! $identity) {
             $identity = SocialIdentity::create([
+                'clinic_id' => app(TenantContext::class)->id(),
                 'platform' => $comment->platform->value,
                 'platform_user_id' => 'unknown-'.$comment->id,
                 'username' => $comment->author_username,
@@ -162,7 +165,7 @@ class SocialConversionService
     {
         $normalized = $this->normalizePhone($phone);
 
-        return SocialComment::whereHas('socialIdentity', function (Builder $query) use ($normalized, $phone): void {
+        return SocialComment::query()->forCurrentTenant()->whereHas('socialIdentity', function (Builder $query) use ($normalized, $phone): void {
             $query->where('normalized_phone', $normalized)
                 ->orWhere('phone', $phone)
                 ->orWhere('phone', '+'.$normalized);
@@ -177,6 +180,7 @@ class SocialConversionService
         $normalized = $this->normalizePhone($message->from_phone);
         $procedureId = $this->resolveProcedureIdFromText($message->message_body ?? '');
         $identity = SocialIdentity::query()
+            ->forCurrentTenant()
             ->where('platform', SocialPlatform::Whatsapp->value)
             ->where(function (Builder $query) use ($normalized, $message): void {
                 $query->where('normalized_phone', $normalized)
@@ -187,6 +191,7 @@ class SocialConversionService
 
         if (! $identity) {
             $identity = SocialIdentity::create([
+                'clinic_id' => app(TenantContext::class)->id(),
                 'platform' => SocialPlatform::Whatsapp,
                 'platform_user_id' => $normalized,
                 'display_name' => $message->from_phone,
@@ -251,6 +256,7 @@ class SocialConversionService
         }
 
         $comment = SocialComment::create([
+            'clinic_id' => app(TenantContext::class)->id(),
             'social_account_id' => $this->whatsappSocialAccount()->id,
             'social_identity_id' => $identity->id,
             'suggested_procedure_id' => $procedureId,
@@ -436,6 +442,7 @@ class SocialConversionService
         };
 
         return Procedure::query()
+            ->forCurrentTenant()
             ->where('is_active', true)
             ->where(function (Builder $query) use ($category, $terms): void {
                 $query->whereRaw('lower(category) = ?', [$category])
@@ -457,10 +464,12 @@ class SocialConversionService
 
         return SocialAccount::firstOrCreate(
             [
+                'clinic_id' => app(TenantContext::class)->id(),
                 'platform' => SocialPlatform::Whatsapp,
                 'external_account_id' => $externalAccountId,
             ],
             [
+                'clinic_id' => app(TenantContext::class)->id(),
                 'account_name' => 'WhatsApp Business',
                 'is_active' => true,
                 'sync_settings' => ['source' => 'whatsapp_first_leads'],

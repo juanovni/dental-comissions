@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\MetaSocialService;
+use App\Support\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -12,6 +13,7 @@ class MetaSocialWebhookController extends Controller
 {
     public function __construct(
         private MetaSocialService $metaSocialService,
+        private TenantContext $tenantContext,
     ) {}
 
     public function verify(Request $request): Response|JsonResponse
@@ -30,6 +32,8 @@ class MetaSocialWebhookController extends Controller
     public function receive(Request $request): JsonResponse
     {
         $payload = $request->all();
+
+        $this->tenantContext->clear();
 
         Log::info('Webhook Meta social recibido', [
             'object' => $payload['object'] ?? null,
@@ -53,6 +57,8 @@ class MetaSocialWebhookController extends Controller
                 'status' => 'accepted',
                 'message' => 'Webhook recibido, sincronizacion diferida por error.',
             ]);
+        } finally {
+            $this->tenantContext->clear();
         }
     }
 }

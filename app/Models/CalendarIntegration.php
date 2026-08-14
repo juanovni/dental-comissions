@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
+use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
 class CalendarIntegration extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
+        'clinic_id',
         'provider',
         'account_email',
         'calendar_id',
@@ -29,8 +34,12 @@ class CalendarIntegration extends Model
     public static function clinicGoogle(): self
     {
         return static::firstOrCreate(
-            ['provider' => 'google_calendar'],
             [
+                'clinic_id' => app(TenantContext::class)->id(),
+                'provider' => 'google_calendar',
+            ],
+            [
+                'clinic_id' => app(TenantContext::class)->id(),
                 'calendar_id' => 'primary',
                 'is_enabled' => false,
             ],

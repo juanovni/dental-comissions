@@ -67,7 +67,8 @@ class WebhookController extends Controller
 
                     if (!empty($value['messages'])) {
                         foreach ($value['messages'] as $message) {
-                            $singlePayload = ['messages' => [$message]];
+                            $singlePayload = $value;
+                            $singlePayload['messages'] = [$message];
                             $this->whatsappService->processIncomingMessage($singlePayload);
                         }
                     }

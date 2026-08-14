@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
 use App\Models\Concerns\BelongsToTenant;
+use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -65,7 +66,9 @@ class WhatsappMessage extends Model
         $digits = preg_replace('/\D+/', '', $phone) ?? $phone;
         $phones = array_values(array_unique([$phone, $digits, '+' . $digits]));
 
-        return Professional::whereIn('whatsapp_phone', $phones)
+        return Professional::query()
+            ->forCurrentTenant()
+            ->whereIn('whatsapp_phone', $phones)
             ->where('is_active', true)
             ->where('can_register_via_whatsapp', true)
             ->first();

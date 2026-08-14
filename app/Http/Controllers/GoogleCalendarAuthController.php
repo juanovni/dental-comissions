@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Clinic;
 use App\Services\GoogleCalendarService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,13 +24,21 @@ class GoogleCalendarAuthController extends Controller
 
         abort_unless($request->filled('code'), 400, 'Google no devolvio codigo de autorizacion.');
 
-        if ($request->string('state')->toString() !== 'clinic') {
+        $state = $request->string('state')->toString();
+
+        if (! str_starts_with($state, 'clinic')) {
             Log::error('State OAuth Google Calendar invalido', [
-                'state' => $request->string('state')->toString(),
+                'state' => $state,
             ]);
 
             return redirect('/admin/integrations#google-calendar')
                 ->with('error', 'Solicitud de autorizacion invalida.');
+        }
+
+        $clinicSlug = str($state)->after('clinic:')->toString();
+
+        if ($clinicSlug !== '' && ($clinic = Clinic::query()->where('slug', $clinicSlug)->first())) {
+            app(GoogleCalendarService::class)->setCurrentClinic($clinic);
         }
 
         $success = app(GoogleCalendarService::class)->exchangeClinicCode(

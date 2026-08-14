@@ -6,9 +6,11 @@ use App\Enums\ProfessionalRole;
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
 use App\Models\DoctorAssistantAssignment;
+use App\Models\Clinic;
 use App\Models\Professional;
 use App\Models\SocialComment;
 use App\Models\WhatsappMessage;
+use App\Support\TenantContext;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -18,10 +20,16 @@ class WhatsappService
 {
     private function getConfig(): array
     {
+        $clinic = app(TenantContext::class)->get();
+
+        $tenantWhatsapp = is_array($clinic?->settings['integrations']['whatsapp'] ?? null)
+            ? $clinic->settings['integrations']['whatsapp']
+            : [];
+
         return [
             'api_url' => config('services.whatsapp.api_url', 'https://graph.facebook.com/v19.0'),
-            'phone_number_id' => config('services.whatsapp.phone_number_id', ''),
-            'access_token' => config('services.whatsapp.access_token', ''),
+            'phone_number_id' => $tenantWhatsapp['phone_number_id'] ?? $clinic?->settings['whatsapp_phone_number_id'] ?? config('services.whatsapp.phone_number_id', ''),
+            'access_token' => $tenantWhatsapp['access_token'] ?? config('services.whatsapp.access_token', ''),
             'verify_token' => config('services.whatsapp.verify_token', 'dental-commissions-verify'),
         ];
     }
@@ -34,17 +42,21 @@ class WhatsappService
     public function processIncomingMessage(array $payload): ?WhatsappMessage
     {
         try {
-            $message = $payload['messages'][0] ?? null;
-            if (! $message) {
-                return null;
-            }
+            $resolvedClinic = $this->resolveClinicFromPayload($payload);
 
-            $fromPhone = $message['from'] ?? '';
-            $body = $message['text']['body'] ?? '';
-            $messageSid = $message['id'] ?? null;
-            $contextId = $message['context']['id'] ?? null;
+            $callback = function () use ($payload): ?WhatsappMessage {
+                $message = $payload['messages'][0] ?? null;
 
-            $existing = WhatsappMessage::where('message_sid', $messageSid)->first();
+                if (! $message) {
+                    return null;
+                }
+
+                $fromPhone = $message['from'] ?? '';
+                $body = $message['text']['body'] ?? '';
+                $messageSid = $message['id'] ?? null;
+                $contextId = $message['context']['id'] ?? null;
+
+            $existing = WhatsappMessage::query()->forCurrentTenant()->where('message_sid', $messageSid)->first();
             if ($existing) {
                 return $existing;
             }
@@ -54,6 +66,7 @@ class WhatsappService
             $toPhone = $this->getConfig()['phone_number_id'];
 
             $whatsappMessage = WhatsappMessage::create([
+                'clinic_id' => app(TenantContext::class)->id(),
                 'professional_id' => $professional?->id,
                 'direction' => WhatsappMessageDirection::Incoming,
                 'status' => WhatsappMessageStatus::Received,
@@ -137,7 +150,7 @@ class WhatsappService
             }
 
             if ($contextId) {
-                $contextMessage = WhatsappMessage::where('message_sid', $contextId)->first();
+                $contextMessage = WhatsappMessage::query()->forCurrentTenant()->where('message_sid', $contextId)->first();
                 $originalMessage = $contextMessage?->direction === WhatsappMessageDirection::Incoming
                     ? $contextMessage
                     : $this->findPendingOriginalForReply($whatsappMessage);
@@ -159,7 +172,17 @@ class WhatsappService
                 }
             }
 
-            return $whatsappMessage;
+                return $whatsappMessage;
+            };
+
+            $tenantContext = app(TenantContext::class);
+            $clinic = $resolvedClinic ?? $tenantContext->get();
+
+            if ($clinic !== null) {
+                return $tenantContext->run($clinic, $callback);
+            }
+
+            return $callback();
         } catch (\Throwable $e) {
             Log::error('Error procesando mensaje WhatsApp', [
                 'error' => $e->getMessage(),
@@ -236,6 +259,7 @@ class WhatsappService
     private function assignedDoctorsForAssistant(Professional $assistant): Collection
     {
         return DoctorAssistantAssignment::query()
+            ->forCurrentTenant()
             ->with('doctor')
             ->where('assistant_id', $assistant->id)
             ->where('is_active', true)
@@ -380,6 +404,7 @@ class WhatsappService
         }
 
         return WhatsappMessage::query()
+            ->forCurrentTenant()
             ->where('from_phone', $reply->from_phone)
             ->where('direction', WhatsappMessageDirection::Incoming->value)
             ->where('status', WhatsappMessageStatus::Parsed->value)
@@ -554,6 +579,7 @@ class WhatsappService
                 $messageId = $responseData['messages'][0]['id'] ?? null;
 
                 WhatsappMessage::create([
+                    'clinic_id' => app(TenantContext::class)->id(),
                     'professional_id' => WhatsappMessage::findByPhone($toPhone)?->id,
                     'social_comment_id' => $socialCommentId,
                     'direction' => WhatsappMessageDirection::Outgoing,
@@ -594,5 +620,23 @@ class WhatsappService
         $message->markAsFailed('No se pudo enviar la respuesta por WhatsApp. Revisa logs de Meta/Graph API.');
 
         return false;
+    }
+
+    private function resolveClinicFromPayload(array $payload): ?Clinic
+    {
+        $phoneNumberId = $payload['metadata']['phone_number_id'] ?? null;
+
+        if (! is_string($phoneNumberId) || $phoneNumberId === '') {
+            return null;
+        }
+
+        return Clinic::query()
+            ->get()
+            ->first(function (Clinic $clinic) use ($phoneNumberId): bool {
+                $whatsappSettings = $clinic->settings['integrations']['whatsapp'] ?? null;
+
+                return ($whatsappSettings['phone_number_id'] ?? null) === $phoneNumberId
+                    || ($clinic->settings['whatsapp_phone_number_id'] ?? null) === $phoneNumberId;
+            });
     }
 }

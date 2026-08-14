@@ -111,10 +111,10 @@ Estados sugeridos:
 
 ## Fase 5: Integraciones publicas
 
-- [ ] Adaptar rutas publicas para resolver tenant por host.
-- [ ] Corregir check-in publico para filtrar por clinica.
-- [ ] Adaptar webhook WhatsApp por `phone_number_id`.
-- [ ] Agregar `clinic_id` a `whatsapp_messages`.
+- [~] Adaptar rutas publicas para resolver tenant por host.
+- [x] Corregir check-in publico para filtrar por clinica.
+- [x] Adaptar webhook WhatsApp por `phone_number_id`.
+- [x] Agregar `clinic_id` a `whatsapp_messages`.
 - [ ] Adaptar Meta webhook por page/account id.
 - [ ] Adaptar OAuth Meta con `state` firmado por clinica.
 - [ ] Adaptar Google Calendar OAuth con `state` firmado por clinica.
