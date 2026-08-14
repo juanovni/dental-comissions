@@ -9,6 +9,7 @@ use App\Models\Procedure;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -18,6 +19,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Validation\Rules\Unique;
 
 class ProcedureResource extends Resource
 {
@@ -43,8 +45,21 @@ class ProcedureResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('name')->label('Nombre')->required()->maxLength(255)->unique(ignoreRecord: true),
-            TextInput::make('code')->label('Codigo')->maxLength(50)->unique(ignoreRecord: true),
+            TextInput::make('name')
+                ->label('Nombre')
+                ->required()
+                ->maxLength(255)
+                ->unique(
+                    ignoreRecord: true,
+                    modifyRuleUsing: fn (Unique $rule): Unique => $rule->where('clinic_id', Filament::getTenant()?->getKey()),
+                ),
+            TextInput::make('code')
+                ->label('Codigo')
+                ->maxLength(50)
+                ->unique(
+                    ignoreRecord: true,
+                    modifyRuleUsing: fn (Unique $rule): Unique => $rule->where('clinic_id', Filament::getTenant()?->getKey()),
+                ),
             TextInput::make('category')->label('Categoria')->maxLength(255),
             TextInput::make('internal_rate')->label('Tarifa interna')->numeric()->prefix('$'),
             Toggle::make('is_active')->label('Activo')->default(true),

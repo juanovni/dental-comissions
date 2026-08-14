@@ -6,6 +6,7 @@ use App\Support\TenantContext;
 use Closure;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpFoundation\Response;
 
 class SyncFilamentTenantContext
@@ -16,7 +17,21 @@ class SyncFilamentTenantContext
 
     public function handle(Request $request, Closure $next): Response
     {
-        if ($tenant = Filament::getTenant()) {
+        $tenant = Filament::getTenant();
+
+        if (! $tenant && Filament::getCurrentPanel()?->getId() === 'clinic') {
+            $user = $request->user();
+
+            if ($user && method_exists($user, 'getDefaultTenant')) {
+                $tenant = $user->getDefaultTenant(Filament::getCurrentPanel());
+
+                if ($tenant instanceof Model) {
+                    Filament::setTenant($tenant, isQuiet: true);
+                }
+            }
+        }
+
+        if ($tenant) {
             $this->tenantContext->set($tenant);
         }
 

@@ -103,24 +103,36 @@ class UsersRelationManager extends RelationManager
                             ->default(true),
                     ])
                     ->action(function (array $data): void {
-                        $user = User::create([
-                            'name' => $data['name'],
-                            'email' => $data['email'],
-                            'password' => Hash::make($data['password']),
-                            'role' => $data['global_role'],
-                            'is_active' => $data['global_is_active'],
-                            'remember_token' => Str::random(10),
-                        ]);
+                        $user = User::query()->where('email', $data['email'])->first();
 
-                        $this->getOwnerRecord()->users()->attach($user->id, [
+                        if ($user === null) {
+                            $user = User::create([
+                                'name' => $data['name'],
+                                'email' => $data['email'],
+                                'password' => Hash::make($data['password']),
+                                'role' => $data['global_role'],
+                                'is_active' => $data['global_is_active'],
+                                'remember_token' => Str::random(10),
+                            ]);
+                        } else {
+                            $user->update([
+                                'name' => $data['name'],
+                                'role' => $data['global_role'],
+                                'is_active' => $data['global_is_active'],
+                            ]);
+                        }
+
+                        $this->getOwnerRecord()->users()->syncWithoutDetaching([
+                            $user->id => [
                             'role' => $data['membership_role'],
                             'is_default' => $data['membership_is_default'],
                             'is_active' => $data['membership_is_active'],
                             'permissions' => null,
+                            ],
                         ]);
 
                         Notification::make()
-                            ->title('Usuario creado y asignado')
+                            ->title($user->wasRecentlyCreated ? 'Usuario creado y asignado' : 'Usuario existente asignado a la clínica')
                             ->success()
                             ->send();
                     }),

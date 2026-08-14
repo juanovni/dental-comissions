@@ -192,11 +192,12 @@ class ClinicPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
                 ResolveClinicFromHost::class,
+            ])
+            ->tenantMiddleware([
                 EnsureAuthenticatedUserCanAccessTenant::class,
-                IdentifyTenant::class,
                 EnsureTenantMatchesHost::class,
                 SyncFilamentTenantContext::class,
-            ])
+            ], isPersistent: true)
             ->authMiddleware([
                 Authenticate::class,
             ]);

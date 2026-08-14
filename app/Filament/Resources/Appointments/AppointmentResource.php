@@ -65,16 +65,19 @@ class AppointmentResource extends Resource
                 ->label('Paciente')
                 ->options(fn (): array => Patient::query()->forCurrentTenant()->orderBy('full_name')->pluck('full_name', 'id')->all())
                 ->searchable()
+                ->preload()
                 ->nullable(),
             Select::make('doctor_id')
                 ->label('Doctor')
                 ->options(fn (): array => Professional::query()->forCurrentTenant()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
                 ->searchable()
+                ->preload()
                 ->nullable(),
             Select::make('procedure_id')
                 ->label('Procedimiento')
                 ->options(fn (): array => Procedure::query()->forCurrentTenant()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
                 ->searchable()
+                ->preload()
                 ->nullable(),
             DateTimePicker::make('scheduled_at')
                 ->label('Fecha y hora')
