@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Filament\Pages\Integrations;
 use App\Models\Clinic;
 use App\Services\GoogleCalendarService;
 use Illuminate\Http\RedirectResponse;
@@ -12,13 +13,15 @@ class GoogleCalendarAuthController extends Controller
 {
     public function callback(Request $request): RedirectResponse
     {
+        $clinic = $this->clinicFromState($request->string('state')->toString());
+
         if ($request->filled('error')) {
             Log::warning('Error en OAuth Google Calendar', [
                 'error' => $request->string('error')->toString(),
                 'error_description' => $request->string('error_description')->toString(),
             ]);
 
-            return redirect('/admin/integrations#google-calendar')
+            return redirect($this->integrationsUrl($clinic))
                 ->with('error', 'Autorizacion cancelada o rechazada.');
         }
 
@@ -31,13 +34,11 @@ class GoogleCalendarAuthController extends Controller
                 'state' => $state,
             ]);
 
-            return redirect('/admin/integrations#google-calendar')
+            return redirect($this->integrationsUrl($clinic))
                 ->with('error', 'Solicitud de autorizacion invalida.');
         }
 
-        $clinicSlug = str($state)->after('clinic:')->toString();
-
-        if ($clinicSlug !== '' && ($clinic = Clinic::query()->where('slug', $clinicSlug)->first())) {
+        if ($clinic) {
             app(GoogleCalendarService::class)->setCurrentClinic($clinic);
         }
 
@@ -46,11 +47,35 @@ class GoogleCalendarAuthController extends Controller
         );
 
         if (!$success) {
-            return redirect('/admin/integrations#google-calendar')
+            return redirect($this->integrationsUrl($clinic))
                 ->with('error', 'No se pudo completar la autenticacion con Google.');
         }
 
-        return redirect('/admin/integrations#google-calendar')
+        return redirect($this->integrationsUrl($clinic))
             ->with('status', 'Google Calendar conectado exitosamente.');
+    }
+
+    private function clinicFromState(string $state): ?Clinic
+    {
+        if (! str_starts_with($state, 'clinic:')) {
+            return null;
+        }
+
+        $clinicSlug = str($state)->after('clinic:')->toString();
+
+        if ($clinicSlug === '') {
+            return null;
+        }
+
+        return Clinic::query()->where('slug', $clinicSlug)->first();
+    }
+
+    private function integrationsUrl(?Clinic $clinic): string
+    {
+        if ($clinic) {
+            return Integrations::getUrl(panel: 'clinic', tenant: $clinic).'#google-calendar';
+        }
+
+        return '/admin';
     }
 }

@@ -20,6 +20,7 @@ class SocialAppointmentLinkController extends Controller
     public function show(string $token): View
     {
         $offer = AppointmentSlotOffer::query()
+            ->forCurrentTenant()
             ->with(['appointment.doctor', 'appointment.procedure', 'socialComment.suggestedProcedure', 'socialComment.suggestedDoctor'])
             ->where('token', $token)
             ->firstOrFail();
@@ -71,6 +72,7 @@ class SocialAppointmentLinkController extends Controller
     public function confirm(Request $request, string $token): RedirectResponse
     {
         $offer = AppointmentSlotOffer::query()
+            ->forCurrentTenant()
             ->with(['socialComment.socialIdentity', 'whatsappMessage', 'socialComment.suggestedProcedure', 'socialComment.suggestedDoctor'])
             ->where('token', $token)
             ->firstOrFail();
@@ -242,6 +244,7 @@ class SocialAppointmentLinkController extends Controller
     public function calendar(string $token): Response
     {
         $offer = AppointmentSlotOffer::query()
+            ->forCurrentTenant()
             ->with(['appointment.doctor', 'appointment.procedure'])
             ->where('token', $token)
             ->firstOrFail();

@@ -78,6 +78,7 @@ class SocialSmartLinkController extends Controller
     private function findComment(string $trackingToken): SocialComment
     {
         return SocialComment::query()
+            ->forCurrentTenant()
             ->with(['suggestedProcedure', 'socialAccount', 'socialIdentity'])
             ->where('tracking_token', strtoupper($trackingToken))
             ->firstOrFail();
@@ -135,7 +136,7 @@ class SocialSmartLinkController extends Controller
             return null;
         }
 
-        return Procedure::query()->find($treatmentId);
+        return Procedure::query()->forCurrentTenant()->find($treatmentId);
     }
 
     private function attributionFromRequest(Request $request, ?Procedure $procedure): array
