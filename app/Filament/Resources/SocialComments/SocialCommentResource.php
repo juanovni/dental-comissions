@@ -506,12 +506,14 @@ class SocialCommentResource extends Resource
                                 ->nullable(),
                             DateTimePicker::make('scheduled_at')
                                 ->label('Fecha y hora')
+                                ->seconds(false)
+                                ->displayFormat('m/d/Y H:i')
                                 ->required(),
-                            TextInput::make('duration_minutes')
+                            Select::make('duration_minutes')
                                 ->label('Duracion (min)')
-                                ->numeric()
-                                ->minValue(1)
-                                ->default(45),
+                                ->options(self::durationOptions())
+                                ->default(fn (): int => app(SocialCrmSettingsService::class)->appointmentSlotDuration())
+                                ->required(),
                             Select::make('status')
                                 ->label('Estado')
                                 ->options(self::enumOptions(AppointmentStatus::cases()))
@@ -674,6 +676,13 @@ class SocialCommentResource extends Resource
     {
         return "Ficha creada desde lead social. Red: {$record->platform->label()}. Comentario ID: {$record->id}. Usuario: "
             .($record->author_username ?: $record->author_name ?: 'N/A').'.';
+    }
+
+    private static function durationOptions(): array
+    {
+        return collect([15, 30, 45, 60, 90, 120])
+            ->mapWithKeys(fn (int $minutes): array => [$minutes => "{$minutes} minutos"])
+            ->all();
     }
 
     private static function smartAlertHtml(SocialComment $record): string
