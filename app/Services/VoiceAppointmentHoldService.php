@@ -19,7 +19,7 @@ class VoiceAppointmentHoldService
         $expiresAt = now()->addMinutes($holdMinutes);
 
         if (! app(AppointmentAvailabilityService::class)->isSlotAvailableForDoctor(
-            Professional::findOrFail($doctorId),
+            Professional::query()->forCurrentTenant()->findOrFail($doctorId),
             $start,
             $end,
         )) {
@@ -70,7 +70,7 @@ class VoiceAppointmentHoldService
 
     public function tokenForHold(AppointmentSlotHold $hold): string
     {
-        return 'voice_' . $hold->id . '_' . Str::random(16);
+        return 'voice_'.$hold->id.'_'.Str::random(16);
     }
 
     public function resolveHold(string $token): AppointmentSlotHold
@@ -83,6 +83,6 @@ class VoiceAppointmentHoldService
 
         $holdId = (int) $parts[1];
 
-        return AppointmentSlotHold::findOrFail($holdId);
+        return AppointmentSlotHold::query()->forCurrentTenant()->findOrFail($holdId);
     }
 }

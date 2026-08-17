@@ -30,7 +30,7 @@ Route::post('/webhook/whatsapp', [WebhookController::class, 'receive']);
 Route::get('/webhook/meta/social', [MetaSocialWebhookController::class, 'verify']);
 Route::post('/webhook/meta/social', [MetaSocialWebhookController::class, 'receive']);
 Route::post('/webhook/telnyx/voice/events', [TelnyxVoiceWebhookController::class, 'events']);
-Route::get('/auth/meta/redirect', [MetaAuthController::class, 'redirect'])->name('meta.auth.redirect');
+Route::get('/auth/meta/redirect', [MetaAuthController::class, 'redirect'])->name('meta.auth.redirect')->middleware('tenant.request');
 Route::get('/auth/meta/callback', [MetaAuthController::class, 'callback'])->name('meta.auth.callback');
 Route::get('/auth/google/callback', [GoogleCalendarAuthController::class, 'callback'])->name('google.oauth.callback');
 Route::middleware('tenant.request')->group(function (): void {

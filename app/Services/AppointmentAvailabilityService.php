@@ -41,6 +41,7 @@ class AppointmentAvailabilityService
 
             if (! in_array($dayOfWeek, $clinicDays, true)) {
                 $cursor = $cursor->copy()->addDay()->startOfDay()->addMinutes($openMinutes);
+
                 continue;
             }
 
@@ -48,6 +49,7 @@ class AppointmentAvailabilityService
 
             if ($cursorMinutes < $openMinutes) {
                 $cursor = $cursor->copy()->startOfDay()->addMinutes($openMinutes);
+
                 continue;
             }
 
@@ -55,6 +57,7 @@ class AppointmentAvailabilityService
 
             if ($slotEndMinutes > $closeMinutes) {
                 $cursor = $cursor->copy()->addDay()->startOfDay()->addMinutes($openMinutes);
+
                 continue;
             }
 
@@ -100,6 +103,7 @@ class AppointmentAvailabilityService
 
             if (! in_array($dayOfWeek, $clinicDays, true)) {
                 $date = $date->copy()->addDay()->startOfDay();
+
                 continue;
             }
 
@@ -122,6 +126,7 @@ class AppointmentAvailabilityService
 
                 if ($cursorMinutes < $currentOpen) {
                     $cursor = $cursor->copy()->startOfDay()->addMinutes($currentOpen);
+
                     continue;
                 }
 
@@ -211,6 +216,7 @@ class AppointmentAvailabilityService
 
             if (! in_array($dayOfWeek, $clinicDays, true)) {
                 $cursor->addDay();
+
                 continue;
             }
 
@@ -305,6 +311,7 @@ class AppointmentAvailabilityService
         $defaultDuration = app(SocialCrmSettingsService::class)->appointmentSlotDuration();
 
         $query = Appointment::query()
+            ->forCurrentTenant()
             ->whereNotNull('scheduled_at')
             ->where('scheduled_at', '<', $end->format('Y-m-d H:i:s'))
             ->whereNotIn('status', [
@@ -330,6 +337,7 @@ class AppointmentAvailabilityService
     public function hasActiveHoldConflict(?int $doctorId, Carbon $start, Carbon $end): bool
     {
         $query = AppointmentSlotHold::query()
+            ->forCurrentTenant()
             ->where('status', 'active')
             ->where('expires_at', '>', now())
             ->where('starts_at', '<', $end->format('Y-m-d H:i:s'))

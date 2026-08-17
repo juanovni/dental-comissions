@@ -111,15 +111,15 @@ Estados sugeridos:
 
 ## Fase 5: Integraciones publicas
 
-- [~] Adaptar rutas publicas para resolver tenant por host.
+- [x] Adaptar rutas publicas para resolver tenant por host.
 - [x] Corregir check-in publico para filtrar por clinica.
 - [x] Adaptar webhook WhatsApp por `phone_number_id`.
 - [x] Agregar `clinic_id` a `whatsapp_messages`.
 - [x] Adaptar Meta webhook por page/account id.
-- [~] Adaptar OAuth Meta con `state` firmado por clinica.
-- [~] Adaptar Google Calendar OAuth con `state` firmado por clinica.
+- [x] Adaptar OAuth Meta con `state` firmado por clinica.
+- [x] Adaptar Google Calendar OAuth con `state` firmado por clinica.
 - [x] Adaptar Telnyx/Pity Voice por numero destino.
-- [~] Scopear validaciones de doctores, pacientes, procedimientos y citas en integraciones publicas principales.
+- [x] Scopear validaciones de doctores, pacientes, procedimientos y citas en integraciones publicas principales.
 
 ## Fase 6: Jobs, commands y cache
 

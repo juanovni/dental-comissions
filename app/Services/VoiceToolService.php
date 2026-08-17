@@ -7,8 +7,11 @@ use App\Enums\AppointmentStatus;
 use App\Enums\ProfessionalRole;
 use App\Enums\VoiceHandoffReason;
 use App\Models\Appointment;
+use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Professional;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class VoiceToolService
 {
@@ -82,9 +85,9 @@ class VoiceToolService
         $requestedDateUnavailable = null;
 
         if ($preferredDate && ! empty($rawSlots)) {
-            $preferredDay = \Carbon\Carbon::parse($preferredDate)->startOfDay();
+            $preferredDay = Carbon::parse($preferredDate)->startOfDay();
             $hasSlotsOnDate = collect($rawSlots)->contains(
-                fn (array $slot): bool => \Carbon\Carbon::parse($slot['datetime'])->startOfDay()->eq($preferredDay),
+                fn (array $slot): bool => Carbon::parse($slot['datetime'])->startOfDay()->eq($preferredDay),
             );
 
             if (! $hasSlotsOnDate) {
@@ -121,11 +124,13 @@ class VoiceToolService
         }
 
         Procedure::query()
+            ->forCurrentTenant()
             ->whereKey((int) $procedureId)
             ->where('is_active', true)
             ->firstOrFail();
 
         Professional::query()
+            ->forCurrentTenant()
             ->whereKey((int) $doctorId)
             ->where('role', ProfessionalRole::Doctor->value)
             ->where('is_active', true)
@@ -159,7 +164,7 @@ class VoiceToolService
             $existingAppointment->update([
                 'doctor_id' => $hold->doctor_id,
                 'procedure_id' => $hold->procedure_id,
-                'notes' => trim(($existingAppointment->notes ?? '') . "\nReprogramado por Pity Voice. " . $notes),
+                'notes' => trim(($existingAppointment->notes ?? '')."\nReprogramado por Pity Voice. ".$notes),
             ]);
 
             $appointment = app(AppointmentWorkflowService::class)->reschedule(
@@ -229,19 +234,19 @@ class VoiceToolService
         ];
     }
 
-    private function syncToWhatsApp(Appointment $appointment, \App\Models\Patient $patient): void
+    private function syncToWhatsApp(Appointment $appointment, Patient $patient): void
     {
         try {
             if (filled($patient->phone)) {
                 app(AppointmentWorkflowService::class)->syncToCalendar($appointment);
 
-                \Illuminate\Support\Facades\Log::info('Cita de voz sincronizada con calendario.', [
+                Log::info('Cita de voz sincronizada con calendario.', [
                     'appointment_id' => $appointment->id,
                     'patient_id' => $patient->id,
                 ]);
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('No se pudo sincronizar cita de voz con calendario.', [
+            Log::warning('No se pudo sincronizar cita de voz con calendario.', [
                 'appointment_id' => $appointment->id,
                 'error' => $e->getMessage(),
             ]);

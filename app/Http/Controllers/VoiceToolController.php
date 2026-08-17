@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Procedure;
+use App\Models\Professional;
 use App\Services\VoiceToolService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,7 +29,7 @@ class VoiceToolController extends Controller
             'procedure_name' => 'nullable|string|max:255',
             'preferred_date' => 'nullable|date',
             'preferred_period' => 'nullable|string|in:morning,afternoon',
-            'doctor_id' => 'nullable|integer|exists:professionals,id',
+            'doctor_id' => ['nullable', 'integer', $this->tenantScopedExists(Professional::class)],
         ]);
 
         return response()->json($this->toolService->getAvailableSlots($data));
@@ -37,8 +39,8 @@ class VoiceToolController extends Controller
     {
         $data = $request->validate([
             'slot_datetime' => 'required|date',
-            'doctor_id' => 'required|integer|exists:professionals,id',
-            'procedure_id' => 'required|integer|exists:procedures,id',
+            'doctor_id' => ['required', 'integer', $this->tenantScopedExists(Professional::class)],
+            'procedure_id' => ['required', 'integer', $this->tenantScopedExists(Procedure::class)],
             'phone_e164' => 'nullable|string|max:20',
         ]);
 
@@ -65,5 +67,23 @@ class VoiceToolController extends Controller
         ]);
 
         return response()->json($this->toolService->requestHandoff($data));
+    }
+
+    private function tenantScopedExists(string $model): \Closure
+    {
+        return function (string $attribute, mixed $value, $fail) use ($model): void {
+            if ($value === null) {
+                return;
+            }
+
+            $exists = $model::query()
+                ->forCurrentTenant()
+                ->whereKey((int) $value)
+                ->exists();
+
+            if (! $exists) {
+                $fail('El registro seleccionado no pertenece a esta clinica.');
+            }
+        };
     }
 }

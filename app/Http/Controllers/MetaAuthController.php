@@ -15,9 +15,7 @@ use Illuminate\Support\Str;
 
 class MetaAuthController extends Controller
 {
-    public function __construct(private TenantContext $tenantContext)
-    {
-    }
+    public function __construct(private TenantContext $tenantContext) {}
 
     public function redirect(Request $request): RedirectResponse
     {
@@ -25,7 +23,7 @@ class MetaAuthController extends Controller
 
         $state = Str::random(40);
         $request->session()->put('meta_oauth_state', $state);
-        $request->session()->put('meta_oauth_clinic_id', $this->resolveClinicFromHost($request)?->id);
+        $request->session()->put('meta_oauth_clinic_id', app(TenantContext::class)->id());
 
         $query = http_build_query([
             'client_id' => $config['app_id'],
@@ -264,20 +262,6 @@ class MetaAuthController extends Controller
             'source' => $source,
             'connected_at' => $settings['connected_at'] ?? now()->toIso8601String(),
         ]);
-    }
-
-    private function resolveClinicFromHost(Request $request): ?Clinic
-    {
-        $host = $request->getHost();
-
-        if ($host === '' || $host === config('tenancy.admin_domain')) {
-            return null;
-        }
-
-        return Clinic::query()
-            ->where('primary_domain', $host)
-            ->orWhere('subdomain', str($host)->before('.'.config('tenancy.base_domain'))->toString())
-            ->first();
     }
 
     private function completeCallbackWithoutTenant(Request $request): array
