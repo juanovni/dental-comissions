@@ -10,9 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ResolveClinicFromRequest
 {
-    public function __construct(private TenantContext $tenantContext)
-    {
-    }
+    public function __construct(private TenantContext $tenantContext) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -34,10 +32,15 @@ class ResolveClinicFromRequest
         $host = $request->getHost();
 
         if ($host !== '' && $host !== config('tenancy.admin_domain')) {
-            $clinic = Clinic::query()
-                ->where('primary_domain', $host)
-                ->orWhere('subdomain', $this->extractSubdomain($host))
-                ->first();
+            $query = Clinic::query()->where('primary_domain', $host);
+
+            $prefix = $this->extractSubdomain($host);
+
+            if ($prefix !== null) {
+                $query->orWhere('subdomain', $prefix)->orWhere('slug', $prefix);
+            }
+
+            $clinic = $query->first();
 
             if ($clinic !== null) {
                 return $clinic;

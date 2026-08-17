@@ -11,16 +11,27 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureTenantMatchesHost
 {
-    public function __construct(private TenantContext $tenantContext)
-    {
-    }
+    public function __construct(
+        private TenantContext $tenantContext,
+        private ResolveClinicFromHost $resolver,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
         $clinicFromHost = $this->tenantContext->get();
 
         if ($clinicFromHost === null) {
-            return $next($request);
+            if (Filament::getCurrentPanel()?->getId() === 'clinic') {
+                $clinicFromHost = $this->resolver->resolveClinicFromHost($request->getHost());
+
+                if ($clinicFromHost === null) {
+                    abort(404);
+                }
+
+                $this->tenantContext->set($clinicFromHost);
+            } else {
+                return $next($request);
+            }
         }
 
         $routeClinic = $this->resolveRouteClinic($request);

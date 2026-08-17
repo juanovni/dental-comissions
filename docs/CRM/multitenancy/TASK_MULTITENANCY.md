@@ -91,7 +91,7 @@ Estados sugeridos:
 - [x] Crear middleware `ResolveClinicFromHost`.
 - [x] Resolver tenant por `primary_domain` o `subdomain`.
 - [x] Rechazar mismatch host/tenant en rutas tenant-aware controladas.
-- [~] Rechazar hosts no reconocidos sin devolver datos de ninguna clinica.
+- [x] Rechazar hosts no reconocidos sin devolver datos de ninguna clinica.
 - [x] Configurar Filament Tenancy con `Clinic::class`.
 - [x] Sincronizar tenant de Filament con `TenantContext`.
 - [x] Bloquear cambios de tenant incompatibles con el host actual.
@@ -168,7 +168,7 @@ Estados sugeridos:
 - [ ] Usuario de Clinica A no lista citas de Clinica B.
 - [ ] Selects de Filament no muestran doctores/procedimientos/pacientes de otra clinica.
 - [ ] Host `clinica-a.dominio.com` resuelve Clinica A.
-- [ ] Host no reconocido no devuelve datos de ninguna clinica.
+- [x] Host no reconocido no devuelve datos de ninguna clinica.
 - [ ] Usuario no asignado no puede acceder al host de una clinica.
 - [ ] Tenant nuevo requiere `subdomain` y `primary_domain` unicos.
 - [ ] Check-in publico con Clinica A no encuentra cita de Clinica B.
