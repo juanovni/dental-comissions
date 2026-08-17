@@ -5,8 +5,8 @@ namespace App\Filament\Pages;
 use App\Enums\SocialCommentActionType;
 use App\Enums\SocialCommentClassification;
 use App\Enums\SocialCommentStatus;
-use App\Enums\SocialReputationRisk;
 use App\Enums\SocialPlatform;
+use App\Enums\SocialReputationRisk;
 use App\Enums\WhatsappMessageDirection;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Models\Procedure;
@@ -17,6 +17,7 @@ use App\Services\SocialAutoReplyService;
 use App\Services\SocialConversionService;
 use App\Services\SocialCrmSettingsService;
 use App\Services\SocialLinkEventMapper;
+use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -108,6 +109,13 @@ class SocialInbox extends Page
 
     public ?string $historicalReplySuggestion = null;
 
+    public int $clinicId = 0;
+
+    public function boot(): void
+    {
+        $this->clinicId = Filament::getTenant()?->id ?? 0;
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -136,7 +144,7 @@ class SocialInbox extends Page
         $this->resetPage();
     }
 
-    #[On('echo-private:admin-notifications,LeadActivityDetected')]
+    #[On('echo-private:clinic-{clinicId}.notifications,LeadActivityDetected')]
     public function handleLeadActivityDetected(array $payload): void
     {
         $leadId = isset($payload['lead_id']) ? (int) $payload['lead_id'] : null;

@@ -21,7 +21,7 @@ class LeadActivityDetected implements ShouldBroadcast
 
     public function broadcastOn(): PrivateChannel
     {
-        return new PrivateChannel('admin-notifications');
+        return new PrivateChannel('clinic.'.$this->comment->clinic_id.'.notifications');
     }
 
     public function broadcastAs(): string

@@ -130,7 +130,7 @@ Estados sugeridos:
 - [x] Si no hay `--clinic=`, iterar clinicas activas.
 - [x] Aislar errores por clinica en scheduled commands.
 - [x] Incluir `clinic_id` en cache keys tenant-scoped.
-- [ ] Revisar broadcasting y notificaciones.
+- [x] Revisar broadcasting y notificaciones.
 
 ## Fase 7: Auditoria
 

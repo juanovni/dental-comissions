@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Filament\Pages\SocialInbox;
+use App\Models\Clinic;
 use App\Models\SocialLeadAlert;
 use App\Services\SocialLeadAlertService;
 use Filament\Facades\Filament;
@@ -19,6 +20,13 @@ class SocialLeadNotificationCenter extends Component
 
     public bool $urgentPulse = false;
 
+    public int $clinicId = 0;
+
+    public function boot(): void
+    {
+        $this->clinicId = Filament::getTenant()?->id ?? 0;
+    }
+
     public function setFilter(string $filter): void
     {
         if (! in_array($filter, ['all', 'danger', 'warning', 'info'], true)) {
@@ -28,7 +36,7 @@ class SocialLeadNotificationCenter extends Component
         $this->filter = $filter;
     }
 
-    #[On('echo-private:admin-notifications,LeadActivityDetected')]
+    #[On('echo-private:clinic-{clinicId}.notifications,LeadActivityDetected')]
     public function handleLeadActivityDetected(array $payload): void
     {
         $interestScore = (int) ($payload['interest_score'] ?? 0);
@@ -41,7 +49,7 @@ class SocialLeadNotificationCenter extends Component
         unset($this->alerts, $this->stats);
     }
 
-    #[On('echo-private:admin-notifications,ClosingOpportunityDetected')]
+    #[On('echo-private:clinic-{clinicId}.notifications,ClosingOpportunityDetected')]
     public function handleClosingOpportunityDetected(array $payload): void
     {
         $this->urgentPulse = true;
@@ -107,7 +115,7 @@ class SocialLeadNotificationCenter extends Component
     public function leadUrl(SocialLeadAlert $alert): string
     {
         return SocialInbox::getUrl([
-            'tenant' => $alert->clinic ?? Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first(),
+            'tenant' => $alert->clinic ?? Filament::getTenant() ?? Clinic::query()->orderBy('id')->first(),
             'comment' => $alert->social_comment_id,
         ], panel: 'clinic');
     }
