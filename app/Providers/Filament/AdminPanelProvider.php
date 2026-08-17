@@ -9,7 +9,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -33,9 +32,6 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth('fi-width-full')
             ->brandLogo('/images/icon-odon-crm_3.png')
             ->brandLogoHeight('1.35rem')
-            ->navigationGroups([
-                NavigationGroup::make('Configuración'),
-            ])
             ->resources([
                 ClinicResource::class,
                 UserResource::class,

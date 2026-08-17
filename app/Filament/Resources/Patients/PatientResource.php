@@ -36,9 +36,9 @@ class PatientResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
-    protected static ?string $modelLabel = 'contacto';
+    protected static ?string $modelLabel = 'paciente';
 
-    protected static ?string $pluralModelLabel = 'contactos';
+    protected static ?string $pluralModelLabel = 'pacientes';
 
     public static function form(Schema $schema): Schema
     {
