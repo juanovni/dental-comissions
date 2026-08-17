@@ -9,6 +9,7 @@ use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
 use App\Enums\SocialReputationRisk;
 use App\Jobs\SendSocialCommentAutoReply;
+use App\Models\Clinic;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialCrmSetting;
@@ -16,6 +17,7 @@ use App\Models\SocialIdentity;
 use App\Models\SocialPost;
 use App\Services\SocialAutoReplyService;
 use App\Services\SocialCrmSettingsService;
+use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -40,13 +42,16 @@ class SendSocialCommentAutoReplyTest extends TestCase
 
     public function test_job_executes_auto_reply_service_for_comment(): void
     {
-        $this->enableDryRun();
-        $this->setting('social_auto_reply_use_ai', false, 'boolean');
-        $comment = $this->socialComment();
+        $clinic = $this->createClinic();
+        $this->enableDryRun($clinic);
+        $comment = $this->socialComment($clinic);
 
         Http::fake();
 
-        (new SendSocialCommentAutoReply($comment->id))->handle(app(SocialAutoReplyService::class));
+        (new SendSocialCommentAutoReply($comment->id, $comment->clinic_id))->handle(
+            app(SocialAutoReplyService::class),
+            app(TenantContext::class),
+        );
 
         $comment->refresh();
 
@@ -63,7 +68,10 @@ class SendSocialCommentAutoReplyTest extends TestCase
     {
         Log::spy();
 
-        (new SendSocialCommentAutoReply(999999))->handle(app(SocialAutoReplyService::class));
+        (new SendSocialCommentAutoReply(999999))->handle(
+            app(SocialAutoReplyService::class),
+            app(TenantContext::class),
+        );
 
         Log::shouldHaveReceived('warning')
             ->once()
@@ -80,29 +88,44 @@ class SendSocialCommentAutoReplyTest extends TestCase
         $this->assertSame(30, $job->timeout);
     }
 
-    private function enableDryRun(): void
+    private function createClinic(): Clinic
     {
-        $this->setting('social_auto_reply_enabled', true, 'boolean');
-        $this->setting('social_auto_reply_dry_run', true, 'boolean');
+        return Clinic::create([
+            'name' => 'Test Clinic',
+            'slug' => 'test-clinic',
+            'subdomain' => 'test-clinic',
+            'primary_domain' => 'test-clinic.localhost',
+            'currency' => 'USD',
+            'timezone' => 'UTC',
+            'status' => 'active',
+        ]);
     }
 
-    private function setting(string $key, mixed $value, string $type = 'string'): void
+    private function enableDryRun(Clinic $clinic): void
+    {
+        $this->setting($clinic, 'social_auto_reply_enabled', true, 'boolean');
+        $this->setting($clinic, 'social_auto_reply_use_ai', false, 'boolean');
+        $this->setting($clinic, 'social_auto_reply_dry_run', true, 'boolean');
+    }
+
+    private function setting(Clinic $clinic, string $key, mixed $value, string $type = 'string'): void
     {
         SocialCrmSetting::updateOrCreate(
-            ['key' => $key],
+            ['key' => $key, 'clinic_id' => $clinic->id],
             [
                 'setting_group' => 'auto_reply',
                 'label' => $key,
                 'value_type' => $type,
                 'value' => $value,
                 'is_active' => true,
+                'clinic_id' => $clinic->id,
             ],
         );
 
         app(SocialCrmSettingsService::class)->clearCache();
     }
 
-    private function socialComment(): SocialComment
+    private function socialComment(Clinic $clinic): SocialComment
     {
         $account = SocialAccount::create([
             'platform' => SocialPlatform::Instagram,
@@ -111,6 +134,7 @@ class SendSocialCommentAutoReplyTest extends TestCase
             'instagram_business_account_id' => 'ig_1',
             'access_token' => 'page-token',
             'is_active' => true,
+            'clinic_id' => $clinic->id,
         ]);
 
         $post = SocialPost::create([
@@ -118,6 +142,7 @@ class SendSocialCommentAutoReplyTest extends TestCase
             'platform' => SocialPlatform::Instagram,
             'external_post_id' => 'post_'.uniqid(),
             'caption' => 'Implantes dentales',
+            'clinic_id' => $clinic->id,
         ]);
 
         $identity = SocialIdentity::create([
@@ -144,6 +169,7 @@ class SendSocialCommentAutoReplyTest extends TestCase
             'status' => SocialCommentStatus::Classified,
             'requires_human_review' => false,
             'reputation_risk' => SocialReputationRisk::Low,
+            'clinic_id' => $clinic->id,
         ]);
     }
 }

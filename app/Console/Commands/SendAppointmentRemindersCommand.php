@@ -2,23 +2,26 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\RunsForEachClinic;
 use App\Services\AppointmentReminderService;
 use Illuminate\Console\Command;
 
 class SendAppointmentRemindersCommand extends Command
 {
-    protected $signature = 'appointments:send-reminders';
+    use RunsForEachClinic;
+
+    protected $signature = 'appointments:send-reminders {--clinic= : ID de clinica a procesar}';
 
     protected $description = 'Procesa recordatorios de confirmacion de citas.';
 
     public function handle(AppointmentReminderService $service): int
     {
-        $summary = $service->run();
+        return $this->runForEachClinic(function () use ($service): void {
+            $summary = $service->run();
 
-        foreach ($summary as $key => $count) {
-            $this->line("{$key}: {$count}");
-        }
-
-        return self::SUCCESS;
+            foreach ($summary as $key => $count) {
+                $this->line("{$key}: {$count}");
+            }
+        });
     }
 }

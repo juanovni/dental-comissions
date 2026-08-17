@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
+use App\Enums\SocialReputationRisk;
 use App\Jobs\SendSocialCommentAutoReply;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
@@ -114,7 +115,7 @@ class MetaSocialService
                     app(SocialLeadAlertService::class)->createAlert(
                         $comment->fresh(),
                         'new_lead_arrived',
-                        in_array($comment->reputation_risk, [\App\Enums\SocialReputationRisk::High, \App\Enums\SocialReputationRisk::Critical], true) ? 'danger' : 'info',
+                        in_array($comment->reputation_risk, [SocialReputationRisk::High, SocialReputationRisk::Critical], true) ? 'danger' : 'info',
                         ['classification' => $comment->classification?->value, 'platform' => $comment->platform?->value],
                     );
 
@@ -274,7 +275,7 @@ class MetaSocialService
                     app(SocialLeadAlertService::class)->createAlert(
                         $comment->fresh(),
                         'new_lead_arrived',
-                        in_array($comment->reputation_risk, [\App\Enums\SocialReputationRisk::High, \App\Enums\SocialReputationRisk::Critical], true) ? 'danger' : 'info',
+                        in_array($comment->reputation_risk, [SocialReputationRisk::High, SocialReputationRisk::Critical], true) ? 'danger' : 'info',
                         ['classification' => $comment->classification?->value, 'platform' => $comment->platform?->value],
                     );
                 }
@@ -747,7 +748,7 @@ class MetaSocialService
             return;
         }
 
-        SendSocialCommentAutoReply::dispatch($comment->id);
+        SendSocialCommentAutoReply::dispatch($comment->id, $comment->clinic_id);
     }
 
     private function normalizeAccountHandle(string $value): string

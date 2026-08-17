@@ -123,13 +123,13 @@ Estados sugeridos:
 
 ## Fase 6: Jobs, commands y cache
 
-- [ ] Agregar `clinicId` a jobs tenant-scoped.
-- [ ] Ejecutar jobs dentro de `TenantContext::run()`.
-- [ ] Limpiar contexto al terminar jobs/workers.
-- [ ] Adaptar commands para aceptar `--clinic=`.
-- [ ] Si no hay `--clinic=`, iterar clinicas activas.
-- [ ] Aislar errores por clinica en scheduled commands.
-- [ ] Incluir `clinic_id` en cache keys tenant-scoped.
+- [x] Agregar `clinicId` a jobs tenant-scoped.
+- [x] Ejecutar jobs dentro de `TenantContext::run()`.
+- [x] Limpiar contexto al terminar jobs/workers.
+- [x] Adaptar commands para aceptar `--clinic=`.
+- [x] Si no hay `--clinic=`, iterar clinicas activas.
+- [x] Aislar errores por clinica en scheduled commands.
+- [x] Incluir `clinic_id` en cache keys tenant-scoped.
 - [ ] Revisar broadcasting y notificaciones.
 
 ## Fase 7: Auditoria

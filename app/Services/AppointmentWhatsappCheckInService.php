@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\WhatsappMessage;
+use App\Support\TenantContext;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -218,8 +219,9 @@ class AppointmentWhatsappCheckInService
     private function cacheKey(string $phone): string
     {
         $digits = preg_replace('/\D+/', '', $phone) ?: $phone;
+        $clinicId = app(TenantContext::class)->id() ?? 'global';
 
-        return 'appointment-whatsapp-check-in:'.$digits;
+        return 'appointment-whatsapp-check-in:'.$clinicId.':'.$digits;
     }
 
     /**
