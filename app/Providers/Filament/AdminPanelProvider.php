@@ -30,6 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->homeUrl(fn (): string => ClinicResource::getUrl(panel: 'admin'))
             ->login()
+            ->maxContentWidth('fi-width-full')
             ->brandLogo('/images/icon-odon-crm_3.png')
             ->brandLogoHeight('1.35rem')
             ->navigationGroups([
