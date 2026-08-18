@@ -4,9 +4,6 @@ namespace App\Livewire;
 
 use App\Models\SocialCrmSetting;
 use App\Services\SocialCrmSettingsService;
-use App\Support\TenantContext;
-use App\Models\Clinic;
-use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -82,30 +79,7 @@ class SocialCrmAutomaticModeButton extends Component
 
     private function currentClinicId(): ?int
     {
-        $clinicId = app(TenantContext::class)->id();
-
-        if ($clinicId !== null) {
-            return $clinicId;
-        }
-
-        $tenant = Filament::getTenant();
-
-        if ($tenant instanceof Clinic) {
-            return $tenant->getKey();
-        }
-
-        $panel = Filament::getCurrentPanel();
-        $user = auth()->user();
-
-        if ($panel?->getId() === 'clinic' && $user && method_exists($user, 'getDefaultTenant')) {
-            $defaultTenant = $user->getDefaultTenant($panel);
-
-            if ($defaultTenant instanceof Clinic) {
-                return $defaultTenant->getKey();
-            }
-        }
-
-        return null;
+        return SocialCrmSetting::currentTenantId();
     }
 
     private function automaticSettings(): array

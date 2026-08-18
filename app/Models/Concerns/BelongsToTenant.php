@@ -45,7 +45,7 @@ trait BelongsToTenant
         return $query->where($query->getModel()->getTable().'.clinic_id', $clinicId);
     }
 
-    private static function currentTenantId(): ?int
+    public static function currentTenantId(): ?int
     {
         $clinicId = app(TenantContext::class)->id();
 

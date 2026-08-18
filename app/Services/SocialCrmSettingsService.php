@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\SocialConversionStatus;
 use App\Models\SocialCrmSetting;
-use App\Support\TenantContext;
 use Illuminate\Support\Facades\Cache;
 
 class SocialCrmSettingsService
@@ -496,7 +495,7 @@ class SocialCrmSettingsService
 
     private function cacheKey(): string
     {
-        $clinicId = app(TenantContext::class)->id();
+        $clinicId = SocialCrmSetting::currentTenantId();
 
         return self::CACHE_KEY.'.'.($clinicId ?? 'global');
     }
