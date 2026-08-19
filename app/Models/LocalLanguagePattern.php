@@ -59,6 +59,20 @@ class LocalLanguagePattern extends Model
         return $query->where('type', $type instanceof LocalLanguagePatternType ? $type->value : $type);
     }
 
+    public function scopeForCurrentTenantWithGlobal(Builder $query): Builder
+    {
+        $clinicId = self::currentTenantId();
+
+        if ($clinicId === null) {
+            return $query->whereNull('clinic_id');
+        }
+
+        return $query->where(function (Builder $q) use ($clinicId): void {
+            $q->whereNull('clinic_id')
+                ->orWhere('clinic_id', $clinicId);
+        });
+    }
+
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');

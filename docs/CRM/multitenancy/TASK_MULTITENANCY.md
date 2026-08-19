@@ -33,7 +33,7 @@ Estados sugeridos:
 - [x] Confirmar dominios personalizados: no se soportan en la primera version.
 - [x] Confirmar comisiones: modulo no activo en OdonCRM, fuera de defaults minimos.
 - [x] Excluir formalmente comisiones del alcance activo de Fase 2.
-- [x] Definir `local_language_patterns`: `clinic_id nullable` para global + overrides por clinica.
+- [x] Definir `local_language_patterns`: `clinic_id nullable` para global + overrides por clinica. (Corregido: migración `2026_08_18_160917` agrega `clinic_id` FK + unique constraint. Patrones de sistema tienen `clinic_id = NULL` intencionalmente. Scope `forCurrentTenantWithGlobal()` retorna sistema + clínica actual.)
 - [x] Confirmar defaults minimos: Clinic, dominio, admin inicial, clinic_user, permisos admin, settings base y storage prefix.
 - [x] Confirmar defaults operativos: Consulta inicial precio 0 duracion 30, settings de citas, settings CRM e integraciones not_configured.
 - [x] Definir estados de tenant: `draft`, `provisioning`, `active`, `suspended`, `provisioning_failed`.
@@ -73,7 +73,7 @@ Estados sugeridos:
 - [x] Validar conteos por tabla antes y despues del backfill.
 - [x] Crear indices por `clinic_id`.
 - [x] Ajustar uniques globales a uniques por tenant cuando aplique.
-- [ ] Preparar cambio futuro de `clinic_id` a `NOT NULL` en tablas activas tenant-scoped.
+- [x] Preparar cambio futuro de `clinic_id` a `NOT NULL` en tablas activas tenant-scoped. (Completado en Fase 8: migración `2026_08_18_165916`).
 
 ## Fase 3: Contexto y scopes
 
@@ -155,12 +155,21 @@ Estados sugeridos:
 
 ## Fase 8: Endurecimiento
 
-- [ ] Cambiar `clinic_id` a `NOT NULL` por grupos de tablas.
-- [ ] Activar PostgreSQL RLS por grupos de tablas.
-- [ ] Setear `app.current_clinic_id` en la conexion.
-- [ ] Definir estrategia RLS para superadmin.
-- [ ] Agregar tests especificos de RLS.
+- [x] Cambiar `clinic_id` a `NOT NULL` por grupos de tablas (migración `2026_08_18_165916`, guard: salta si clinics=0 para tests).
+- [x] Activar PostgreSQL RLS por grupos de tablas (migración `2026_08_18_172326`, 25 tablas, función `current_clinic_id()` + políticas `tenant_isolation_*`).
+- [x] Setear `app.current_clinic_id` en la conexión (middleware `SetRLSContext` en panel Filament + `RunsForEachClinic` para commands).
+- [x] Definir estrategia RLS para superadmin: crear roles PostgreSQL `dental_app` (no-superuser, RLS enforced) y `dental_bypass` (BYPASSRLS).
+- [x] Crear artisan command `app:set-current-clinic {clinic?} [--clear]` para setear contexto RLS en jobs/commands.
+- [x] Agregar tests específicos de RLS (`tests/pgsql/RowLevelSecurityTest.php`, 9 tests, ejecutar con `vendor/bin/phpunit --configuration=phpunit.xml.pgsql`).
 - [ ] Auditar queries con bypass.
+
+### Notas de implementación Fase 8
+
+- **RLS**: solo se aplica en PostgreSQL (`DB::getDriverName() === 'pgsql'`). En SQLite se ignora.
+- **Superuser bypass**: el usuario `dental` (superuser de PostgreSQL en Docker) bypasea RLS automáticamente. Para que RLS funcione, la app debe conectarse como `dental_app` o usar `SET ROLE dental_app` en cada request.
+- **Middleware SetRLSContext**: registrado en `tenantMiddleware` del panel Filament. Usa `SET app.current_clinic_id` (session-level) y limpia al finalizar el request.
+- **Roles**: `dental_app` (LOGIN, NO superuser, NO BYPASSRLS) y `dental_bypass` (LOGIN, NO superuser, BYPASSRLS). Creados por migración `2026_08_18_173439`.
+- **Tests RLS**: usan `phpunit.xml.pgsql` contra base `dental_commissions_mvp_testing`. `RefreshDatabase` + setup manual de RLS + `SET ROLE dental_app` para simular usuario no-superuser.
 
 ## Pruebas minimas de aceptacion
 

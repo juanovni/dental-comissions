@@ -59,12 +59,7 @@ class LocalLanguagePatternService
     {
         return Cache::remember($this->cacheKey(), now()->addMinutes(10), function (): array {
             return LocalLanguagePattern::query()
-                ->when(app(TenantContext::class)->id() !== null, function ($query): void {
-                    $query->where(function ($query): void {
-                        $query->whereNull('clinic_id')
-                            ->orWhere('clinic_id', app(TenantContext::class)->id());
-                    });
-                })
+                ->forCurrentTenantWithGlobal()
                 ->active()
                 ->get(['id', 'type', 'phrase', 'normalized_phrase', 'value', 'locale'])
                 ->map(fn (LocalLanguagePattern $pattern): array => [

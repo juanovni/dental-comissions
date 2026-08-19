@@ -29,6 +29,7 @@ use App\Filament\Resources\VoiceCalls\VoiceCallResource;
 use App\Http\Middleware\EnsureAuthenticatedUserCanAccessTenant;
 use App\Http\Middleware\EnsureTenantMatchesHost;
 use App\Http\Middleware\ResolveClinicFromHost;
+use App\Http\Middleware\SetRLSContext;
 use App\Http\Middleware\SyncFilamentTenantContext;
 use App\Models\Clinic;
 use App\Models\User;
@@ -200,6 +201,7 @@ class ClinicPanelProvider extends PanelProvider
                 EnsureAuthenticatedUserCanAccessTenant::class,
                 EnsureTenantMatchesHost::class,
                 SyncFilamentTenantContext::class,
+                SetRLSContext::class,
             ], isPersistent: true)
             ->authMiddleware([
                 Authenticate::class,

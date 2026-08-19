@@ -5,6 +5,7 @@ namespace App\Console\Commands\Concerns;
 use App\Models\Clinic;
 use App\Support\TenantContext;
 use Closure;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 trait RunsForEachClinic
@@ -18,7 +19,7 @@ trait RunsForEachClinic
         if ($clinicOption !== null) {
             $clinic = Clinic::query()->findOrFail((int) $clinicOption);
 
-            $tenantContext->run($clinic, fn () => $callback($clinic));
+            $tenantContext->run($clinic, fn () => $this->runWithRLS($clinic, $callback));
 
             return self::SUCCESS;
         }
@@ -28,7 +29,7 @@ trait RunsForEachClinic
 
         foreach ($clinics as $clinic) {
             try {
-                $tenantContext->run($clinic, fn () => $callback($clinic));
+                $tenantContext->run($clinic, fn () => $this->runWithRLS($clinic, $callback));
             } catch (\Throwable $e) {
                 report($e);
                 Log::error("Error en clinica {$clinic->name} ({$clinic->id})", [
@@ -45,5 +46,14 @@ trait RunsForEachClinic
         }
 
         return $errors > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    private function runWithRLS(Clinic $clinic, Closure $callback): mixed
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SET app.current_clinic_id = '{$clinic->getKey()}'");
+        }
+
+        return $callback($clinic);
     }
 }
