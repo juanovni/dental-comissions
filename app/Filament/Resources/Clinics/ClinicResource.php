@@ -12,6 +12,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -144,8 +145,27 @@ class ClinicResource extends Resource
                 ->label('Estado')
                 ->options(TenantStatus::options())
                 ->required(),
+            Section::make('WhatsApp Cloud API')
+                ->icon('heroicon-o-chat-bubble-left-right')
+                ->description('Configura la conexion con Meta WhatsApp Cloud API para recibir y enviar mensajes.')
+                ->schema([
+                    TextInput::make('settings.integrations.whatsapp.phone_number_id')
+                        ->label('Phone Number ID')
+                        ->placeholder('ej. 1234567890')
+                        ->helperText('ID del numero de WhatsApp Business en Meta')
+                        ->columnSpanFull(),
+                    TextInput::make('settings.integrations.whatsapp.access_token')
+                        ->label('Access Token')
+                        ->placeholder('Token de acceso de la API')
+                        ->helperText('Token permanente o de corta duracion de Meta')
+                        ->password()
+                        ->revealable()
+                        ->columnSpanFull(),
+                ])
+                ->columns(2)
+                ->columnSpanFull(),
             KeyValue::make('settings')
-                ->label('Settings')
+                ->label('Settings adicionales')
                 ->keyLabel('Clave')
                 ->valueLabel('Valor')
                 ->columnSpanFull(),
