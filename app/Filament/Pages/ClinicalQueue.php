@@ -136,13 +136,13 @@ class ClinicalQueue extends Page
     public function selectedAppointment(): ?Appointment
     {
         return $this->selectedAppointmentId
-            ? Appointment::query()->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote'])->find($this->selectedAppointmentId)
+            ? Appointment::query()->forCurrentTenant()->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote'])->find($this->selectedAppointmentId)
             : null;
     }
 
     public function transition(int $appointmentId, string $status): void
     {
-        $appointment = Appointment::query()->findOrFail($appointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($appointmentId);
 
         try {
             app(AppointmentFlowService::class)->transition($appointment, AppointmentStatus::from($status), 'assistant', auth()->id());
@@ -193,7 +193,7 @@ class ClinicalQueue extends Page
             'noteText' => ['required', 'string', 'max:1000'],
         ]);
 
-        $appointment = Appointment::query()->findOrFail($this->noteAppointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($this->noteAppointmentId);
 
         $appointment->appointmentNotes()->create([
             'patient_id' => $appointment->patient_id,
@@ -213,6 +213,7 @@ class ClinicalQueue extends Page
         $todayEnd = $todayStart->copy()->endOfDay();
 
         return Appointment::query()
+            ->forCurrentTenant()
             ->with(['patient', 'doctor', 'procedure', 'latestAppointmentNote'])
             ->whereBetween('scheduled_at', [$todayStart, $todayEnd])
             ->when($this->doctorIdsForCurrentUser() !== null, fn (Builder $query): Builder => $query->whereIn('doctor_id', $this->doctorIdsForCurrentUser()))
@@ -238,6 +239,7 @@ class ClinicalQueue extends Page
         }
 
         return DoctorAssistantAssignment::query()
+            ->forCurrentTenant()
             ->where('assistant_id', $user->professional_id)
             ->where('is_active', true)
             ->pluck('doctor_id')

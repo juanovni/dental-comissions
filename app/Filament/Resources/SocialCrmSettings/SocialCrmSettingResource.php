@@ -15,6 +15,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Resources\Resource\Concerns\BelongsToTenant;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -22,6 +23,8 @@ use Filament\Tables\Table;
 
 class SocialCrmSettingResource extends Resource
 {
+    use BelongsToTenant;
+
 
     public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('social_crm_settings.view') ?? false; }
 

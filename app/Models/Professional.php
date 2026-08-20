@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProfessionalRole;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,9 +12,11 @@ use Illuminate\Support\Facades\Crypt;
 
 class Professional extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'name',
         'role',
         'whatsapp_phone',

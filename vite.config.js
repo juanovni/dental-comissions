@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
             host: '0.0.0.0',
             origin: env.VITE_DEV_SERVER_URL || 'http://localhost:5173',
             cors: {
-                origin: env.APP_URL || 'http://localhost:8080',
+                origin: [/^http:\/\/([a-z0-9-]+\.)?localhost:8080$/],
             },
             hmr: {
                 host: env.VITE_HMR_HOST || 'localhost',

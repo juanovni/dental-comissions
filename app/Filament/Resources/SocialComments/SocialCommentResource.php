@@ -29,6 +29,7 @@ use App\Services\SocialPatientConversionService;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -36,6 +37,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Resources\Resource\Concerns\BelongsToTenant;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
@@ -47,6 +49,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class SocialCommentResource extends Resource
 {
+    use BelongsToTenant;
+
 
     public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('social_comments.view') ?? false; }
 
@@ -74,7 +78,14 @@ class SocialCommentResource extends Resource
 
     public static function getIndexUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?\Illuminate\Database\Eloquent\Model $tenant = null, bool $shouldGuessMissingParameters = false): string
     {
-        return SocialInbox::getUrl(isAbsolute: $isAbsolute, panel: $panel, tenant: $tenant, shouldGuessMissingParameters: $shouldGuessMissingParameters);
+        $tenant ??= Filament::getTenant() ?? Clinic::query()->orderBy('id')->first();
+
+        return SocialInbox::getUrl(
+            isAbsolute: $isAbsolute,
+            panel: 'clinic',
+            tenant: $tenant,
+            shouldGuessMissingParameters: $shouldGuessMissingParameters,
+        );
     }
 
     public static function form(Schema $schema): Schema
@@ -317,7 +328,7 @@ class SocialCommentResource extends Resource
                     Select::make('suggested_procedure_id')
                         ->label('Procedimiento de interes')
                         ->default(fn (): ?int => $record->suggested_procedure_id ?? $record->socialPost?->procedure_id)
-                        ->options(fn (): array => Procedure::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                        ->options(fn (): array => Procedure::query()->forCurrentTenant()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
                         ->searchable()
                         ->preload()
                         ->nullable()
@@ -342,7 +353,7 @@ class SocialCommentResource extends Resource
                     $update = ['suggested_procedure_id' => $procedureId];
 
                     if ($record->estimated_value === null && $procedureId) {
-                        $procedure = Procedure::find($procedureId);
+                            $procedure = Procedure::query()->forCurrentTenant()->find($procedureId);
 
                         if ($procedure?->internal_rate !== null) {
                             $update['estimated_value'] = $procedure->internal_rate;
@@ -397,12 +408,12 @@ class SocialCommentResource extends Resource
                     Select::make('patient_id')
                         ->label('Paciente')
                         ->default($record->socialIdentity?->patient_id ?? $record->converted_patient_id)
-                        ->options(fn (): array => Patient::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
+                        ->options(fn (): array => Patient::query()->forCurrentTenant()->orderBy('full_name')->pluck('full_name', 'id')->all())
                         ->searchable()
                         ->required(),
                 ])
                 ->action(function (SocialComment $record, array $data): void {
-                    $patient = Patient::findOrFail($data['patient_id']);
+                    $patient = Patient::query()->forCurrentTenant()->findOrFail($data['patient_id']);
                     app(SocialPatientConversionService::class)->linkPatientToLead(
                         $record,
                         $patient,
@@ -478,29 +489,31 @@ class SocialCommentResource extends Resource
                             Select::make('patient_id')
                                 ->label('Paciente')
                                 ->default($record->socialIdentity?->patient_id ?? $record->converted_patient_id)
-                                ->options(fn (): array => Patient::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
+                                ->options(fn (): array => Patient::query()->forCurrentTenant()->orderBy('full_name')->pluck('full_name', 'id')->all())
                                 ->searchable()
                                 ->nullable(),
                             Select::make('doctor_id')
                                 ->label('Doctor')
-                                ->options(fn (): array => Professional::query()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
+                                ->options(fn (): array => Professional::query()->forCurrentTenant()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
                                 ->searchable()
                                 ->preload()
                                 ->nullable(),
                             Select::make('procedure_id')
                                 ->label('Procedimiento')
                                 ->default($record->suggested_procedure_id ?? $record->socialPost?->procedure_id)
-                                ->options(fn (): array => Procedure::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                                ->options(fn (): array => Procedure::query()->forCurrentTenant()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
                                 ->searchable()
                                 ->nullable(),
                             DateTimePicker::make('scheduled_at')
                                 ->label('Fecha y hora')
+                                ->seconds(false)
+                                ->displayFormat('m/d/Y H:i')
                                 ->required(),
-                            TextInput::make('duration_minutes')
+                            Select::make('duration_minutes')
                                 ->label('Duracion (min)')
-                                ->numeric()
-                                ->minValue(1)
-                                ->default(45),
+                                ->options(self::durationOptions())
+                                ->default(fn (): int => app(SocialCrmSettingsService::class)->appointmentSlotDuration())
+                                ->required(),
                             Select::make('status')
                                 ->label('Estado')
                                 ->options(self::enumOptions(AppointmentStatus::cases()))
@@ -590,6 +603,7 @@ class SocialCommentResource extends Resource
         $patientId = $record->socialIdentity?->patient_id ?? $record->converted_patient_id;
 
         return Appointment::query()
+            ->forCurrentTenant()
             ->whereNotNull('scheduled_at')
             ->where('scheduled_at', '>=', now()->startOfDay())
             ->whereIn('status', [
@@ -662,6 +676,13 @@ class SocialCommentResource extends Resource
     {
         return "Ficha creada desde lead social. Red: {$record->platform->label()}. Comentario ID: {$record->id}. Usuario: "
             .($record->author_username ?: $record->author_name ?: 'N/A').'.';
+    }
+
+    private static function durationOptions(): array
+    {
+        return collect([15, 30, 45, 60, 90, 120])
+            ->mapWithKeys(fn (int $minutes): array => [$minutes => "{$minutes} minutos"])
+            ->all();
     }
 
     private static function smartAlertHtml(SocialComment $record): string

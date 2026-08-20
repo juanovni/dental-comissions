@@ -2568,7 +2568,8 @@
                         'lead' => 'success',
                         default => 'neutral',
                     };
-                    $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $comment]);
+                    $detailTenant = $comment->clinic ?? \Filament\Facades\Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first();
+                    $detailUrl = \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['tenant' => $detailTenant, 'record' => $comment], panel: 'clinic');
                     $patientUrl = $patient ? \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $patient]) : null;
                 @endphp
 
@@ -2771,7 +2772,7 @@
                         <div class="smart-action-banner" style="margin-bottom:.75rem">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
                             <span>El cliente hizo clic en WhatsApp. Crea su ficha y agenda la cita.</span>
-                            <a class="smart-action-link" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}">Crear ficha</a>
+                            <a class="smart-action-link" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['tenant' => ($selectedComment->clinic ?? \Filament\Facades\Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first()), 'record' => $selectedComment], panel: 'clinic') }}">Crear ficha</a>
                         </div>
                     @endif
 
@@ -3061,11 +3062,11 @@
                 </div>
 
                 <footer class="smart-drawer-footer">
-                    <a class="smart-action" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Ver caso completo</span></a>
+                    <a class="smart-action" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['tenant' => ($selectedComment->clinic ?? \Filament\Facades\Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first()), 'record' => $selectedComment], panel: 'clinic') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg><span>Ver caso completo</span></a>
                     @if ($drawerPatient)
                         <a class="smart-action" href="{{ \App\Filament\Resources\Patients\PatientResource::getUrl('edit', ['record' => $drawerPatient]) }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><span>Ver ficha</span></a>
                     @else
-                        <a class="smart-action" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['record' => $selectedComment]) }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/></svg><span>Crear ficha</span></a>
+                        <a class="smart-action" href="{{ \App\Filament\Resources\SocialComments\SocialCommentResource::getUrl('view', ['tenant' => ($selectedComment->clinic ?? \Filament\Facades\Filament::getTenant() ?? \App\Models\Clinic::query()->orderBy('id')->first()), 'record' => $selectedComment], panel: 'clinic') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:.85rem;height:.85rem"><path d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/></svg><span>Crear ficha</span></a>
                     @endif
                 </footer>
             </aside>

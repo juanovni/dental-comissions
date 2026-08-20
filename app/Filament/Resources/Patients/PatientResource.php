@@ -13,6 +13,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Resources\Resource\Concerns\BelongsToTenant;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -20,6 +21,8 @@ use Illuminate\Support\Str;
 
 class PatientResource extends Resource
 {
+    use BelongsToTenant;
+
 
     public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('patients.view') ?? false; }
 
@@ -33,9 +36,9 @@ class PatientResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
-    protected static ?string $modelLabel = 'contacto';
+    protected static ?string $modelLabel = 'paciente';
 
-    protected static ?string $pluralModelLabel = 'contactos';
+    protected static ?string $pluralModelLabel = 'pacientes';
 
     public static function form(Schema $schema): Schema
     {

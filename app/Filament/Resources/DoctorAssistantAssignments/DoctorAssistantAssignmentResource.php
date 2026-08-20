@@ -15,6 +15,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Resources\Resource\Concerns\BelongsToTenant;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -22,6 +23,8 @@ use Filament\Tables\Table;
 
 class DoctorAssistantAssignmentResource extends Resource
 {
+    use BelongsToTenant;
+
 
     public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('doctor_assistant_assignments.view') ?? false; }
 
@@ -46,12 +49,12 @@ class DoctorAssistantAssignmentResource extends Resource
         return $schema->components([
             Select::make('doctor_id')
                 ->label('Doctor')
-                ->options(fn () => Professional::query()->where('role', ProfessionalRole::Doctor->value)->orderBy('name')->pluck('name', 'id'))
+                ->options(fn () => Professional::query()->forCurrentTenant()->where('role', ProfessionalRole::Doctor->value)->orderBy('name')->pluck('name', 'id'))
                 ->searchable()
                 ->required(),
             Select::make('assistant_id')
                 ->label('Auxiliar')
-                ->options(fn () => Professional::query()->where('role', ProfessionalRole::Assistant->value)->orderBy('name')->pluck('name', 'id'))
+                ->options(fn () => Professional::query()->forCurrentTenant()->where('role', ProfessionalRole::Assistant->value)->orderBy('name')->pluck('name', 'id'))
                 ->searchable()
                 ->required(),
             Toggle::make('is_active')->label('Activa')->default(true),

@@ -12,15 +12,16 @@ use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\Professional;
 use App\Services\AppointmentFlowService;
+use App\Services\SocialCrmSettingsService;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Resources\Resource\Concerns\BelongsToTenant;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -32,6 +33,8 @@ use Illuminate\Support\Carbon;
 
 class AppointmentResource extends Resource
 {
+    use BelongsToTenant;
+
 
     public static function canViewAny(): bool { return auth()->user()?->hasRolePermission('appointments.view') ?? false; }
 
@@ -60,27 +63,32 @@ class AppointmentResource extends Resource
         return $schema->components([
             Select::make('patient_id')
                 ->label('Paciente')
-                ->options(fn (): array => Patient::query()->orderBy('full_name')->pluck('full_name', 'id')->all())
+                ->options(fn (): array => Patient::query()->forCurrentTenant()->orderBy('full_name')->pluck('full_name', 'id')->all())
                 ->searchable()
+                ->preload()
                 ->nullable(),
             Select::make('doctor_id')
                 ->label('Doctor')
-                ->options(fn (): array => Professional::query()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
+                ->options(fn (): array => Professional::query()->forCurrentTenant()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all())
                 ->searchable()
+                ->preload()
                 ->nullable(),
             Select::make('procedure_id')
                 ->label('Procedimiento')
-                ->options(fn (): array => Procedure::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                ->options(fn (): array => Procedure::query()->forCurrentTenant()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
                 ->searchable()
+                ->preload()
                 ->nullable(),
             DateTimePicker::make('scheduled_at')
                 ->label('Fecha y hora')
+                ->seconds(false)
+                ->displayFormat('m/d/Y H:i')
                 ->required(),
-            TextInput::make('duration_minutes')
+            Select::make('duration_minutes')
                 ->label('Duracion (min)')
-                ->numeric()
-                ->minValue(1)
-                ->default(45),
+                ->options(self::durationOptions())
+                ->default(fn (): int => app(SocialCrmSettingsService::class)->appointmentSlotDuration())
+                ->required(),
             Select::make('status')
                 ->label('Estado')
                 ->options(collect(AppointmentStatus::cases())->mapWithKeys(fn (AppointmentStatus $s): array => [$s->value => $s->label()]))
@@ -88,6 +96,7 @@ class AppointmentResource extends Resource
             Select::make('source')
                 ->label('Origen')
                 ->options(collect(AppointmentSource::cases())->mapWithKeys(fn (AppointmentSource $s): array => [$s->value => $s->label()]))
+                ->default(AppointmentSource::AdminManual->value)
                 ->required(),
             Textarea::make('notes')
                 ->label('Notas')
@@ -157,7 +166,7 @@ class AppointmentResource extends Resource
                     ->options(collect(AppointmentSource::cases())->mapWithKeys(fn (AppointmentSource $s): array => [$s->value => $s->label()])),
                 SelectFilter::make('doctor_id')
                     ->label('Doctor')
-                    ->options(fn (): array => Professional::query()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all()),
+                    ->options(fn (): array => Professional::query()->forCurrentTenant()->where('role', 'doctor')->orderBy('name')->pluck('name', 'id')->all()),
                 Filter::make('scheduled_at')
                     ->label('Rango de fecha')
                     ->form([
@@ -292,11 +301,14 @@ class AppointmentResource extends Resource
                 ->form([
                     DateTimePicker::make('scheduled_at')
                         ->label('Nueva fecha y hora')
+                        ->seconds(false)
+                        ->displayFormat('m/d/Y H:i')
                         ->required(),
-                    TextInput::make('duration_minutes')
+                    Select::make('duration_minutes')
                         ->label('Duracion (min)')
-                        ->numeric()
-                        ->minValue(1),
+                        ->options(self::durationOptions())
+                        ->default(fn (Appointment $record): int => $record->duration_minutes ?? app(SocialCrmSettingsService::class)->appointmentSlotDuration())
+                        ->required(),
                 ])
                 ->visible(fn (Appointment $record): bool => in_array($record->status, [
                     AppointmentStatus::PendingConfirmation,
@@ -418,5 +430,12 @@ class AppointmentResource extends Resource
             'edit' => EditAppointment::route('/{record}/edit'),
             'view' => ViewAppointment::route('/{record}'),
         ];
+    }
+
+    private static function durationOptions(): array
+    {
+        return collect([15, 30, 45, 60, 90, 120])
+            ->mapWithKeys(fn (int $minutes): array => [$minutes => "{$minutes} minutos"])
+            ->all();
     }
 }

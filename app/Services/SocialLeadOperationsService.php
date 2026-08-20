@@ -16,6 +16,7 @@ class SocialLeadOperationsService
         $urgentScore = $settings->salesUrgentScoreThreshold();
 
         return SocialComment::query()
+            ->forCurrentTenant()
             ->with(['convertedPatient', 'socialIdentity.patient', 'socialAccount', 'suggestedProcedure'])
             ->whereNull('lost_at')
             ->where(function (Builder $query) use ($urgentScore): void {

@@ -54,6 +54,7 @@ class WhatsappIssuesTable extends TableWidget
     private function messagesQuery(): Builder
     {
         return WhatsappMessage::query()
+            ->forCurrentTenant()
             ->with('professional')
             ->whereIn('status', [
                 WhatsappMessageStatus::Failed,

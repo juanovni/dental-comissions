@@ -3,8 +3,10 @@
 namespace App\Livewire;
 
 use App\Filament\Pages\SocialInbox;
+use App\Models\Clinic;
 use App\Models\SocialLeadAlert;
 use App\Services\SocialLeadAlertService;
+use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -18,6 +20,13 @@ class SocialLeadNotificationCenter extends Component
 
     public bool $urgentPulse = false;
 
+    public int $clinicId = 0;
+
+    public function boot(): void
+    {
+        $this->clinicId = Filament::getTenant()?->id ?? 0;
+    }
+
     public function setFilter(string $filter): void
     {
         if (! in_array($filter, ['all', 'danger', 'warning', 'info'], true)) {
@@ -27,7 +36,7 @@ class SocialLeadNotificationCenter extends Component
         $this->filter = $filter;
     }
 
-    #[On('echo-private:admin-notifications,LeadActivityDetected')]
+    #[On('echo-private:clinic-{clinicId}.notifications,LeadActivityDetected')]
     public function handleLeadActivityDetected(array $payload): void
     {
         $interestScore = (int) ($payload['interest_score'] ?? 0);
@@ -40,7 +49,7 @@ class SocialLeadNotificationCenter extends Component
         unset($this->alerts, $this->stats);
     }
 
-    #[On('echo-private:admin-notifications,ClosingOpportunityDetected')]
+    #[On('echo-private:clinic-{clinicId}.notifications,ClosingOpportunityDetected')]
     public function handleClosingOpportunityDetected(array $payload): void
     {
         $this->urgentPulse = true;
@@ -105,7 +114,10 @@ class SocialLeadNotificationCenter extends Component
 
     public function leadUrl(SocialLeadAlert $alert): string
     {
-        return SocialInbox::getUrl(['comment' => $alert->social_comment_id]);
+        return SocialInbox::getUrl([
+            'tenant' => $alert->clinic ?? Filament::getTenant() ?? Clinic::query()->orderBy('id')->first(),
+            'comment' => $alert->social_comment_id,
+        ], panel: 'clinic');
     }
 
     #[Computed]
@@ -121,10 +133,10 @@ class SocialLeadNotificationCenter extends Component
     public function stats(): array
     {
         return [
-            'all' => SocialLeadAlert::whereNull('resolved_at')->count(),
-            'danger' => SocialLeadAlert::whereNull('resolved_at')->where('severity', 'danger')->count(),
-            'warning' => SocialLeadAlert::whereNull('resolved_at')->where('severity', 'warning')->count(),
-            'info' => SocialLeadAlert::whereNull('resolved_at')->where('severity', 'info')->count(),
+            'all' => SocialLeadAlert::query()->forCurrentTenant()->whereNull('resolved_at')->count(),
+            'danger' => SocialLeadAlert::query()->forCurrentTenant()->whereNull('resolved_at')->where('severity', 'danger')->count(),
+            'warning' => SocialLeadAlert::query()->forCurrentTenant()->whereNull('resolved_at')->where('severity', 'warning')->count(),
+            'info' => SocialLeadAlert::query()->forCurrentTenant()->whereNull('resolved_at')->where('severity', 'info')->count(),
         ];
     }
 
@@ -136,6 +148,7 @@ class SocialLeadNotificationCenter extends Component
     private function baseAlertQuery(): Builder
     {
         return SocialLeadAlert::query()
+            ->forCurrentTenant()
             ->with(['socialComment.socialIdentity.patient', 'socialComment.convertedPatient', 'socialComment.suggestedProcedure'])
             ->whereNull('resolved_at')
             ->orderByRaw("case when severity = 'danger' then 0 when severity = 'warning' then 1 else 2 end")

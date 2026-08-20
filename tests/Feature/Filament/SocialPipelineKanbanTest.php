@@ -7,10 +7,12 @@ use App\Enums\SocialConversionStatus;
 use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
 use App\Filament\Pages\SocialPipelineKanban;
+use App\Models\Clinic;
 use App\Models\Procedure;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -21,16 +23,22 @@ class SocialPipelineKanbanTest extends TestCase
 
     public function test_pipeline_kanban_shows_visible_comments_and_hides_hidden_comments(): void
     {
-        $visible = $this->socialComment([
+        $clinic = $this->clinic();
+        $user = User::factory()->create();
+        $clinic->users()->attach($user, ['role' => 'admin', 'is_default' => true, 'is_active' => true]);
+        Filament::setCurrentPanel('clinic');
+        Filament::setTenant($clinic, isQuiet: true);
+
+        $visible = $this->socialComment($clinic, [
             'comment_text' => 'Lead visible en kanban',
             'is_hidden' => false,
         ]);
-        $hidden = $this->socialComment([
+        $hidden = $this->socialComment($clinic, [
             'comment_text' => 'Lead oculto en kanban',
             'is_hidden' => true,
         ]);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(SocialPipelineKanban::class)
             ->assertSee($visible->comment_text)
             ->assertDontSee($hidden->comment_text);
@@ -40,12 +48,16 @@ class SocialPipelineKanbanTest extends TestCase
 
     public function test_nuevos_column_shows_only_new_leads(): void
     {
-        $new = $this->socialComment([
+        $clinic = $this->clinic();
+        Filament::setCurrentPanel('clinic');
+        Filament::setTenant($clinic, isQuiet: true);
+
+        $new = $this->socialComment($clinic, [
             'comment_text' => 'Lead nuevo',
             'pipeline_stage' => SocialPipelineStage::New,
             'recent_engagement_score' => 10,
         ]);
-        $qualified = $this->socialComment([
+        $qualified = $this->socialComment($clinic, [
             'comment_text' => 'Lead calificado',
             'pipeline_stage' => SocialPipelineStage::Qualified,
             'recent_engagement_score' => 120,
@@ -62,9 +74,14 @@ class SocialPipelineKanbanTest extends TestCase
 
     public function test_archive_drop_to_won_converts_directly(): void
     {
-        $comment = $this->socialComment();
+        $clinic = $this->clinic();
+        $comment = $this->socialComment($clinic);
+        $user = User::factory()->create();
+        $clinic->users()->attach($user, ['role' => 'admin', 'is_default' => true, 'is_active' => true]);
+        Filament::setCurrentPanel('clinic');
+        Filament::setTenant($clinic, isQuiet: true);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(SocialPipelineKanban::class)
             ->call('moveCard', $comment->id, SocialPipelineStage::Won->value);
 
@@ -77,12 +94,17 @@ class SocialPipelineKanbanTest extends TestCase
 
     public function test_card_can_move_to_qualified(): void
     {
-        $comment = $this->socialComment([
+        $clinic = $this->clinic();
+        $comment = $this->socialComment($clinic, [
             'pipeline_stage' => SocialPipelineStage::New,
             'conversion_status' => SocialConversionStatus::None,
         ]);
+        $user = User::factory()->create();
+        $clinic->users()->attach($user, ['role' => 'admin', 'is_default' => true, 'is_active' => true]);
+        Filament::setCurrentPanel('clinic');
+        Filament::setTenant($clinic, isQuiet: true);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(SocialPipelineKanban::class)
             ->call('moveCard', $comment->id, SocialPipelineStage::Qualified->value);
 
@@ -91,9 +113,14 @@ class SocialPipelineKanbanTest extends TestCase
 
     public function test_archive_drop_to_lost_asks_for_reason_then_archives(): void
     {
-        $comment = $this->socialComment();
+        $clinic = $this->clinic();
+        $comment = $this->socialComment($clinic);
+        $user = User::factory()->create();
+        $clinic->users()->attach($user, ['role' => 'admin', 'is_default' => true, 'is_active' => true]);
+        Filament::setCurrentPanel('clinic');
+        Filament::setTenant($clinic, isQuiet: true);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(SocialPipelineKanban::class)
             ->call('moveCard', $comment->id, SocialPipelineStage::Lost->value)
             ->assertSet('lostModalCommentId', $comment->id)
@@ -109,13 +136,18 @@ class SocialPipelineKanbanTest extends TestCase
 
     public function test_pipeline_kanban_opens_selected_lead_detail(): void
     {
-        $comment = $this->socialComment([
+        $clinic = $this->clinic();
+        $comment = $this->socialComment($clinic, [
             'comment_text' => 'Lead abierto desde campana',
             'recent_engagement_score' => 85,
             'interest_score' => 90,
         ]);
+        $user = User::factory()->create();
+        $clinic->users()->attach($user, ['role' => 'admin', 'is_default' => true, 'is_active' => true]);
+        Filament::setCurrentPanel('clinic');
+        Filament::setTenant($clinic, isQuiet: true);
 
-        Livewire::actingAs(User::factory()->create())
+        Livewire::actingAs($user)
             ->test(SocialPipelineKanban::class)
             ->call('openLeadDetail', $comment->id)
             ->assertSet('selectedLeadId', $comment->id)
@@ -123,9 +155,10 @@ class SocialPipelineKanbanTest extends TestCase
             ->assertSee('Lead abierto desde campana');
     }
 
-    private function socialComment(array $overrides = []): SocialComment
+    private function socialComment(Clinic $clinic, array $overrides = []): SocialComment
     {
         $account = SocialAccount::create([
+            'clinic_id' => $clinic->id,
             'platform' => SocialPlatform::Instagram,
             'account_name' => 'Clinica Dental',
             'external_account_id' => 'ig_account_'.uniqid(),
@@ -133,6 +166,7 @@ class SocialPipelineKanbanTest extends TestCase
         ]);
 
         return SocialComment::create(array_merge([
+            'clinic_id' => $clinic->id,
             'social_account_id' => $account->id,
             'platform' => SocialPlatform::Instagram,
             'external_comment_id' => 'comment_'.uniqid(),
@@ -145,5 +179,18 @@ class SocialPipelineKanbanTest extends TestCase
             'pipeline_stage' => SocialPipelineStage::Qualified,
             'is_hidden' => false,
         ], $overrides));
+    }
+
+    private function clinic(): Clinic
+    {
+        return Clinic::create([
+            'name' => 'Clinica Demo',
+            'slug' => 'clinica-demo-'.uniqid(),
+            'subdomain' => 'clinica-demo-'.uniqid(),
+            'primary_domain' => 'clinica-demo.localhost',
+            'currency' => 'USD',
+            'timezone' => 'UTC',
+            'status' => 'active',
+        ]);
     }
 }

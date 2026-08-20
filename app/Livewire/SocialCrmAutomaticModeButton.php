@@ -17,10 +17,15 @@ class SocialCrmAutomaticModeButton extends Component
 
         foreach ($settings as $key => $value) {
             $valueType = $this->valueType($value);
+            $clinicId = $this->currentClinicId();
 
             SocialCrmSetting::query()->updateOrCreate(
-                ['key' => $key],
                 [
+                    'clinic_id' => $clinicId,
+                    'key' => $key,
+                ],
+                [
+                    'clinic_id' => $clinicId,
                     'setting_group' => $this->settingGroup($key),
                     'label' => $this->settingLabel($key),
                     'value_type' => $valueType,
@@ -70,6 +75,11 @@ class SocialCrmAutomaticModeButton extends Component
     public function render(): View
     {
         return view('livewire.social-crm-automatic-mode-button');
+    }
+
+    private function currentClinicId(): ?int
+    {
+        return SocialCrmSetting::currentTenantId();
     }
 
     private function automaticSettings(): array

@@ -12,7 +12,7 @@ class VoicePatientResolver
     {
         $phones = $this->phoneVariants($phoneE164);
 
-        $patient = Patient::whereIn('phone', $phones)->first();
+        $patient = Patient::query()->forCurrentTenant()->whereIn('phone', $phones)->first();
 
         if ($patient) {
             return $patient;
@@ -20,6 +20,7 @@ class VoicePatientResolver
 
         $digits = $this->digits($phoneE164);
         $identity = SocialIdentity::query()
+            ->forCurrentTenant()
             ->whereIn('phone', $phones)
             ->when($digits !== '', fn ($query) => $query->orWhere('normalized_phone', $digits))
             ->first();

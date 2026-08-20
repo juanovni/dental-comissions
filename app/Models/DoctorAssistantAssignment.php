@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DoctorAssistantAssignment extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'doctor_id',
         'assistant_id',
         'is_active',
@@ -30,6 +33,11 @@ class DoctorAssistantAssignment extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Professional::class, 'doctor_id');
+    }
+
+    public function clinic(): BelongsTo
+    {
+        return $this->belongsTo(Clinic::class);
     }
 
     public function assistant(): BelongsTo

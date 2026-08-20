@@ -4,16 +4,19 @@ namespace App\Models;
 
 use App\Enums\WhatsappMessageDirection;
 use App\Enums\WhatsappMessageStatus;
+use App\Models\Concerns\BelongsToTenant;
+use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WhatsappMessage extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'professional_id',
         'social_comment_id',
         'direction',
@@ -38,17 +41,17 @@ class WhatsappMessage extends Model
         ];
     }
 
-    public function professional(): BelongsTo
+    public function professional(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Professional::class);
     }
 
-    public function socialComment(): BelongsTo
+    public function socialComment(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(SocialComment::class);
     }
 
-    public function relatedMessage(): BelongsTo
+    public function relatedMessage(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(WhatsappMessage::class, 'related_message_id');
     }
@@ -63,7 +66,9 @@ class WhatsappMessage extends Model
         $digits = preg_replace('/\D+/', '', $phone) ?? $phone;
         $phones = array_values(array_unique([$phone, $digits, '+' . $digits]));
 
-        return Professional::whereIn('whatsapp_phone', $phones)
+        return Professional::query()
+            ->forCurrentTenant()
+            ->whereIn('whatsapp_phone', $phones)
             ->where('is_active', true)
             ->where('can_register_via_whatsapp', true)
             ->first();

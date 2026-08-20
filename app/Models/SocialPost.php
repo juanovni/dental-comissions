@@ -3,16 +3,18 @@
 namespace App\Models;
 
 use App\Enums\SocialPlatform;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SocialPost extends Model
 {
+    use BelongsToTenant;
     use HasFactory;
 
     protected $fillable = [
+        'clinic_id',
         'social_account_id',
         'procedure_id',
         'platform',
@@ -43,12 +45,12 @@ class SocialPost extends Model
         ];
     }
 
-    public function socialAccount(): BelongsTo
+    public function socialAccount(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(SocialAccount::class);
     }
 
-    public function procedure(): BelongsTo
+    public function procedure(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Procedure::class);
     }

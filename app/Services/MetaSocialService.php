@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\SocialCommentStatus;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
+use App\Enums\SocialReputationRisk;
 use App\Jobs\SendSocialCommentAutoReply;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
@@ -90,34 +91,42 @@ class MetaSocialService
                     $webhookComment['account_id'],
                 );
 
-                if ($this->wasPublishedBefore(
-                    $webhookComment['comment']['created_time'] ?? $webhookComment['comment']['timestamp'] ?? null,
-                    $this->syncSince($account),
-                )) {
-                    $summary['ignored']++;
+                $persistComment = function () use ($account, $webhookComment, &$summary): void {
+                    if ($this->wasPublishedBefore(
+                        $webhookComment['comment']['created_time'] ?? $webhookComment['comment']['timestamp'] ?? null,
+                        $this->syncSince($account),
+                    )) {
+                        $summary['ignored']++;
 
-                    continue;
+                        return;
+                    }
+
+                    if ($this->isOwnAccountComment($account, $webhookComment['comment'])) {
+                        $summary['ignored']++;
+
+                        return;
+                    }
+
+                    $post = $this->storeWebhookPost($account, $this->enrichWebhookPost($account, $webhookComment['post']));
+                    $comment = $this->storeComment($account, $post, $webhookComment['comment']);
+                    app(SocialCommentClassificationService::class)->classify($comment);
+                    $this->dispatchAutoReplyIfEligible($comment->refresh());
+
+                    app(SocialLeadAlertService::class)->createAlert(
+                        $comment->fresh(),
+                        'new_lead_arrived',
+                        in_array($comment->reputation_risk, [SocialReputationRisk::High, SocialReputationRisk::Critical], true) ? 'danger' : 'info',
+                        ['classification' => $comment->classification?->value, 'platform' => $comment->platform?->value],
+                    );
+
+                    $summary['comments']++;
+                };
+
+                if ($account->clinic_id !== null) {
+                    app(TenantContext::class)->run($account->clinic_id, $persistComment);
+                } else {
+                    $persistComment();
                 }
-
-                if ($this->isOwnAccountComment($account, $webhookComment['comment'])) {
-                    $summary['ignored']++;
-
-                    continue;
-                }
-
-                $post = $this->storeWebhookPost($account, $this->enrichWebhookPost($account, $webhookComment['post']));
-                $comment = $this->storeComment($account, $post, $webhookComment['comment']);
-                app(SocialCommentClassificationService::class)->classify($comment);
-                $this->dispatchAutoReplyIfEligible($comment->refresh());
-
-                app(SocialLeadAlertService::class)->createAlert(
-                    $comment->fresh(),
-                    'new_lead_arrived',
-                    in_array($comment->reputation_risk, [\App\Enums\SocialReputationRisk::High, \App\Enums\SocialReputationRisk::Critical], true) ? 'danger' : 'info',
-                    ['classification' => $comment->classification?->value, 'platform' => $comment->platform?->value],
-                );
-
-                $summary['comments']++;
             }
         }
 
@@ -266,7 +275,7 @@ class MetaSocialService
                     app(SocialLeadAlertService::class)->createAlert(
                         $comment->fresh(),
                         'new_lead_arrived',
-                        in_array($comment->reputation_risk, [\App\Enums\SocialReputationRisk::High, \App\Enums\SocialReputationRisk::Critical], true) ? 'danger' : 'info',
+                        in_array($comment->reputation_risk, [SocialReputationRisk::High, SocialReputationRisk::Critical], true) ? 'danger' : 'info',
                         ['classification' => $comment->classification?->value, 'platform' => $comment->platform?->value],
                     );
                 }
@@ -602,6 +611,7 @@ class MetaSocialService
         }
 
         return SocialAccount::create([
+            'clinic_id' => app(TenantContext::class)->id(),
             'platform' => $platform->value,
             'account_name' => $platform === SocialPlatform::Instagram ? 'Instagram Business' : 'Facebook Page',
             'external_account_id' => $externalAccountId,
@@ -738,7 +748,7 @@ class MetaSocialService
             return;
         }
 
-        SendSocialCommentAutoReply::dispatch($comment->id);
+        SendSocialCommentAutoReply::dispatch($comment->id, $comment->clinic_id);
     }
 
     private function normalizeAccountHandle(string $value): string

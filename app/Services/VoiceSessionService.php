@@ -7,12 +7,14 @@ use App\Enums\VoiceChannelType;
 use App\Enums\VoiceEventType;
 use App\Models\VoiceCall;
 use App\Models\VoiceEvent;
+use App\Support\TenantContext;
 
 class VoiceSessionService
 {
     public function startCall(string $fromPhone, VoiceChannelType $channel, ?string $provider = null): VoiceCall
     {
         $call = VoiceCall::create([
+            'clinic_id' => app(TenantContext::class)->id(),
             'from_phone' => $fromPhone,
             'channel' => $channel,
             'provider' => $provider ?? $channel->value,
@@ -21,6 +23,7 @@ class VoiceSessionService
         ]);
 
         $call->events()->create([
+            'clinic_id' => $call->clinic_id,
             'type' => VoiceEventType::SessionStarted,
             'payload' => ['channel' => $channel->value, 'provider' => $provider],
         ]);
@@ -33,6 +36,7 @@ class VoiceSessionService
         $payload = array_merge(['message' => $message], $extra ?? []);
 
         $event = $call->events()->create([
+            'clinic_id' => $call->clinic_id,
             'type' => $type,
             'payload' => $payload,
         ]);
@@ -49,6 +53,7 @@ class VoiceSessionService
     public function addToolCall(VoiceCall $call, string $toolName, array $arguments, array $result): VoiceEvent
     {
         $call->events()->create([
+            'clinic_id' => $call->clinic_id,
             'type' => VoiceEventType::ToolCalled,
             'payload' => [
                 'tool' => $toolName,
@@ -57,6 +62,7 @@ class VoiceSessionService
         ]);
 
         $resultEvent = $call->events()->create([
+            'clinic_id' => $call->clinic_id,
             'type' => VoiceEventType::ToolResult,
             'payload' => [
                 'tool' => $toolName,
@@ -76,6 +82,7 @@ class VoiceSessionService
         ]);
 
         $call->events()->create([
+            'clinic_id' => $call->clinic_id,
             'type' => VoiceEventType::SessionEnded,
             'payload' => ['status' => $status->value],
         ]);
@@ -89,6 +96,7 @@ class VoiceSessionService
         ]);
 
         $call->events()->create([
+            'clinic_id' => $call->clinic_id,
             'type' => VoiceEventType::HandoffRequested,
             'payload' => ['reason' => $reason, 'summary' => $summary],
         ]);
@@ -102,6 +110,7 @@ class VoiceSessionService
         ]);
 
         $call->events()->create([
+            'clinic_id' => $call->clinic_id,
             'type' => VoiceEventType::Error,
             'payload' => ['error' => $error],
         ]);
@@ -115,6 +124,7 @@ class VoiceSessionService
         ]);
 
         $call->events()->create([
+            'clinic_id' => $call->clinic_id,
             'type' => VoiceEventType::AppointmentCreated,
             'payload' => ['appointment_id' => $appointmentId],
         ]);

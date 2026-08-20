@@ -5,11 +5,13 @@ namespace Tests\Feature\Filament;
 use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPlatform;
 use App\Filament\Pages\SocialHotLeads;
+use App\Models\Clinic;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Models\SocialPost;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -20,9 +22,15 @@ class SocialHotLeadsTest extends TestCase
 
     public function test_hot_leads_page_lists_and_contacts_lead(): void
     {
-        $comment = $this->socialComment();
+        $clinic = $this->clinic();
+        $comment = $this->socialComment($clinic);
+        $user = User::factory()->create();
+        $clinic->users()->attach($user, ['role' => 'admin', 'is_default' => true, 'is_active' => true]);
 
-        Livewire::actingAs(User::factory()->create())
+        Filament::setCurrentPanel('clinic');
+        Filament::setTenant($clinic, isQuiet: true);
+
+        Livewire::actingAs($user)
             ->test(SocialHotLeads::class)
             ->assertSee($comment->comment_text)
             ->call('markContacted', $comment->id);
@@ -30,9 +38,10 @@ class SocialHotLeadsTest extends TestCase
         $this->assertNotNull($comment->refresh()->contacted_at);
     }
 
-    private function socialComment(): SocialComment
+    private function socialComment(Clinic $clinic): SocialComment
     {
         $account = SocialAccount::create([
+            'clinic_id' => $clinic->id,
             'platform' => SocialPlatform::Instagram,
             'account_name' => 'Clinica Dental',
             'external_account_id' => 'ig_account_'.uniqid(),
@@ -40,6 +49,7 @@ class SocialHotLeadsTest extends TestCase
         ]);
 
         $post = SocialPost::create([
+            'clinic_id' => $clinic->id,
             'social_account_id' => $account->id,
             'platform' => SocialPlatform::Instagram,
             'external_post_id' => 'post_'.uniqid(),
@@ -47,6 +57,7 @@ class SocialHotLeadsTest extends TestCase
         ]);
 
         $identity = SocialIdentity::create([
+            'clinic_id' => $clinic->id,
             'platform' => SocialPlatform::Instagram,
             'platform_user_id' => 'user_'.uniqid(),
             'username' => 'paciente_test',
@@ -57,6 +68,7 @@ class SocialHotLeadsTest extends TestCase
         ]);
 
         return SocialComment::create([
+            'clinic_id' => $clinic->id,
             'social_account_id' => $account->id,
             'social_identity_id' => $identity->id,
             'social_post_id' => $post->id,
@@ -68,6 +80,19 @@ class SocialHotLeadsTest extends TestCase
             'comment_text' => 'Quiero agenda para implantes',
             'interest_score' => 90,
             'hot_lead_at' => now(),
+        ]);
+    }
+
+    private function clinic(): Clinic
+    {
+        return Clinic::create([
+            'name' => 'Clinica Demo',
+            'slug' => 'clinica-demo',
+            'subdomain' => 'clinica-demo',
+            'primary_domain' => 'clinica-demo.localhost',
+            'currency' => 'USD',
+            'timezone' => 'UTC',
+            'status' => 'active',
         ]);
     }
 }

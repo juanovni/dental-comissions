@@ -2,129 +2,41 @@
 
 namespace App\Providers\Filament;
 
-use App\Enums\UserRole;
-use App\Filament\Pages\ClinicalQueue;
-use App\Filament\Pages\Dashboard;
-use App\Filament\Pages\DashboardRoiSocial;
-use App\Filament\Pages\DoctorQueue;
-use App\Filament\Pages\Reception;
-use App\Filament\Resources\Appointments\AppointmentResource;
+use App\Filament\Resources\Clinics\ClinicResource;
+use App\Filament\Resources\RolePermissions\RolePermissionResource;
+use App\Filament\Resources\Users\UserResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Assets\Js;
-use Filament\Support\Facades\FilamentView;
-use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\HtmlString;
-use Illuminate\Support\Facades\Vite;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        FilamentView::registerRenderHook(
-            PanelsRenderHook::USER_MENU_BEFORE,
-            fn (): HtmlString => new HtmlString('<div class="">'.view('filament.partials.social-lead-notification-center')->render().'</div>'),
-        );
-
-        FilamentView::registerRenderHook(
-            PanelsRenderHook::HEAD_END,
-            fn (): HtmlString => in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant, UserRole::Doctor], true)
-                ? new HtmlString(<<<'HTML'
-                    <script>
-                        document.documentElement.classList.add('fi-role-clinical-flat')
-
-                        try {
-                            const collapsedGroups = JSON.parse(localStorage.getItem('collapsedGroups') || '[]')
-
-                            localStorage.setItem(
-                                'collapsedGroups',
-                                JSON.stringify(collapsedGroups.filter((group) => group !== 'Operación Clinica')),
-                            )
-                        } catch (error) {
-                            localStorage.removeItem('collapsedGroups')
-                        }
-                    </script>
-                    HTML)
-                : new HtmlString(''),
-        );
-
         return $panel
             ->default()
             ->id('admin')
+            ->domain(config('tenancy.admin_domain'))
             ->path('admin')
-            ->homeUrl(function (): string {
-                return match (auth()->user()?->role) {
-                    UserRole::Receptionist => Reception::getUrl(),
-                    UserRole::Doctor => DoctorQueue::getUrl(),
-                    UserRole::Assistant => ClinicalQueue::getUrl(),
-                    UserRole::SuperAdmin, UserRole::Admin => DashboardRoiSocial::getUrl(),
-                    default => AppointmentResource::getUrl(),
-                };
-            })
+            ->homeUrl(fn (): string => ClinicResource::getUrl(panel: 'admin'))
             ->login()
-            ->brandLogo(function () {
-                if (request()->routeIs('filament.admin.auth.login')) {
-                    return '/images/icon-odon-crm_3.png';
-                }
-                return '/images/icon-odon-crm_3.png';
-            })
-            ->brandLogoHeight(function () {
-                return request()->routeIs('filament.admin.auth.login') ? '4rem' : '1.35rem';
-            })
-            ->colors([
-                'primary' => [
-                    50 => 'oklch(97% .02 185)',
-                    100 => 'oklch(94% .035 185)',
-                    200 => 'oklch(88% .055 185)',
-                    300 => 'oklch(80% .08 185)',
-                    400 => 'oklch(68% .105 185)',
-                    500 => 'oklch(55% .12 185)',
-                    600 => 'oklch(47% .115 185)',
-                    700 => 'oklch(39% .1 185)',
-                    800 => 'oklch(31% .08 185)',
-                    900 => 'oklch(25% .06 185)',
-                    950 => 'oklch(18% .045 185)',
-                ],
-            ])
-            ->sidebarCollapsibleOnDesktop()
-            ->navigationGroups([
-                NavigationGroup::make('Dashboards')
-                    ->icon('heroicon-o-chart-bar-square'),
-                NavigationGroup::make('Reputacion Digital')
-                    ->collapsible(false),
-                NavigationGroup::make('Operación Clinica')
-                    ->icon(fn (): ?string => in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant, UserRole::Doctor], true) ? null : 'heroicon-o-clipboard-document-list')
-                    ->collapsible(fn (): bool => ! in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant, UserRole::Doctor], true)),
-                NavigationGroup::make('Pity Voice')
-                    ->icon('heroicon-o-phone'),
-                NavigationGroup::make('Configuración')
-                    ->icon('heroicon-o-cog-6-tooth'),
-            ])
             ->maxContentWidth('fi-width-full')
-            ->viteTheme('resources/css/app.css')
-            ->assets([
-                Js::make('admin-app')
-                    ->html(Vite::asset('resources/js/app.js'))
-                    ->module(),
+            ->brandLogo('/images/icon-odon-crm_3.png')
+            ->brandLogoHeight('1.35rem')
+            ->resources([
+                ClinicResource::class,
+                UserResource::class,
+                RolePermissionResource::class,
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([
-                Dashboard::class,
-            ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\CalendarIntegration;
+use App\Models\Clinic;
 use App\Models\Professional;
+use App\Support\TenantContext;
 use Carbon\Carbon;
 use Google\Client as GoogleClient;
 use Google\Service\Calendar as GoogleCalendar;
@@ -86,7 +88,9 @@ class GoogleCalendarService
     public function getClinicAuthorizationUrl(): string
     {
         $client = $this->client();
-        $client->setState('clinic');
+        $clinic = app(TenantContext::class)->get();
+        $suffix = $clinic?->slug ? ':'.$clinic->slug : '';
+        $client->setState('clinic'.$suffix);
 
         return $client->createAuthUrl();
     }
@@ -149,6 +153,11 @@ class GoogleCalendarService
             ]);
             return false;
         }
+    }
+
+    public function setCurrentClinic(Clinic $clinic): void
+    {
+        app(TenantContext::class)->set($clinic);
     }
 
     public function exchangeCode(Professional $professional, string $code): bool

@@ -107,7 +107,7 @@ class SocialHotLeads extends Page
 
     private function findComment(int $commentId): ?SocialComment
     {
-        $comment = SocialComment::find($commentId);
+        $comment = SocialComment::query()->forCurrentTenant()->find($commentId);
 
         if (! $comment) {
             Notification::make()

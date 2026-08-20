@@ -102,7 +102,7 @@ class ListAppointments extends ListRecords
 
     public function openRescheduleModal(int $appointmentId): void
     {
-        $appointment = Appointment::query()->findOrFail($appointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($appointmentId);
         $this->reschedulingAppointmentId = $appointmentId;
         $this->newScheduledAt = $appointment->scheduled_at?->format('Y-m-d\TH:i');
         $this->newDurationMinutes = $appointment->duration_minutes ?? 45;
@@ -130,7 +130,7 @@ class ListAppointments extends ListRecords
         }
 
         try {
-            $appointment = Appointment::query()->findOrFail($this->reschedulingAppointmentId);
+            $appointment = Appointment::query()->forCurrentTenant()->findOrFail($this->reschedulingAppointmentId);
             app(AppointmentWorkflowService::class)->reschedule($appointment, $newDate, $duration);
             Notification::make()->title('Cita reprogramada exitosamente')->success()->send();
             $this->closeRescheduleModal();
@@ -141,7 +141,7 @@ class ListAppointments extends ListRecords
 
     private function hasRescheduleConflict(?int $appointmentId, Carbon $newStart, int $durationMinutes): bool
     {
-        $appointment = Appointment::query()->find($appointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->find($appointmentId);
 
         if (!$appointment || !$appointment->doctor_id) {
             return false;
@@ -150,6 +150,7 @@ class ListAppointments extends ListRecords
         $newEnd = (clone $newStart)->addMinutes($durationMinutes);
 
         return Appointment::query()
+            ->forCurrentTenant()
             ->where('id', '!=', $appointmentId)
             ->where('doctor_id', $appointment->doctor_id)
             ->whereNotIn('status', [
@@ -168,7 +169,7 @@ class ListAppointments extends ListRecords
 
     public function completeAppointment(int $appointmentId): void
     {
-        $appointment = Appointment::query()->findOrFail($appointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($appointmentId);
 
         try {
             app(AppointmentWorkflowService::class)->complete($appointment);
@@ -180,7 +181,7 @@ class ListAppointments extends ListRecords
 
     public function openNoShowModal(int $appointmentId): void
     {
-        $appointment = Appointment::query()->findOrFail($appointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($appointmentId);
         $this->noShowAppointmentId = $appointmentId;
         $this->noShowNotes = '';
         $this->showNoShowModal = true;
@@ -193,7 +194,7 @@ class ListAppointments extends ListRecords
 
     public function saveNoShow(): void
     {
-        $appointment = Appointment::query()->findOrFail($this->noShowAppointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($this->noShowAppointmentId);
 
         try {
             app(AppointmentWorkflowService::class)->markNoShow($appointment);
@@ -206,7 +207,7 @@ class ListAppointments extends ListRecords
 
     public function openCancelModal(int $appointmentId): void
     {
-        $appointment = Appointment::query()->findOrFail($appointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($appointmentId);
         $this->cancelAppointmentId = $appointmentId;
         $this->cancelReason = '';
         $this->showCancelModal = true;
@@ -219,7 +220,7 @@ class ListAppointments extends ListRecords
 
     public function saveCancel(): void
     {
-        $appointment = Appointment::query()->findOrFail($this->cancelAppointmentId);
+        $appointment = Appointment::query()->forCurrentTenant()->findOrFail($this->cancelAppointmentId);
 
         try {
             app(AppointmentWorkflowService::class)->cancel($appointment, $this->cancelReason ?: null);
@@ -247,6 +248,7 @@ class ListAppointments extends ListRecords
         }
 
         return Appointment::query()
+            ->forCurrentTenant()
             ->with(['patient', 'doctor', 'procedure', 'socialComment', 'socialComment.socialIdentity'])
             ->find($this->selectedAppointmentId);
     }
@@ -283,6 +285,7 @@ class ListAppointments extends ListRecords
     public function getDoctorOptionsProperty(): array
     {
         return Professional::query()
+            ->forCurrentTenant()
             ->where('role', 'doctor')
             ->orderBy('name')
             ->pluck('name', 'id')
@@ -292,6 +295,7 @@ class ListAppointments extends ListRecords
     public function getPatientOptionsProperty(): array
     {
         return Patient::query()
+            ->forCurrentTenant()
             ->orderBy('full_name')
             ->limit(100)
             ->pluck('full_name', 'id')
@@ -318,6 +322,7 @@ class ListAppointments extends ListRecords
         $todayEnd = $todayStart->copy()->endOfDay();
 
         return Appointment::query()
+            ->forCurrentTenant()
             ->with(['patient', 'doctor', 'procedure', 'socialComment', 'socialComment.socialIdentity'])
             ->when($this->period === 'today', fn (Builder $query): Builder => $query->whereBetween('scheduled_at', [$todayStart, $todayEnd]))
             ->when($this->period === 'upcoming', fn (Builder $query): Builder => $query->where('scheduled_at', '>=', $todayStart))

@@ -143,7 +143,7 @@ class SocialCrmSettings extends Page
     private function persistSettings(array $state): void
     {
         foreach ($state as $key => $value) {
-            $existing = SocialCrmSetting::query()->where('key', $key)->first();
+            $existing = SocialCrmSetting::query()->forCurrentTenant()->where('key', $key)->first();
 
             if ($existing) {
                 $existing->update([
@@ -158,6 +158,7 @@ class SocialCrmSettings extends Page
                 };
 
                 SocialCrmSetting::create([
+                    'clinic_id' => app(\App\Support\TenantContext::class)->id(),
                     'key' => $key,
                     'setting_group' => $this->inferGroup($key),
                     'label' => $this->inferLabel($key),
@@ -914,6 +915,7 @@ class SocialCrmSettings extends Page
         $keys = $this->allSettingKeys();
 
         $settings = SocialCrmSetting::query()
+            ->forCurrentTenant()
             ->whereIn('key', $keys)
             ->where('is_active', true)
             ->get()

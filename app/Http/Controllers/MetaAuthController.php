@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\SocialPlatform;
+use App\Models\Clinic;
 use App\Models\SocialAccount;
+use App\Support\TenantContext;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,12 +15,15 @@ use Illuminate\Support\Str;
 
 class MetaAuthController extends Controller
 {
+    public function __construct(private TenantContext $tenantContext) {}
+
     public function redirect(Request $request): RedirectResponse
     {
         $config = $this->config();
 
         $state = Str::random(40);
         $request->session()->put('meta_oauth_state', $state);
+        $request->session()->put('meta_oauth_clinic_id', app(TenantContext::class)->id());
 
         $query = http_build_query([
             'client_id' => $config['app_id'],
@@ -50,17 +55,24 @@ class MetaAuthController extends Controller
             'Estado OAuth invalido.',
         );
 
+        $clinicId = $request->session()->pull('meta_oauth_clinic_id');
+        $clinic = $clinicId ? Clinic::query()->find($clinicId) : null;
+
         try {
-            $shortToken = $this->exchangeCodeForToken($request->string('code')->toString());
-            $longToken = $this->exchangeForLongLivedToken($shortToken['access_token']);
-            $userAccessToken = $this->selectTokenWithPageAccess(
-                $shortToken['access_token'],
-                $longToken['access_token'] ?? null,
-            );
+            $summary = $clinic
+                ? $this->tenantContext->run($clinic, function () use ($request): array {
+                    $shortToken = $this->exchangeCodeForToken($request->string('code')->toString());
+                    $longToken = $this->exchangeForLongLivedToken($shortToken['access_token']);
+                    $userAccessToken = $this->selectTokenWithPageAccess(
+                        $shortToken['access_token'],
+                        $longToken['access_token'] ?? null,
+                    );
 
-            $this->logGrantedPermissions($userAccessToken);
+                    $this->logGrantedPermissions($userAccessToken);
 
-            $summary = $this->storeAuthorizedAccounts($userAccessToken, $longToken['expires_in'] ?? $shortToken['expires_in'] ?? null);
+                    return $this->storeAuthorizedAccounts($userAccessToken, $longToken['expires_in'] ?? $shortToken['expires_in'] ?? null);
+                })
+                : $this->completeCallbackWithoutTenant($request);
         } catch (ConnectionException $e) {
             Log::error('OAuth Meta no pudo conectar con Graph API.', [
                 'error' => $e->getMessage(),
@@ -184,10 +196,12 @@ class MetaAuthController extends Controller
 
             $pageAccount = SocialAccount::updateOrCreate(
                 [
+                    'clinic_id' => app(TenantContext::class)->id(),
                     'platform' => SocialPlatform::Facebook->value,
                     'external_account_id' => $page['id'],
                 ],
                 [
+                    'clinic_id' => app(TenantContext::class)->id(),
                     'account_name' => $page['name'] ?? 'Facebook Page',
                     'page_id' => $page['id'],
                     'access_token' => $pageAccessToken,
@@ -216,10 +230,12 @@ class MetaAuthController extends Controller
 
             SocialAccount::updateOrCreate(
                 [
+                    'clinic_id' => app(TenantContext::class)->id(),
                     'platform' => SocialPlatform::Instagram->value,
                     'external_account_id' => $instagramAccount['id'],
                 ],
                 [
+                    'clinic_id' => app(TenantContext::class)->id(),
                     'account_name' => $instagramAccount['username']
                         ?? $instagramAccount['name']
                         ?? 'Instagram Business',
@@ -246,6 +262,20 @@ class MetaAuthController extends Controller
             'source' => $source,
             'connected_at' => $settings['connected_at'] ?? now()->toIso8601String(),
         ]);
+    }
+
+    private function completeCallbackWithoutTenant(Request $request): array
+    {
+        $shortToken = $this->exchangeCodeForToken($request->string('code')->toString());
+        $longToken = $this->exchangeForLongLivedToken($shortToken['access_token']);
+        $userAccessToken = $this->selectTokenWithPageAccess(
+            $shortToken['access_token'],
+            $longToken['access_token'] ?? null,
+        );
+
+        $this->logGrantedPermissions($userAccessToken);
+
+        return $this->storeAuthorizedAccounts($userAccessToken, $longToken['expires_in'] ?? $shortToken['expires_in'] ?? null);
     }
 
     private function getConfiguredPages(string $userAccessToken): array

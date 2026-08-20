@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
+use App\Support\TenantContext;
+use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
 class CalendarIntegration extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
+        'clinic_id',
         'provider',
         'account_email',
         'calendar_id',
@@ -28,13 +34,47 @@ class CalendarIntegration extends Model
 
     public static function clinicGoogle(): self
     {
+        $clinicId = static::currentClinicId();
+
         return static::firstOrCreate(
-            ['provider' => 'google_calendar'],
             [
+                'clinic_id' => $clinicId,
+                'provider' => 'google_calendar',
+            ],
+            [
+                'clinic_id' => $clinicId,
                 'calendar_id' => 'primary',
                 'is_enabled' => false,
             ],
         );
+    }
+
+    private static function currentClinicId(): ?int
+    {
+        $clinicId = app(TenantContext::class)->id();
+
+        if ($clinicId !== null) {
+            return $clinicId;
+        }
+
+        $tenant = Filament::getTenant();
+
+        if ($tenant instanceof Clinic) {
+            return $tenant->getKey();
+        }
+
+        $panel = Filament::getCurrentPanel();
+        $user = auth()->user();
+
+        if ($panel?->getId() === 'clinic' && $user && method_exists($user, 'getDefaultTenant')) {
+            $defaultTenant = $user->getDefaultTenant($panel);
+
+            if ($defaultTenant instanceof Clinic) {
+                return $defaultTenant->getKey();
+            }
+        }
+
+        return null;
     }
 
     public function isConnected(): bool

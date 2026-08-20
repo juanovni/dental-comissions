@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\LocalLanguagePatternType;
 use App\Models\LocalLanguagePattern;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -51,13 +52,14 @@ class LocalLanguagePatternService
 
     public function clearCache(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget($this->cacheKey());
     }
 
     private function patterns(): array
     {
-        return Cache::remember(self::CACHE_KEY, now()->addMinutes(10), function (): array {
+        return Cache::remember($this->cacheKey(), now()->addMinutes(10), function (): array {
             return LocalLanguagePattern::query()
+                ->forCurrentTenantWithGlobal()
                 ->active()
                 ->get(['id', 'type', 'phrase', 'normalized_phrase', 'value', 'locale'])
                 ->map(fn (LocalLanguagePattern $pattern): array => [
@@ -70,5 +72,12 @@ class LocalLanguagePatternService
                 ])
                 ->all();
         });
+    }
+
+    private function cacheKey(): string
+    {
+        $clinicId = app(TenantContext::class)->id();
+
+        return self::CACHE_KEY.'.'.($clinicId ?? 'global');
     }
 }

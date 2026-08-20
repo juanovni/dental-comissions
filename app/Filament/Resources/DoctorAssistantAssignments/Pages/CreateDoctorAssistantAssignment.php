@@ -18,6 +18,7 @@ class CreateDoctorAssistantAssignment extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         if (DoctorAssistantAssignment::query()
+            ->forCurrentTenant()
             ->where('doctor_id', $data['doctor_id'])
             ->where('assistant_id', $data['assistant_id'])
             ->exists()) {
