@@ -30,7 +30,7 @@ class ClinicSeeder extends Seeder
                 'slug' => 'clinic-1',
                 'subdomain' => 'clinic-1',
                 'currency' => 'USD',
-                'timezone' => config('app.timezone', 'UTC'),
+                'timezone' => 'America/Guayaquil',
             ], existingAdmin: $seedAdmin);
         } else {
             $clinic = $existing;

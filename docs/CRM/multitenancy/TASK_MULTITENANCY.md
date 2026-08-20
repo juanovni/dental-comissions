@@ -173,14 +173,14 @@ Estados sugeridos:
 
 ## Pruebas minimas de aceptacion
 
-- [ ] Usuario de Clinica A no lista pacientes de Clinica B.
-- [ ] Usuario de Clinica A no lista citas de Clinica B.
-- [ ] Selects de Filament no muestran doctores/procedimientos/pacientes de otra clinica.
-- [ ] Host `clinica-a.dominio.com` resuelve Clinica A.
+- [x] Usuario de Clinica A no lista pacientes de Clinica B.
+- [x] Usuario de Clinica A no lista citas de Clinica B.
+- [x] Selects de Filament no muestran doctores/procedimientos/pacientes de otra clinica.
+- [x] Host `clinica-a.dominio.com` resuelve Clinica A.
 - [x] Host no reconocido no devuelve datos de ninguna clinica.
-- [ ] Usuario no asignado no puede acceder al host de una clinica.
-- [ ] Tenant nuevo requiere `subdomain` y `primary_domain` unicos.
-- [ ] Check-in publico con Clinica A no encuentra cita de Clinica B.
+- [x] Usuario no asignado no puede acceder al host de una clinica.
+- [x] Tenant nuevo requiere `subdomain` y `primary_domain` unicos.
+- [x] Check-in publico con Clinica A no encuentra cita de Clinica B.
 - [ ] Webhook WhatsApp crea mensajes en la clinica correcta.
 - [ ] Webhook Meta crea comentarios en la clinica correcta.
 - [ ] Job con `clinicId A` no procesa datos de Clinica B.

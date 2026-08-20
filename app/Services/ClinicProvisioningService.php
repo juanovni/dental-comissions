@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\TenantStatus;
 use App\Enums\UserRole;
 use App\Models\Clinic;
+use App\Models\SocialCrmSetting;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class ClinicProvisioningService
             'primary_domain' => $clinicData['primary_domain'] ?? $this->buildPrimaryDomain((string) $clinicData['subdomain']),
             'country' => $clinicData['country'] ?? null,
             'currency' => $clinicData['currency'] ?? 'USD',
-            'timezone' => $clinicData['timezone'] ?? config('app.timezone', 'UTC'),
+            'timezone' => $clinicData['timezone'] ?? 'America/Guayaquil',
             'status' => TenantStatus::Provisioning,
             'settings' => null,
         ]);
@@ -51,6 +52,16 @@ class ClinicProvisioningService
                 $clinic->update([
                     'status' => TenantStatus::Active,
                     'settings' => $this->defaultSettings($clinic),
+                ]);
+
+                SocialCrmSetting::create([
+                    'clinic_id' => $clinic->id,
+                    'setting_group' => 'citas',
+                    'key' => 'social_appointment_clinic_timezone',
+                    'label' => 'Zona horaria de la clínica',
+                    'value_type' => 'string',
+                    'value' => $clinic->timezone,
+                    'is_active' => true,
                 ]);
             });
         } catch (Throwable $exception) {
