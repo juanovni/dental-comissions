@@ -39,7 +39,9 @@ class EasypanelDomainService
             return false;
         }
 
-        $response = Http::withToken((string) config('services.easypanel.api_key'))
+        $response = Http::withHeaders([
+            'Authorization' => (string) config('services.easypanel.api_key'),
+        ])
             ->acceptJson()
             ->asJson()
             ->post($this->endpoint(), $this->payload($domain));
@@ -104,18 +106,21 @@ class EasypanelDomainService
     {
         return [
             'json' => [
-                'projectName' => config('services.easypanel.project'),
-                'serviceName' => config('services.easypanel.service'),
-                'domain' => [
-                    'host' => $domain,
-                    'https' => true,
-                    'path' => '/',
-                    'target' => [
-                        'protocol' => config('services.easypanel.destination_protocol', 'HTTP'),
-                        'port' => config('services.easypanel.destination_port', 80),
-                        'path' => config('services.easypanel.destination_path', '/'),
-                    ],
+                'certificateResolver' => '',
+                'destinationType' => 'service',
+                'host' => $domain,
+                'https' => true,
+                'id' => '',
+                'middlewares' => [],
+                'path' => '/',
+                'serviceDestination' => [
+                    'path' => config('services.easypanel.destination_path', '/'),
+                    'port' => config('services.easypanel.destination_port', 80),
+                    'projectName' => config('services.easypanel.project'),
+                    'protocol' => Str::lower((string) config('services.easypanel.destination_protocol', 'http')),
+                    'serviceName' => config('services.easypanel.service'),
                 ],
+                'wildcard' => false,
             ],
         ];
     }
