@@ -25,8 +25,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (app()->runningInConsole() === false && request()->getHost()) {
-            $origin = request()->getScheme().'://'.request()->getHttpHost();
+            $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) === 'https'
+                ? 'https'
+                : request()->getScheme();
 
+            $origin = $scheme.'://'.request()->getHttpHost();
+
+            URL::forceScheme($scheme);
             URL::forceRootUrl($origin);
             URL::useAssetOrigin($origin);
         }
