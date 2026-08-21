@@ -11,6 +11,7 @@ use App\Models\SocialAccount;
 use App\Models\SocialComment;
 use App\Models\SocialIdentity;
 use App\Models\SocialPost;
+use App\Support\TenantContext;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -41,6 +42,7 @@ class MetaSocialService
         ];
 
         SocialAccount::query()
+            ->forCurrentTenant()
             ->where('is_active', true)
             ->whereIn('platform', [
                 SocialPlatform::Facebook->value,
@@ -143,12 +145,14 @@ class MetaSocialService
     {
         foreach ($this->getPages() as $page) {
             $existingPageAccount = SocialAccount::query()
+                ->forCurrentTenant()
                 ->where('platform', SocialPlatform::Facebook->value)
                 ->where('external_account_id', $page['id'])
                 ->first();
 
             $pageAccount = SocialAccount::updateOrCreate(
                 [
+                    'clinic_id' => app(TenantContext::class)->id(),
                     'platform' => SocialPlatform::Facebook->value,
                     'external_account_id' => $page['id'],
                 ],
@@ -168,12 +172,14 @@ class MetaSocialService
             }
 
             $existingInstagramAccount = SocialAccount::query()
+                ->forCurrentTenant()
                 ->where('platform', SocialPlatform::Instagram->value)
                 ->where('external_account_id', $instagramAccount['id'])
                 ->first();
 
             SocialAccount::updateOrCreate(
                 [
+                    'clinic_id' => app(TenantContext::class)->id(),
                     'platform' => SocialPlatform::Instagram->value,
                     'external_account_id' => $instagramAccount['id'],
                 ],
@@ -358,8 +364,8 @@ class MetaSocialService
         $connectedAt = $account->sync_settings['connected_at'] ?? null;
 
         return $connectedAt
-            ? Carbon::parse($connectedAt)
-            : ($account->created_at ?: now());
+            ? Carbon::parse($connectedAt)->subDays($this->config()['sync_days'])
+            : now()->subDays($this->config()['sync_days']);
     }
 
     private function wasPublishedBefore(mixed $publishedAt, Carbon $syncSince): bool
@@ -445,10 +451,12 @@ class MetaSocialService
 
         return SocialPost::updateOrCreate(
             [
+                'clinic_id' => $account->clinic_id,
                 'platform' => $account->platform->value,
                 'external_post_id' => $postData['id'],
             ],
             [
+                'clinic_id' => $account->clinic_id,
                 'social_account_id' => $account->id,
                 'caption' => $postData['message'] ?? $postData['caption'] ?? null,
                 'media_url' => $postData['full_picture'] ?? $postData['media_url'] ?? null,
@@ -467,19 +475,22 @@ class MetaSocialService
         $identity = $this->resolveSocialIdentity($account, $commentData, $publishedAt);
 
         $parent = $externalParentId
-            ? SocialComment::where('platform', $account->platform->value)
+            ? SocialComment::where('clinic_id', $account->clinic_id)
+                ->where('platform', $account->platform->value)
                 ->where('external_comment_id', $externalParentId)
                 ->first()
             : null;
 
         $comment = SocialComment::firstOrNew(
             [
+                'clinic_id' => $account->clinic_id,
                 'platform' => $account->platform->value,
                 'external_comment_id' => $commentData['id'],
             ],
         );
 
         $comment->fill([
+            'clinic_id' => $account->clinic_id,
             'social_account_id' => $account->id,
             'social_identity_id' => $identity?->id,
             'social_post_id' => $post->id,
@@ -694,6 +705,7 @@ class MetaSocialService
         $seenAt = $publishedAt ? Carbon::parse($publishedAt) : now();
 
         $identity = SocialIdentity::firstOrNew([
+            'clinic_id' => $account->clinic_id,
             'platform' => $account->platform->value,
             'platform_user_id' => (string) $platformUserId,
         ]);
@@ -703,6 +715,7 @@ class MetaSocialService
         $metadata['social_account_id'] = $account->id;
 
         $identity->fill([
+            'clinic_id' => $account->clinic_id,
             'username' => $commentData['username'] ?? $identity->username,
             'display_name' => Arr::get($commentData, 'from.name') ?: ($commentData['username'] ?? $identity->display_name),
             'status' => $identity->status?->value ?? SocialIdentityStatus::NewLead->value,
