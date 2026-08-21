@@ -51,7 +51,13 @@ class SocialConversionService
 
     public function whatsappLink(SocialComment $comment): ?string
     {
-        $businessPhone = $this->normalizePhone((string) config('services.whatsapp.business_phone'));
+        $comment->loadMissing('clinic');
+
+        $tenantWhatsapp = is_array($comment->clinic?->settings['integrations']['whatsapp'] ?? null)
+            ? $comment->clinic->settings['integrations']['whatsapp']
+            : [];
+
+        $businessPhone = $this->normalizePhone((string) ($tenantWhatsapp['business_phone'] ?? config('services.whatsapp.business_phone')));
 
         if (blank($businessPhone)) {
             return null;
