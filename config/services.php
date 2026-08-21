@@ -101,4 +101,15 @@ return [
         'prompt' => 'consent',
     ],
 
+    'easypanel' => [
+        'url' => env('EASYPANEL_URL'),
+        'api_key' => env('EASYPANEL_API_KEY'),
+        'project' => env('EASYPANEL_PROJECT', 'fabrica'),
+        'service' => env('EASYPANEL_SERVICE', 'dentaljuanipro'),
+        'domain_endpoint' => env('EASYPANEL_DOMAIN_ENDPOINT', '/api/trpc/services.domains.create'),
+        'destination_protocol' => env('EASYPANEL_DESTINATION_PROTOCOL', 'HTTP'),
+        'destination_port' => (int) env('EASYPANEL_DESTINATION_PORT', 80),
+        'destination_path' => env('EASYPANEL_DESTINATION_PATH', '/'),
+    ],
+
 ];
