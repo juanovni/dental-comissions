@@ -9,6 +9,7 @@ use App\Support\TenantContext;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -24,6 +25,9 @@ class MetaAuthController extends Controller
         $state = Str::random(40);
         $request->session()->put('meta_oauth_state', $state);
         $request->session()->put('meta_oauth_clinic_id', app(TenantContext::class)->id());
+        Cache::put($this->stateCacheKey($state), [
+            'clinic_id' => app(TenantContext::class)->id(),
+        ], now()->addMinutes(10));
 
         $query = http_build_query([
             'client_id' => $config['app_id'],
@@ -49,13 +53,18 @@ class MetaAuthController extends Controller
     {
         abort_if($request->filled('error'), 400, $request->string('error_description')->toString());
         abort_unless($request->filled('code'), 400, 'Meta no devolvio codigo de autorizacion.');
+
+        $state = (string) $request->query('state');
+        $statePayload = Cache::pull($this->stateCacheKey($state));
+        $sessionState = (string) $request->session()->pull('meta_oauth_state');
+
         abort_unless(
-            hash_equals((string) $request->session()->pull('meta_oauth_state'), (string) $request->query('state')),
+            is_array($statePayload) || hash_equals($sessionState, $state),
             403,
             'Estado OAuth invalido.',
         );
 
-        $clinicId = $request->session()->pull('meta_oauth_clinic_id');
+        $clinicId = $statePayload['clinic_id'] ?? $request->session()->pull('meta_oauth_clinic_id');
         $clinic = $clinicId ? Clinic::query()->find($clinicId) : null;
 
         try {
@@ -469,5 +478,10 @@ class MetaAuthController extends Controller
         abort_if(blank($config['redirect_uri']), 500, 'META_REDIRECT_URI no configurado.');
 
         return $config;
+    }
+
+    private function stateCacheKey(string $state): string
+    {
+        return 'meta_oauth_state:'.$state;
     }
 }
