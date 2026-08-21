@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\SocialPlatform;
+use App\Filament\Pages\Integrations;
 use App\Models\Clinic;
 use App\Models\SocialAccount;
 use App\Support\TenantContext;
@@ -87,7 +88,7 @@ class MetaAuthController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect('/admin/social-accounts')->with(
+            return redirect($this->integrationsUrl($clinic))->with(
                 'error',
                 'No se pudo conectar con Meta Graph API. Revisa DNS/conectividad del servidor e intenta conectar Meta nuevamente.',
             );
@@ -96,7 +97,7 @@ class MetaAuthController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect('/admin/social-accounts')->with(
+            return redirect($this->integrationsUrl($clinic))->with(
                 'error',
                 'No se pudo completar la conexión con Meta. Intenta nuevamente desde Integraciones.',
             );
@@ -104,7 +105,7 @@ class MetaAuthController extends Controller
 
         Log::info('OAuth Meta completado.', $summary);
 
-        return redirect('/admin/social-accounts')->with(
+        return redirect($this->integrationsUrl($clinic))->with(
             'status',
             "Meta conectado. Paginas: {$summary['pages']}. Instagram: {$summary['instagram']}.",
         );
@@ -483,5 +484,14 @@ class MetaAuthController extends Controller
     private function stateCacheKey(string $state): string
     {
         return 'meta_oauth_state:'.$state;
+    }
+
+    private function integrationsUrl(?Clinic $clinic): string
+    {
+        if ($clinic) {
+            return Integrations::getUrl(panel: 'clinic', tenant: $clinic);
+        }
+
+        return '/admin';
     }
 }
