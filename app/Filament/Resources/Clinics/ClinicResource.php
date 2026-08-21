@@ -17,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class ClinicResource extends Resource
 {
@@ -24,21 +25,29 @@ class ClinicResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
 
-    protected static ?string $navigationLabel = 'Clínicas';
+    protected static ?string $navigationLabel = 'Tenants (Clínicas)';
 
     protected static ?int $navigationSort = 2;
 
-    protected static ?string $modelLabel = 'clínica';
+    protected static ?string $modelLabel = 'Tenant';
 
-    protected static ?string $pluralModelLabel = 'clínicas';
+    protected static ?string $pluralModelLabel = 'Gestión de Tenants';
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
             TextInput::make('name')
-                ->label('Nombre')
+                ->label('Nombre de la clínica')
                 ->required()
-                ->maxLength(255),
+                ->maxLength(255)
+                ->live(debounce: 500)
+                ->afterStateUpdated(function (?string $state, callable $set): void {
+                    $slug = Str::slug($state ?? '');
+
+                    $set('slug', $slug);
+                    $set('subdomain', $slug);
+                    $set('primary_domain', $slug ? $slug.'.'.config('tenancy.base_domain', 'localhost') : null);
+                }),
             TextInput::make('slug')
                 ->label('Slug')
                 ->required()
@@ -148,16 +157,19 @@ class ClinicResource extends Resource
             Section::make('WhatsApp Cloud API')
                 ->icon('heroicon-o-chat-bubble-left-right')
                 ->description('Configura la conexion con Meta WhatsApp Cloud API para recibir y enviar mensajes.')
+                ->hiddenOn('create')
                 ->schema([
                     TextInput::make('settings.integrations.whatsapp.phone_number_id')
                         ->label('Phone Number ID')
                         ->placeholder('ej. 1234567890')
                         ->helperText('ID del numero de WhatsApp Business en Meta')
+                        ->autocomplete(false)
                         ->columnSpanFull(),
                     TextInput::make('settings.integrations.whatsapp.access_token')
                         ->label('Access Token')
                         ->placeholder('Token de acceso de la API')
                         ->helperText('Token permanente o de corta duracion de Meta')
+                        ->autocomplete('new-password')
                         ->password()
                         ->revealable()
                         ->columnSpanFull(),
@@ -176,15 +188,24 @@ class ClinicResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Nombre')->searchable()->sortable(),
-                TextColumn::make('slug')->label('Slug')->searchable(),
-                TextColumn::make('subdomain')->label('Subdominio')->searchable(),
-                TextColumn::make('primary_domain')->label('Dominio')->searchable(),
+                TextColumn::make('name')->label('Clínica')->searchable()->sortable(),
+                TextColumn::make('slug')
+                    ->label('Id / Slug')
+                    ->formatStateUsing(fn (Clinic $record): string => "{$record->id} / <span class=\"text-muted-foreground\">{$record->slug}</span>")
+                    ->html()
+                    ->searchable(),
+                TextColumn::make('primary_domain')
+                    ->label('Dominios')
+                    ->formatStateUsing(fn (?string $state): string => $state ?: '-')
+                    ->url(fn (?string $state): ?string => $state ? 'https://'.$state : null)
+                    ->openUrlInNewTab()
+                    ->extraAttributes(['style' => 'color: oklch(0.769 0.188 70.08);'])
+                    ->searchable(),
+                TextColumn::make('country')->label('País')->searchable()->sortable(),
                 TextColumn::make('status')
                     ->label('Estado')
                     ->badge()
                     ->formatStateUsing(fn (TenantStatus $state): string => $state->label()),
-                TextColumn::make('currency')->label('Moneda'),
                 TextColumn::make('timezone')->label('Zona horaria')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([
