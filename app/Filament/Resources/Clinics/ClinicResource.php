@@ -9,7 +9,6 @@ use App\Filament\Resources\Clinics\Pages\EditClinic;
 use App\Filament\Resources\Clinics\Pages\ListClinics;
 use App\Models\Clinic;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -165,6 +164,13 @@ class ClinicResource extends Resource
                         ->helperText('ID del numero de WhatsApp Business en Meta')
                         ->autocomplete(false)
                         ->columnSpanFull(),
+                    TextInput::make('settings.integrations.whatsapp.business_phone')
+                        ->label('Numero WhatsApp publico')
+                        ->placeholder('ej. 593992374871')
+                        ->helperText('Numero visible para pacientes, sin + ni espacios. Se usa para enlaces wa.me')
+                        ->tel()
+                        ->autocomplete(false)
+                        ->columnSpanFull(),
                     TextInput::make('settings.integrations.whatsapp.access_token')
                         ->label('Access Token')
                         ->placeholder('Token de acceso de la API')
@@ -175,11 +181,6 @@ class ClinicResource extends Resource
                         ->columnSpanFull(),
                 ])
                 ->columns(2)
-                ->columnSpanFull(),
-            KeyValue::make('settings')
-                ->label('Settings adicionales')
-                ->keyLabel('Clave')
-                ->valueLabel('Valor')
                 ->columnSpanFull(),
         ])->columns(2);
     }
