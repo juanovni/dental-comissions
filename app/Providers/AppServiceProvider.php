@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (app()->environment('local') && app()->runningInConsole() === false && request()->getHost()) {
+        if (app()->runningInConsole() === false && request()->getHost()) {
             $origin = request()->getScheme().'://'.request()->getHttpHost();
 
             URL::forceRootUrl($origin);
