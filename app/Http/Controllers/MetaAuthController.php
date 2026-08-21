@@ -200,6 +200,7 @@ class MetaAuthController extends Controller
 
             $pageAccessToken = $page['access_token'] ?? $userAccessToken;
             $existingPageAccount = SocialAccount::query()
+                ->forCurrentTenant()
                 ->where('platform', SocialPlatform::Facebook->value)
                 ->where('external_account_id', $page['id'])
                 ->first();
@@ -234,6 +235,7 @@ class MetaAuthController extends Controller
             }
 
             $existingInstagramAccount = SocialAccount::query()
+                ->forCurrentTenant()
                 ->where('platform', SocialPlatform::Instagram->value)
                 ->where('external_account_id', $instagramAccount['id'])
                 ->first();
