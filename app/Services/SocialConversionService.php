@@ -66,6 +66,19 @@ class SocialConversionService
     public function smartLink(SocialComment $comment): string
     {
         $token = $this->generateTrackingToken($comment);
+        $comment->loadMissing('clinic');
+
+        $domain = $comment->clinic?->primary_domain;
+
+        if (filled($domain)) {
+            $host = Str::of((string) $domain)
+                ->replaceStart('https://', '')
+                ->replaceStart('http://', '')
+                ->before('/')
+                ->toString();
+
+            return 'https://'.$host.'/v/'.$token;
+        }
 
         return route('social-smart-link.show', ['trackingToken' => $token]);
     }
