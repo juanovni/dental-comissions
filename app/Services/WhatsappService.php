@@ -48,6 +48,10 @@ class WhatsappService
                 Log::warning('No se pudo resolver clinica para WhatsApp.', [
                     'phone_number_id' => $payload['metadata']['phone_number_id'] ?? null,
                 ]);
+
+                if (filled($payload['metadata']['phone_number_id'] ?? null)) {
+                    return null;
+                }
             }
 
             $callback = function () use ($payload): ?WhatsappMessage {

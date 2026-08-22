@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class SocialAppointmentLinkController extends Controller
@@ -114,7 +116,7 @@ class SocialAppointmentLinkController extends Controller
                 $appointment = $this->confirmFromDatetime(
                     $offer,
                     $comment,
-                    Carbon::parse($selectedDatetime),
+                    Carbon::parse($selectedDatetime, app(SocialCrmSettingsService::class)->clinicTimezone()),
                     $notificationMetadata,
                     $whatsappNotificationsConsent ? $patientPhone : null,
                 );
@@ -129,6 +131,16 @@ class SocialAppointmentLinkController extends Controller
                 return back()->with('appointment_error', 'Por favor selecciona un horario.');
             }
         } catch (\Throwable $e) {
+            Log::warning('No se pudo confirmar cita desde link publico.', [
+                'offer_id' => $offer->id,
+                'token' => $token,
+                'clinic_id' => $offer->clinic_id,
+                'selected_datetime' => $selectedDatetime,
+                'selected_option' => $selectedOptionIndex,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile().':'.$e->getLine(),
+            ]);
+
             return back()->with('appointment_error', 'Ese horario acaba de ocuparse. Por favor elige otra opción o escríbenos por WhatsApp.');
         }
 
@@ -152,82 +164,86 @@ class SocialAppointmentLinkController extends Controller
         ?string $whatsappPhone,
     ): Appointment
     {
-        $settings = app(SocialCrmSettingsService::class);
-        $duration = $settings->appointmentSlotDuration();
-        $end = $start->copy()->addMinutes($duration);
+        $appointment = DB::transaction(function () use ($offer, $comment, $start, $notificationMetadata, $whatsappPhone): Appointment {
+            $settings = app(SocialCrmSettingsService::class);
+            $duration = $settings->appointmentSlotDuration();
+            $end = $start->copy()->addMinutes($duration);
 
-        $doctor = $comment->suggestedDoctor
-            ?? \App\Models\Professional::query()
-                ->where('role', \App\Enums\ProfessionalRole::Doctor->value)
-                ->where('is_active', true)
-                ->first();
+            $doctor = $comment->suggestedDoctor
+                ?? \App\Models\Professional::query()
+                    ->where('role', \App\Enums\ProfessionalRole::Doctor->value)
+                    ->where('is_active', true)
+                    ->first();
 
-        if (! $doctor) {
-            throw new \RuntimeException('No hay doctor disponible.');
-        }
+            if (! $doctor) {
+                throw new \RuntimeException('No hay doctor disponible.');
+            }
 
-        $available = app(AppointmentAvailabilityService::class)->isSlotAvailableForDoctor($doctor, $start, $end);
+            $available = app(AppointmentAvailabilityService::class)->isSlotAvailableForDoctor($doctor, $start, $end);
 
-        if (! $available) {
-            throw new \RuntimeException('Ese horario acaba de ocuparse.');
-        }
+            if (! $available) {
+                throw new \RuntimeException('Ese horario acaba de ocuparse.');
+            }
 
-        $patient = app(\App\Services\SocialPatientConversionService::class)->ensurePatientForLead($comment, $whatsappPhone);
+            $patient = app(\App\Services\SocialPatientConversionService::class)->ensurePatientForLead($comment, $whatsappPhone);
 
-        if ($patient && $whatsappPhone && blank($patient->phone)) {
-            $patient->update(['phone' => $whatsappPhone]);
-        }
+            if ($patient && $whatsappPhone && blank($patient->phone)) {
+                $patient->update(['phone' => $whatsappPhone]);
+            }
 
-        $appointment = app(\App\Services\AppointmentCreationService::class)->createFromSocialLead($comment, [
-            'patient_id' => $patient?->id,
-            'scheduled_at' => $start,
-            'duration_minutes' => $duration,
-            'doctor_id' => $doctor->id,
-            'procedure_id' => $comment->suggested_procedure_id,
-            'status' => $settings->appointmentAutoConfirm() ? \App\Enums\AppointmentStatus::Confirmed : \App\Enums\AppointmentStatus::PendingConfirmation,
-            'source' => \App\Enums\AppointmentSource::SmartLink,
-            'notes' => 'Cita agendada desde calendario web.',
-            'created_by' => null,
-            'audit_notes' => 'Cita creada desde seleccion libre en calendario.',
-            'metadata' => [
-                'slot_offer_id' => $offer->id,
-                'selected_datetime' => $start->toIso8601String(),
-            ] + $notificationMetadata,
-        ]);
+            $appointment = app(\App\Services\AppointmentCreationService::class)->createFromSocialLead($comment, [
+                'patient_id' => $patient?->id,
+                'scheduled_at' => $start,
+                'duration_minutes' => $duration,
+                'doctor_id' => $doctor->id,
+                'procedure_id' => $comment->suggested_procedure_id,
+                'status' => $settings->appointmentAutoConfirm() ? \App\Enums\AppointmentStatus::Confirmed : \App\Enums\AppointmentStatus::PendingConfirmation,
+                'source' => \App\Enums\AppointmentSource::SmartLink,
+                'notes' => 'Cita agendada desde calendario web.',
+                'created_by' => null,
+                'audit_notes' => 'Cita creada desde seleccion libre en calendario.',
+                'metadata' => [
+                    'slot_offer_id' => $offer->id,
+                    'selected_datetime' => $start->toIso8601String(),
+                ] + $notificationMetadata,
+            ]);
+
+            \App\Models\AppointmentSlotHold::create([
+                'appointment_slot_offer_id' => $offer->id,
+                'social_comment_id' => $comment->id,
+                'appointment_id' => $appointment->id,
+                'doctor_id' => $doctor->id,
+                'procedure_id' => $comment->suggested_procedure_id,
+                'starts_at' => $start,
+                'ends_at' => $end,
+                'expires_at' => now()->addMinutes($settings->appointmentSlotHoldMinutes()),
+                'status' => 'confirmed',
+                'metadata' => ['selected_datetime' => $start->toIso8601String()] + $notificationMetadata,
+            ]);
+
+            $offer->update([
+                'status' => 'selected',
+                'appointment_id' => $appointment->id,
+                'selected_option_index' => null,
+            ]);
+
+            $comment->actions()->create([
+                'action' => \App\Enums\SocialCommentActionType::AppointmentSlotHeld,
+                'performed_by' => null,
+                'notes' => 'Horario seleccionado desde calendario web.',
+                'external_response' => [
+                    'offer_id' => $offer->id,
+                    'appointment_id' => $appointment->id,
+                    'selected_datetime' => $start->toIso8601String(),
+                ],
+            ]);
+
+            app(\App\Services\SocialLeadScoringService::class)->scoreWhatsappSlotSelected($comment->refresh());
+
+            return $appointment;
+        });
 
         app(\App\Services\AppointmentWorkflowService::class)->syncToCalendar($appointment);
-
-        \App\Models\AppointmentSlotHold::create([
-            'appointment_slot_offer_id' => $offer->id,
-            'social_comment_id' => $comment->id,
-            'appointment_id' => $appointment->id,
-            'doctor_id' => $doctor->id,
-            'procedure_id' => $comment->suggested_procedure_id,
-            'starts_at' => $start,
-            'ends_at' => $end,
-            'expires_at' => now()->addMinutes($settings->appointmentSlotHoldMinutes()),
-            'status' => 'confirmed',
-            'metadata' => ['selected_datetime' => $start->toIso8601String()] + $notificationMetadata,
-        ]);
-
-        $offer->update([
-            'status' => 'selected',
-            'appointment_id' => $appointment->id,
-            'selected_option_index' => null,
-        ]);
-
-        $comment->actions()->create([
-            'action' => \App\Enums\SocialCommentActionType::AppointmentSlotHeld,
-            'performed_by' => null,
-            'notes' => 'Horario seleccionado desde calendario web.',
-            'external_response' => [
-                'offer_id' => $offer->id,
-                'appointment_id' => $appointment->id,
-                'selected_datetime' => $start->toIso8601String(),
-            ],
-        ]);
-
-        app(\App\Services\SocialLeadScoringService::class)->scoreWhatsappSlotSelected($comment->refresh());
 
         return $appointment;
     }
