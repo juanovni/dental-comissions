@@ -669,13 +669,30 @@ class WhatsappService
             return null;
         }
 
-        return Clinic::query()
+        $matches = Clinic::query()
+            ->where(function ($query) use ($phoneNumberId): void {
+                $query
+                    ->where('settings->integrations->whatsapp->phone_number_id', $phoneNumberId)
+                    ->orWhere('settings->whatsapp_phone_number_id', $phoneNumberId);
+            })
             ->get()
-            ->first(function (Clinic $clinic) use ($phoneNumberId): bool {
+            ->filter(function (Clinic $clinic) use ($phoneNumberId): bool {
                 $whatsappSettings = $clinic->settings['integrations']['whatsapp'] ?? null;
 
                 return ($whatsappSettings['phone_number_id'] ?? null) === $phoneNumberId
                     || ($clinic->settings['whatsapp_phone_number_id'] ?? null) === $phoneNumberId;
             });
+
+        if ($matches->count() > 1) {
+            Log::error('Phone Number ID de WhatsApp duplicado entre tenants.', [
+                'phone_number_id' => $phoneNumberId,
+                'clinic_ids' => $matches->pluck('id')->values()->all(),
+                'domains' => $matches->pluck('primary_domain')->values()->all(),
+            ]);
+
+            return null;
+        }
+
+        return $matches->first();
     }
 }
