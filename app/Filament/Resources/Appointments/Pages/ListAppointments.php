@@ -208,6 +208,17 @@ class ListAppointments extends ListRecords
     public function openCancelModal(int $appointmentId): void
     {
         $appointment = Appointment::query()->forCurrentTenant()->findOrFail($appointmentId);
+
+        if (! $this->canCancelAppointment($appointment->status)) {
+            Notification::make()
+                ->title('No se puede cancelar esta cita')
+                ->body("La cita esta en estado {$appointment->status->label()}.")
+                ->warning()
+                ->send();
+
+            return;
+        }
+
         $this->cancelAppointmentId = $appointmentId;
         $this->cancelReason = '';
         $this->showCancelModal = true;
@@ -229,6 +240,19 @@ class ListAppointments extends ListRecords
         } catch (\Throwable $e) {
             Notification::make()->title('Error al cancelar')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function canCancelAppointment(AppointmentStatus $status): bool
+    {
+        return in_array($status, [
+            AppointmentStatus::PendingConfirmation,
+            AppointmentStatus::Scheduled,
+            AppointmentStatus::Confirmed,
+            AppointmentStatus::CheckedIn,
+            AppointmentStatus::Preparing,
+            AppointmentStatus::ReadyForDoctor,
+            AppointmentStatus::Rescheduled,
+        ], true);
     }
 
     public function selectAppointment(int $appointmentId): void

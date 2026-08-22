@@ -482,10 +482,11 @@ class AppointmentSlotOfferService
         $doctorId = $option['doctor_id'] ?? $comment?->suggested_doctor_id;
 
         if ($doctorId) {
-            return Professional::find($doctorId);
+            return Professional::query()->forCurrentTenant()->find($doctorId);
         }
 
         return Professional::query()
+            ->forCurrentTenant()
             ->where('role', ProfessionalRole::Doctor->value)
             ->where('is_active', true)
             ->first();

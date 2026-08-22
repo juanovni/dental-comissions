@@ -233,12 +233,15 @@ class AppointmentSlotSearchService
 
     private function doctor(mixed $doctorId): ?Professional
     {
-        return $doctorId ? Professional::find($doctorId) : null;
+        return $doctorId
+            ? Professional::query()->forCurrentTenant()->find($doctorId)
+            : null;
     }
 
     private function fallbackDoctor(): ?Professional
     {
         return Professional::query()
+            ->forCurrentTenant()
             ->where('role', ProfessionalRole::Doctor->value)
             ->where('is_active', true)
             ->first();

@@ -100,6 +100,23 @@ class AppointmentWorkflowServiceTest extends TestCase
         $this->assertStringContainsString('cancelación', $result->notes);
     }
 
+    public function test_cancel_checked_in_appointment_deletes_event(): void
+    {
+        $appointment = Appointment::factory()->create([
+            'status' => AppointmentStatus::CheckedIn,
+            'external_appointment_id' => 'checked-in-event-to-delete',
+        ]);
+
+        $this->calendarService->expects($this->once())
+            ->method('deleteEvent')
+            ->with($appointment);
+
+        $result = $this->makeWorkflow()->cancel($appointment, 'Paciente se retiro');
+
+        $this->assertSame(AppointmentStatus::Cancelled, $result->status);
+        $this->assertNotNull($result->cancelled_at);
+    }
+
     public function test_complete_does_not_sync_to_calendar(): void
     {
         $appointment = Appointment::factory()->create([
