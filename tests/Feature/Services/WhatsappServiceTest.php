@@ -134,6 +134,29 @@ class WhatsappServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_appointment_preference_does_not_repeat_day_and_time_question_when_slots_are_unavailable(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));
+        config(['services.ai.provider' => 'local']);
+
+        Procedure::factory()->create(['name' => 'Limpieza dental', 'is_active' => true]);
+        Professional::factory()->doctor()->create(['name' => 'Dra. Agenda']);
+
+        $result = $this->whatsappService->processIncomingMessage($this->buildPayload(
+            '593985925100',
+            'Necesito una cita para mañana temprano',
+        ));
+
+        $reply = WhatsappMessage::where('direction', 'outgoing')->latest('id')->value('message_body');
+
+        $this->assertNotNull($result);
+        $this->assertStringContainsString('recibimos tu preferencia', mb_strtolower($reply));
+        $this->assertStringContainsString('mañana temprano', $reply);
+        $this->assertStringNotContainsString('Que dia y horario prefieres', $reply);
+
+        Carbon::setTestNow();
+    }
+
     public function test_whatsapp_first_confirmation_reuses_lead_after_appointment_created_status(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-13 09:00:00'));

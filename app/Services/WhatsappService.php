@@ -516,7 +516,7 @@ class WhatsappService
         if ($appointment) {
             $reply = $this->buildAppointmentCreatedReply($appointment);
         } elseif ($this->isAppointmentIntentResponse($agentResponse)) {
-            $reply = 'Sí, con gusto te ayudamos a agendar tu cita. Estoy revisando la disponibilidad real de la clínica; por favor indícanos el día y horario que prefieres para confirmarte opciones.';
+            $reply = $this->buildAppointmentIntentFallbackReply($agentResponse);
         } else {
             $reply = $agentResponse['reply'];
         }
@@ -533,6 +533,36 @@ class WhatsappService
         return in_array($agentResponse['intent'] ?? null, ['appointment_interest', 'ready_to_book'], true)
             || in_array($candidate['intent_type'] ?? null, ['appointment_interest', 'ready_to_book'], true)
             || (bool) ($candidate['wants_appointment'] ?? false);
+    }
+
+    private function buildAppointmentIntentFallbackReply(array $agentResponse): string
+    {
+        $candidate = $agentResponse['appointment_candidate'] ?? [];
+        $date = $candidate['preferred_date_text'] ?? $candidate['preferred_date_parsed'] ?? null;
+        $time = $candidate['preferred_time_text'] ?? $candidate['preferred_time_parsed'] ?? null;
+        $period = $candidate['preferred_period'] ?? null;
+
+        if ($date || $time || $period) {
+            $preference = collect([$date, $time ?: $this->periodLabel($period)])
+                ->filter()
+                ->implode(' ');
+
+            return "Perfecto, recibimos tu preferencia para {$preference}. Estoy revisando la disponibilidad real de la clinica; si ese horario no esta libre, te enviaremos opciones cercanas o un asesor te ayudara a confirmarla.";
+        }
+
+        return 'Sí, con gusto te ayudamos a agendar tu cita. Estoy revisando la disponibilidad real de la clínica; por favor indícanos el día y horario que prefieres para confirmarte opciones.';
+    }
+
+    private function periodLabel(?string $period): ?string
+    {
+        return match ($period) {
+            'early_morning' => 'temprano',
+            'morning' => 'en la mañana',
+            'afternoon' => 'en la tarde',
+            'night' => 'en la noche',
+            'noon' => 'al mediodia',
+            default => null,
+        };
     }
 
     private function scoreAgentResponse(SocialComment $comment, array $agentResponse): void
