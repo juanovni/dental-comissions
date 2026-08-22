@@ -444,6 +444,28 @@
         .appointment-btn:disabled { background: #7bc5bd; cursor: not-allowed; opacity: 1; }
         .appointment-btn:not(:disabled):hover { filter: brightness(.97); transform: translateY(-1px); }
         .appointment-btn.secondary { background: #fafffe; border: 1px solid var(--appt-border); color: var(--appt-text); }
+        .appointment-btn.is-loading { cursor: wait; filter: none; position: relative; transform: none; }
+        .appointment-btn.is-loading .appointment-btn-icon { display: none; }
+        .appointment-btn-spinner {
+            animation: appointment-spin .72s linear infinite;
+            border: 2px solid rgba(255, 255, 255, .38);
+            border-radius: 999px;
+            border-top-color: #ffffff;
+            display: none;
+            flex: 0 0 auto;
+            height: 1rem;
+            width: 1rem;
+        }
+        .appointment-btn.is-loading .appointment-btn-spinner { display: inline-block; }
+        .appointment-submit-hint {
+            color: #47606d;
+            display: none;
+            font-size: .78rem;
+            line-height: 1.35;
+            text-align: center;
+        }
+        .appointment-submit-hint.is-visible { display: block; }
+        @keyframes appointment-spin { to { transform: rotate(360deg); } }
 
         .patient-info-row { display: grid; gap: .4rem; }
         .patient-info-label { color: var(--appt-muted); font-size: .78rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
@@ -821,8 +843,9 @@
                     </span>
                 </div>
                 <button class="appointment-btn" type="button" id="confirm-button" disabled>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
-                    Confirmar cita
+                    <span class="appointment-btn-spinner" aria-hidden="true"></span>
+                    <svg class="appointment-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+                    <span data-submit-label>Confirmar cita</span>
                 </button>
             </form>
 
@@ -866,9 +889,11 @@
 
                     <div class="appointment-modal-actions">
                         <button class="appointment-btn" type="submit" id="modal-submit-button" form="appointment-confirm-form">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
-                            Confirmar cita
+                            <span class="appointment-btn-spinner" aria-hidden="true"></span>
+                            <svg class="appointment-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+                            <span data-submit-label>Confirmar cita</span>
                         </button>
+                        <span class="appointment-submit-hint" id="appointment-submit-hint" role="status" aria-live="polite">Agendando tu cita. Por favor espera unos segundos...</span>
                         <button class="appointment-btn secondary" type="button" data-modal-close>Volver a elegir horario</button>
                     </div>
                 </div>
@@ -892,13 +917,43 @@
             var confirmModal = document.getElementById('appointment-confirm-modal');
             var modalSummary = document.getElementById('modal-selected-summary');
             var modalMeta = document.getElementById('modal-selected-meta');
+            var modalSubmitButton = document.getElementById('modal-submit-button');
+            var submitHint = document.getElementById('appointment-submit-hint');
             var patientName = document.getElementById('patient-name');
             var lastFocusedElement = null;
+            var isSubmitting = false;
+
+            var setSubmittingState = function () {
+                isSubmitting = true;
+
+                [confirmButton, modalSubmitButton].forEach(function (button) {
+                    if (! button) {
+                        return;
+                    }
+
+                    button.disabled = true;
+                    button.classList.add('is-loading');
+                    button.setAttribute('aria-busy', 'true');
+
+                    var label = button.querySelector('[data-submit-label]');
+                    if (label) {
+                        label.textContent = 'Agendando cita...';
+                    }
+                });
+
+                document.querySelectorAll('[data-modal-close], .slot-btn, .appointment-btn.secondary').forEach(function (control) {
+                    control.disabled = true;
+                });
+
+                if (submitHint) {
+                    submitHint.classList.add('is-visible');
+                }
+            };
 
             var openModal = function () {
                 var hasSelection = (datetimeInput && datetimeInput.value) || (optionInput && optionInput.value);
 
-                if (! confirmModal || ! hasSelection) {
+                if (! confirmModal || ! hasSelection || isSubmitting) {
                     return;
                 }
 
@@ -912,7 +967,7 @@
             };
 
             var closeModal = function () {
-                if (! confirmModal) {
+                if (! confirmModal || isSubmitting) {
                     return;
                 }
 
@@ -988,6 +1043,12 @@
             if (confirmForm) {
                 confirmForm.addEventListener('submit', function (event) {
                     if (! patientName || patientName.value.trim() !== '') {
+                        if (isSubmitting) {
+                            event.preventDefault();
+                            return;
+                        }
+
+                        setSubmittingState();
                         return;
                     }
 
