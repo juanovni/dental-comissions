@@ -314,6 +314,9 @@ class AppointmentResource extends Resource
                     AppointmentStatus::PendingConfirmation,
                     AppointmentStatus::Scheduled,
                     AppointmentStatus::Confirmed,
+                    AppointmentStatus::CheckedIn,
+                    AppointmentStatus::Preparing,
+                    AppointmentStatus::ReadyForDoctor,
                     AppointmentStatus::Rescheduled,
                 ], true))
                 ->action(function (Appointment $record, array $data): void {

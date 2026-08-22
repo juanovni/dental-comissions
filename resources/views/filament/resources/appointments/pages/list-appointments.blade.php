@@ -1560,7 +1560,7 @@
 
                                             <div class="appointment-action-separator"></div>
 
-                                            <button class="appointment-action-item danger" type="button" wire:click="openCancelModal({{ $appointment->id }})" @disabled(! in_array($appointment->status, [\App\Enums\AppointmentStatus::PendingConfirmation, \App\Enums\AppointmentStatus::Scheduled, \App\Enums\AppointmentStatus::Confirmed, \App\Enums\AppointmentStatus::Rescheduled], true))>
+                                            <button class="appointment-action-item danger" type="button" wire:click="openCancelModal({{ $appointment->id }})" @disabled(! $this->canCancelAppointment($appointment->status))>
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/></svg>
                                                 <span>Cancelar cita</span>
                                             </button>

@@ -11,6 +11,7 @@ use App\Enums\SocialIdentityStatus;
 use App\Enums\SocialPipelineStage;
 use App\Enums\SocialPlatform;
 use App\Models\Patient;
+use App\Models\Professional;
 use App\Models\Procedure;
 use App\Models\SocialAccount;
 use App\Models\SocialComment;
@@ -246,6 +247,10 @@ class SocialConversionService
         if ($comment) {
             if (! $comment->suggested_procedure_id && $procedureId) {
                 $comment->update(['suggested_procedure_id' => $procedureId]);
+            }
+
+            if ($comment->suggested_doctor_id && ! Professional::query()->forCurrentTenant()->whereKey($comment->suggested_doctor_id)->exists()) {
+                $comment->update(['suggested_doctor_id' => null]);
             }
 
             $message->update(['social_comment_id' => $comment->id]);
