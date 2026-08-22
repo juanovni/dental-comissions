@@ -364,7 +364,7 @@ class MetaSocialService
         $connectedAt = $account->sync_settings['connected_at'] ?? null;
 
         return $connectedAt
-            ? Carbon::parse($connectedAt)->subDays($this->config()['sync_days'])
+            ? Carbon::parse($connectedAt)
             : now()->subDays($this->config()['sync_days']);
     }
 
