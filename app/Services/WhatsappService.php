@@ -44,6 +44,12 @@ class WhatsappService
         try {
             $resolvedClinic = $this->resolveClinicFromPayload($payload);
 
+            if (! $resolvedClinic) {
+                Log::warning('No se pudo resolver clinica para WhatsApp.', [
+                    'phone_number_id' => $payload['metadata']['phone_number_id'] ?? null,
+                ]);
+            }
+
             $callback = function () use ($payload): ?WhatsappMessage {
                 $message = $payload['messages'][0] ?? null;
 
@@ -558,6 +564,9 @@ class WhatsappService
 
         if (empty($cfg['phone_number_id']) || empty($cfg['access_token'])) {
             Log::warning('WhatsApp no configurado. Mensaje no enviado.', [
+                'clinic_id' => app(TenantContext::class)->id(),
+                'phone_number_id_configured' => ! empty($cfg['phone_number_id']),
+                'access_token_configured' => ! empty($cfg['access_token']),
                 'to' => $toPhone,
                 'body' => $body,
             ]);
