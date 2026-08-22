@@ -479,7 +479,12 @@ class SocialConversionService
 
     private function whatsappSocialAccount(): SocialAccount
     {
-        $externalAccountId = 'whatsapp-'.(config('services.whatsapp.phone_number_id') ?: 'business');
+        $clinic = app(TenantContext::class)->get();
+        $tenantWhatsapp = is_array($clinic?->settings['integrations']['whatsapp'] ?? null)
+            ? $clinic->settings['integrations']['whatsapp']
+            : [];
+
+        $externalAccountId = 'whatsapp-'.($tenantWhatsapp['phone_number_id'] ?? config('services.whatsapp.phone_number_id') ?: 'business');
 
         return SocialAccount::firstOrCreate(
             [
