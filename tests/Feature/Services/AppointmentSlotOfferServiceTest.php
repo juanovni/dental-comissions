@@ -17,6 +17,7 @@ use App\Models\SocialIdentity;
 use App\Models\SocialPost;
 use App\Models\WhatsappMessage;
 use App\Services\AppointmentSlotOfferService;
+use App\Services\AppointmentWorkflowService;
 use App\Services\SocialCrmSettingsService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,6 +56,12 @@ class AppointmentSlotOfferServiceTest extends TestCase
         $this->assertSame('pending', $offer->status);
         $this->assertCount(3, $offer->metadata['options']);
         $this->assertStringContainsString('18 de julio', app(AppointmentSlotOfferService::class)->buildOfferReply($offer));
+
+        $this->mock(AppointmentWorkflowService::class, function ($mock) use ($doctor): void {
+            $mock->shouldReceive('syncToCalendar')
+                ->once()
+                ->with(\Mockery::on(fn ($appointment): bool => $appointment->doctor_id === $doctor->id));
+        });
 
         $appointment = app(AppointmentSlotOfferService::class)->confirmFromToken($offer, 2);
 

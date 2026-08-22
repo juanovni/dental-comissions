@@ -265,7 +265,7 @@ class AppointmentSlotOfferService
             $lines[] = $option['index'].'. '.$slot->isoFormat('dddd D [de] MMMM').' - '.$slot->format('g:i A');
         }
 
-        $calendarLink = route('social-appointments.show', ['token' => $offer->token]);
+        $calendarLink = $this->publicOfferUrl($offer);
         $requested = $period ? "para el {$dateText} en la {$period}" : "para {$dateText}";
         $intro = ($offer->metadata['is_default_procedure'] ?? false)
             ? "Como aún no tenemos un procedimiento específico, podemos ayudarte a agendar una {$procedure} para que el doctor revise tu caso."
@@ -275,6 +275,25 @@ class AppointmentSlotOfferService
             "Estas son las opciones disponibles {$requested}:\n\n".
             implode("\n", $lines).
             "\n\nResponde con el número de la opción o abre este enlace para ver más horarios:\n{$calendarLink}";
+    }
+
+    private function publicOfferUrl(AppointmentSlotOffer $offer): string
+    {
+        $offer->loadMissing('clinic');
+
+        $domain = $offer->clinic?->primary_domain;
+
+        if (filled($domain)) {
+            $host = Str::of((string) $domain)
+                ->replaceStart('https://', '')
+                ->replaceStart('http://', '')
+                ->before('/')
+                ->toString();
+
+            return 'https://'.$host.'/social/appointments/'.$offer->token;
+        }
+
+        return route('social-appointments.show', ['token' => $offer->token]);
     }
 
     public function confirmFromToken(

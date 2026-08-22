@@ -17,6 +17,7 @@ use App\Models\SocialCrmSetting;
 use App\Models\SocialIdentity;
 use App\Models\SocialPost;
 use App\Models\WhatsappMessage;
+use App\Services\AppointmentWorkflowService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -157,6 +158,11 @@ class SocialAppointmentLinkControllerTest extends TestCase
             ['index' => 1, 'datetime' => '2026-07-15 10:00:00', 'doctor_id' => $doctor->id],
         ]);
         $offer->update(['whatsapp_message_id' => $incoming->id]);
+        $this->mock(AppointmentWorkflowService::class, function ($mock) use ($doctor): void {
+            $mock->shouldReceive('syncToCalendar')
+                ->once()
+                ->with(\Mockery::on(fn ($appointment): bool => $appointment->doctor_id === $doctor->id));
+        });
 
         $this->post(route('social-appointments.confirm', ['token' => $offer->token]), [
             'option' => 1,
