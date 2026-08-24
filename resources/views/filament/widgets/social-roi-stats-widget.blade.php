@@ -1,5 +1,5 @@
 <x-filament-widgets::widget>
-    <div x-data="statsOverview()" x-init="init()">
+    <div>
         @php
             $periodBadgeLabel = $this->getPeriodBadgeLabel();
             $currentPeriodLabel = $this->getCurrentPeriodLabel();

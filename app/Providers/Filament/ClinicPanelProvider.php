@@ -153,7 +153,7 @@ class ClinicPanelProvider extends PanelProvider
             ->viteTheme('resources/css/app.css')
             ->assets([
                 Js::make('clinic-app')
-                    ->html(Vite::asset('resources/js/app.js'))
+                    ->html($this->viteAssetForCurrentHost('resources/js/app.js'))
                     ->module(),
             ])
             ->resources([
@@ -206,5 +206,19 @@ class ClinicPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ]);
+    }
+
+    private function viteAssetForCurrentHost(string $asset): string
+    {
+        $url = Vite::asset($asset);
+
+        if (Vite::isRunningHot()) {
+            return $url;
+        }
+
+        $path = parse_url($url, PHP_URL_PATH) ?: $url;
+        $query = parse_url($url, PHP_URL_QUERY);
+
+        return $query ? $path.'?'.$query : $path;
     }
 }
