@@ -48,7 +48,14 @@ enum UserPermission: string
 
     // Odontograma
     case OdontogramsView = 'odontograms.view';
-    case OdontogramsUpdate = 'odontograms.update';
+    case OdontogramsCreate = 'odontograms.create';
+    case OdontogramsUpdateDraft = 'odontograms.update_draft';
+    case OdontogramsSign = 'odontograms.sign';
+    case OdontogramsAmend = 'odontograms.amend';
+    case OdontogramsAddFinding = 'odontograms.add_finding';
+    case OdontogramsAddDiagnosis = 'odontograms.add_diagnosis';
+    case OdontogramsPlanTreatment = 'odontograms.plan_treatment';
+    case OdontogramsViewHistory = 'odontograms.view_history';
 
     // Planes de tratamiento
     case TreatmentPlansView = 'treatment_plans.view';
@@ -57,6 +64,7 @@ enum UserPermission: string
     case TreatmentPlansUpdatePricing = 'treatment_plans.update_pricing';
     case TreatmentPlansApprove = 'treatment_plans.approve';
     case TreatmentPlansSend = 'treatment_plans.send';
+    case TreatmentPlansDelete = 'treatment_plans.delete';
 
     // Consentimientos
     case InformedConsentsView = 'informed_consents.view';
@@ -120,7 +128,14 @@ enum UserPermission: string
             self::PerformedProceduresCorrect => 'Corregir procedimientos realizados',
             // Odontograma
             self::OdontogramsView => 'Ver odontogramas',
-            self::OdontogramsUpdate => 'Actualizar odontogramas',
+            self::OdontogramsCreate => 'Crear odontogramas',
+            self::OdontogramsUpdateDraft => 'Actualizar borradores de odontogramas',
+            self::OdontogramsSign => 'Firmar odontogramas',
+            self::OdontogramsAmend => 'Enmendar odontogramas',
+            self::OdontogramsAddFinding => 'Agregar hallazgos al odontograma',
+            self::OdontogramsAddDiagnosis => 'Agregar diagnosticos al odontograma',
+            self::OdontogramsPlanTreatment => 'Planificar tratamientos desde odontograma',
+            self::OdontogramsViewHistory => 'Ver historial de odontogramas',
             // Planes de tratamiento
             self::TreatmentPlansView => 'Ver planes de tratamiento',
             self::TreatmentPlansCreate => 'Crear planes de tratamiento',
@@ -128,6 +143,7 @@ enum UserPermission: string
             self::TreatmentPlansUpdatePricing => 'Actualizar precios de planes',
             self::TreatmentPlansApprove => 'Aprobar planes de tratamiento',
             self::TreatmentPlansSend => 'Enviar planes de tratamiento',
+            self::TreatmentPlansDelete => 'Eliminar planes de tratamiento',
             // Consentimientos
             self::InformedConsentsView => 'Ver consentimientos informados',
             self::InformedConsentsManage => 'Gestionar consentimientos informados',
@@ -188,14 +204,22 @@ enum UserPermission: string
             self::PerformedProceduresCorrect => 'Procedimientos realizados',
             // Odontograma
             self::OdontogramsView,
-            self::OdontogramsUpdate => 'Odontograma',
+            self::OdontogramsCreate,
+            self::OdontogramsUpdateDraft,
+            self::OdontogramsSign,
+            self::OdontogramsAmend,
+            self::OdontogramsAddFinding,
+            self::OdontogramsAddDiagnosis,
+            self::OdontogramsPlanTreatment,
+            self::OdontogramsViewHistory => 'Odontograma',
             // Planes de tratamiento
             self::TreatmentPlansView,
             self::TreatmentPlansCreate,
             self::TreatmentPlansUpdateClinical,
             self::TreatmentPlansUpdatePricing,
             self::TreatmentPlansApprove,
-            self::TreatmentPlansSend => 'Planes de tratamiento',
+            self::TreatmentPlansSend,
+            self::TreatmentPlansDelete => 'Planes de tratamiento',
             // Consentimientos
             self::InformedConsentsView,
             self::InformedConsentsManage => 'Consentimientos informados',
