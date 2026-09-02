@@ -195,6 +195,14 @@ La lista se mantiene en borrador hasta que un usuario autorizado la publique. Lo
 - Plantillas clinicas.
 - Politicas de firma y enmienda.
 - Consentimientos por procedimiento cuando correspondan.
+- Vigencia de revision del perfil medico y niveles de bloqueo permitidos.
+- Version publicada de reglas clinicas predeterminadas.
+- Politicas de interconsulta y autorizacion externa.
+- Formulario minimo y permisos para urgencias o walk-ins.
+- Tipos, evaluaciones de riesgo y politicas versionadas de recall.
+- Productos criticos con trazabilidad obligatoria y etapas de laboratorio aplicables.
+
+Las reglas clinicas sugeridas por un paquete regional permanecen en borrador hasta revision y publicacion por un responsable autorizado. Una actualizacion del paquete no reemplaza automaticamente reglas ya publicadas.
 
 ### 7. Operacion financiera inicial
 
@@ -226,10 +234,12 @@ La aplicacion debe evaluar capacidades, no un unico indicador global de configur
 | Acceder al panel | Tenant activo y usuario tenant activo |
 | Registrar pacientes | Permiso y formularios basicos definidos |
 | Usar agenda | Profesional, horario y procedimiento agendable |
+| Agendar item de tratamiento | Item aceptado cuando aplique y evaluacion de preparacion para agenda |
 | Registrar clinica | Doctor activo, permisos y configuracion clinica basica |
 | Crear plan | Catalogo clinico publicado |
 | Crear presupuesto | Plan, moneda y lista de precios publicada |
-| Ejecutar tratamiento | Preparacion clinica y consentimientos aplicables |
+| Ejecutar tratamiento | Perfil revisado, bloqueos resueltos, consentimientos, secuencia, autorizaciones, laboratorio y dispositivos aplicables |
+| Atender urgencia o walk-in | Profesional activo, formulario minimo de seguridad, consentimiento aplicable y permiso de encuentro urgente |
 | Registrar pago interno | Modulo de pagos habilitado y metodo de pago valido |
 | Referenciar factura externa | Modo `external` y datos del documento externo |
 | Simular factura | Modo `simulation` y reglas de simulacion versionadas |
@@ -258,6 +268,8 @@ Crear tenant
 -> actualizar odontograma
 -> programar seguimiento
 ```
+
+El escenario debe incluir al menos un bloqueo clinico resuelto de forma trazable, multiples consentimientos cuando correspondan y un recall calculado desde riesgo. Se valida ademas un encuentro urgente sin plan previo y, para clinicas que los habiliten, un caso de laboratorio o dispositivo critico.
 
 Opcionalmente puede incluir:
 
@@ -298,6 +310,9 @@ OdonCRM no marca el documento externo como validado por el SRI si no realizo esa
 8. El servicio marca el tenant `active` sin representar el progreso funcional del onboarding.
 9. El dominio no posee un estado y mecanismo de reintento independientes.
 10. No existen listas de precios versionadas ni modos financieros activos.
+11. No existen perfiles medicos estructurados ni un evaluador unico de preparacion clinica.
+12. No existen consentimientos clinicos por item, interconsultas externas ni flujo urgente estructurado.
+13. No existen politicas de recall por riesgo, readiness de laboratorio ni trazabilidad de dispositivos criticos.
 
 ## Orden De Implementacion
 
@@ -309,8 +324,10 @@ OdonCRM no marca el documento externo como validado por el SRI si no realizo esa
 6. Crear procedimientos tenant reales desde un paquete regional revisado.
 7. Crear y publicar listas de precios versionadas.
 8. Validar el escenario clinico-comercial completo sin SRI.
-9. Agregar pagos internos y referencia de facturacion externa cuando entren en alcance.
-10. Implementar conectores SRI de prueba y produccion en una fase independiente.
+9. Validar el camino urgente, bloqueos, consentimientos, autorizaciones y recall.
+10. Habilitar laboratorio basico y dispositivos criticos solo para clinicas que los requieran.
+11. Agregar pagos internos y referencia de facturacion externa cuando entren en alcance.
+12. Implementar conectores SRI de prueba y produccion en una fase independiente.
 
 ## Criterios De Aceptacion
 

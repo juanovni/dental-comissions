@@ -130,6 +130,9 @@ Responsabilidades:
 - Cuestionarios versionados y procedencia de cada respuesta.
 - Revision profesional y reconocimiento de alertas.
 - Signos vitales cuando la practica los requiera.
+- Versiones inmutables del perfil medico y fecha de revision.
+- Alertas informativas, bloqueos condicionales y bloqueos duros.
+- Evidencia utilizada para decidir si se puede agendar o ejecutar.
 
 Las notas operativas actuales no sustituyen este modulo.
 
@@ -175,6 +178,7 @@ Responsabilidades:
 - PDF o representacion imprimible.
 - Estados comerciales y clinicos separados.
 - Seguimiento de items aceptados sin cita.
+- Reglas predeterminadas de secuencia versionadas y excepciones auditadas.
 
 Es el centro de la propuesta actual.
 
@@ -201,6 +205,8 @@ Responsabilidades:
 - Profesional, fecha, pieza, superficie y cantidad.
 - Firma y enmiendas.
 - Actualizacion trazable del plan y odontograma.
+- Atencion urgente o walk-in sin cita ni plan artificial.
+- Registro de dispositivos y lotes criticos usados.
 
 Una cita completada no equivale automaticamente a un procedimiento realizado.
 
@@ -248,7 +254,7 @@ Responsabilidades:
 
 - Plantillas versionadas.
 - Variables del paciente y tratamiento.
-- Consentimiento asociado a revision o procedimiento.
+- Cero, uno o varios consentimientos asociados al item estable y a una version exacta de plantilla.
 - Firma, fecha y evidencia.
 - Revocacion o nueva version.
 - Documentos clinicos configurables.
@@ -268,7 +274,8 @@ Responsabilidades:
 
 - Controles postoperatorios.
 - Tareas clinicas pendientes.
-- Recall preventivo configurable.
+- Recall preventivo estratificado por tipo de cuidado y riesgo.
+- Politicas versionadas, fecha calculada, ajuste profesional y motivo.
 - Mantenimiento periodontal.
 - Cola de pacientes vencidos o proximos.
 - Historial de contacto separado del seguimiento comercial.
@@ -280,12 +287,38 @@ Responsabilidades:
 - Referido desde y hacia otro profesional.
 - Motivo, estado y documentos.
 - Autorizacion o evaluacion medica requerida.
-- Resultado recibido.
+- Respuesta recibida y decision profesional diferenciadas.
+- Alcance, condiciones, vigencia y documento privado.
 - Impacto sobre la preparacion del tratamiento.
+
+Recepcion puede gestionar el estado, pero solo un profesional autorizado interpreta la respuesta y libera el bloqueo.
+
+### 20. Laboratorio Clinico Basico
+
+Responsabilidades iniciales cuando el procedimiento depende de un laboratorio:
+
+- Orden y especificaciones vinculadas al item del plan.
+- Envio, fecha prometida, recepcion y control de calidad.
+- Ajuste o remake sin sobrescribir eventos anteriores.
+- Bloqueo de ejecucion hasta alcanzar la etapa requerida.
+- Documentos clinicos privados.
+
+Costos, portales de proveedor, logistica y automatizacion avanzada pertenecen a evolucion independiente.
+
+### 21. Trazabilidad Clinica De Dispositivos Criticos
+
+Responsabilidades iniciales:
+
+- Producto, fabricante, lote, serial o UDI y vencimiento cuando aplique.
+- Vinculacion con paciente, sitio y procedimiento realizado.
+- Validacion de expiracion, cuarentena o recall.
+- Busqueda de pacientes afectados.
+
+No equivale a implementar inventario general. Se limita a implantes, injertos y productos configurados como clinicamente trazables.
 
 ## Modulos De Evolucion Independiente
 
-### 20. Pagos, Abonos Y Saldos
+### 22. Pagos, Abonos Y Saldos
 
 Responsabilidades futuras:
 
@@ -299,7 +332,7 @@ Responsabilidades futuras:
 
 Debe construirse despues de estabilizar revisiones, aceptacion y procedimientos realizados.
 
-### 21. Caja, Gastos Y Bancos
+### 23. Caja, Gastos Y Bancos
 
 Es un dominio contable separado:
 
@@ -312,32 +345,29 @@ Es un dominio contable separado:
 
 No es requisito para que funcionen odontograma, plan y recuperacion.
 
-### 22. Laboratorios
+### 24. Laboratorios Avanzados
 
-Responsabilidades futuras:
+Responsabilidades futuras sobre el flujo clinico basico:
 
-- Ordenes de laboratorio.
-- Proveedor.
-- Pieza o trabajo solicitado.
-- Fechas de envio y entrega.
-- Estado.
 - Costos y documentos.
-- Vinculacion con plan, caso y cita.
+- Portal o integracion con proveedores.
+- Logistica, tracking y capacidad.
+- Automatizacion de comunicaciones y conciliacion.
 
-### 23. Inventario
+### 25. Inventario General
 
 Responsabilidades futuras:
 
 - Productos e insumos.
 - Movimientos.
-- Lotes y vencimientos.
+- Lotes y vencimientos de inventario general.
 - Consumo por procedimiento.
 - Alertas de stock.
 - Proveedores.
 
-No debe bloquear el nucleo clinico inicial.
+No debe bloquear el nucleo clinico inicial. La trazabilidad por paciente de dispositivos criticos pertenece al baseline clinico anterior.
 
-### 24. Recursos Fisicos
+### 26. Recursos Fisicos
 
 El control de sillones o boxes solo debe implementarse si la operacion real lo necesita.
 
@@ -372,20 +402,22 @@ No se contempla gestion de sucursales.
 ### Bloque 2: Registro clinico
 
 1. Antecedentes y alertas.
-2. Evaluacion y diagnosticos.
-3. Encuentros y firma.
-4. Odontograma y periodontograma.
-5. Documentos y rayos X.
-6. Procedimientos realizados.
-7. Consentimientos clinicos.
+2. Interconsultas y documentos externos a nivel de paciente.
+3. Evaluacion y diagnosticos.
+4. Encuentros, urgencias y firma.
+5. Odontograma y periodontograma.
+6. Documentos y rayos X.
+7. Procedimientos realizados y dispositivos criticos.
 
 ### Bloque 3: Planificacion
 
 1. Planes e items.
 2. Revisiones y presupuesto.
 3. Aceptacion parcial.
-4. Consentimientos.
-5. Recetas.
+4. Reglas predeterminadas de secuencia.
+5. Requisitos de autorizacion vinculados a items.
+6. Consentimientos clinicos por item.
+7. Recetas.
 
 ### Bloque 4: Agenda integrada
 
@@ -396,6 +428,7 @@ No se contempla gestion de sucursales.
 5. Duracion por procedimiento.
 6. Reserva atomica.
 7. Actualizacion clinica al finalizar.
+8. Readiness de laboratorio cuando aplique.
 
 ### Bloque 5: Especialidades
 
@@ -408,7 +441,7 @@ No se contempla gestion de sucursales.
 ### Bloque 6: Seguimiento y recuperacion
 
 1. Seguimiento clinico y controles.
-2. Recall preventivo.
+2. Recall preventivo estratificado por riesgo.
 3. Planes sin respuesta.
 4. Items aceptados sin cita.
 5. Brechas de agenda.
@@ -419,8 +452,8 @@ No se contempla gestion de sucursales.
 
 1. Pagos, abonos y saldos.
 2. Caja y gastos.
-3. Laboratorios.
-4. Inventario.
+3. Laboratorios avanzados.
+4. Inventario general.
 5. Recursos fisicos si aplican.
 
 ## Dependencias
@@ -433,10 +466,14 @@ flowchart TD
     B --> E[Ficha clinica]
     C --> E
     E --> F[Odontograma y diagnosticos]
+    E --> N[Encuentro urgente]
+    N --> I
     D --> G[Plan y presupuesto]
     F --> G
     G --> H[Agenda integrada]
     H --> I[Encuentros y procedimientos realizados]
+    G --> O[Laboratorio clinico basico]
+    O --> H
     E --> I
     I --> J[Casos especializados]
     G --> K[Seguimiento y recuperacion]
@@ -462,4 +499,4 @@ Los modulos que convierten a OdonCRM en sistema odontologico son:
 9. Agenda integrada al tratamiento.
 10. Seguimiento y recuperacion inteligente.
 
-Pagos, cajas, inventario y laboratorios son valiosos, pero no deben definir ni retrasar la arquitectura clinica central.
+Pagos, cajas, inventario general y automatizacion avanzada de laboratorios son valiosos, pero no deben definir ni retrasar la arquitectura clinica central. El camino urgente, el readiness basico de laboratorio y la trazabilidad de dispositivos criticos si forman parte de esa arquitectura.

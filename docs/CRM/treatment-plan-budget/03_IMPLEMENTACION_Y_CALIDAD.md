@@ -51,6 +51,13 @@ La secuencia prioriza primero consistencia clinica, seguridad y trazabilidad; de
 3. Implementar firma y enmienda sin sobrescritura de registros clinicos.
 4. Definir almacenamiento privado para documentos e imagenes.
 5. Separar permisos clinicos de permisos comerciales.
+6. Versionar antecedentes, alergias, medicamentos y condiciones con revision profesional.
+7. Implementar niveles de alerta y un evaluador unico para agendamiento y ejecucion.
+8. Modelar multiples consentimientos por item e interconsultas externas con vigencia.
+9. Definir el conjunto minimo seguro para urgencias y walk-ins.
+10. Versionar reglas predeterminadas de secuencia y sus excepciones.
+11. Incorporar readiness basico de laboratorio y trazabilidad de dispositivos criticos.
+12. Definir evaluaciones de riesgo y politicas versionadas de recall.
 
 ## Capacidades De Implementacion
 
@@ -136,6 +143,23 @@ Resultado esperado:
 Resultado esperado:
 
 > Los tratamientos simples se registran sin formularios innecesarios y los tratamientos especializados conservan un expediente longitudinal propio.
+
+### Seguridad Clinica Transversal
+
+Esta capacidad no es una fase aislada y debe atravesar fundacion, agenda y ejecucion:
+
+- Perfil medico estructurado, versionado y revisado.
+- Alertas `advisory`, `conditional_hold` y `hard_stop`.
+- Evaluaciones separadas para agendar y ejecutar mediante un servicio unico.
+- Consentimientos multiples por item y autorizaciones externas verificadas.
+- Flujo urgente abreviado sin plan artificial.
+- Reglas de secuencia predeterminadas con override profesional auditado.
+- Etapas de laboratorio y dispositivos criticos como fuentes de preparacion.
+- Recall estratificado por riesgo.
+
+Resultado esperado:
+
+> Ningun canal puede saltarse un bloqueo clinico y una urgencia puede atenderse sin forzar datos falsos ni omitir controles minimos.
 
 ### Capacidad 7: Seguimiento operativo
 
@@ -238,6 +262,15 @@ Reglas de acceso:
 - `ClinicalCaseService`
 - `ClinicalEncounterService`
 - `PerformedProcedureService`
+- `ClinicalReadinessService`
+- `MedicalProfileReviewService`
+- `ExternalMedicalConsultationService`
+- `InformedConsentService`
+- `UrgentCareService`
+- `ClinicalSequenceRuleService`
+- `DentalLaboratoryCaseService`
+- `TraceableMaterialService`
+- `ClinicalRecallService`
 - `ScheduleGapService`
 - `RecoveryCandidateService`
 - `RecoveryOfferService`
@@ -281,6 +314,9 @@ Las transiciones, calculos y aceptaciones no deben residir directamente en Pages
 - Elegibilidad de items.
 - Puntaje de recuperacion.
 - Reglas de vigencia.
+- Resolucion de alertas y bloqueos por nivel.
+- Aplicacion de reglas de secuencia versionadas.
+- Calculo de recall por riesgo y politica.
 
 ### Feature
 
@@ -294,6 +330,11 @@ Las transiciones, calculos y aceptaciones no deben residir directamente en Pages
 - Firma y enmienda de encuentros.
 - Registro de procedimientos realizados.
 - Permisos por rol.
+- Multiples consentimientos aplicables al mismo item.
+- Autorizacion externa condicionada, vencida o insuficiente.
+- Encuentro urgente sin cita ni plan previo.
+- Bloqueo y reapertura por laboratorio o remake.
+- Registro obligatorio de lote para un dispositivo critico.
 
 ### Multitenancy
 
@@ -311,6 +352,8 @@ Las transiciones, calculos y aceptaciones no deben residir directamente en Pages
 - Edicion concurrente de borrador.
 - Revision emitida mientras otro usuario edita.
 - Dos respuestas sobre una oferta de recuperacion.
+- Cambio de readiness o laboratorio durante una reserva.
+- Firma y revocacion simultanea de consentimiento.
 
 ### Seguridad
 
@@ -319,6 +362,9 @@ Las transiciones, calculos y aceptaciones no deben residir directamente en Pages
 - CSRF y firma de webhooks.
 - Redaccion de tokens en logs.
 - Acceso a diagnostico sin permiso.
+- Override clinico sin permiso o sin motivo.
+- Acceso `break_glass` sin auditoria.
+- Acceso no autorizado a documentos de interconsulta.
 
 ### End-to-end
 
@@ -335,6 +381,8 @@ Consulta
 -> procedimiento realizado
 -> avance
 ```
+
+Tambien deben existir escenarios end-to-end para una urgencia sin cita previa y para un tratamiento condicionado por laboratorio, consentimiento y dispositivo critico.
 
 ## Observabilidad
 

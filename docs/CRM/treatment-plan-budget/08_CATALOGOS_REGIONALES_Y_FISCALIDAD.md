@@ -300,6 +300,8 @@ Requieren validacion contable individual:
 
 El sistema debe permitir facturas mixtas con clasificaciones distintas por linea.
 
+La clasificacion fiscal es independiente de la seguridad clinica. Una linea facturable de laboratorio o material no sustituye el caso de laboratorio, el readiness ni la trazabilidad del producto utilizado. Del mismo modo, un caso de laboratorio puede existir sin una linea facturable separada.
+
 ### Hecho generador
 
 La configuracion fiscal debe distinguir:

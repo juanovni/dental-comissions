@@ -322,6 +322,8 @@ No se debe borrar el hallazgo anterior. Se marca resuelto y se registra la nueva
 - Ortodoncia utiliza el odontograma como registro base y lo complementa con su caso longitudinal.
 - Un procedimiento realizado puede actualizar odontograma y caso dentro de la misma transaccion clinica.
 
+Los implantes, protesis u otros dispositivos pueden proyectar una condicion visible en el odontograma. La identidad del producto, lote, serial y estado del laboratorio permanecen en las entidades del procedimiento realizado y laboratorio; no se duplican en el odontograma.
+
 ## Periodontograma
 
 El periodontograma es un modulo separado porque necesita mediciones por sitio:

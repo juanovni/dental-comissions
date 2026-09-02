@@ -45,6 +45,8 @@ El sistema recomienda acciones y candidatos. El equipo conserva la decision fina
 13. La aceptacion economica no equivale al consentimiento informado clinico.
 14. Ningun procedimiento debe ejecutarse sin revisar antecedentes, alertas, requisitos y consentimientos aplicables.
 15. El cierre comercial, el cierre administrativo y la resolucion clinica son conceptos diferentes.
+16. Urgencia no significa ausencia de controles minimos de identidad, seguridad, consentimiento y registro clinico.
+17. Los bloqueos clinicos deben distinguir advertencias, bloqueos anulables y bloqueos duros.
 
 ## Separacion De Dominios
 
@@ -127,7 +129,11 @@ Un item simple puede completarse con uno o varios procedimientos realizados sin 
 - Registrar motivo de consulta, examen, hallazgos y diagnosticos estructurados.
 - Relacionar hallazgos, evidencia, diagnosticos e items del plan.
 - Exigir revision profesional antes de ejecutar o prescribir.
-- Permitir bloqueos y excepciones auditadas.
+- Evaluar contraindicaciones e interacciones relevantes para el procedimiento planificado.
+- Distinguir alerta informativa, bloqueo condicional y bloqueo duro.
+- Permitir excepciones solamente sobre bloqueos anulables, por un profesional autorizado y con motivo auditable.
+- Registrar interconsultas, respuestas y decisiones de autorizacion medica externa con alcance y vigencia.
+- Revalidar la seguridad clinica al agendar y antes de ejecutar.
 
 ### Experiencia del paciente
 
@@ -140,6 +146,8 @@ Un item simple puede completarse con uno o varios procedimientos realizados sin 
 - Permitir solicitar agendamiento.
 - Generar representacion imprimible o PDF de la revision emitida.
 - Separar aceptacion economica, autorizacion de tratamiento y consentimiento informado.
+- Permitir cero, uno o varios consentimientos informados por item segun procedimiento, tecnica y riesgo.
+- Conservar la version exacta, alcance, firmante, explicacion profesional y evidencia de cada consentimiento.
 - Registrar representante, tutor o responsable cuando corresponda.
 
 ### Agenda y ejecucion
@@ -153,6 +161,8 @@ Un item simple puede completarse con uno o varios procedimientos realizados sin 
 - Detectar items aceptados sin cita.
 - Crear citas planificadas sin fecha para agrupar items, duracion, proveedor y secuencia.
 - Verificar preparacion clinica antes de agendar y nuevamente antes de ejecutar.
+- Aplicar dependencias clinicas predeterminadas versionadas sin sobrescribir la decision profesional del plan individual.
+- Bloquear la ejecucion cuando falte una autorizacion, consentimiento, etapa de laboratorio o dispositivo critico requerido.
 
 ### Casos y ejecucion clinica
 
@@ -163,6 +173,8 @@ Un item simple puede completarse con uno o varios procedimientos realizados sin 
 - Mantener detalles propios de ortodoncia, endodoncia y periodoncia.
 - Conservar fotografias, radiografias, documentos y controles relacionados.
 - Evitar formularios especializados innecesarios para procedimientos simples.
+- Permitir un encuentro urgente o walk-in sin plan ni cita previos, conservando controles minimos de seguridad y seguimiento posterior.
+- Registrar los lotes o seriales de implantes, injertos y otros productos configurados como clinicamente trazables.
 
 ### Seguimiento
 
@@ -174,7 +186,7 @@ Un item simple puede completarse con uno o varios procedimientos realizados sin 
 - Detener contactos ante rechazo definitivo, opt-out o tratamiento completado.
 - Separar seguimiento comercial, seguimiento clinico y recall preventivo.
 - Registrar controles postoperatorios, complicaciones y escalamiento.
-- Mantener recalls configurables por paciente y tipo de cuidado.
+- Mantener recalls por tipo de cuidado y riesgo clinico, con intervalo sugerido, confirmacion profesional y trazabilidad de ajustes.
 
 ### Recuperacion inteligente
 
@@ -200,14 +212,19 @@ Incluye:
 6. Estados de ciclo de vida, comerciales y clinicos separados.
 7. Precio comercial, descuentos, impuestos y totales.
 8. Aceptacion total o parcial separada del consentimiento informado.
-9. Consentimientos versionados aplicables al tratamiento.
+9. Uno o varios consentimientos versionados aplicables a cada item del tratamiento.
 10. Enlace publico seguro con verificacion proporcional a la informacion expuesta.
 11. Seguimiento manual comercial y clinico estructurado.
 12. Citas planificadas, multiples citas futuras y validacion de preparacion clinica.
 13. Auditoria, permisos granulares y storage clinico privado.
 14. Encuentros firmados, enmiendas y procedimientos realizados.
-15. Seguimiento postoperatorio y recall preventivo.
-16. Fundacion extensible para casos clinicos especializados.
+15. Seguimiento postoperatorio y recall preventivo estratificado por riesgo.
+16. Interconsultas y autorizaciones medicas externas con bloqueo por alcance y vigencia.
+17. Flujo seguro abreviado para urgencias y pacientes sin cita.
+18. Reglas clinicas predeterminadas versionadas y excepciones auditadas.
+19. Seguimiento basico de laboratorio cuando condicione la preparacion del tratamiento.
+20. Trazabilidad por paciente de implantes, injertos y dispositivos criticos configurados.
+21. Fundacion extensible para casos clinicos especializados.
 
 Se integraran en entregas posteriores, sobre el mismo modelo robusto:
 
@@ -217,6 +234,8 @@ Se integraran en entregas posteriores, sobre el mismo modelo robusto:
 - Recuperacion inteligente y ofertas automaticas de espacios.
 - Pity Voice para recuperacion saliente.
 - Modelos predictivos.
+- Inventario general, compras, valoracion y control de todos los consumibles.
+- Portales, logistica, costos y automatizacion avanzada de laboratorios.
 
 No se contempla un modulo de sucursales.
 

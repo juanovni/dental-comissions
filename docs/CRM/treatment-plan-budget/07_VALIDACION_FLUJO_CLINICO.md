@@ -38,6 +38,11 @@ Antes de permitir ejecucion clinica, el sistema debe cubrir:
 12. Instrucciones, recetas y seguimiento postoperatorio cuando correspondan.
 13. Recall preventivo independiente del seguimiento comercial.
 14. Cierre clinico que preserve necesidades rechazadas, diferidas o referidas.
+15. Contraindicaciones y bloqueos por nivel, con override profesional limitado y auditable.
+16. Consentimientos multiples por item y autorizaciones externas vigentes cuando correspondan.
+17. Camino seguro de urgencia o walk-in sin exigir un plan previo.
+18. Trazabilidad por paciente de dispositivos criticos y readiness de laboratorio cuando apliquen.
+19. Recall estratificado por riesgo y politica versionada.
 
 ## Flujo Diario Objetivo
 
@@ -65,7 +70,13 @@ flowchart TD
     S --> T[Actualizar plan, caso y odontograma]
     T --> U[Control clinico o recall]
     T --> V[Seguimiento comercial de necesidades pendientes]
+    B --> W{Urgencia o walk-in}
+    W -->|Si| X[Tamizaje agudo y consentimiento aplicable]
+    X --> Y[Encuentro urgente]
+    Y --> S
 ```
+
+La ruta urgente permite atender antes de completar plan y presupuesto, pero no omite identidad razonablemente disponible, alergias, medicamentos, alertas activas, senales de alarma, consentimiento ni registro del encuentro.
 
 ## Flujo De Recepcion
 
@@ -96,6 +107,7 @@ El doctor necesita:
 8. Documentar complicaciones, instrucciones y seguimiento.
 9. Firmar el encuentro.
 10. Corregir mediante enmienda sin sobrescribir el original.
+11. Resolver o justificar bloqueos condicionales sin poder anular bloqueos duros por conveniencia operativa.
 
 ## Flujo De Planificacion
 
@@ -108,6 +120,8 @@ El plan requiere:
 - Bloqueos por resultado, referido o autorizacion.
 - Estado de preparacion independiente de la aceptacion.
 - Citas planificadas antes de asignar fecha.
+- Reglas predeterminadas versionadas que generan recomendaciones sin sobrescribir el criterio profesional.
+- Etapas de laboratorio, autorizaciones y dispositivos criticos cuando apliquen.
 
 Ejemplo:
 
@@ -135,7 +149,7 @@ Paciente o representante confirma que recibio explicacion de procedimiento,
 riesgos, beneficios, alternativas y opcion de no tratarse.
 ```
 
-Uno no sustituye al otro. Un item puede estar comercialmente aceptado y permanecer bloqueado por falta de consentimiento, historia actualizada, resultado diagnostico, referido o autorizacion.
+Uno no sustituye al otro. Un item puede requerir varios consentimientos independientes y permanecer bloqueado por falta de alguno, historia actualizada, resultado diagnostico, referido, autorizacion o etapa de laboratorio.
 
 ## Ejecucion Y Resultados
 
@@ -151,7 +165,7 @@ Los procedimientos realizados deben soportar:
 - `externally_completed`
 - `voided`
 
-Cada resultado registra profesional, participantes, cantidad, sesion, motivo, complicaciones, fecha, firma y cadena de correccion. El avance del plan se calcula con reglas deterministas y no solamente por cerrar una cita.
+Cada resultado registra profesional, participantes, cantidad, sesion, motivo, complicaciones y fecha. Queda atestado por la firma del encuentro que lo contiene y conserva su cadena de correccion. El avance del plan se calcula con reglas deterministas y no solamente por cerrar una cita.
 
 ## Seguimiento Clinico Y Recall
 
@@ -168,9 +182,11 @@ Se deben separar tres colas:
 ### Recall preventivo
 
 - Tipo de recall.
-- Intervalo general o individual.
+- Evaluacion vigente de riesgo por dominio.
+- Version de politica e intervalo sugerido.
 - Ultima realizacion.
 - Fecha calculada y fecha ajustada.
+- Motivo y profesional responsable del ajuste.
 - Estado, notas y contactos.
 - Proxima cita relacionada.
 
@@ -199,18 +215,22 @@ Un plan no debe mostrarse como clinicamente completo si conserva diagnosticos ac
 | Brecha | Prioridad | Decision recomendada |
 |---|---|---|
 | Antecedentes, alergias y medicamentos | Obligatoria | Incorporar antes de ejecucion clinica |
+| Contraindicaciones y bloqueos por nivel | Obligatoria | Evaluar al agendar y ejecutar mediante un servicio unico |
 | Examen y diagnostico estructurado | Obligatoria | Crear entidades propias |
-| Consentimiento informado | Obligatoria | Separar de aceptacion comercial |
-| Fases, dependencias y alternativas | Obligatoria | Incorporar al plan |
+| Consentimiento informado por item | Obligatoria | Permitir multiples requisitos y versiones exactas |
+| Urgencias y walk-ins | Obligatoria | Crear flujo abreviado con controles minimos de seguridad |
+| Fases, dependencias y alternativas | Obligatoria | Incorporar reglas predeterminadas versionadas y overrides auditados |
 | Preparacion clinica | Obligatoria | Crear reglas y bloqueos auditados |
 | Firma y enmiendas | Obligatoria | Inmutabilidad y versiones firmadas |
 | Seguimiento postoperatorio | Obligatoria | Separar de CRM comercial |
-| Recall preventivo | Obligatoria | Crear dominio independiente |
+| Recall preventivo | Obligatoria | Crear dominio independiente estratificado por riesgo |
 | Responsable o tutor | Obligatoria cuando aplique | Modelar autoridad y firma |
-| Referidos y autorizaciones | Requerida | Flujo basico antes de automatizacion |
+| Referidos y autorizaciones externas | Requerida | Registrar documento, decision, alcance, vigencia y bloqueo |
 | Cita planificada | Requerida | Separar aceptado de listo y agendado |
+| Laboratorio clinico basico | Requerida cuando aplique | Bloquear prueba o entrega hasta recepcion y control de calidad |
+| Lotes de dispositivos criticos | Requerida cuando aplique | Vincular producto y lote con paciente y procedimiento |
 | Finanzas completas | Posterior | No bloquear nucleo clinico |
-| Inventario y laboratorios avanzados | Posterior | Integrar cuando exista demanda |
+| Inventario y laboratorios avanzados | Posterior | Diferir compras, stock general, costos, portales y automatizacion |
 | Recuperacion predictiva | Posterior | Iniciar con filtros explicables |
 
 ## Comparacion Con Sistemas
@@ -264,8 +284,8 @@ Se deben conservar:
 ## Capacidades Que Pueden Esperar
 
 - Contabilidad general y conciliacion bancaria.
-- Inventario avanzado.
-- Automatizacion completa de laboratorios.
+- Inventario avanzado, sin incluir trazabilidad clinica de dispositivos criticos.
+- Automatizacion completa de laboratorios, sin excluir el readiness basico.
 - Integracion directa con sensores e imagenes DICOM.
 - Prescripcion electronica conectada a farmacias.
 - Procesamiento de seguros si no aplica al mercado inicial.
@@ -287,6 +307,13 @@ Se deben conservar:
 - Curve Dental Treatment Plans: `https://www.curvedental.com/treatment-plan`
 - CareStack Treatment Plan Board: `https://carestack.zendesk.com/hc/en-us/articles/32950569925652-Explore-the-Treatment-Plan-Board-Feature`
 - Dentrix Ascend Clinical Charting: `https://www.dentrixascend.com/dental-solutions/charting-imaging-and-clinical-ai/streamline-clinical-charting/`
+- ADA Medical/Dental Health History: `https://www.ada.org/resources/practice/practice-management/medical-dental-health-history`
+- AAPD Informed Consent: `https://www.aapd.org/research/oral-health-policies--recommendations/informed-consent/`
+- SDCEP Management of Acute Dental Problems: `https://www.sdcep.org.uk/published-guidance/acute-dental-problems/`
+- SDCEP Anticoagulants and Antiplatelets: `https://www.sdcep.org.uk/published-guidance/anticoagulants-and-antiplatelets/`
+- NICE Dental Recall: `https://www.nice.org.uk/guidance/cg19/chapter/Recommendations`
+- FDA Unique Device Identification: `https://www.fda.gov/medical-devices/unique-device-identification-system-udi-system/udi-basics`
+- Ecuador ARCSA, documentos vigentes: `https://www.controlsanitario.gob.ec/documentos-vigentes/`
 
 ## Validaciones Pendientes
 

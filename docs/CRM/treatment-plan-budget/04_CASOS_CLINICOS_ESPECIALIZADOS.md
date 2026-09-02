@@ -20,7 +20,7 @@ Un paciente puede tener varios planes y varios casos a lo largo del tiempo. Un p
 
 ## Niveles De Registro
 
-### Nivel 1: procedimiento simple
+### Nivel 1: procedimiento simple planificado
 
 Ejemplos:
 
@@ -39,6 +39,8 @@ Registro requerido:
 - Profesional, fecha, resultado y notas necesarias.
 
 No requiere un caso especializado por defecto.
+
+La atencion urgente puede crear encuentro y procedimiento realizado sin plan ni cita previos, conforme al flujo abreviado de `02_FLUJOS_Y_REGLAS.md`. Si quedan necesidades definitivas, se genera el plan posterior sin alterar el registro urgente.
 
 ### Nivel 2: tratamiento especializado o multisesion
 
@@ -231,6 +233,15 @@ Modelo sugerido:
 - `periodontal_exams`
 - `periodontal_measurements`
 - `clinical_documents`
+
+## Dependencias De Laboratorio Y Dispositivos
+
+Los casos de ortodoncia, protesis, rehabilitacion e implantes pueden relacionarse con casos de laboratorio y dispositivos trazables. El caso especializado conserva el contexto longitudinal; no debe duplicar estados de laboratorio, lotes ni seriales.
+
+- El readiness de laboratorio se resuelve desde `dental_laboratory_cases` y sus eventos.
+- El dispositivo realmente usado se registra en `performed_procedure_material_usages`.
+- Un ajuste, remake, retiro o reemplazo crea nuevos eventos sin sobrescribir la evidencia original.
+- Los modelos y reglas autoritativos se definen en `01_MODELO_DATOS.md` y `02_FLUJOS_Y_REGLAS.md`.
 
 ## Encuentro Clinico Y Diario
 

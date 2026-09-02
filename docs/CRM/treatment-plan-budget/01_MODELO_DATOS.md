@@ -12,6 +12,42 @@ Representar de forma separada y trazable:
 
 Todas las tablas del modulo deben incluir `clinic_id`, usar `BelongsToTenant`, tener RLS y validar que sus relaciones pertenezcan a la misma clinica.
 
+## Perfil Medico Y Seguridad Clinica
+
+La seguridad clinica no debe depender de `patients.notes` ni de metadata libre. Se requieren registros estructurados y versionados:
+
+- `patient_medical_profiles`: contenedor vigente del paciente.
+- `patient_medical_profile_versions`: respuestas inmutables, procedencia, informante, fecha efectiva y estado de revision.
+- `patient_allergies`: sustancia, reaccion, severidad, estado y fuente.
+- `patient_medications`: medicamento, principio activo cuando se conozca, dosis, frecuencia, indicacion y vigencia.
+- `patient_medical_conditions`: condicion, estado, control, profesional tratante y fechas relevantes.
+- `patient_clinical_alerts`: alerta manual o derivada, alcance, nivel de bloqueo, fuente y vigencia.
+- `medical_profile_reviews`: profesional, version revisada, resultado, cambios reconocidos y proxima revision.
+- `clinical_safety_rule_sets`: conjunto de reglas aprobado para una clinica o paquete revisado.
+- `clinical_safety_rule_set_versions`: contenido inmutable, fuente, responsable y vigencia.
+- `clinical_safety_rules`: combinacion de condicion, medicamento, alergia, procedimiento o tecnica y accion resultante.
+- `clinical_safety_rule_applications`: regla evaluada, contexto, resultado y evidencia para un paciente e item.
+- `clinical_readiness_evaluations`: resultado para agendamiento o ejecucion y evidencias exactas utilizadas.
+
+Niveles de control:
+
+- `advisory`: informa y puede exigir reconocimiento, pero no bloquea.
+- `conditional_hold`: bloquea hasta resolver o hasta que un profesional autorizado registre una excepcion con motivo, alcance y vencimiento.
+- `hard_stop`: no admite override operativo ordinario; se resuelve actualizando evidencia, requisito o decision clinica definida.
+
+La severidad clinica y el nivel de bloqueo son conceptos diferentes. Las reglas deben registrar fuente, version, fecha de revision y responsable. El sistema no debe presentarse como un verificador exhaustivo de interacciones farmacologicas sin una base clinica validada y mantenida.
+
+### Interconsultas Y Autorizaciones Medicas Externas
+
+- `external_medical_consultations`: paciente, profesional solicitante, destinatario, especialidad, motivo, preguntas, estado y fechas de envio/recepcion.
+- `medical_clearance_decisions`: respuesta revisada, decision, condiciones, alcance, vigencia, emisor, documento y profesional verificador.
+- `medical_clearance_conditions`: decision, condicion verificable, estado, evidencia, verificador y fecha de cumplimiento.
+- `treatment_plan_item_clearance_requirements`: item afectado, tipo de requisito, momento requerido (`scheduling`, `execution` o ambos), estado y decision que lo satisface.
+
+Una respuesta recibida no equivale automaticamente a autorizacion. Solo una decision revisada por un profesional autorizado, vigente y aplicable al item puede satisfacer el requisito. Los documentos se almacenan como documentos clinicos privados.
+
+Estados de interconsulta sugeridos: `draft`, `requested`, `sent`, `received`, `under_review`, `closed` y `cancelled`. Decisiones sugeridas: `cleared`, `cleared_with_conditions`, `not_cleared`, `insufficient_information`, `expired` y `superseded`. Una decision condicionada solo satisface preparacion cuando todas sus condiciones obligatorias tienen evidencia verificada.
+
 ## Entidades Principales
 
 ### `treatment_plans`
@@ -111,7 +147,6 @@ clinical_priority
 sequence_order
 readiness_status
 clinical_hold_reason nullable
-requires_informed_consent
 recommended_from nullable
 recommended_until nullable
 commercial_status
@@ -131,6 +166,7 @@ Reglas:
 - Estado comercial y clinico nunca deben mezclarse.
 - La aceptacion no vuelve al item automaticamente listo para agendar.
 - `readiness_status` depende de prerequisitos, consentimientos, alertas y bloqueos clinicos.
+- La UI puede proyectar `requires_informed_consent` desde requisitos activos, pero no debe persistirlo como fuente autoritativa.
 
 ### `treatment_plan_phases`
 
@@ -164,8 +200,19 @@ Tipos sugeridos:
 - `must_complete_before`
 - `must_start_before`
 - `requires_result`
-- `requires_clearance`
 - `minimum_healing_interval`
+
+Esta relacion representa dependencias entre items del mismo plan. Una autorizacion medica externa utiliza `treatment_plan_item_clearance_requirements`, no un item artificial.
+
+### Reglas Clinicas Predeterminadas De Secuenciacion
+
+- `clinical_sequence_rule_sets`: conjunto publicable por clinica o paquete regional revisado.
+- `clinical_sequence_rule_set_versions`: version inmutable, vigencia y responsable de aprobacion.
+- `clinical_sequence_rules`: fase, precedencia, resultado, intervalo, autorizacion, consentimiento o etapa de laboratorio recomendada.
+- `treatment_plan_sequence_rule_applications`: regla y version aplicadas al borrador, con dependencias generadas.
+- `treatment_plan_sequence_overrides`: decision distinta, motivo clinico, profesional, alcance y vigencia.
+
+Las reglas predeterminadas generan recomendaciones al construir un borrador. Las fases y dependencias del plan individual siguen siendo autoritativas. Publicar una nueva version no modifica planes existentes y toda excepcion obliga a recalcular preparacion clinica.
 
 ### `treatment_plan_alternative_groups`
 
@@ -233,6 +280,16 @@ Respuestas sugeridas:
 - `contact_requested`
 
 La respuesta actual puede proyectarse en `treatment_plan_items.commercial_status`, pero la evidencia historica permanece append-only.
+
+### Consentimientos Informados Por Item
+
+- `informed_consent_templates`: tipo y proposito estable del consentimiento.
+- `informed_consent_template_versions`: contenido, idioma, riesgos, alternativas, vigencia y checksum inmutables.
+- `treatment_plan_item_consent_requirements`: item, plantilla requerida, obligatoriedad, alcance, momento requerido (`scheduling`, `execution` o ambos) y estado de aplicabilidad.
+- `treatment_plan_item_consents`: requisito, version exacta, paciente o representante, profesional que explico, firma, fecha, evidencia y vigencia.
+- `informed_consent_events`: firma, rechazo, revocacion, expiracion y sustitucion append-only.
+
+Un item puede tener cero, uno o varios requisitos independientes. La preparacion exige que todos los requisitos obligatorios aplicables esten satisfechos. Una nueva revision economica no invalida automaticamente el consentimiento; se exige uno nuevo cuando cambian procedimiento, sitio, tecnica, riesgo material, plantilla aplicable o vigencia.
 
 ### `treatment_plan_events`
 
@@ -331,6 +388,40 @@ Reglas:
 - Completar la cita no completa automaticamente todos los items.
 - La realizacion debe confirmarse de forma explicita.
 
+### `planned_appointments`
+
+Agrupacion clinica previa a reservar una fecha:
+
+```text
+id
+clinic_id
+patient_id
+professional_id nullable
+specialty_id nullable
+status
+duration_minutes
+readiness_status
+notes nullable
+converted_appointment_id nullable
+created_by
+converted_at nullable
+created_at
+updated_at
+```
+
+`planned_appointment_items` relaciona la agrupacion con uno o varios items, cantidades y sesiones. La cita planificada no ocupa agenda. Su conversion revalida disponibilidad y preparacion dentro de la misma transaccion que crea `appointments`, vincula los items y registra `converted_appointment_id`. Una agrupacion convertida no puede convertirse de nuevo.
+
+### Casos De Laboratorio Dental
+
+- `dental_laboratory_cases`: paciente, laboratorio, profesional, estado, fechas prometidas y referencias clinicas.
+- `dental_laboratory_case_items`: item del plan, pieza, trabajo, material, color, especificaciones y etapas requeridas para agendamiento y ejecucion.
+- `dental_laboratory_events`: orden, envio, recepcion, control de calidad, ajuste, remake, cancelacion y comunicaciones.
+- `dental_laboratory_documents`: prescripcion, escaneo, fotografia, archivo, guia y resultado en storage privado.
+
+Estados base: `draft`, `ordered`, `sent`, `accepted_by_lab`, `in_production`, `received`, `quality_review`, `ready_for_patient`, `adjustment_required` y `cancelled`.
+
+`received` no equivale a `ready_for_patient`. La cita de prueba o entrega puede planificarse tentativamente, pero no queda lista para ejecucion hasta satisfacer la etapa de laboratorio configurada. Costos, portal del laboratorio y logistica automatizada pertenecen a una capacidad posterior.
+
 ### `clinical_cases`
 
 Caso longitudinal para tratamientos que requieren seguimiento especializado:
@@ -375,6 +466,7 @@ clinical_case_id nullable
 appointment_id nullable
 professional_id
 encounter_type
+care_path
 status
 occurred_at
 subjective_notes nullable
@@ -393,6 +485,30 @@ Reglas:
 - Un encuentro firmado no se sobrescribe; las correcciones se registran como enmiendas.
 - Un encuentro puede contener varios procedimientos realizados.
 - Los campos clinicos requieren permisos distintos de los datos comerciales.
+- `care_path` distingue atencion planificada, urgencia y walk-in sin obligar a crear una cita o plan artificial.
+
+### `urgent_care_intakes`
+
+Complemento estructurado para atencion urgente o sin cita:
+
+```text
+id
+clinic_id
+patient_id
+clinical_encounter_id
+arrival_mode
+chief_complaint
+triage_category
+red_flags
+acute_medical_screen_status
+disposition
+deferred_completion_due_at nullable
+created_by
+created_at
+updated_at
+```
+
+El flujo urgente puede diferir informacion no critica, pero no omite identidad razonablemente disponible, alergias y medicamentos relevantes, senales de alarma, consentimiento aplicable ni documentacion del encuentro.
 
 ### `performed_procedures`
 
@@ -428,6 +544,19 @@ Reglas:
 - El snapshot conserva lo realizado aunque cambie el catalogo.
 - El avance del item se calcula desde procedimientos realizados validos.
 - Anulaciones y correcciones conservan historial; no eliminan el hecho original.
+- Los procedimientos realizados quedan atestados por la firma del encuentro que los contiene; cambiarlos despues exige enmienda del encuentro y evento de correccion.
+
+### Dispositivos Y Materiales Clinicamente Trazables
+
+- `traceable_clinical_products`: producto, fabricante, referencia, tipo y politica de trazabilidad.
+- `traceable_product_lots`: lote, serial o UDI cuando aplique, vencimiento, cantidad recibida, cantidad disponible, cuarentena y recall.
+- `traceable_product_lot_movements`: entrada, reserva, liberacion, uso, descarte o ajuste con cantidad, actor y referencia clinica.
+- `treatment_plan_item_traceable_product_requirements`: item, tipo de producto requerido, cantidad, momento requerido, reserva nullable y politica de sustitucion.
+- `performed_procedure_material_usages`: procedimiento realizado, paciente, pieza o sitio, lote, cantidad, profesional y evento de correccion.
+
+La primera entrega solo exige trazabilidad para productos configurados como criticos, por ejemplo implantes, componentes principales, injertos, membranas o dispositivos especificos del paciente. Antes de ejecutar se valida disponibilidad, vencimiento y recall; antes de completar el procedimiento o firmar el encuentro se registra el lote o serial realmente utilizado.
+
+Este ledger minimo existe para decidir disponibilidad y evitar reutilizar un serial o consumir dos veces la misma cantidad. No incorpora compras, costos, stock de consumibles generales ni valoracion de inventario.
 
 ### `treatment_plan_follow_ups`
 
@@ -454,6 +583,16 @@ updated_at
 ```
 
 Esta entidad permite medir intentos, resultados y frecuencia sin depender de notas libres.
+
+## Recall Clinico Estratificado Por Riesgo
+
+- `recall_types`: preventivo general, periodontal, implantes, retencion u otros tipos configurados.
+- `recall_policy_versions`: reglas inmutables que relacionan riesgo y tipo de cuidado con un intervalo sugerido.
+- `patient_risk_assessments`: dominio, nivel, factores, evidencia, evaluador, fecha y vigencia.
+- `patient_recall_plans`: tipo, evaluacion y politica usadas, ultimo encuentro o procedimiento calificante, fecha calculada, fecha ajustada, motivo, profesional que ajusta y cita relacionada.
+- `patient_recall_events`: tipo de evento, fechas anterior/nueva, actor, motivo, fuente clinica, politica y metadata auditada.
+
+Un paciente puede tener varios recalls simultaneos. El intervalo sugerido se calcula desde la ultima evaluacion valida y la version de politica; el profesional puede ajustarlo con motivo. Informacion ausente o vencida nunca se interpreta automaticamente como riesgo bajo. Una cita por si sola no cumple el recall: se requiere evaluacion o procedimiento realizado calificante.
 
 ## Entidades De Evolucion
 
@@ -519,6 +658,12 @@ clinical_case_type nullable
 No debe agregarse un unico `treatment_plan_item_id`. La relacion debe permanecer en la tabla pivote porque es muchos a muchos.
 
 Los flujos que reprograman automaticamente la ultima cita futura del paciente deben modificarse para permitir multiples citas futuras.
+
+### `patients`
+
+Agregar `identity_status` con valores `provisional`, `verified` y `merged`. Una identidad provisional creada en urgencias debe mostrar restricciones operativas y una fecha limite de conciliacion.
+
+`patient_identity_merges` conserva paciente origen, paciente destino, actor, motivo, fecha y referencias transferidas. La conciliacion no elimina ni reasigna silenciosamente registros clinicos; mantiene alias y procedencia auditables.
 
 ### `social_comments`
 
@@ -622,6 +767,16 @@ accepted + cancelled = pendiente de reprogramacion si sigue vigente
 18. Un item solo puede agendarse como listo cuando cumple prerequisitos y bloqueos.
 19. Un plan puede cerrarse administrativamente y conservar necesidades clinicas no resueltas.
 20. Alternativas incompatibles no pueden ejecutarse simultaneamente sin una decision clinica auditada.
+21. La ausencia de alergias debe registrarse explicitamente; no se infiere por ausencia de filas.
+22. Un bloqueo duro no puede ser eliminado por recepcion ni por un override ordinario.
+23. Agendar y ejecutar utilizan evaluaciones de preparacion separadas y conservan las versiones de evidencia consultadas.
+24. Todo consentimiento firmado referencia un item y una version exacta de plantilla.
+25. Una autorizacion externa vencida, insuficiente o fuera de alcance no satisface preparacion clinica.
+26. Un encuentro urgente puede existir sin cita ni plan, pero no sin el conjunto minimo de seguridad.
+27. Actualizar reglas predeterminadas no reescribe dependencias de planes existentes.
+28. Un trabajo de laboratorio recibido no habilita ejecucion hasta aprobar su control de calidad cuando aplique.
+29. Un producto critico utilizado debe poder rastrearse desde el lote hasta el paciente y procedimiento realizado.
+30. El recall conserva la evaluacion de riesgo y politica que originaron cada fecha calculada.
 
 ## Indices Y Restricciones
 
@@ -652,3 +807,7 @@ accepted + cancelled = pendiente de reprogramacion si sigue vigente
 8. Definir que tipos de procedimiento requieren caso clinico por defecto.
 9. Definir politica de firma y enmienda de encuentros clinicos.
 10. Definir retencion y acceso de fotografias, radiografias y documentos.
+11. Definir el conjunto inicial de alertas clinicas validadas y sus responsables de mantenimiento.
+12. Validar por pais los requisitos de consentimiento, interconsulta, retencion y firma.
+13. Definir productos criticos con trazabilidad obligatoria por tipo de practica.
+14. Definir politicas iniciales de riesgo y recall con responsables clinicos.

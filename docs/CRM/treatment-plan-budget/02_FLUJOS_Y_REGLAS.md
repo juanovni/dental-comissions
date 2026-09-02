@@ -83,10 +83,10 @@ flowchart TD
     A[Item aceptado] --> B[Evaluar preparacion clinica]
     B --> C{Cumple requisitos}
     C -->|No| D[Registrar bloqueo o accion requerida]
-    C -->|Si| E[Crear cita planificada]
-    E --> F{Tiene cita activa}
+    C -->|Si| F{Tiene cita activa que cubre el item}
     F -->|Si| G[Mostrar cita relacionada]
-    F -->|No| H[Buscar disponibilidad]
+    F -->|No| E[Crear o reutilizar cita planificada]
+    E --> H[Buscar disponibilidad]
     H --> I[Seleccionar profesional y horario]
     I --> J[Revalidar disponibilidad y preparacion]
     J -->|Disponible| K[Reservar atomicamente]
@@ -134,6 +134,54 @@ Un item puede estar aceptado y seguir no listo. La evaluacion incluye:
 
 Las excepciones requieren usuario autorizado, motivo y evento auditable.
 
+### Evaluacion De Antecedentes Y Bloqueos
+
+1. Utilizar la ultima version revisada del perfil medico e identificar cambios posteriores.
+2. Evaluar alertas y reglas aplicables al procedimiento, tecnica, medicamentos, alergias y condiciones.
+3. Registrar el resultado y las versiones de evidencia utilizadas.
+4. Ejecutar una evaluacion para agendamiento y otra inmediatamente antes de la atencion.
+5. Permitir override solo para `conditional_hold`, por un profesional autorizado, con motivo, alcance y vencimiento.
+6. Resolver un `hard_stop` mediante nueva evidencia o una decision clinica prevista, nunca mediante confirmacion de recepcion.
+
+El sistema debe priorizar pocas alertas accionables y revisadas sobre advertencias masivas. No debe afirmar que cubre todas las interacciones farmacologicas si no utiliza una fuente clinica validada y mantenida.
+
+### Interconsulta Y Autorizacion Medica Externa
+
+```text
+Requisito identificado
+-> solicitud enviada
+-> respuesta recibida
+-> revision profesional de alcance y vigencia
+-> decision registrada
+-> recalculo de preparacion
+```
+
+Recepcion puede dar seguimiento a la solicitud, pero no interpretar ni aprobar la respuesta. `cleared_with_conditions` crea condiciones verificables; un cambio relevante del perfil medico o el vencimiento reabre el requisito. Los documentos permanecen en storage clinico privado.
+
+### Preparacion Dependiente De Laboratorio Y Dispositivos
+
+- Una cita de prueba o entrega puede reservarse tentativamente, pero no ejecutarse hasta que el trabajo este recibido y aprobado para el paciente.
+- Un ajuste o remake reabre el bloqueo sin borrar entregas anteriores.
+- Los dispositivos criticos se validan por disponibilidad, vencimiento y recall antes de ejecutar.
+- El lote o serial realmente usado se registra antes de completar el procedimiento o firmar el encuentro.
+
+## Flujo Abreviado De Urgencia O Atencion Sin Cita
+
+La urgencia no requiere un plan ni presupuesto previo, pero conserva un conjunto minimo de seguridad:
+
+1. Identificar al paciente o crear identidad provisional para conciliacion posterior.
+2. Registrar forma de llegada, motivo, intensidad, evolucion y senales de alarma.
+3. Realizar tamizaje agudo de alergias, medicamentos, condiciones y cambios recientes.
+4. Revisar alertas y bloqueos activos.
+5. Registrar capacidad de decision o representante.
+6. Obtener el consentimiento aplicable a la intervencion urgente.
+7. Crear encuentro clinico aunque no exista cita o item del plan.
+8. Registrar examen, diagnostico provisional o definitivo, intervencion, medicamentos, resultado y disposicion.
+9. Crear seguimiento, referido o plan posterior para necesidades no resueltas.
+10. Completar y conciliar informacion diferida dentro del plazo configurado.
+
+El acceso `break_glass` amplia temporalmente permisos en una emergencia, pero no elimina bloqueos clinicos ni requisitos de documentacion. Debe registrar usuario, motivo, alcance, registros consultados y revision posterior.
+
 ## Confirmacion De Realizacion
 
 Finalizar la cita abre una confirmacion clinica:
@@ -177,6 +225,16 @@ Reglas:
 - El caso puede comenzar durante el diagnostico y vincularse al item despues.
 - El presupuesto nunca almacena hallazgos clinicos especializados.
 
+## Aplicacion De Secuencia Clinica
+
+1. Una version publicada de reglas genera recomendaciones al construir el borrador.
+2. El profesional revisa fases, dependencias, intervalos y requisitos antes de aprobar el plan.
+3. Las reglas aceptadas se materializan como dependencias propias del plan individual.
+4. Una nueva version solo afecta borradores nuevos o recalculados expresamente.
+5. Una excepcion registra regla original, decision, motivo, profesional y vigencia.
+6. Cambiar o retirar una dependencia recalcula preparacion y consentimientos aplicables.
+7. Agenda y recuperacion consultan el plan individual, no la ultima regla global.
+
 ## Seguimiento Comercial
 
 La cola comercial incluye:
@@ -210,6 +268,18 @@ El seguimiento clinico es independiente del contacto comercial:
 - Recall por intervalo configurable.
 
 Cada tarea registra motivo, responsable, fecha requerida, instrucciones, resultado, escalamiento y cierre. El recall se calcula desde procedimientos realizados confirmados, no desde citas creadas.
+
+El recall preventivo se estratifica por riesgo:
+
+```text
+Evaluacion de riesgo vigente
++ tipo de recall
++ version de politica
++ ultimo evento clinico calificante
+= fecha calculada
+```
+
+El profesional puede ajustar la fecha con motivo. Se recalcula ante cambios de riesgo, diagnostico o procedimiento relevante; se conserva el calculo anterior y su procedencia. Un paciente puede estar al dia en un tipo de recall y vencido en otro. El opt-out detiene comunicaciones, pero no elimina la necesidad clinica ni su fecha.
 
 ## Recuperacion De Agenda
 
