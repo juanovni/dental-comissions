@@ -6,6 +6,7 @@ use App\Enums\ProfessionalRole;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Crypt;
@@ -28,6 +29,12 @@ class Professional extends Model
         'is_active',
         'can_register_via_whatsapp',
         'notes',
+        'specialty_id',
+        'license_number',
+        'digital_signature',
+        'can_approve_plans',
+        'can_sign_consents',
+        'can_order_emergency',
     ];
 
     protected function casts(): array
@@ -38,7 +45,15 @@ class Professional extends Model
             'can_register_via_whatsapp' => 'boolean',
             'google_calendar_token_expires_at' => 'datetime',
             'google_calendar_enabled' => 'boolean',
+            'can_approve_plans' => 'boolean',
+            'can_sign_consents' => 'boolean',
+            'can_order_emergency' => 'boolean',
         ];
+    }
+
+    public function specialty(): BelongsTo
+    {
+        return $this->belongsTo(Specialty::class);
     }
 
     public function hasGoogleCalendar(): bool
