@@ -35,6 +35,12 @@ enum UserPermission: string
     case ClinicalAlertsCreate = 'clinical_alerts.create';
     case ClinicalAlertsResolve = 'clinical_alerts.resolve';
 
+    // Casos clinicos
+    case ClinicalCasesView = 'clinical_cases.view';
+    case ClinicalCasesCreate = 'clinical_cases.create';
+    case ClinicalCasesUpdate = 'clinical_cases.update';
+    case ClinicalCasesClose = 'clinical_cases.close';
+
     // Encuentros clinicos
     case ClinicalEncountersView = 'clinical_encounters.view';
     case ClinicalEncountersCreate = 'clinical_encounters.create';
@@ -45,6 +51,11 @@ enum UserPermission: string
     case PerformedProceduresView = 'performed_procedures.view';
     case PerformedProceduresRecord = 'performed_procedures.record';
     case PerformedProceduresCorrect = 'performed_procedures.correct';
+
+    // Enmiendas clinicas
+    case ClinicalAmendmentsView = 'clinical_amendments.view';
+    case ClinicalAmendmentsCreate = 'clinical_amendments.create';
+    case ClinicalAmendmentsApprove = 'clinical_amendments.approve';
 
     // Odontograma
     case OdontogramsView = 'odontograms.view';
@@ -117,6 +128,11 @@ enum UserPermission: string
             self::ClinicalAlertsView => 'Ver alertas clinicas',
             self::ClinicalAlertsCreate => 'Crear alertas clinicas',
             self::ClinicalAlertsResolve => 'Resolver alertas clinicas',
+            // Casos clinicos
+            self::ClinicalCasesView => 'Ver casos clinicos',
+            self::ClinicalCasesCreate => 'Crear casos clinicos',
+            self::ClinicalCasesUpdate => 'Actualizar casos clinicos',
+            self::ClinicalCasesClose => 'Cerrar casos clinicos',
             // Encuentros clinicos
             self::ClinicalEncountersView => 'Ver encuentros clinicos',
             self::ClinicalEncountersCreate => 'Crear encuentros clinicos',
@@ -126,6 +142,10 @@ enum UserPermission: string
             self::PerformedProceduresView => 'Ver procedimientos realizados',
             self::PerformedProceduresRecord => 'Registrar procedimientos realizados',
             self::PerformedProceduresCorrect => 'Corregir procedimientos realizados',
+            // Enmiendas clinicas
+            self::ClinicalAmendmentsView => 'Ver enmiendas clinicas',
+            self::ClinicalAmendmentsCreate => 'Crear enmiendas clinicas',
+            self::ClinicalAmendmentsApprove => 'Aprobar enmiendas clinicas',
             // Odontograma
             self::OdontogramsView => 'Ver odontogramas',
             self::OdontogramsCreate => 'Crear odontogramas',
@@ -193,6 +213,11 @@ enum UserPermission: string
             self::ClinicalAlertsView,
             self::ClinicalAlertsCreate,
             self::ClinicalAlertsResolve => 'Alertas clinicas',
+            // Casos clinicos
+            self::ClinicalCasesView,
+            self::ClinicalCasesCreate,
+            self::ClinicalCasesUpdate,
+            self::ClinicalCasesClose => 'Casos clinicos',
             // Encuentros clinicos
             self::ClinicalEncountersView,
             self::ClinicalEncountersCreate,
@@ -202,6 +227,10 @@ enum UserPermission: string
             self::PerformedProceduresView,
             self::PerformedProceduresRecord,
             self::PerformedProceduresCorrect => 'Procedimientos realizados',
+            // Enmiendas clinicas
+            self::ClinicalAmendmentsView,
+            self::ClinicalAmendmentsCreate,
+            self::ClinicalAmendmentsApprove => 'Enmiendas clinicas',
             // Odontograma
             self::OdontogramsView,
             self::OdontogramsCreate,
