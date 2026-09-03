@@ -12,7 +12,6 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -48,76 +47,68 @@ class PerformedProcedureResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Grid::make(2)->schema([
-                Select::make('patient_id')
-                    ->label('Paciente')
-                    ->relationship('patient', 'full_name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-                Select::make('clinical_encounter_id')
-                    ->label('Encuentro clinico')
-                    ->relationship('encounter', 'id')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-            ]),
-            Grid::make(3)->schema([
-                Select::make('procedure_id')
-                    ->label('Procedimiento')
-                    ->relationship('procedure', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-                Select::make('performed_by')
-                    ->label('Realizado por')
-                    ->relationship('performedBy', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-                Select::make('status')
-                    ->label('Estado')
-                    ->options([
-                        'pending' => 'Pendiente',
-                        'in_progress' => 'En progreso',
-                        'completed' => 'Completado',
-                        'cancelled' => 'Cancelado',
-                        'amended' => 'Enmendado',
-                    ])
-                    ->default('completed')
-                    ->required(),
-            ]),
-            Grid::make(4)->schema([
-                TextInput::make('tooth')
-                    ->label('Pieza')
-                    ->maxLength(10)
-                    ->placeholder('Ej: 11'),
-                TextInput::make('surface')
-                    ->label('Superficie')
-                    ->maxLength(20)
-                    ->placeholder('Ej: Oclusal'),
-                TextInput::make('quantity')
-                    ->label('Cantidad')
-                    ->numeric()
-                    ->default(1)
-                    ->minValue(1),
-                TextInput::make('procedure_name_snapshot')
-                    ->label('Nombre del procedimiento')
-                    ->maxLength(255)
-                    ->dehydrated()
-                    ->required(),
-            ]),
-            Grid::make(2)->schema([
-                DatePicker::make('started_at')
-                    ->label('Iniciado el'),
-                DatePicker::make('completed_at')
-                    ->label('Completado el'),
-            ]),
+            Select::make('patient_id')
+                ->label('Paciente')
+                ->relationship('patient', 'full_name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Select::make('clinical_encounter_id')
+                ->label('Encuentro clinico')
+                ->relationship('encounter', 'id')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Select::make('procedure_id')
+                ->label('Procedimiento')
+                ->relationship('procedure', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Select::make('performed_by')
+                ->label('Realizado por')
+                ->relationship('performedBy', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Select::make('status')
+                ->label('Estado')
+                ->options([
+                    'pending' => 'Pendiente',
+                    'in_progress' => 'En progreso',
+                    'completed' => 'Completado',
+                    'cancelled' => 'Cancelado',
+                    'amended' => 'Enmendado',
+                ])
+                ->default('completed')
+                ->required(),
+            TextInput::make('tooth')
+                ->label('Pieza')
+                ->maxLength(10)
+                ->placeholder('Ej: 11'),
+            TextInput::make('surface')
+                ->label('Superficie')
+                ->maxLength(20)
+                ->placeholder('Ej: Oclusal'),
+            TextInput::make('quantity')
+                ->label('Cantidad')
+                ->numeric()
+                ->default(1)
+                ->minValue(1),
+            TextInput::make('procedure_name_snapshot')
+                ->label('Nombre del procedimiento')
+                ->maxLength(255)
+                ->dehydrated()
+                ->required(),
+            DatePicker::make('started_at')
+                ->label('Iniciado el'),
+            DatePicker::make('completed_at')
+                ->label('Completado el'),
             Textarea::make('clinical_notes')
                 ->label('Notas clinicas')
                 ->rows(3)
                 ->columnSpanFull(),
-        ]);
+        ])->columns(4);
     }
 
     public static function table(Table $table): Table

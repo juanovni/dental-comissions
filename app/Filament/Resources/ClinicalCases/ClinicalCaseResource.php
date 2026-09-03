@@ -12,7 +12,6 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -48,70 +47,64 @@ class ClinicalCaseResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Grid::make(2)->schema([
-                Select::make('patient_id')
-                    ->label('Paciente')
-                    ->relationship('patient', 'full_name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-                Select::make('responsible_professional_id')
-                    ->label('Profesional responsable')
-                    ->relationship('responsibleProfessional', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-            ]),
-            Grid::make(3)->schema([
-                Select::make('case_type')
-                    ->label('Tipo de caso')
-                    ->options([
-                        'orthodontics' => 'Ortodoncia',
-                        'endodontics' => 'Endodoncia',
-                        'periodontics' => 'Periodoncia',
-                        'general' => 'General',
-                        'implantology' => 'Implantologia',
-                        'prosthodontics' => 'Prostodoncia',
-                        'pediatric' => 'Odontopediatria',
-                        'oral_surgery' => 'Cirugia oral',
-                        'cosmetic' => 'Estetica dental',
-                    ])
-                    ->required(),
-                Select::make('specialty_id')
-                    ->label('Especialidad')
-                    ->relationship('specialty', 'name')
-                    ->searchable()
-                    ->preload(),
-                Select::make('status')
-                    ->label('Estado')
-                    ->options([
-                        'draft' => 'Borrador',
-                        'active' => 'Activo',
-                        'on_hold' => 'En espera',
-                        'completed' => 'Completado',
-                        'closed' => 'Cerrado',
-                        'cancelled' => 'Cancelado',
-                    ])
-                    ->default('draft')
-                    ->required(),
-            ]),
+            Select::make('patient_id')
+                ->label('Paciente')
+                ->relationship('patient', 'full_name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Select::make('responsible_professional_id')
+                ->label('Profesional responsable')
+                ->relationship('responsibleProfessional', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Select::make('case_type')
+                ->label('Tipo de caso')
+                ->options([
+                    'orthodontics' => 'Ortodoncia',
+                    'endodontics' => 'Endodoncia',
+                    'periodontics' => 'Periodoncia',
+                    'general' => 'General',
+                    'implantology' => 'Implantologia',
+                    'prosthodontics' => 'Prostodoncia',
+                    'pediatric' => 'Odontopediatria',
+                    'oral_surgery' => 'Cirugia oral',
+                    'cosmetic' => 'Estetica dental',
+                ])
+                ->required(),
+            Select::make('specialty_id')
+                ->label('Especialidad')
+                ->relationship('specialty', 'name')
+                ->searchable()
+                ->preload(),
+            Select::make('status')
+                ->label('Estado')
+                ->options([
+                    'draft' => 'Borrador',
+                    'active' => 'Activo',
+                    'on_hold' => 'En espera',
+                    'completed' => 'Completado',
+                    'closed' => 'Cerrado',
+                    'cancelled' => 'Cancelado',
+                ])
+                ->default('draft')
+                ->required(),
             TextInput::make('title')
                 ->label('Titulo')
                 ->required()
                 ->maxLength(255),
+            DatePicker::make('started_at')
+                ->label('Iniciado el'),
+            DatePicker::make('completed_at')
+                ->label('Completado el'),
+            DatePicker::make('closed_at')
+                ->label('Cerrado el'),
             Textarea::make('diagnosis_summary')
                 ->label('Resumen diagnostico')
                 ->rows(3)
                 ->columnSpanFull(),
-            Grid::make(3)->schema([
-                DatePicker::make('started_at')
-                    ->label('Iniciado el'),
-                DatePicker::make('completed_at')
-                    ->label('Completado el'),
-                DatePicker::make('closed_at')
-                    ->label('Cerrado el'),
-            ]),
-        ]);
+        ])->columns(3);
     }
 
     public static function table(Table $table): Table

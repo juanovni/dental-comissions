@@ -17,14 +17,20 @@ use App\Filament\Pages\SocialInbox;
 use App\Filament\Pages\SocialPipelineKanban;
 use App\Filament\Pages\VoiceTestSimulator;
 use App\Filament\Resources\Appointments\AppointmentResource;
+use App\Filament\Resources\ClinicalCases\ClinicalCaseResource;
+use App\Filament\Resources\ClinicalEncounters\ClinicalEncounterResource;
 use App\Filament\Resources\DoctorAssistantAssignments\DoctorAssistantAssignmentResource;
+use App\Filament\Resources\InformedConsentTemplates\InformedConsentTemplateResource;
 use App\Filament\Resources\LocalLanguagePatterns\LocalLanguagePatternResource;
 use App\Filament\Resources\Patients\PatientResource;
+use App\Filament\Resources\PerformedProcedures\PerformedProcedureResource;
 use App\Filament\Resources\Procedures\ProcedureResource;
 use App\Filament\Resources\Professionals\ProfessionalResource;
 use App\Filament\Resources\SocialAccounts\SocialAccountResource;
 use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Filament\Resources\SocialCrmSettings\SocialCrmSettingResource;
+use App\Filament\Resources\Specialties\SpecialtyResource;
+use App\Filament\Resources\TreatmentPlans\TreatmentPlanResource;
 use App\Filament\Resources\VoiceCalls\VoiceCallResource;
 use App\Http\Middleware\EnsureAuthenticatedUserCanAccessTenant;
 use App\Http\Middleware\EnsureTenantMatchesHost;
@@ -148,6 +154,7 @@ class ClinicPanelProvider extends PanelProvider
                     ->collapsible(fn (): bool => ! in_array(auth()->user()?->role, [UserRole::Receptionist, UserRole::Assistant, UserRole::Doctor], true)),
                 NavigationGroup::make('Pity Voice'),
                 NavigationGroup::make('Configuración'),
+                NavigationGroup::make('Consentimientos informados'),
             ])
             ->maxContentWidth('fi-width-full')
             ->viteTheme('resources/css/app.css')
@@ -158,14 +165,20 @@ class ClinicPanelProvider extends PanelProvider
             ])
             ->resources([
                 AppointmentResource::class,
+                ClinicalCaseResource::class,
+                ClinicalEncounterResource::class,
                 DoctorAssistantAssignmentResource::class,
                 LocalLanguagePatternResource::class,
                 PatientResource::class,
+                PerformedProcedureResource::class,
                 ProcedureResource::class,
                 ProfessionalResource::class,
                 SocialAccountResource::class,
                 SocialCommentResource::class,
                 SocialCrmSettingResource::class,
+                SpecialtyResource::class,
+                TreatmentPlanResource::class,
+                InformedConsentTemplateResource::class,
                 VoiceCallResource::class,
             ])
             ->pages([

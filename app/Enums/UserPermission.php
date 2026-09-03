@@ -77,9 +77,19 @@ enum UserPermission: string
     case TreatmentPlansSend = 'treatment_plans.send';
     case TreatmentPlansDelete = 'treatment_plans.delete';
 
-    // Consentimientos
+    // Consentimientos informados
     case InformedConsentsView = 'informed_consents.view';
     case InformedConsentsManage = 'informed_consents.manage';
+    case InformedConsentTemplatesView = 'informed_consent_templates.view';
+    case InformedConsentTemplatesCreate = 'informed_consent_templates.create';
+    case InformedConsentTemplatesUpdate = 'informed_consent_templates.update';
+    case InformedConsentTemplatesApprove = 'informed_consent_templates.approve';
+    case InformedConsentTemplatesArchive = 'informed_consent_templates.archive';
+    case InformedConsentRequirementsManage = 'informed_consent_requirements.manage';
+    case InformedConsentSign = 'informed_consents.sign';
+    case InformedConsentReject = 'informed_consents.reject';
+    case InformedConsentRevoke = 'informed_consents.revoke';
+    case InformedConsentWaive = 'informed_consents.waive';
 
     // Autorizaciones externas
     case ExternalClearanceView = 'external_clearance.view';
@@ -164,9 +174,19 @@ enum UserPermission: string
             self::TreatmentPlansApprove => 'Aprobar planes de tratamiento',
             self::TreatmentPlansSend => 'Enviar planes de tratamiento',
             self::TreatmentPlansDelete => 'Eliminar planes de tratamiento',
-            // Consentimientos
+            // Consentimientos informados
             self::InformedConsentsView => 'Ver consentimientos informados',
             self::InformedConsentsManage => 'Gestionar consentimientos informados',
+            self::InformedConsentTemplatesView => 'Ver plantillas de consentimiento',
+            self::InformedConsentTemplatesCreate => 'Crear plantillas de consentimiento',
+            self::InformedConsentTemplatesUpdate => 'Actualizar plantillas de consentimiento',
+            self::InformedConsentTemplatesApprove => 'Aprobar plantillas de consentimiento',
+            self::InformedConsentTemplatesArchive => 'Archivar plantillas de consentimiento',
+            self::InformedConsentRequirementsManage => 'Gestionar requisitos de consentimiento',
+            self::InformedConsentSign => 'Firmar consentimiento',
+            self::InformedConsentReject => 'Rechazar consentimiento',
+            self::InformedConsentRevoke => 'Revocar consentimiento',
+            self::InformedConsentWaive => 'Dispensar consentimiento',
             // Autorizaciones externas
             self::ExternalClearanceView => 'Ver autorizaciones externas',
             self::ExternalClearanceManage => 'Gestionar autorizaciones externas',
@@ -249,9 +269,19 @@ enum UserPermission: string
             self::TreatmentPlansApprove,
             self::TreatmentPlansSend,
             self::TreatmentPlansDelete => 'Planes de tratamiento',
-            // Consentimientos
+            // Consentimientos informados
             self::InformedConsentsView,
-            self::InformedConsentsManage => 'Consentimientos informados',
+            self::InformedConsentsManage,
+            self::InformedConsentTemplatesView,
+            self::InformedConsentTemplatesCreate,
+            self::InformedConsentTemplatesUpdate,
+            self::InformedConsentTemplatesApprove,
+            self::InformedConsentTemplatesArchive,
+            self::InformedConsentRequirementsManage,
+            self::InformedConsentSign,
+            self::InformedConsentReject,
+            self::InformedConsentRevoke,
+            self::InformedConsentWaive => 'Consentimientos informados',
             // Autorizaciones externas
             self::ExternalClearanceView,
             self::ExternalClearanceManage => 'Autorizaciones externas',

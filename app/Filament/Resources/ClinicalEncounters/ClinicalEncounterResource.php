@@ -12,7 +12,6 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
@@ -47,63 +46,57 @@ class ClinicalEncounterResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Grid::make(2)->schema([
-                Select::make('patient_id')
-                    ->label('Paciente')
-                    ->relationship('patient', 'full_name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-                Select::make('professional_id')
-                    ->label('Profesional')
-                    ->relationship('professional', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-            ]),
-            Grid::make(3)->schema([
-                Select::make('encounter_type')
-                    ->label('Tipo de encuentro')
-                    ->options([
-                        'consultation' => 'Consulta',
-                        'treatment' => 'Tratamiento',
-                        'follow_up' => 'Seguimiento',
-                        'emergency' => 'Urgencia',
-                        'walk_in' => 'Sin cita',
-                        'recall' => 'Control programado',
-                    ])
-                    ->required(),
-                Select::make('care_path')
-                    ->label('Via de atencion')
-                    ->options([
-                        'planned' => 'Planificado',
-                        'emergency' => 'Urgencia',
-                        'walk_in' => 'Sin cita',
-                        'recall' => 'Control programado',
-                    ])
-                    ->required(),
-                DatePicker::make('occurred_at')
-                    ->label('Fecha de atencion')
-                    ->required(),
-            ]),
-            Grid::make(2)->schema([
-                Select::make('clinical_case_id')
-                    ->label('Caso clinico')
-                    ->relationship('clinicalCase', 'title')
-                    ->searchable()
-                    ->preload()
-                    ->nullable(),
-                Select::make('status')
-                    ->label('Estado')
-                    ->options([
-                        'draft' => 'Borrador',
-                        'signed' => 'Firmado',
-                        'amended' => 'Enmendado',
-                        'cancelled' => 'Cancelado',
-                    ])
-                    ->default('draft')
-                    ->required(),
-            ]),
+            Select::make('patient_id')
+                ->label('Paciente')
+                ->relationship('patient', 'full_name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Select::make('professional_id')
+                ->label('Profesional')
+                ->relationship('professional', 'name')
+                ->searchable()
+                ->preload()
+                ->required(),
+            Select::make('encounter_type')
+                ->label('Tipo de encuentro')
+                ->options([
+                    'consultation' => 'Consulta',
+                    'treatment' => 'Tratamiento',
+                    'follow_up' => 'Seguimiento',
+                    'emergency' => 'Urgencia',
+                    'walk_in' => 'Sin cita',
+                    'recall' => 'Control programado',
+                ])
+                ->required(),
+            Select::make('care_path')
+                ->label('Via de atencion')
+                ->options([
+                    'planned' => 'Planificado',
+                    'emergency' => 'Urgencia',
+                    'walk_in' => 'Sin cita',
+                    'recall' => 'Control programado',
+                ])
+                ->required(),
+            DatePicker::make('occurred_at')
+                ->label('Fecha de atencion')
+                ->required(),
+            Select::make('clinical_case_id')
+                ->label('Caso clinico')
+                ->relationship('clinicalCase', 'title')
+                ->searchable()
+                ->preload()
+                ->nullable(),
+            Select::make('status')
+                ->label('Estado')
+                ->options([
+                    'draft' => 'Borrador',
+                    'signed' => 'Firmado',
+                    'amended' => 'Enmendado',
+                    'cancelled' => 'Cancelado',
+                ])
+                ->default('draft')
+                ->required(),
             Textarea::make('subjective_notes')
                 ->label('Subjetivo (S)')
                 ->placeholder('Motivo de consulta, sintomas, molestias del paciente...')
@@ -124,7 +117,7 @@ class ClinicalEncounterResource extends Resource
                 ->placeholder('Tratamiento, prescripciones, indicaciones...')
                 ->rows(3)
                 ->columnSpanFull(),
-        ]);
+        ])->columns(3);
     }
 
     public static function table(Table $table): Table
