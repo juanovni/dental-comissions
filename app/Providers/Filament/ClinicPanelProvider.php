@@ -20,8 +20,10 @@ use App\Filament\Resources\Appointments\AppointmentResource;
 use App\Filament\Resources\ClinicalCases\ClinicalCaseResource;
 use App\Filament\Resources\ClinicalEncounters\ClinicalEncounterResource;
 use App\Filament\Resources\DoctorAssistantAssignments\DoctorAssistantAssignmentResource;
+use App\Filament\Resources\DentalLaboratoryCases\DentalLaboratoryCaseResource;
 use App\Filament\Resources\ExternalConsultations\ExternalConsultationResource;
 use App\Filament\Resources\InformedConsentTemplates\InformedConsentTemplateResource;
+use App\Filament\Resources\UrgentCareIntakes\UrgentCareIntakeResource;
 use App\Filament\Resources\LocalLanguagePatterns\LocalLanguagePatternResource;
 use App\Filament\Resources\Patients\PatientResource;
 use App\Filament\Resources\PerformedProcedures\PerformedProcedureResource;
@@ -157,6 +159,8 @@ class ClinicPanelProvider extends PanelProvider
                 NavigationGroup::make('Configuración'),
                 NavigationGroup::make('Consentimientos informados'),
                 NavigationGroup::make('Consultas externas y autorizaciones'),
+                NavigationGroup::make('Atencion urgente'),
+                NavigationGroup::make('Laboratorio dental'),
             ])
             ->maxContentWidth('fi-width-full')
             ->viteTheme('resources/css/app.css')
@@ -182,6 +186,8 @@ class ClinicPanelProvider extends PanelProvider
                 TreatmentPlanResource::class,
                 InformedConsentTemplateResource::class,
                 ExternalConsultationResource::class,
+                UrgentCareIntakeResource::class,
+                DentalLaboratoryCaseResource::class,
                 VoiceCallResource::class,
             ])
             ->pages([

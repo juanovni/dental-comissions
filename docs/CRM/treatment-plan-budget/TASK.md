@@ -167,35 +167,35 @@ Estados:
 
 ---
 
-## Bloque 6: Atencion urgente y laboratorio dental `[~]`
+## Bloque 6: Atencion urgente y laboratorio dental `[x]`
 
-### Enums pendientes
-- [ ] `UrgentCareArrivalMode` (walk_in, ambulance, transfer, self_referral)
-- [ ] `UrgentCareTriageCategory` (immediate, urgent, semi_urgent, non_urgent)
-- [ ] `UrgentCareDisposition` (discharged, admitted, transferred, deferred)
-- [ ] `LaboratoryCaseStatus` (draft, ordered, sent, accepted_by_lab, in_production, received, quality_review, ready_for_patient, adjustment_required, cancelled)
-- [ ] `LaboratoryCaseEventType` (ordered, sent, received, quality_review, adjustment, remake, cancelled, communicated)
-- [ ] `LaboratoryCaseItemStatus` (pending, in_production, received, approved, adjustment_required)
+### Enums
+- [x] `UrgentCareArrivalMode` (walk_in, ambulance, transfer, self_referral)
+- [x] `UrgentCareTriageCategory` (immediate, urgent, semi_urgent, non_urgent)
+- [x] `UrgentCareDisposition` (discharged, admitted, transferred, deferred)
+- [x] `LaboratoryCaseStatus` (draft, ordered, sent, accepted_by_lab, in_production, received, quality_review, ready_for_patient, adjustment_required, cancelled)
+- [x] `LaboratoryCaseEventType` (ordered, sent, received, quality_review, adjustment, remake, cancelled, communicated)
+- [x] `LaboratoryCaseItemStatus` (pending, in_production, received, approved, adjustment_required)
 
-### Migraciones pendientes
-- [ ] `urgent_care_intakes` (paciente, encuentro, modo llegada, triage, banderas rojas, tamizaje, disposition, plazos)
-- [ ] `dental_laboratory_cases` (paciente, laboratorio, profesional, estado, fechas prometidas)
-- [ ] `dental_laboratory_case_items` (item del plan, pieza, trabajo, material, color, especificaciones)
-- [ ] `dental_laboratory_events` (orden, envio, recepcion, control calidad, ajuste, remake, cancelacion)
-- [ ] `dental_laboratory_documents` (prescripcion, escaneo, fotografia, archivo, guia, resultado en storage privado)
-- [ ] RLS en todas las tablas
+### Migraciones
+- [x] `urgent_care_intakes` (paciente, encuentro, modo llegada, triage, banderas rojas, tamizaje, disposition, plazos)
+- [x] `dental_laboratory_cases` (paciente, laboratorio, profesional, estado, fechas prometidas)
+- [x] `dental_laboratory_case_items` (item del plan, pieza, trabajo, material, color, especificaciones)
+- [x] `dental_laboratory_events` (orden, envio, recepcion, control calidad, ajuste, remake, cancelacion)
+- [x] `dental_laboratory_documents` (prescripcion, escaneo, fotografia, archivo, guia, resultado en storage privado)
+- [x] RLS en todas las tablas
 
-### Modelos pendientes
-- [ ] `UrgentCareIntake`
-- [ ] `DentalLaboratoryCase`, `DentalLaboratoryCaseItem`, `DentalLaboratoryEvent`, `DentalLaboratoryDocument`
+### Modelos
+- [x] `UrgentCareIntake`
+- [x] `DentalLaboratoryCase`, `DentalLaboratoryCaseItem`, `DentalLaboratoryEvent`, `DentalLaboratoryDocument`
 
-### Filament Resources pendientes
-- [ ] `UrgentCareIntakeResource`
-- [ ] `DentalLaboratoryCaseResource`
+### Filament Resources
+- [x] `UrgentCareIntakeResource` (form con triage, disposition, banderas rojas)
+- [x] `DentalLaboratoryCaseResource` (form con Repeater de items, instrucciones)
 
-### Permisos pendientes
-- [ ] `urgent_care.*`
-- [ ] `laboratory_cases.*`
+### Permisos
+- [x] `urgent_care.*` (view, create, update, dispose)
+- [x] `laboratory_cases.*` (view, create, update, manage_items, manage_events, manage_documents)
 
 ---
 
@@ -425,7 +425,7 @@ Estados:
 | 3 | [x] | 6 | 4 | 4 | 3 | 4 |
 | 4 | [x] | 6 | 7 | 5 | 1 | 4 |
 | 5 | [x] | 4 | 6 | 4 | 1 | 4 |
-| 6 | [~] | 0 | 0 | 0 | 0 | 0 |
+| 6 | [x] | 6 | 6 | 5 | 2 | 2 |
 | 7 | [ ] | 6 | 6 | 7 | 2 | 2 |
 | 8 | [ ] | 0 | 0 | 0 | 0 | 1 |
 | 9 | [ ] | 3 | 5 | 5 | 0 | 0 |
@@ -437,6 +437,6 @@ Estados:
 | 15 | [ ] | 0 | 3 | 3 | 0 | 0 |
 | 16 | [ ] | 0 | 9 | 9 | 0 | 0 |
 
-**Bloques completados:** 5/16
-**Migraciones creadas:** 51 (000001 - 000048 + RLS + FKs)
-**Migraciones pendientes:** ~65
+**Bloques completados:** 6/16
+**Migraciones creadas:** 57 (000001 - 000054 + RLS + FKs)
+**Migraciones pendientes:** ~59

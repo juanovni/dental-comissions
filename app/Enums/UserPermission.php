@@ -104,6 +104,20 @@ enum UserPermission: string
     case MedicalClearanceConditionsVerify = 'medical_clearance_conditions.verify';
     case ClearanceRequirementsManage = 'clearance_requirements.manage';
 
+    // Atencion urgente
+    case UrgentCareView = 'urgent_care.view';
+    case UrgentCareCreate = 'urgent_care.create';
+    case UrgentCareUpdate = 'urgent_care.update';
+    case UrgentCareDispose = 'urgent_care.dispose';
+
+    // Laboratorio dental
+    case LaboratoryCasesView = 'laboratory_cases.view';
+    case LaboratoryCasesCreate = 'laboratory_cases.create';
+    case LaboratoryCasesUpdate = 'laboratory_cases.update';
+    case LaboratoryCasesManageItems = 'laboratory_cases.manage_items';
+    case LaboratoryCasesManageEvents = 'laboratory_cases.manage_events';
+    case LaboratoryCasesManageDocuments = 'laboratory_cases.manage_documents';
+
     // Recall clinico
     case ClinicalRecallView = 'clinical_recall.view';
     case ClinicalRecallManage = 'clinical_recall.manage';
@@ -208,6 +222,18 @@ enum UserPermission: string
             self::MedicalClearanceDecisionsReview => 'Revisar decisiones de autorizacion',
             self::MedicalClearanceConditionsVerify => 'Verificar condiciones de autorizacion',
             self::ClearanceRequirementsManage => 'Gestionar requisitos de autorizacion',
+            // Atencion urgente
+            self::UrgentCareView => 'Ver atencion urgente',
+            self::UrgentCareCreate => 'Crear registro urgente',
+            self::UrgentCareUpdate => 'Actualizar registro urgente',
+            self::UrgentCareDispose => 'Dispositionar paciente urgente',
+            // Laboratorio dental
+            self::LaboratoryCasesView => 'Ver casos de laboratorio',
+            self::LaboratoryCasesCreate => 'Crear casos de laboratorio',
+            self::LaboratoryCasesUpdate => 'Actualizar casos de laboratorio',
+            self::LaboratoryCasesManageItems => 'Gestionar items de laboratorio',
+            self::LaboratoryCasesManageEvents => 'Gestionar eventos de laboratorio',
+            self::LaboratoryCasesManageDocuments => 'Gestionar documentos de laboratorio',
             // Recall clinico
             self::ClinicalRecallView => 'Ver recall clinico',
             self::ClinicalRecallManage => 'Gestionar recall clinico',
@@ -312,6 +338,18 @@ enum UserPermission: string
             self::MedicalClearanceDecisionsReview,
             self::MedicalClearanceConditionsVerify,
             self::ClearanceRequirementsManage => 'Consultas externas y autorizaciones',
+            // Atencion urgente
+            self::UrgentCareView,
+            self::UrgentCareCreate,
+            self::UrgentCareUpdate,
+            self::UrgentCareDispose => 'Atencion urgente',
+            // Laboratorio dental
+            self::LaboratoryCasesView,
+            self::LaboratoryCasesCreate,
+            self::LaboratoryCasesUpdate,
+            self::LaboratoryCasesManageItems,
+            self::LaboratoryCasesManageEvents,
+            self::LaboratoryCasesManageDocuments => 'Laboratorio dental',
             // Recall clinico
             self::ClinicalRecallView,
             self::ClinicalRecallManage => 'Recall clinico',
