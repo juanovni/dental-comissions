@@ -133,7 +133,7 @@ class InformedConsentTemplateResource extends Resource
                     ->label('Requisitos')
                     ->counts('requirements')
                     ->sortable(),
-                TextColumn::make('is_active')
+                \Filament\Tables\Columns\IconColumn::make('is_active')
                     ->label('Activo')
                     ->boolean()
                     ->sortable(),

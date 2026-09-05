@@ -91,9 +91,18 @@ enum UserPermission: string
     case InformedConsentRevoke = 'informed_consents.revoke';
     case InformedConsentWaive = 'informed_consents.waive';
 
-    // Autorizaciones externas
+    // Consultas externas y autorizaciones
     case ExternalClearanceView = 'external_clearance.view';
     case ExternalClearanceManage = 'external_clearance.manage';
+    case ExternalConsultationsView = 'external_consultations.view';
+    case ExternalConsultationsCreate = 'external_consultations.create';
+    case ExternalConsultationsUpdate = 'external_consultations.update';
+    case ExternalConsultationsSend = 'external_consultations.send';
+    case ExternalConsultationsClose = 'external_consultations.close';
+    case MedicalClearanceDecisionsCreate = 'medical_clearance_decisions.create';
+    case MedicalClearanceDecisionsReview = 'medical_clearance_decisions.review';
+    case MedicalClearanceConditionsVerify = 'medical_clearance_conditions.verify';
+    case ClearanceRequirementsManage = 'clearance_requirements.manage';
 
     // Recall clinico
     case ClinicalRecallView = 'clinical_recall.view';
@@ -187,9 +196,18 @@ enum UserPermission: string
             self::InformedConsentReject => 'Rechazar consentimiento',
             self::InformedConsentRevoke => 'Revocar consentimiento',
             self::InformedConsentWaive => 'Dispensar consentimiento',
-            // Autorizaciones externas
+            // Consultas externas y autorizaciones
             self::ExternalClearanceView => 'Ver autorizaciones externas',
             self::ExternalClearanceManage => 'Gestionar autorizaciones externas',
+            self::ExternalConsultationsView => 'Ver consultas externas',
+            self::ExternalConsultationsCreate => 'Crear consultas externas',
+            self::ExternalConsultationsUpdate => 'Actualizar consultas externas',
+            self::ExternalConsultationsSend => 'Enviar consultas externas',
+            self::ExternalConsultationsClose => 'Cerrar consultas externas',
+            self::MedicalClearanceDecisionsCreate => 'Crear decisiones de autorizacion',
+            self::MedicalClearanceDecisionsReview => 'Revisar decisiones de autorizacion',
+            self::MedicalClearanceConditionsVerify => 'Verificar condiciones de autorizacion',
+            self::ClearanceRequirementsManage => 'Gestionar requisitos de autorizacion',
             // Recall clinico
             self::ClinicalRecallView => 'Ver recall clinico',
             self::ClinicalRecallManage => 'Gestionar recall clinico',
@@ -282,9 +300,18 @@ enum UserPermission: string
             self::InformedConsentReject,
             self::InformedConsentRevoke,
             self::InformedConsentWaive => 'Consentimientos informados',
-            // Autorizaciones externas
+            // Consultas externas y autorizaciones
             self::ExternalClearanceView,
-            self::ExternalClearanceManage => 'Autorizaciones externas',
+            self::ExternalClearanceManage,
+            self::ExternalConsultationsView,
+            self::ExternalConsultationsCreate,
+            self::ExternalConsultationsUpdate,
+            self::ExternalConsultationsSend,
+            self::ExternalConsultationsClose,
+            self::MedicalClearanceDecisionsCreate,
+            self::MedicalClearanceDecisionsReview,
+            self::MedicalClearanceConditionsVerify,
+            self::ClearanceRequirementsManage => 'Consultas externas y autorizaciones',
             // Recall clinico
             self::ClinicalRecallView,
             self::ClinicalRecallManage => 'Recall clinico',
