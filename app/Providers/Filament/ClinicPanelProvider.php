@@ -27,6 +27,7 @@ use App\Filament\Resources\UrgentCareIntakes\UrgentCareIntakeResource;
 use App\Filament\Resources\LocalLanguagePatterns\LocalLanguagePatternResource;
 use App\Filament\Resources\Patients\PatientResource;
 use App\Filament\Resources\PerformedProcedures\PerformedProcedureResource;
+use App\Filament\Resources\RecallTypes\RecallTypeResource;
 use App\Filament\Resources\Procedures\ProcedureResource;
 use App\Filament\Resources\Professionals\ProfessionalResource;
 use App\Filament\Resources\SocialAccounts\SocialAccountResource;
@@ -34,6 +35,7 @@ use App\Filament\Resources\SocialComments\SocialCommentResource;
 use App\Filament\Resources\SocialCrmSettings\SocialCrmSettingResource;
 use App\Filament\Resources\Specialties\SpecialtyResource;
 use App\Filament\Resources\TreatmentPlans\TreatmentPlanResource;
+use App\Filament\Resources\TreatmentPlanFollowUps\TreatmentPlanFollowUpResource;
 use App\Filament\Resources\VoiceCalls\VoiceCallResource;
 use App\Http\Middleware\EnsureAuthenticatedUserCanAccessTenant;
 use App\Http\Middleware\EnsureTenantMatchesHost;
@@ -184,6 +186,8 @@ class ClinicPanelProvider extends PanelProvider
                 SocialCrmSettingResource::class,
                 SpecialtyResource::class,
                 TreatmentPlanResource::class,
+                TreatmentPlanFollowUpResource::class,
+                RecallTypeResource::class,
                 InformedConsentTemplateResource::class,
                 ExternalConsultationResource::class,
                 UrgentCareIntakeResource::class,

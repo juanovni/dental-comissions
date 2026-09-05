@@ -199,34 +199,37 @@ Estados:
 
 ---
 
-## Bloque 7: Recall clinico y seguimiento `[ ]`
+## Bloque 7: Recall clinico y seguimiento `[x]`
 
-### Enums pendientes
-- [ ] `RecallType` (general, periodontal, implant, retention, custom)
-- [ ] `RecallPolicyStatus` (draft, active, archived)
-- [ ] `PatientRiskLevel` (low, moderate, high, very_high)
-- [ ] `FollowUpChannel` (whatsapp, phone, email, sms, in_person)
-- [ ] `FollowUpStatus` (pending, performed, failed, cancelled)
-- [ ] `FollowUpOutcome` (contacted, no_answer, rescheduled, completed, declined)
+### Enums
+- [x] `RecallType` (general, periodontal, implant, retention, custom)
+- [x] `RecallPolicyStatus` (draft, active, archived)
+- [x] `PatientRiskLevel` (low, moderate, high, very_high)
+- [x] `FollowUpChannel` (whatsapp, phone, email, sms, in_person)
+- [x] `FollowUpStatus` (pending, performed, failed, cancelled)
+- [x] `FollowUpOutcome` (contacted, no_answer, rescheduled, completed, declined)
 
-### Migraciones pendientes
-- [ ] `recall_types`
-- [ ] `recall_policy_versions`
-- [ ] `patient_risk_assessments`
-- [ ] `patient_recall_plans`
-- [ ] `patient_recall_events`
-- [ ] `treatment_plan_follow_ups`
+### Migraciones
+- [x] `recall_types`
+- [x] `recall_policy_versions`
+- [x] `patient_risk_assessments`
+- [x] `patient_recall_plans`
+- [x] `patient_recall_events`
+- [x] `treatment_plan_follow_ups`
+- [x] RLS en todas las tablas
 
-### Modelos pendientes
-- [ ] `RecallType`, `RecallPolicyVersion`, `PatientRiskAssessment`, `PatientRecallPlan`, `PatientRecallEvent`
-- [ ] `TreatmentPlanFollowUp`
+### Modelos
+- [x] `RecallType`, `RecallPolicyVersion`, `PatientRiskAssessment`, `PatientRecallPlan`, `PatientRecallEvent`
+- [x] `TreatmentPlanFollowUp`
 
-### Filament Resources pendientes
-- [ ] `RecallTypeResource`
-- [ ] `PatientRecallPlanResource`
+### Filament Resources
+- [x] `RecallTypeResource` (CRUD tipos de recall)
+- [x] `TreatmentPlanFollowUpResource` (seguimientos con canal, motivo, resultado)
 
-### Permisos pendientes
-- [ ] `clinical_recall.*`, `follow_ups.*`
+### Permisos
+- [x] `clinical_recall.*`, `recall_types.*`, `recall_policies.*`
+- [x] `patient_risk_assessments.*`, `patient_recall_plans.*`
+- [x] `follow_ups.*` (view, create, perform)
 
 ---
 
@@ -426,7 +429,7 @@ Estados:
 | 4 | [x] | 6 | 7 | 5 | 1 | 4 |
 | 5 | [x] | 4 | 6 | 4 | 1 | 4 |
 | 6 | [x] | 6 | 6 | 5 | 2 | 2 |
-| 7 | [ ] | 6 | 6 | 7 | 2 | 2 |
+| 7 | [x] | 6 | 7 | 7 | 2 | 3 |
 | 8 | [ ] | 0 | 0 | 0 | 0 | 1 |
 | 9 | [ ] | 3 | 5 | 5 | 0 | 0 |
 | 10 | [ ] | 2 | 2 | 2 | 0 | 0 |
@@ -437,6 +440,6 @@ Estados:
 | 15 | [ ] | 0 | 3 | 3 | 0 | 0 |
 | 16 | [ ] | 0 | 9 | 9 | 0 | 0 |
 
-**Bloques completados:** 6/16
-**Migraciones creadas:** 57 (000001 - 000054 + RLS + FKs)
-**Migraciones pendientes:** ~59
+**Bloques completados:** 7/16
+**Migraciones creadas:** 64 (000001 - 000061 + RLS + FKs)
+**Migraciones pendientes:** ~52

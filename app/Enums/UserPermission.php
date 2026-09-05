@@ -118,9 +118,20 @@ enum UserPermission: string
     case LaboratoryCasesManageEvents = 'laboratory_cases.manage_events';
     case LaboratoryCasesManageDocuments = 'laboratory_cases.manage_documents';
 
-    // Recall clinico
+    // Recall clinico y seguimiento
     case ClinicalRecallView = 'clinical_recall.view';
     case ClinicalRecallManage = 'clinical_recall.manage';
+    case RecallTypesView = 'recall_types.view';
+    case RecallTypesCreate = 'recall_types.create';
+    case RecallTypesManage = 'recall_types.manage';
+    case RecallPoliciesManage = 'recall_policies.manage';
+    case PatientRiskAssessmentsCreate = 'patient_risk_assessments.create';
+    case PatientRiskAssessmentsView = 'patient_risk_assessments.view';
+    case PatientRecallPlansView = 'patient_recall_plans.view';
+    case PatientRecallPlansAdjust = 'patient_recall_plans.adjust';
+    case FollowUpsView = 'follow_ups.view';
+    case FollowUpsCreate = 'follow_ups.create';
+    case FollowUpsPerform = 'follow_ups.perform';
 
     // Seguridad clinica
     case SafetyRulesView = 'safety_rules.view';
@@ -234,9 +245,20 @@ enum UserPermission: string
             self::LaboratoryCasesManageItems => 'Gestionar items de laboratorio',
             self::LaboratoryCasesManageEvents => 'Gestionar eventos de laboratorio',
             self::LaboratoryCasesManageDocuments => 'Gestionar documentos de laboratorio',
-            // Recall clinico
+            // Recall clinico y seguimiento
             self::ClinicalRecallView => 'Ver recall clinico',
             self::ClinicalRecallManage => 'Gestionar recall clinico',
+            self::RecallTypesView => 'Ver tipos de recall',
+            self::RecallTypesCreate => 'Crear tipos de recall',
+            self::RecallTypesManage => 'Gestionar tipos de recall',
+            self::RecallPoliciesManage => 'Gestionar politicas de recall',
+            self::PatientRiskAssessmentsCreate => 'Crear evaluaciones de riesgo',
+            self::PatientRiskAssessmentsView => 'Ver evaluaciones de riesgo',
+            self::PatientRecallPlansView => 'Ver planes de recall',
+            self::PatientRecallPlansAdjust => 'Ajustar planes de recall',
+            self::FollowUpsView => 'Ver seguimientos',
+            self::FollowUpsCreate => 'Crear seguimientos',
+            self::FollowUpsPerform => 'Realizar seguimientos',
             // Seguridad clinica
             self::SafetyRulesView => 'Ver reglas de seguridad clinica',
             self::SafetyRulesManage => 'Gestionar reglas de seguridad clinica',
@@ -350,9 +372,20 @@ enum UserPermission: string
             self::LaboratoryCasesManageItems,
             self::LaboratoryCasesManageEvents,
             self::LaboratoryCasesManageDocuments => 'Laboratorio dental',
-            // Recall clinico
+            // Recall clinico y seguimiento
             self::ClinicalRecallView,
-            self::ClinicalRecallManage => 'Recall clinico',
+            self::ClinicalRecallManage,
+            self::RecallTypesView,
+            self::RecallTypesCreate,
+            self::RecallTypesManage,
+            self::RecallPoliciesManage,
+            self::PatientRiskAssessmentsCreate,
+            self::PatientRiskAssessmentsView,
+            self::PatientRecallPlansView,
+            self::PatientRecallPlansAdjust,
+            self::FollowUpsView,
+            self::FollowUpsCreate,
+            self::FollowUpsPerform => 'Recall clinico y seguimiento',
             // Seguridad clinica
             self::SafetyRulesView,
             self::SafetyRulesManage => 'Seguridad clinica',
